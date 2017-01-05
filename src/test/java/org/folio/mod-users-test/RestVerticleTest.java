@@ -70,7 +70,7 @@ public class RestVerticleTest {
         });
       }
     })
-            .putHeader("tenant", "diku")
+            .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
             .end();
@@ -91,7 +91,7 @@ public class RestVerticleTest {
         future.fail("Got status code: " + res.statusCode());
       }
     })
-            .putHeader("tenant", "diku")
+            .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
             .end(userObject.encode());
@@ -115,7 +115,7 @@ public class RestVerticleTest {
        future.fail("Bad response: " + res.statusCode());
      }
    })
-           .putHeader("tenant", "diku")
+           .putHeader("X-Okapi-Tenant", "diku")
            .putHeader("content-type", "application/json")
            .putHeader("accept", "application/json")
            .end();

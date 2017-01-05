@@ -28,7 +28,9 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.utils.TenantTool;
+import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 
 
 
@@ -40,10 +42,10 @@ import org.folio.rest.tools.utils.TenantTool;
 public class UsersAPI implements UsersResource {
 
   private final Messages messages = Messages.getInstance();
-  private final String USER_COLLECTION = "user";
+  //private final String USER_COLLECTION = "user";
   private static final String USER_ID_FIELD = "'id'";
   private static final String USER_NAME_FIELD = "'username'";
-  private static final String TABLE_NAME_USER = "user";
+  private static final String TABLE_NAME_USER = "users";
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
   
@@ -81,6 +83,11 @@ public class UsersAPI implements UsersResource {
     });
   }
   
+  private CQLWrapper getCQL(String query, int limit, int offset){
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USER+".jsonb");
+    return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+  }
+  
   @Validate
   @Override
   public void getUsers(String query, String orderBy, 
@@ -91,17 +98,19 @@ public class UsersAPI implements UsersResource {
     logger.debug("Getting users");
     try {
       vertxContext.runOnContext(v -> {
+        CQLWrapper cql = getCQL(query,limit,offset);
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-        Criterion criterion = Criterion.json2Criterion(query);
-        criterion.setLimit(new Limit(limit)).setOffset(new Offset(offset));
+        String[] fieldList = {"*"};
+        //Criterion criterion = Criterion.json2Criterion(query);
+        //criterion.setLimit(new Limit(limit)).setOffset(new Offset(offset));
         logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
-        logger.debug("Using criterion: " + criterion.toString());
+        //logger.debug("Using criterion: " + criterion.toString());
         logger.debug("tenantId = " + tenantId);
         
             try {          
               PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
-                      User.class, criterion, true, false, reply -> {
+                      User.class, fieldList, cql, true, false, reply -> {
                 try {
                   if(reply.succeeded()) {
                     UserdataCollection userCollection = new UserdataCollection();
@@ -242,7 +251,7 @@ public class UsersAPI implements UsersResource {
         Criteria idCrit = new Criteria();
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
-        idCrit.setValue(userId);
+        idCrit.setValue(userId); 
         Criterion criterion = new Criterion(idCrit);
         logger.debug("Using criterion: " + criterion.toString());
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
