@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.client.TenantClient;
 import org.junit.AfterClass;
 import org.junit.Test;
 
@@ -25,31 +26,29 @@ public class RestVerticleTest {
   @BeforeClass
   public static void setup(TestContext context) {
     Async async = context.async();
-    vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
+    TenantClient tenantClient = new TenantClient("localhost", port, "diku");
+    vertx = Vertx.vertx();
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       PostgresClient.setIsEmbedded(true);
-      //MongoCRUD.setIsEmbedded(true);
       try {
-        //MongoCRUD.getInstance(vertx).startEmbeddedMongo();
         PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+        tenantClient.post( res2 -> {
+           async.complete();
+        });
       } catch(Exception e) {
         e.printStackTrace();
-      }
-      async.complete();
+      }    
+     
     });
-    
   }
   
   @AfterClass
   public static void teardown(TestContext context) {
     context.async().complete();
-    
   }
   
-  
-
   private Future<Void> getEmptyUsers(TestContext context) {
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
@@ -71,14 +70,12 @@ public class RestVerticleTest {
         });
       }
     })
-            .putHeader("tenant", "diku")
+            .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
             .end();
     return future;
   }
-  
-  
   
   private Future<Void> postUser(TestContext context) {
     Future future = Future.future();
@@ -94,7 +91,7 @@ public class RestVerticleTest {
         future.fail("Got status code: " + res.statusCode());
       }
     })
-            .putHeader("tenant", "diku")
+            .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
             .end(userObject.encode());
@@ -118,7 +115,7 @@ public class RestVerticleTest {
        future.fail("Bad response: " + res.statusCode());
      }
    })
-           .putHeader("tenant", "diku")
+           .putHeader("X-Okapi-Tenant", "diku")
            .putHeader("content-type", "application/json")
            .putHeader("accept", "application/json")
            .end();

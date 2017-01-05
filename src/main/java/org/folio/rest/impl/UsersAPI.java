@@ -28,7 +28,9 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.utils.TenantTool;
+import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 
 
 
@@ -40,10 +42,10 @@ import org.folio.rest.tools.utils.TenantTool;
 public class UsersAPI implements UsersResource {
 
   private final Messages messages = Messages.getInstance();
-  private final String USER_COLLECTION = "user";
+  //private final String USER_COLLECTION = "user";
   private static final String USER_ID_FIELD = "'id'";
   private static final String USER_NAME_FIELD = "'username'";
-  private static final String TABLE_NAME_USER = "user";
+  private static final String TABLE_NAME_USER = "users";
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
   
@@ -51,7 +53,8 @@ public class UsersAPI implements UsersResource {
   private String getTableName(String tenantId, String tableBase) {
     //This hardly deserves to be a method, but since details may change, I'm
     //trying to keep it flexible
-    return tenantId + "." + tableBase;
+    //return tenantId + "." + tableBase;
+    return tableBase;
   }
   
   private void initDB(Context vertxContext, String tenantId, String tableName, Handler<AsyncResult> initHandler) {
@@ -80,6 +83,11 @@ public class UsersAPI implements UsersResource {
     });
   }
   
+  private CQLWrapper getCQL(String query, int limit, int offset){
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USER+".jsonb");
+    return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+  }
+  
   @Validate
   @Override
   public void getUsers(String query, String orderBy, 
@@ -90,18 +98,19 @@ public class UsersAPI implements UsersResource {
     logger.debug("Getting users");
     try {
       vertxContext.runOnContext(v -> {
+        CQLWrapper cql = getCQL(query,limit,offset);
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-        Criterion criterion = Criterion.json2Criterion(query);
-        criterion.setLimit(new Limit(limit)).setOffset(new Offset(offset));
+        String[] fieldList = {"*"};
+        //Criterion criterion = Criterion.json2Criterion(query);
+        //criterion.setLimit(new Limit(limit)).setOffset(new Offset(offset));
         logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
-        logger.debug("Using criterion: " + criterion.toString());
+        //logger.debug("Using criterion: " + criterion.toString());
         logger.debug("tenantId = " + tenantId);
-        initDB(vertxContext, tenantId, tableName, init-> {
-          if(init.succeeded()) {
+        
             try {          
               PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
-                      User.class, criterion, true, false, reply -> {
+                      User.class, fieldList, cql, true, false, reply -> {
                 try {
                   if(reply.succeeded()) {
                     UserdataCollection userCollection = new UserdataCollection();
@@ -127,15 +136,9 @@ public class UsersAPI implements UsersResource {
                                     messages.getMessage(lang,
                                             MessageConsts.InternalServerError))));
             }
-          } else {
-            logger.debug("Unable to init db: " + init.cause().getMessage());
-            asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                            GetUsersResponse.withPlainInternalServerError(
-                                    messages.getMessage(lang,
-                                            MessageConsts.InternalServerError))));
-          }
+          
         });
-      });
+     
     } catch(Exception e) {
       logger.debug(e.getMessage());
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
@@ -165,10 +168,9 @@ public class UsersAPI implements UsersResource {
         Criterion crit = new Criterion();
         crit.addCriterion(idCrit, "OR", nameCrit);
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-        initDB(vertxContext, tenantId, tableName, init-> {
-          if(init.succeeded()) {
+        
             try {
-              PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName, 
+              PostgresClient.getInstance(vertxContext.owner(), TenantTool.calculateTenantId(tenantId)).get(tableName, 
                       User.class, crit, true, getReply -> { 
                   logger.debug("Attempting to get existing users of same id and/or username");
                   if(getReply.failed()) {
@@ -228,13 +230,7 @@ public class UsersAPI implements UsersResource {
                             PostUsersResponse.withPlainInternalServerError(
                             messages.getMessage(lang, MessageConsts.InternalServerError))));
             }
-          } else {
-            logger.debug("DB Init failed: " + init.cause().getMessage());
-            asyncResultHandler.handle(Future.succeededFuture(
-                        PostUsersResponse.withPlainInternalServerError(
-                        messages.getMessage(lang, MessageConsts.InternalServerError))));
-          }
-        });
+
       });
     } catch(Exception e) {
       asyncResultHandler.handle(Future.succeededFuture(
@@ -255,12 +251,11 @@ public class UsersAPI implements UsersResource {
         Criteria idCrit = new Criteria();
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
-        idCrit.setValue(userId);
+        idCrit.setValue(userId); 
         Criterion criterion = new Criterion(idCrit);
         logger.debug("Using criterion: " + criterion.toString());
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-        initDB(vertxContext, tenantId, tableName, init-> {
-          if(init.succeeded()) {
+
             try {
                PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName, User.class, criterion,
                        true, false, getReply -> {
@@ -293,12 +288,7 @@ public class UsersAPI implements UsersResource {
                       GetUsersResponse.withPlainInternalServerError(messages.getMessage(
                               lang, MessageConsts.InternalServerError))));           
              }
-          } else {
-            asyncResultHandler.handle(Future.succeededFuture(
-              GetUsersResponse.withPlainInternalServerError(messages.getMessage(
-                      lang, MessageConsts.InternalServerError))));
-          }
-        });
+         
        });
     } catch(Exception e) {
       asyncResultHandler.handle(Future.succeededFuture(
@@ -321,8 +311,7 @@ public class UsersAPI implements UsersResource {
         idCrit.setOperation("=");
         idCrit.setValue(userId);
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-        initDB(vertxContext, tenantId, tableName, init-> {
-          if(init.succeeded()) {
+
             try {
               PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(
                       tableName, new Criterion(idCrit), deleteReply -> {
@@ -343,14 +332,7 @@ public class UsersAPI implements UsersResource {
                                 messages.getMessage(lang,
                                         MessageConsts.InternalServerError))));
             }
-          } else {
-            asyncResultHandler.handle(
-              Future.succeededFuture(
-                      DeleteUsersByUserIdResponse.withPlainInternalServerError(
-                              messages.getMessage(lang,
-                                      MessageConsts.InternalServerError))));
-          }
-        });
+          
       });  
     } catch(Exception e) {
       asyncResultHandler.handle(
@@ -377,8 +359,7 @@ public class UsersAPI implements UsersResource {
         idCrit.setOperation("=");
         idCrit.setValue(userId);
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-        initDB(vertxContext, tenantId, tableName, init-> {
-          if(init.succeeded()) {
+
         try {
           PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
                   tableName, entity, new Criterion(idCrit), true, putReply -> {
@@ -403,12 +384,7 @@ public class UsersAPI implements UsersResource {
                                       messages.getMessage(lang, 
                                               MessageConsts.InternalServerError))));
         }
-          } else {
-            asyncResultHandler.handle(Future.succeededFuture(
-              PutUsersByUserIdResponse.withPlainInternalServerError(
-                      messages.getMessage(lang, MessageConsts.InternalServerError))));
-          }
-        });
+         
       });
     } catch (Exception e) {
       asyncResultHandler.handle(Future.succeededFuture(
