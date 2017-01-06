@@ -125,16 +125,25 @@ public class UsersAPI implements UsersResource {
                                     reply.cause().getMessage())));
                   }
                 } catch(Exception e) {
+                  logger.debug(e.getMessage());
+                  
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
                             GetUsersResponse.withPlainInternalServerError(
                                     reply.cause().getMessage())));
                 }            
               });
             } catch(Exception e) {
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                            GetUsersResponse.withPlainInternalServerError(
-                                    messages.getMessage(lang,
-                                            MessageConsts.InternalServerError))));
+              logger.debug(e.getMessage());
+              if(e.getCause() != null && e.getCause().getClass().getSimpleName().contains("CQLParseException")) {
+                logger.debug("BAD CQL");
+                asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+                        "CQL Parsing Error for '" + query + "': " + e.getLocalizedMessage())));
+              } else {
+                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
+                              GetUsersResponse.withPlainInternalServerError(
+                                      messages.getMessage(lang,
+                                              MessageConsts.InternalServerError))));
+              }
             }
           
         });
