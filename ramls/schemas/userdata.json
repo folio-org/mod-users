@@ -25,13 +25,16 @@
         "personal" : {
             "type" : "object",
             "properties" : {
-                "full_name" : {
+                "last_name" : {
                     "type" : "string"
                 },
-                "email_primary" : {
+                "first_name" : {
                     "type" : "string"
                 },
-                "email_alternate" : {
+                "email" : {
+                    "type" : "string"
+                },
+                "phone" : {
                     "type" : "string"
                 }
             }

@@ -9,9 +9,10 @@
         "last_login_date" : ""
     },
     "personal" : {
-        "full_name" : "Jack Michael Handey",
-        "email_primary" : "jhandey@biglibrary.org",
-        "email_alternate" : "handyjack65@gmail.com"
+        "last_name" : "Handey",
+        "first_name" : "Jack",
+        "email" : "jhandey@biglibrary.org",
+        "phone" : "2125551212"
     }
 }
 
