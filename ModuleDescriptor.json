@@ -36,11 +36,6 @@
             "level" : "30",
             "type" : "request-response",
             "permissionsRequired" : [ "users.delete" ]
-        }, {
-            "methods" : [ "POST", "DELETE" ],
-            "path" : "/tenant",
-            "level" : "30",
-            "type" : "request-response"
         }
     ],
     "modulePermissions" : []
