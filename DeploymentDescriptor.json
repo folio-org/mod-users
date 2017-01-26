@@ -1,6 +1,6 @@
 {
   "instId" : "localhost-9131",
-  "srvcId" : "5090649a-46e4-4219-9ea1-64f5dccc8a91",
+  "srvcId" : "users-module",
   "nodeId" : "localhost",
   "url" : "http://localhost:9131",
   "descriptor" : {
