@@ -38,5 +38,6 @@
             "permissionsRequired" : [ "users.delete" ]
         }
     ],
-    "modulePermissions" : []
+    "modulePermissions" : [],
+    "tenantInterface" : "/_/tenant"
 }
