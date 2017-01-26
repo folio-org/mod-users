@@ -34,10 +34,16 @@ public class RestVerticleTest {
     TenantClient tenantClient = new TenantClient("localhost", port, "diku");
     vertx = Vertx.vertx();
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
-    vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
+    try {
       PostgresClient.setIsEmbedded(true);
+      PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+    } catch(Exception e) {
+      e.printStackTrace();
+      context.fail(e);
+      return;
+    }
+    vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
-        PostgresClient.getInstance(vertx).startEmbeddedPostgres();
         tenantClient.post( res2 -> {
            async.complete();
         });
