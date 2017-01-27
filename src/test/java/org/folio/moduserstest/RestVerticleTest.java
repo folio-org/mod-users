@@ -1,3 +1,5 @@
+package org.folio.moduserstest;
+
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -6,23 +8,25 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.client.TenantClient;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
-
-
-
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
 
 @RunWith(VertxUnitRunner.class)
 public class RestVerticleTest {
   private static Vertx vertx;
   static int port;
-  
+
+  @Rule
+  public Timeout rule = Timeout.seconds(180);  // 3 minutes for loading embedded postgres
+
   @BeforeClass
   public static void setup(TestContext context) {
     Async async = context.async();
@@ -45,16 +49,16 @@ public class RestVerticleTest {
         });
       } catch(Exception e) {
         e.printStackTrace();
-      }    
-     
+      }
+
     });
   }
-  
+
   @AfterClass
   public static void teardown(TestContext context) {
     context.async().complete();
   }
-  
+
   private Future<Void> getEmptyUsers(TestContext context) {
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
@@ -82,7 +86,7 @@ public class RestVerticleTest {
             .end();
     return future;
   }
-  
+
   private Future<Void> postUser(TestContext context) {
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
@@ -103,7 +107,7 @@ public class RestVerticleTest {
             .end(userObject.encode());
     return future;
   }
-  
+
  private Future<Void> getUser(TestContext context) {
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
@@ -127,7 +131,7 @@ public class RestVerticleTest {
            .end();
    return future;
  }
- 
+
  @Test
   public void doSequentialTests(TestContext context) {
     Async async = context.async();
@@ -143,8 +147,7 @@ public class RestVerticleTest {
       getUser(context).setHandler(f3.completer());
       return f3;
     });
-            
-    
+
     startFuture.setHandler(res -> {
       if(res.succeeded()) {
         async.complete();
@@ -153,5 +156,4 @@ public class RestVerticleTest {
       }
     });
   }
-  
 }
