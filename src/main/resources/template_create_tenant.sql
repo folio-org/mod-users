@@ -1,8 +1,9 @@
 CREATE ROLE myuniversity PASSWORD 'myuniversity' NOSUPERUSER NOCREATEDB INHERIT LOGIN;
 
-CREATE SCHEMA myuniversity AUTHORIZATION myuniversity;
+CREATE SCHEMA myuniversity_mymodule AUTHORIZATION myuniversity;
 
-CREATE TABLE myuniversity.users (_id SERIAL PRIMARY KEY, jsonb JSONB NOT NULL);
+CREATE EXTENSION IF NOT EXISTS 'pgcrypto';
 
-GRANT ALL ON myuniversity.users TO myuniversity;
-GRANT ALL ON myuniversity.users__id_seq TO myuniversity;
+CREATE TABLE IF NOT EXISTS myuniversity_mymodule.users (_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), jsonb JSONB NOT NULL);
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA myuniversity_mymodule TO myuniversity;
