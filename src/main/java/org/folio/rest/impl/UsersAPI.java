@@ -57,32 +57,7 @@ public class UsersAPI implements UsersResource {
     return tableBase;
   }
   
-  private void initDB(Context vertxContext, String tenantId, String tableName, Handler<AsyncResult> initHandler) {
-    String[] parts = tableName.split("\\.");
-    if(parts.length != 2) {
-      initHandler.handle(Future.failedFuture(tableName + " did not split into schema.table format"));
-      return;
-    }
-    String schema = parts[0];
-    String schemaSql = String.format("CREATE SCHEMA IF NOT EXISTS %s", schema);
-    String tableSql = String.format("CREATE TABLE IF NOT EXISTS %s (_id serial primary key, jsonb jsonb );", tableName);
-    logger.debug("Attempting to send query: " + schemaSql);
-    PostgresClient.getInstance(vertxContext.owner(), tenantId).mutate(schemaSql, mutateReply -> {
-      if(mutateReply.failed()){
-        initHandler.handle(Future.failedFuture(mutateReply.cause()));
-      } else {
-        logger.debug("Attempting to send query: " + tableSql);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).mutate(tableSql, mutateReply2 -> {
-          if(mutateReply2.failed()) {
-            initHandler.handle(Future.failedFuture(mutateReply2.cause()));
-          } else {
-            initHandler.handle(Future.succeededFuture());        
-          }
-        });
-      }
-    });
-  }
-  
+ 
   private CQLWrapper getCQL(String query, int limit, int offset){
     CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USER+".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
