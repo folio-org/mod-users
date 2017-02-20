@@ -95,7 +95,7 @@
               <goals>
                 <goal>exec</goal>
               </goals>
-            </execution> 
+            </execution>
           </executions>
         </plugin>
 
@@ -225,7 +225,7 @@
               </configuration>
             </execution>
           </executions>
-        </plugin>      
+        </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -261,7 +261,7 @@
     <scm>
       <url>https://github.com/folio-org/mod-users</url>
       <connection>scm:git:git://github.com:folio-org/mod-users.git</connection>
-      <developerConnection>scm:git:git@github.com:folio-org/mod-users.git</developerConnection> 
+      <developerConnection>scm:git:git@github.com:folio-org/mod-users.git</developerConnection>
       <tag>HEAD</tag>
     </scm>
 
