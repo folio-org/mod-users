@@ -1,9 +1,9 @@
 {
-  "instId" : "localhost-9131",
-  "srvcId" : "users-module",
-  "nodeId" : "localhost",
-  "url" : "http://localhost:9131",
-  "descriptor" : {
-    "exec" : "java -jar ../mod-users/target/mod-users-fat.jar -Dhttp.port=%p embed_postgres=true"
+  "instId": "localhost-9131",
+  "srvcId": "users-module",
+  "nodeId": "localhost",
+  "url": "http://localhost:9131",
+  "descriptor": {
+    "exec": "java -jar ../mod-users/target/mod-users-fat.jar -Dhttp.port=%p embed_postgres=true"
   }
 }
