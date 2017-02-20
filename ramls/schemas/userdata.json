@@ -1,43 +1,43 @@
 {
-    "title" : "User Schema",
-    "type" : "object",
-    "properties" : {
-        "username" : {
-            "type" : "string",
-            "required" : true
+  "title": "User Schema",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "required": true
+    },
+    "id": {
+      "type": "string",
+      "required": true
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "type": {
+      "type": "string"
+    },
+    "patron_group": {
+      "type": "string"
+    },
+    "meta": {
+      "type": "object"
+    },
+    "personal": {
+      "type": "object",
+      "properties": {
+        "last_name": {
+          "type": "string"
         },
-        "id" : {
-            "type" : "string",
-            "required" : true
+        "first_name": {
+          "type": "string"
         },
-        "active" : {
-            "type" : "boolean"
+        "email": {
+          "type": "string"
         },
-        "type" : {
-            "type" : "string"
-        },
-        "patron_group" : {
-            "type" : "string"
-        },
-        "meta" : {
-            "type" : "object"
-        },
-        "personal" : {
-            "type" : "object",
-            "properties" : {
-                "last_name" : {
-                    "type" : "string"
-                },
-                "first_name" : {
-                    "type" : "string"
-                },
-                "email" : {
-                    "type" : "string"
-                },
-                "phone" : {
-                    "type" : "string"
-                }
-            }
+        "phone": {
+          "type": "string"
         }
+      }
     }
+  }
 }
