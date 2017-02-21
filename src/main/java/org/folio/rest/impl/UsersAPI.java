@@ -100,19 +100,28 @@ public class UsersAPI implements UsersResource {
                                     reply.cause().getMessage())));
                   }
                 } catch(Exception e) {
-                  logger.debug(e.getMessage());
+                  logger.debug(e.getLocalizedMessage());
 
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
                             GetUsersResponse.withPlainInternalServerError(
                                     reply.cause().getMessage())));
                 }
               });
-            } catch(Exception e) {
-              logger.debug(e.getMessage());
-              if(e.getCause() != null && e.getCause().getClass().getSimpleName().contains("CQLParseException")) {
+            } catch (IllegalStateException e) {
+              logger.debug("IllegalStateException: " + e.getLocalizedMessage());
+              asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+                        "CQL Illegal State Error for '" + query + "': " + e.getLocalizedMessage())));                            
+            }
+              catch(Exception e) {
+              Throwable cause = e;
+              while(cause.getCause() != null) {
+                  cause = cause.getCause();
+              }
+              logger.debug("Got error " + cause.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+              if(cause.getClass().getSimpleName().contains("CQLParseException")) {
                 logger.debug("BAD CQL");
                 asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
-                        "CQL Parsing Error for '" + query + "': " + e.getLocalizedMessage())));
+                        "CQL Parsing Error for '" + query + "': " + cause.getLocalizedMessage())));
               } else {
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
                               GetUsersResponse.withPlainInternalServerError(
@@ -124,11 +133,18 @@ public class UsersAPI implements UsersResource {
         });
 
     } catch(Exception e) {
-      logger.debug(e.getMessage());
-      asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                        GetUsersResponse.withPlainInternalServerError(
-                                messages.getMessage(lang,
-                                        MessageConsts.InternalServerError))));
+      //I guess we need to look for CQL errors here, too. :(
+      logger.debug(e.getLocalizedMessage());
+      if(e.getCause() != null && e.getCause().getClass().getSimpleName().contains("CQLParseException")) {
+                logger.debug("BAD CQL");
+                asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+                        "CQL Parsing Error for '" + query + "': " + e.getLocalizedMessage())));
+      } else {
+        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
+                          GetUsersResponse.withPlainInternalServerError(
+                                  messages.getMessage(lang,
+                                          MessageConsts.InternalServerError))));
+      }
     }
   }
 
