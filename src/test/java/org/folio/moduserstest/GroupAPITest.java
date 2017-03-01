@@ -105,7 +105,9 @@ public class GroupAPITest {
 
   @After
   public void tearDown(TestContext context) {
-    Async async = context.async();
+    PostgresClient.stopEmbeddedPostgres();
+
+/*    Async async = context.async();
     tClient.delete( reply -> {
       reply.bodyHandler( body2 -> {
         System.out.println(body2.toString());
@@ -114,7 +116,7 @@ public class GroupAPITest {
           async.complete();
         }));
       });
-    });
+    });*/
 
   }
 
