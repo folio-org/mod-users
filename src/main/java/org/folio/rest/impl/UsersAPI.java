@@ -4,31 +4,31 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
+
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+
+import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
+import org.folio.rest.jaxrs.resource.GroupsResource.GetGroupsByGroupIdResponse;
 import org.folio.rest.jaxrs.resource.UsersResource;
-import org.folio.rest.jaxrs.resource.UsersResource.GetUsersResponse;
-import org.folio.rest.jaxrs.resource.UsersResource.PostUsersResponse;
-import org.folio.rest.jaxrs.resource.UsersResource.PutUsersByUserIdResponse;
-import org.folio.rest.jaxrs.resource.UsersResource.DeleteUsersByUserIdResponse;
-import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.messages.MessageConsts;
-import org.folio.rest.tools.utils.OutStream;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
-import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
+import org.folio.rest.persist.helpers.JoinBy;
+import org.folio.rest.tools.messages.MessageConsts;
+import org.folio.rest.tools.messages.Messages;
+import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 
@@ -41,11 +41,12 @@ import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 @Path("users")
 public class UsersAPI implements UsersResource {
 
+  public static final String TABLE_NAME_USER = "users";
+
   private final Messages messages = Messages.getInstance();
   //private final String USER_COLLECTION = "user";
   private static final String USER_ID_FIELD = "'id'";
   private static final String USER_NAME_FIELD = "'username'";
-  private static final String TABLE_NAME_USER = "users";
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
@@ -110,7 +111,7 @@ public class UsersAPI implements UsersResource {
             } catch (IllegalStateException e) {
               logger.debug("IllegalStateException: " + e.getLocalizedMessage());
               asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
-                        "CQL Illegal State Error for '" + query + "': " + e.getLocalizedMessage())));                            
+                        "CQL Illegal State Error for '" + query + "': " + e.getLocalizedMessage())));
             }
               catch(Exception e) {
               Throwable cause = e;
@@ -391,6 +392,59 @@ public class UsersAPI implements UsersResource {
               PutUsersByUserIdResponse.withPlainInternalServerError(
                       messages.getMessage(lang, MessageConsts.InternalServerError))));
     }
+  }
+
+  @Override
+  public void getUsersByUserIdGroups(String userId, String lang, Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
+
+    vertxContext.runOnContext(v -> {
+      try {
+
+        System.out.println("sending... getUsersByUserIdGroups");
+        String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
+
+        Criteria c = new Criteria().addField("'userId'").setAlias("user2groups").setOperation("=").setValue(userId);
+
+        //create a join between the users table and its external (non jsonb) id to the 'group to user' table which
+        //only contains a jsonb column (no id) - where in the jsonb column there is a groupId and userId fields
+        JoinBy jbFrom = new JoinBy(UserGroupAPI.GROUP_TABLE, "groups", new Criteria().addField("_id").setJSONB(false)
+          .setForceCast("varchar"), new String[]{"jsonb"});
+        //do not return columns from the join table
+        JoinBy jbOn = new JoinBy(UserGroupAPI.GROUP_USER_JOIN_TABLE, "user2groups", new Criteria().addField("'groupId'") , new String[]{});
+
+        PostgresClient.getInstance(vertxContext.owner(), tenantId).join(jbFrom, jbOn, "=", JoinBy.INNER_JOIN,
+          new Criterion(c).toString(), User.class,
+            reply -> {
+              try {
+                if(reply.succeeded()){
+                  List<User> users = (List<User>) ((Object [])reply.result())[0];
+                 // List<User> users = (List<User>)[0];
+                  UserdataCollection userCollection = new UserdataCollection();
+                  userCollection.setUsers(users);
+                  userCollection.setTotalRecords((Integer)((Object [])reply.result())[1]);
+                  asyncResultHandler.handle(Future.succeededFuture(
+                          GetUsersResponse.withJsonOK(userCollection)));
+                }
+                else{
+                  logger.error(reply.cause().getMessage(), reply.cause());
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                    .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError)
+                      + reply.cause().getMessage())));
+                }
+              } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+              }
+        });
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+      }
+    });
+
   }
 }
 

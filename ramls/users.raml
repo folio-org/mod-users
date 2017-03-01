@@ -10,6 +10,8 @@ documentation:
 schemas:
   - userdata: !include schemas/userdata.json
   - userdataCollection: !include schemas/userdataCollection.json
+  - usergroup: !include schemas/usergroup.json
+  - usergroups: !include schemas/usergroups.json
 
 traits:
   - secured: !include ../raml-util/traits/auth.raml
@@ -47,3 +49,8 @@ resourceTypes:
         schema: userdata
     get:
       description: Get a single user
+    /groups:
+      type:
+        get-only:
+          schema: usergroups
+          exampleCollection: !include examples/groups.sample

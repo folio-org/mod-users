@@ -8,10 +8,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.folio.rest.tools.utils.NetworkUtils;
+
 import org.folio.rest.RestVerticle;
-import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.client.TenantClient;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -44,7 +45,7 @@ public class RestVerticleTest {
     }
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
-        tenantClient.post( res2 -> {
+        tenantClient.post(null, res2 -> {
            async.complete();
         });
       } catch(Exception e) {

@@ -1,0 +1,84 @@
+#%RAML 0.8
+title: User Groups
+version: v1
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users Groups API
+    content: This documents the API calls that can be made to query and manage user groups of the system
+
+schemas:
+  - usergroup: !include schemas/usergroup.json
+  - usergroups: !include schemas/usergroups.json
+  - userdata: !include schemas/userdata.json
+  - userdataCollection: !include schemas/userdataCollection.json
+  
+traits:
+  - secured: !include ../raml-util/traits/auth.raml
+  - pageable: !include ../raml-util/traits/pageable.raml
+  - searchable: !include ../raml-util/traits/searchable.raml
+  - language: !include ../raml-util/traits/language.raml
+
+resourceTypes:
+  - collection: !include ../raml-util/rtypes/collection.raml
+  - collection-item: !include ../raml-util/rtypes/item-collection.raml
+  - get-delete-only: !include ../raml-util/rtypes/get-delete.raml
+  
+/groups:
+  type:
+    collection:
+      exampleCollection: !include examples/groups.sample
+      exampleItem: !include examples/group.sample
+      schemaCollection: usergroups
+      schemaItem: usergroup
+  get:
+    is: [
+      searchable: {description: "with valid searchable fields", example: "name=aaa"},
+      pageable
+    ]
+    description: Return a list of groups
+  post:
+    description: Create a group
+  /{groupId}:
+    type:
+      collection-item:
+        exampleItem: !include examples/group.sample
+        schema: usergroup
+    /users:
+      description: delete all users / get users in this specific group
+      type:
+        get-delete-only:
+          exampleItem: !include examples/user_collection.sample
+          schema: userdataCollection
+      delete: 
+        description: delete all users
+      get:
+        description: get all users
+        is: [
+          searchable: {description: "with valid searchable fields", example: "name=aaa"},
+          pageable
+        ]
+      /{userId}:
+        put:
+          description: |
+            Update group by adding a user (no body, user id from url will be added)
+          body:
+          responses:
+            204:
+              description: "User successfully added"
+            404:
+              description: "ID not found"
+              body:
+                text/plain:
+                  example: |
+                    "ID not found"
+            400:
+              description: "Bad request"
+              body:
+                text/plain:
+            500:
+              description: "Internal server error"
+              body:
+                text/plain:
+                  example: "internal server error, contact administrator"
+
