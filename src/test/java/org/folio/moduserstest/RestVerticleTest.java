@@ -228,19 +228,26 @@ public class RestVerticleTest {
                                response8.bodyHandler( bh -> {
                                  System.out.println("get all groups for a specific user " + bh);
                                });
-                               //delete all users in a group
-                               send("http://localhost:"+port+location+"/users", context, HttpMethod.DELETE, null,
-                                 SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response7 -> {
-                                   int statusCode7 = response7.statusCode();
-                                   System.out.println("Status - " + statusCode7 + " at " + System.currentTimeMillis() + " for " + url);
-                                   context.assertEquals(204, statusCode7);
-                                   //delete a group
-                                   send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
-                                     SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
-                                       int statusCode9 = response9.statusCode();
-                                       System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
-                                       context.assertEquals(204, statusCode9);
-                                       async.complete();
+                               //delete a group - should fail as there is a user associated with the group
+                               send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
+                                 SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseFail -> {
+                                   int statusCodeFail = responseFail.statusCode();
+                                   System.out.println("Status - " + statusCodeFail + " at " + System.currentTimeMillis() + " for " + url);
+                                   context.assertEquals(400, statusCodeFail);
+                                   //delete all users in a group
+                                   send("http://localhost:"+port+location+"/users", context, HttpMethod.DELETE, null,
+                                     SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response7 -> {
+                                       int statusCode7 = response7.statusCode();
+                                       System.out.println("Status - " + statusCode7 + " at " + System.currentTimeMillis() + " for " + url);
+                                       context.assertEquals(204, statusCode7);
+                                       //delete a group
+                                       send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
+                                         SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
+                                           int statusCode9 = response9.statusCode();
+                                           System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
+                                           context.assertEquals(204, statusCode9);
+                                           async.complete();
+                                       });
                                    });
                                });
                            });
