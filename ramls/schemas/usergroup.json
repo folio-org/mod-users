@@ -9,10 +9,9 @@
     "desc": {
       "type": "string",
       "required": true
-    },    
+    },
     "_id": {
       "type": "string"
     }
   }
 }
-
