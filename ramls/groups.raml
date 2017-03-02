@@ -51,9 +51,9 @@ resourceTypes:
           exampleItem: !include examples/user_collection.sample
           schema: userdataCollection
       delete:
-        description: delete all users
+        description: delete all users in group
       get:
-        description: get all users
+        description: get all users in group
         is: [
           searchable: {description: "with valid searchable fields", example: "name=aaa"},
           pageable
