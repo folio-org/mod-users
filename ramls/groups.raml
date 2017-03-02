@@ -12,7 +12,7 @@ schemas:
   - usergroups: !include schemas/usergroups.json
   - userdata: !include schemas/userdata.json
   - userdataCollection: !include schemas/userdataCollection.json
-  
+
 traits:
   - secured: !include ../raml-util/traits/auth.raml
   - pageable: !include ../raml-util/traits/pageable.raml
@@ -23,7 +23,7 @@ resourceTypes:
   - collection: !include ../raml-util/rtypes/collection.raml
   - collection-item: !include ../raml-util/rtypes/item-collection.raml
   - get-delete-only: !include ../raml-util/rtypes/get-delete.raml
-  
+
 /groups:
   type:
     collection:
@@ -50,7 +50,7 @@ resourceTypes:
         get-delete-only:
           exampleItem: !include examples/user_collection.sample
           schema: userdataCollection
-      delete: 
+      delete:
         description: delete all users
       get:
         description: get all users
