@@ -55,6 +55,50 @@
       "permissionsRequired": [
         "users.delete"
       ]
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/groups",
+      "level": "30",
+      "type": "request-response",
+      "permissionsRequired": [
+        "usergroups.read"
+      ]
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/groups",
+      "level": "30",
+      "type": "request-response",
+      "permissionsRequired": [
+        "usergroups.create"
+      ]
+    },
+    {
+      "methods": [
+        "PUT"
+      ],
+      "path": "/groups",
+      "level": "30",
+      "type": "request-response",
+      "permissionsRequired": [
+        "usergroups.edit"
+      ]
+    },
+    {
+      "methods": [
+        "DELETE"
+      ],
+      "path": "/groups",
+      "level": "30",
+      "type": "request-response",
+      "permissionsRequired": [
+        "usergroups.delete"
+      ]
     }
   ],
   "modulePermissions": []
