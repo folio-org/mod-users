@@ -31,6 +31,7 @@ import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
+import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 
 
@@ -59,7 +60,7 @@ public class UsersAPI implements UsersResource {
   }
 
 
-  private CQLWrapper getCQL(String query, int limit, int offset){
+  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
     CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USER+".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
@@ -73,8 +74,8 @@ public class UsersAPI implements UsersResource {
           Context vertxContext) throws Exception {
     logger.debug("Getting users");
     try {
+      CQLWrapper cql = getCQL(query,limit,offset);
       vertxContext.runOnContext(v -> {
-        CQLWrapper cql = getCQL(query,limit,offset);
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
         String[] fieldList = {"*"};
@@ -130,16 +131,19 @@ public class UsersAPI implements UsersResource {
                                               MessageConsts.InternalServerError))));
               }
             }
-
         });
-
-    } catch(Exception e) {
-      //I guess we need to look for CQL errors here, too. :(
-      logger.debug(e.getLocalizedMessage());
+    }
+    catch(FieldException fe){
+      logger.error("BAD CQL " + fe.getLocalizedMessage());
+      asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+              "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
+    }
+    catch(Exception e) {
+      logger.error(e.getLocalizedMessage(), e);
       if(e.getCause() != null && e.getCause().getClass().getSimpleName().contains("CQLParseException")) {
-                logger.debug("BAD CQL");
-                asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
-                        "CQL Parsing Error for '" + query + "': " + e.getLocalizedMessage())));
+        logger.debug("BAD CQL");
+        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+                "CQL Parsing Error for '" + query + "': " + e.getLocalizedMessage())));
       } else {
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
                           GetUsersResponse.withPlainInternalServerError(
@@ -393,7 +397,7 @@ public class UsersAPI implements UsersResource {
                       messages.getMessage(lang, MessageConsts.InternalServerError))));
     }
   }
-
+  @Validate
   @Override
   public void getUsersByUserIdGroups(String userId, String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {

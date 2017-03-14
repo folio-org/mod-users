@@ -14,6 +14,7 @@ import java.util.Map;
 import javax.ws.rs.core.Response;
 
 import org.folio.rest.RestVerticle;
+import org.folio.rest.annotations.Validate;
 import org.folio.rest.dao.Group2User;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
@@ -33,6 +34,7 @@ import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
+import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 /**
  * @author shale
@@ -57,12 +59,12 @@ public class UserGroupAPI implements GroupsResource {
     System.out.println("total in milli " + ((nanoend-nano)/1000000));
   }
 
+  @Validate
   @Override
   public void getGroups(String query, int offset, int limit,
       String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
 
-    CQLWrapper cql = getCQL(query,limit, offset);
     /**
     * http://host:port/groups
     */
@@ -70,6 +72,7 @@ public class UserGroupAPI implements GroupsResource {
       try {
         System.out.println("sending... getGroups");
         String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
+        CQLWrapper cql = getCQL(query,limit, offset);
 
         PostgresClient.getInstance(vertxContext.owner(), tenantId).get(GROUP_TABLE, Usergroup.class,
           new String[]{"*"}, cql, true, true,
@@ -96,19 +99,22 @@ public class UserGroupAPI implements GroupsResource {
                     lang, MessageConsts.InternalServerError))));
               }
             });
-      } catch (Exception e) {
+      }
+      catch(FieldException fe){
+        log.error(fe.getLocalizedMessage(), fe);
+        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+                "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
+      }
+      catch (Exception e) {
         log.error(e.getMessage(), e);
-        String message = messages.getMessage(lang, MessageConsts.InternalServerError);
-        if(e.getCause() != null && e.getCause().getClass().getSimpleName().endsWith("CQLParseException")){
-          message = " CQL parse error " + e.getLocalizedMessage();
-        }
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-          .withPlainInternalServerError(message)));
+          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
 
   }
 
+  @Validate
   @Override
   public void postGroups(String lang, Usergroup entity, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
@@ -149,7 +155,7 @@ public class UserGroupAPI implements GroupsResource {
     });
 
   }
-
+  @Validate
   @Override
   public void getGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
@@ -189,7 +195,7 @@ public class UserGroupAPI implements GroupsResource {
     });
 
   }
-
+  @Validate
   @Override
   public void deleteGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
@@ -259,12 +265,11 @@ public class UserGroupAPI implements GroupsResource {
     });
 
   }
-
+  @Validate
   @Override
   public void putGroupsByGroupId(String groupId, String lang, Usergroup entity,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) throws Exception {
-
 
     vertxContext.runOnContext(v -> {
       System.out.println("sending... putGroupsByGroupId");
@@ -303,18 +308,17 @@ public class UserGroupAPI implements GroupsResource {
     });
 
   }
-
+  @Validate
   @Override
   public void getGroupsByGroupIdUsers(String groupId, String query,
       int offset, int limit, String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
 
-    CQLWrapper cql = getCQL(query,limit, offset);
-
     vertxContext.runOnContext(v -> {
       try {
         System.out.println("sending... getGroupsByGroupIdUsers");
         String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
+        CQLWrapper cql = getCQL(query,limit, offset);
 
         //create a join between the users table and its external (non jsonb) id to the group to user table which
         //only contains a jsonb column (no id) - where in the jsonb column there is a groupId, userId fields
@@ -353,7 +357,13 @@ public class UserGroupAPI implements GroupsResource {
                   .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
               }
         });
-      } catch (Exception e) {
+      }
+      catch(FieldException fe){
+        log.error(fe.getLocalizedMessage(), fe);
+        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+                "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
+      }
+      catch (Exception e) {
         log.error(e.getMessage(), e);
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
           .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
@@ -362,7 +372,7 @@ public class UserGroupAPI implements GroupsResource {
 
   }
 
-
+  @Validate
   @Override
   public void deleteGroupsByGroupIdUsers(String groupId, String lang,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
@@ -403,7 +413,7 @@ public class UserGroupAPI implements GroupsResource {
 
   }
 
-
+  @Validate
   @Override
   public void putGroupsByGroupIdUsersByUserId(String userId, String groupId,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
@@ -445,7 +455,7 @@ public class UserGroupAPI implements GroupsResource {
     });
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset){
+  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
     CQL2PgJSON cql2pgJson = new CQL2PgJSON(GROUP_TABLE+".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
