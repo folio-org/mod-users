@@ -53,7 +53,7 @@ resourceTypes:
       delete:
         description: delete all users in group
       get:
-        description: get all users in group
+        description: get all users in group, cql as query is run on user table, so no need to include a users. prefix
         is: [
           searchable: {description: "with valid searchable fields", example: "name=aaa"},
           pageable

@@ -226,27 +226,49 @@ public class RestVerticleTest {
                                System.out.println("Status - " + statusCode8 + " at " + System.currentTimeMillis() + " for " + url);
                                context.assertEquals(200, statusCode8);
                                response8.bodyHandler( bh -> {
-                                 System.out.println("get all groups for a specific user " + bh);
+                                 System.out.println("- get all groups for a specific user - " + bh);
                                });
-                               //delete a group - should fail as there is a user associated with the group
-                               send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
-                                 SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseFail -> {
-                                   int statusCodeFail = responseFail.statusCode();
-                                   System.out.println("Status - " + statusCodeFail + " at " + System.currentTimeMillis() + " for " + url);
-                                   context.assertEquals(400, statusCodeFail);
-                                   //delete all users in a group
-                                   send("http://localhost:"+port+location+"/users", context, HttpMethod.DELETE, null,
-                                     SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response7 -> {
-                                       int statusCode7 = response7.statusCode();
-                                       System.out.println("Status - " + statusCode7 + " at " + System.currentTimeMillis() + " for " + url);
-                                       context.assertEquals(204, statusCode7);
-                                       //delete a group
-                                       send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
-                                         SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
-                                           int statusCode9 = response9.statusCode();
-                                           System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
-                                           context.assertEquals(204, statusCode9);
-                                           async.complete();
+                               //try to get via cql -
+                               String q = "http://localhost:"+port+location+"/users?query=username==jhandey";
+                               send(q,context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, responseZero -> {
+                                   int statusCodeZero = responseZero.statusCode();
+                                   System.out.println("Status - " + statusCodeZero + " for " + q);
+                                   responseZero.bodyHandler( bh1 -> {
+                                     System.out.println(" get all users with cql constraint " + bh1);
+                                     context.assertEquals(1, bh1.toJsonObject().getJsonArray("users").size());
+                                   });
+                                   //delete a group - should fail as there is a user associated with the group
+                                   send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
+                                     SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseFail -> {
+                                       int statusCodeFail = responseFail.statusCode();
+                                       System.out.println("Status - " + statusCodeFail + " at " + System.currentTimeMillis() + " for " + url);
+                                       context.assertEquals(400, statusCodeFail);
+                                       //request users from a non existant group
+                                       String q2 = "http://localhost:"+port+location+"abc/users";
+                                       send(q2, context, HttpMethod.GET, null,
+                                         SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, responseEmpty -> {
+                                           int statusCodeEmpty = responseEmpty.statusCode();
+                                           System.out.println("Status - " + statusCodeEmpty + " at " + System.currentTimeMillis() + " for " + q);
+                                           context.assertEquals(200, statusCodeEmpty);
+                                           responseEmpty.bodyHandler( bh1 -> {
+                                             System.out.println(" get users from non existant group " + bh1);
+                                             context.assertEquals(0, bh1.toJsonObject().getJsonArray("users").size());
+                                           });
+                                           //delete all users in a group
+                                           send("http://localhost:"+port+location+"/users", context, HttpMethod.DELETE, null,
+                                             SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response7 -> {
+                                               int statusCode7 = response7.statusCode();
+                                               System.out.println("Status - " + statusCode7 + " at " + System.currentTimeMillis() + " for " + url);
+                                               context.assertEquals(204, statusCode7);
+                                               //delete a group
+                                               send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
+                                                 SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
+                                                   int statusCode9 = response9.statusCode();
+                                                   System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
+                                                   context.assertEquals(204, statusCode9);
+                                                   async.complete();
+                                               });
+                                           });
                                        });
                                    });
                                });

@@ -318,17 +318,20 @@ public class UserGroupAPI implements GroupsResource {
       try {
         System.out.println("sending... getGroupsByGroupIdUsers");
         String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
-        CQLWrapper cql = getCQL(query,limit, offset);
+
+        /* the query filters against the user table */
+        CQLWrapper cql = getCQL("user2groups", "groupId=="+groupId, limit, offset);
+        cql.addWrapper(new CQLWrapper(new CQL2PgJSON("users.jsonb"), query));
 
         //create a join between the users table and its external (non jsonb) id to the group to user table which
         //only contains a jsonb column (no id) - where in the jsonb column there is a groupId, userId fields
 
         JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("'id'"), new String[]{"jsonb"});
 
-/* TO USE a non jsonb field as a constraint for the join - if for example it is the id field and the id field is of
- * type uuid - use the forceCast to cast to a varchar so that it can be compared to a value in a jsonb field that is textual
- * JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("_id").setJSONB(false)
-   .setForceCast("varchar"), new String[]{"jsonb"});*/
+        /* TO USE a non jsonb field as a constraint for the join - if for example it is the id field and the id field is of
+         * type uuid - use the forceCast to cast to a varchar so that it can be compared to a value in a jsonb field that is textual
+         * JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("_id").setJSONB(false)
+           .setForceCast("varchar"), new String[]{"jsonb"});*/
 
         //do not return columns from the join table
         JoinBy jbOn = new JoinBy(GROUP_USER_JOIN_TABLE, "user2groups", new Criteria().addField("'userId'") , new String[]{});
@@ -455,8 +458,12 @@ public class UserGroupAPI implements GroupsResource {
     });
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(GROUP_TABLE+".jsonb");
+  private CQLWrapper getCQL(String table, String query, int limit, int offset) throws FieldException {
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(table+".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+  }
+
+  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
+    return getCQL(GROUP_TABLE, query, limit, offset);
   }
 }
