@@ -326,7 +326,7 @@ public class UserGroupAPI implements GroupsResource {
         //create a join between the users table and its external (non jsonb) id to the group to user table which
         //only contains a jsonb column (no id) - where in the jsonb column there is a groupId, userId fields
 
-        JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("'id'"), new String[]{"jsonb"});
+        JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("'id'"), new String[]{"_id","jsonb"});
 
         /* TO USE a non jsonb field as a constraint for the join - if for example it is the id field and the id field is of
          * type uuid - use the forceCast to cast to a varchar so that it can be compared to a value in a jsonb field that is textual
@@ -441,18 +441,18 @@ public class UserGroupAPI implements GroupsResource {
               }
               else{
                 log.error(reply.cause().getMessage(), reply.cause());
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
+                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdUsersByUserIdResponse
                   .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
               }
             } catch (Exception e) {
               log.error(e.getMessage(), e);
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
+              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdUsersByUserIdResponse
                 .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
             }
           });
       } catch (Exception e) {
         log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
+        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdUsersByUserIdResponse
           .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
       }
     });

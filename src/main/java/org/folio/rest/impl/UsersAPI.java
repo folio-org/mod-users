@@ -413,7 +413,7 @@ public class UsersAPI implements UsersResource {
         //create a join between the users table and its external (non jsonb) id to the 'group to user' table which
         //only contains a jsonb column (no id) - where in the jsonb column there is a groupId and userId fields
         JoinBy jbFrom = new JoinBy(UserGroupAPI.GROUP_TABLE, "groups", new Criteria().addField("_id").setJSONB(false)
-          .setForceCast("varchar"), new String[]{"jsonb"});
+          .setForceCast("varchar"), new String[]{"_id","jsonb"});
         //do not return columns from the join table
         JoinBy jbOn = new JoinBy(UserGroupAPI.GROUP_USER_JOIN_TABLE, "user2groups", new Criteria().addField("'groupId'") , new String[]{});
 
