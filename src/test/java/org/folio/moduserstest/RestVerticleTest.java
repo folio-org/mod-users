@@ -279,14 +279,26 @@ public class RestVerticleTest {
                                                            int statusGetResp2 = getResp2.statusCode();
                                                            System.out.println("Status - " + statusGetResp2 + " at " + System.currentTimeMillis() + " for " + url);
                                                            context.assertEquals(404, statusGetResp2);
-                                                           //delete a group
-                                                           send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
-                                                             SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
-                                                               int statusCode9 = response9.statusCode();
-                                                               System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
-                                                               context.assertEquals(204, statusCode9);
-                                                               async.complete();
-                                                           });
+														   send("http://localhost:"+port+location+"/users/7261ecaae3a74dc68b468e12a70b1aec", context,
+															 HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseDup2 -> {
+															   int statusCodeDup2 = responseDup2.statusCode();
+															   System.out.println("Status - " + statusCodeDup2 + " at " + System.currentTimeMillis() + " for " + url);
+															   context.assertEquals(204, statusCodeDup2);
+															   //duplicate a user to a group
+															   send("http://localhost:"+port+location+"/users/7261ecaae3a74dc68b468e12a70b1aec", context, HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseDup3 -> {
+																   int responseDupCode3 = responseDup3.statusCode();
+																   System.out.println("Status - " + responseDupCode3 + " at " + System.currentTimeMillis() + " for " + url);
+																   context.assertEquals(400, responseDupCode3);
+																   //delete a group
+																   send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
+																	 SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
+																	   int statusCode9 = response9.statusCode();
+																	   System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
+																	   context.assertEquals(400, statusCode9);
+																	   async.complete();
+																   });
+															   });
+															});
                                                        });
                                                    });                                                   
                                                });

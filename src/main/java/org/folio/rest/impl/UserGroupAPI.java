@@ -461,8 +461,14 @@ public class UserGroupAPI implements GroupsResource {
               }
               else{
                 log.error(reply.cause().getMessage(), reply.cause());
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdUsersByUserIdResponse
-                  .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
+                if(isDuplicate(reply.cause().getMessage())){
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
+                    .withPlainBadRequest("User already in group...")));
+                }
+                else{
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
+                    .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
+                }
               }
             } catch (Exception e) {
               log.error(e.getMessage(), e);
