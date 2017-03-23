@@ -260,13 +260,35 @@ public class RestVerticleTest {
                                                int statusCode7 = response7.statusCode();
                                                System.out.println("Status - " + statusCode7 + " at " + System.currentTimeMillis() + " for " + url);
                                                context.assertEquals(204, statusCode7);
-                                               //delete a group
-                                               send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
-                                                 SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
-                                                   int statusCode9 = response9.statusCode();
-                                                   System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
-                                                   context.assertEquals(204, statusCode9);
-                                                   async.complete();
+                                               //add a duplicate group
+                                               send(url, context, HttpMethod.POST, putRequest,
+                                                 SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, responseDup -> {
+                                                   int responseDupCode = responseDup.statusCode();
+                                                   System.out.println("Status - " + responseDupCode + " at " +
+                                                       System.currentTimeMillis() + " for " + url);
+                                                   context.assertEquals(400, responseDupCode);
+                                                   //get a group
+                                                   send("http://localhost:"+port+location, context, HttpMethod.GET, null,
+                                                     SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, getResp -> {
+                                                       int statusGetResp = getResp.statusCode();
+                                                       System.out.println("Status - " + statusGetResp + " at " + System.currentTimeMillis() + " for " + url);
+                                                       context.assertEquals(200, statusGetResp);
+                                                       //get a group bad id
+                                                       send("http://localhost:"+port+"/groups/12345678", context, HttpMethod.GET, null,
+                                                         SUPPORTED_CONTENT_TYPE_JSON_DEF, 404, getResp2 -> {
+                                                           int statusGetResp2 = getResp2.statusCode();
+                                                           System.out.println("Status - " + statusGetResp2 + " at " + System.currentTimeMillis() + " for " + url);
+                                                           context.assertEquals(404, statusGetResp2);
+                                                           //delete a group
+                                                           send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
+                                                             SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
+                                                               int statusCode9 = response9.statusCode();
+                                                               System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
+                                                               context.assertEquals(204, statusCode9);
+                                                               async.complete();
+                                                           });
+                                                       });
+                                                   });                                                   
                                                });
                                            });
                                        });

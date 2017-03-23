@@ -138,8 +138,14 @@ public class UserGroupAPI implements GroupsResource {
               }
               else{
                 log.error(reply.cause().getMessage(), reply.cause());
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                if(isDuplicate(reply.cause().getMessage())){
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
+                    .withPlainBadRequest("Group exists...")));
+                }
+                else{
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
+                    .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                }
               }
             } catch (Exception e) {
               log.error(e.getMessage(), e);
@@ -155,6 +161,7 @@ public class UserGroupAPI implements GroupsResource {
     });
 
   }
+
   @Validate
   @Override
   public void getGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
@@ -171,15 +178,28 @@ public class UserGroupAPI implements GroupsResource {
         PostgresClient.getInstance(vertxContext.owner(), tenantId).get(GROUP_TABLE, Usergroup.class, c, true,
             reply -> {
               try {
-                @SuppressWarnings("unchecked")
-                List<Usergroup> userGroup = (List<Usergroup>) reply.result()[0];
-                if(userGroup.isEmpty()){
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                    .withPlainNotFound(groupId)));
+                if(reply.succeeded()){
+                  @SuppressWarnings("unchecked")
+                  List<Usergroup> userGroup = (List<Usergroup>) reply.result()[0];
+                  if(userGroup.isEmpty()){
+                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                      .withPlainNotFound(groupId)));
+                  }
+                  else{
+                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                      .withJsonOK(userGroup.get(0))));
+                  }
                 }
                 else{
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                    .withJsonOK(userGroup.get(0))));
+                  log.error(reply.cause().getMessage(), reply.cause());
+                  if(isInvalidUUID(reply.cause().getMessage())){
+                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                      .withPlainNotFound(groupId)));
+                  }
+                  else{
+                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                      .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                  }
                 }
               } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -465,5 +485,21 @@ public class UserGroupAPI implements GroupsResource {
 
   private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
     return getCQL(GROUP_TABLE, query, limit, offset);
+  }
+
+  private boolean isDuplicate(String errorMessage){
+    if(errorMessage != null && errorMessage.contains("duplicate key value violates unique constraint")){
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isInvalidUUID(String errorMessage){
+    if(errorMessage != null && errorMessage.contains("invalid input syntax for uuid")){
+      return true;
+    }
+    else{
+      return false;
+    }
   }
 }
