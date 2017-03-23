@@ -1,5 +1,20 @@
 package org.folio.moduserstest;
 
+import java.net.HttpURLConnection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -14,17 +29,6 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-
 @RunWith(VertxUnitRunner.class)
 public class RestVerticleTest {
 
@@ -33,7 +37,8 @@ public class RestVerticleTest {
 
   private static String postRequest = "{\"group\": \"librarianPOST\",\"desc\": \"basic lib group\"}";
   private static String putRequest = "{\"group\": \"librarianPUT\",\"desc\": \"basic lib group\"}";
-  private static String createUserRequest = "{ \"username\": \"jhandey\" , \"id\": \"7261ecaae3a74dc68b468e12a70b1aec\"}";
+  private static String createUserRequest =
+      "{ \"username\": \"jhandey\" , \"id\": \"7261ecaae3a74dc68b468e12a70b1aec\"}";
 
   private static Vertx vertx;
   static int port;
@@ -173,147 +178,195 @@ public class RestVerticleTest {
 
  @Test
  public void testGroup(TestContext context){
-   Async async = context.async();
    String url = "http://localhost:"+port+"/groups";
-   //add a group
-   send(url, context, HttpMethod.POST, postRequest,
-     SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, response -> {
-       int statusCode = response.statusCode();
-       System.out.println("Status - " + statusCode + " at " + System.currentTimeMillis() + " for " + url);
-       context.assertEquals(201, statusCode);
-       final String location = response.getHeader("Location");
-       System.out.println("Location - " + location);
-       //update a group
-       send("http://localhost:"+port+location, context, HttpMethod.PUT, putRequest,
-         SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, putResponse -> {
-           int statusCode2 = putResponse.statusCode();
-           System.out.println("Status - " + statusCode2 + " at " + System.currentTimeMillis() + " for " + url);
-           context.assertEquals(204, statusCode2);
-           //add a user
-           send("http://localhost:"+port+"/users", context, HttpMethod.POST, createUserRequest,
-             SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, response3 -> {
-               int statusCode3 = response3.statusCode();
-               System.out.println("Status - " + statusCode3 + " at " + System.currentTimeMillis() + " for " + url);
-               context.assertEquals(201, statusCode3);
-               //add a user to the group
-               send("http://localhost:"+port+location+"/users/7261ecaae3a74dc68b468e12a70b1aec", context,
-                 HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response4 -> {
-                   int statusCode4 = response4.statusCode();
-                   System.out.println("Status - " + statusCode4 + " at " + System.currentTimeMillis() + " for " + url);
-                   context.assertEquals(204, statusCode4);
-                   //get all users belonging to a specific group
-                   send("http://localhost:"+port+location+"/users", context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF,
-                     200, response5 -> {
-                       int statusCode5 = response5.statusCode();
-                       System.out.println("Status - " + statusCode5 + " at " + System.currentTimeMillis() + " for " + url);
-                       context.assertEquals(200, statusCode5);
-                       response5.bodyHandler( bh -> {
-                         System.out.println("get all users belonging to a specific group " + bh);
-                       });
-                       //get all groups in groups table
-                       send("http://localhost:"+port+"/groups", context, HttpMethod.GET, null,
-                         SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, response6 -> {
-                           int statusCode6 = response6.statusCode();
-                           System.out.println("Status - " + statusCode6 + " at " + System.currentTimeMillis() + " for " + url);
-                           context.assertEquals(200, statusCode6);
-                           response6.bodyHandler( bh -> {
-                             System.out.println("get all groups in groups table " + bh);
-                           });
-                           //get groups belonging to a user
-                           send("http://localhost:"+port+"/users/7261ecaae3a74dc68b468e12a70b1aec/groups",
-                             context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, response8 -> {
-                               int statusCode8 = response8.statusCode();
-                               System.out.println("Status - " + statusCode8 + " at " + System.currentTimeMillis() + " for " + url);
-                               context.assertEquals(200, statusCode8);
-                               response8.bodyHandler( bh -> {
-                                 System.out.println("- get all groups for a specific user - " + bh);
-                               });
-                               //try to get via cql -
-                               String q = "http://localhost:"+port+location+"/users?query=username==jhandey";
-                               send(q,context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, responseZero -> {
-                                   int statusCodeZero = responseZero.statusCode();
-                                   System.out.println("Status - " + statusCodeZero + " for " + q);
-                                   responseZero.bodyHandler( bh1 -> {
-                                     System.out.println(" get all users with cql constraint " + bh1);
-                                     context.assertEquals(1, bh1.toJsonObject().getJsonArray("users").size());
-                                   });
-                                   //delete a group - should fail as there is a user associated with the group
-                                   send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
-                                     SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseFail -> {
-                                       int statusCodeFail = responseFail.statusCode();
-                                       System.out.println("Status - " + statusCodeFail + " at " + System.currentTimeMillis() + " for " + url);
-                                       context.assertEquals(400, statusCodeFail);
-                                       //request users from a non existant group
-                                       String q2 = "http://localhost:"+port+location+"abc/users";
-                                       send(q2, context, HttpMethod.GET, null,
-                                         SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, responseEmpty -> {
-                                           int statusCodeEmpty = responseEmpty.statusCode();
-                                           System.out.println("Status - " + statusCodeEmpty + " at " + System.currentTimeMillis() + " for " + q);
-                                           context.assertEquals(200, statusCodeEmpty);
-                                           responseEmpty.bodyHandler( bh1 -> {
-                                             System.out.println(" get users from non existant group " + bh1);
-                                             context.assertEquals(0, bh1.toJsonObject().getJsonArray("users").size());
-                                           });
-                                           //delete all users in a group
-                                           send("http://localhost:"+port+location+"/users", context, HttpMethod.DELETE, null,
-                                             SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response7 -> {
-                                               int statusCode7 = response7.statusCode();
-                                               System.out.println("Status - " + statusCode7 + " at " + System.currentTimeMillis() + " for " + url);
-                                               context.assertEquals(204, statusCode7);
-                                               //add a duplicate group
-                                               send(url, context, HttpMethod.POST, putRequest,
-                                                 SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, responseDup -> {
-                                                   int responseDupCode = responseDup.statusCode();
-                                                   System.out.println("Status - " + responseDupCode + " at " +
-                                                       System.currentTimeMillis() + " for " + url);
-                                                   context.assertEquals(400, responseDupCode);
-                                                   //get a group
-                                                   send("http://localhost:"+port+location, context, HttpMethod.GET, null,
-                                                     SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, getResp -> {
-                                                       int statusGetResp = getResp.statusCode();
-                                                       System.out.println("Status - " + statusGetResp + " at " + System.currentTimeMillis() + " for " + url);
-                                                       context.assertEquals(200, statusGetResp);
-                                                       //get a group bad id
-                                                       send("http://localhost:"+port+"/groups/12345678", context, HttpMethod.GET, null,
-                                                         SUPPORTED_CONTENT_TYPE_JSON_DEF, 404, getResp2 -> {
-                                                           int statusGetResp2 = getResp2.statusCode();
-                                                           System.out.println("Status - " + statusGetResp2 + " at " + System.currentTimeMillis() + " for " + url);
-                                                           context.assertEquals(404, statusGetResp2);
-														   send("http://localhost:"+port+location+"/users/7261ecaae3a74dc68b468e12a70b1aec", context,
-															 HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseDup2 -> {
-															   int statusCodeDup2 = responseDup2.statusCode();
-															   System.out.println("Status - " + statusCodeDup2 + " at " + System.currentTimeMillis() + " for " + url);
-															   context.assertEquals(204, statusCodeDup2);
-															   //duplicate a user to a group
-															   send("http://localhost:"+port+location+"/users/7261ecaae3a74dc68b468e12a70b1aec", context, HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, responseDup3 -> {
-																   int responseDupCode3 = responseDup3.statusCode();
-																   System.out.println("Status - " + responseDupCode3 + " at " + System.currentTimeMillis() + " for " + url);
-																   context.assertEquals(400, responseDupCode3);
-																   //delete a group
-																   send("http://localhost:"+port+location, context, HttpMethod.DELETE, null,
-																	 SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, response9 -> {
-																	   int statusCode9 = response9.statusCode();
-																	   System.out.println("Status - " + statusCode9 + " at " + System.currentTimeMillis() + " for " + url);
-																	   context.assertEquals(400, statusCode9);
-																	   async.complete();
-																   });
-															   });
-															});
-                                                       });
-                                                   });                                                   
-                                               });
-                                           });
-                                       });
-                                   });
-                               });
-                           });
-                       });
-                     });
-                 });
-             });
-       });
+   try {
+    /**add a group*/
+     CompletableFuture<Response> addGroupCF = new CompletableFuture();
+     String addGroupURL = url;
+     send(addGroupURL, context, HttpMethod.POST, postRequest,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addGroupCF));
+     Response addGroupResponse = addGroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addGroupResponse.code, HttpURLConnection.HTTP_CREATED);
+     String groupID = addGroupResponse.body.getString("_id");
+     System.out.println(addGroupResponse.body +
+       "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
 
-   });
+     /**update a group*/
+     CompletableFuture<Response> updateGroupCF = new CompletableFuture();
+     String updateGroupURL = url +"/"+groupID;
+     send(updateGroupURL, context, HttpMethod.PUT, putRequest,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 204,  new HTTPNoBodyResponseHandler(updateGroupCF));
+     Response updateGroupResponse = updateGroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(updateGroupResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
+     System.out.println(updateGroupResponse.body +
+       "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
+
+    /**add a user*/
+     CompletableFuture<Response> addUserCF = new CompletableFuture();
+     String addUserURL = "http://localhost:"+port+"/users";
+     send(addUserURL, context, HttpMethod.POST, createUserRequest,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF));
+     Response addUserResponse = addUserCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addUserResponse.code, HttpURLConnection.HTTP_CREATED);
+     String userID = addUserResponse.body.getString("id");
+     System.out.println(addUserResponse.body +
+       "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+
+     /**add a user to the group*/
+     CompletableFuture<Response> addUser2GroupCF = new CompletableFuture();
+     String addUser2GroupURL = url+"/"+groupID+"/users/7261ecaae3a74dc68b468e12a70b1aec";
+     send(addUser2GroupURL, context,
+       HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(addUser2GroupCF));
+     Response addUser2GroupResponse = addUser2GroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addUser2GroupResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
+     System.out.println(addUser2GroupResponse.body +
+       "\nStatus - " + addUser2GroupResponse.code + " at " + System.currentTimeMillis() + " for "
+         + addUser2GroupURL);
+
+     /**get all users belonging to a specific group*/
+     CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
+     String getUsersInGroupURL = url+"/"+groupID+"/users";
+     send(getUsersInGroupURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF,
+       200, new HTTPResponseHandler(getUsersInGroupCF));
+     Response getUsersInGroupResponse = getUsersInGroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(getUsersInGroupResponse.code, HttpURLConnection.HTTP_OK);
+     System.out.println(getUsersInGroupResponse.body +
+       "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
+         + getUsersInGroupURL);
+     context.assertTrue(isSizeMatch(getUsersInGroupResponse, 1));
+
+     /**get all groups in groups table*/
+     CompletableFuture<Response> getAllGroupCF = new CompletableFuture();
+     String getAllGroupURL = url;
+     send(getAllGroupURL, context, HttpMethod.GET, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, new HTTPResponseHandler(getAllGroupCF));
+     Response getAllGroupResponse = getAllGroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(getAllGroupResponse.code, HttpURLConnection.HTTP_OK);
+     System.out.println(getAllGroupResponse.body +
+       "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for "
+         + getAllGroupURL);
+     context.assertTrue(isSizeMatch(getAllGroupResponse, 1));
+
+     /**get groups belonging to a user*/
+     CompletableFuture<Response> getAllGroup4UserCF = new CompletableFuture();
+     String getAllGroup4UserURL = "http://localhost:"+port+"/users/7261ecaae3a74dc68b468e12a70b1aec/groups";
+     send(getAllGroup4UserURL,
+       context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
+       new HTTPResponseHandler(getAllGroup4UserCF));
+     Response getAllGroup4UserResponse = getAllGroup4UserCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(getAllGroup4UserResponse.code, HttpURLConnection.HTTP_OK);
+     System.out.println(getAllGroup4UserResponse.body +
+       "\nStatus - " + getAllGroup4UserResponse.code + " at " + System.currentTimeMillis() + " for "
+         + getAllGroup4UserURL);
+     context.assertTrue(isSizeMatch(getAllGroup4UserResponse, 1));
+
+     /**try to get via cql*/
+     CompletableFuture<Response> cqlCF = new CompletableFuture();
+     String cqlURL = url+"/"+groupID+"/users?query=username==jhandey";
+     send(cqlURL,
+       context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
+       new HTTPResponseHandler(cqlCF));
+     Response cqlResponse = cqlCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(cqlResponse.code, HttpURLConnection.HTTP_OK);
+     System.out.println(cqlResponse.body +
+       "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
+     context.assertTrue(isSizeMatch(cqlResponse, 1));
+
+     /**delete a group - should fail as there is a user associated with the group*/
+     CompletableFuture<Response> delete1CF = new CompletableFuture();
+     String delete1URL = url+"/"+groupID;
+     send(delete1URL, context, HttpMethod.DELETE, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(delete1CF));
+     Response delete1Response = delete1CF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(delete1Response.code, HttpURLConnection.HTTP_BAD_REQUEST);
+     System.out.println(delete1Response.body +
+       "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
+
+     /**request users from a non existant group*/
+     CompletableFuture<Response> badRequestCF = new CompletableFuture();
+     String badRequestURL = url+"/"+groupID+"abc/users";
+     send(badRequestURL, context, HttpMethod.GET, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, new HTTPResponseHandler(badRequestCF));
+     Response bad1Response = badRequestCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(bad1Response.code, HttpURLConnection.HTTP_OK);
+     System.out.println(bad1Response.body +
+       "\nStatus - " + bad1Response.code + " at " + System.currentTimeMillis() + " for " + badRequestURL);
+     context.assertEquals(0, bad1Response.body.getJsonArray("users").size());
+
+     /**delete all users in a group*/
+     CompletableFuture<Response> delAllUCF = new CompletableFuture();
+     String delAllURL = url+"/"+groupID+"/users";
+     send(delAllURL, context, HttpMethod.DELETE, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(delAllUCF));
+     Response delAllUResponse = delAllUCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(delAllUResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
+     System.out.println(delAllUResponse.body +
+       "\nStatus - " + delAllUResponse.code + " at " + System.currentTimeMillis() + " for " + delAllURL);
+
+     /**try to add a duplicate group*/
+     CompletableFuture<Response> dupCF = new CompletableFuture();
+     send(url, context, HttpMethod.POST, putRequest,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(dupCF));
+     Response dupResponse = dupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(dupResponse.code, HttpURLConnection.HTTP_BAD_REQUEST);
+     System.out.println(dupResponse.body +
+       "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + url);
+
+     /**get a group*/
+     CompletableFuture<Response> getSpecGroupCF = new CompletableFuture();
+     String getSpecGroupURL = url+"/"+groupID;
+     send(getSpecGroupURL, context, HttpMethod.GET, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, new HTTPResponseHandler(getSpecGroupCF));
+     Response getSpecGroupResponse = getSpecGroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(getSpecGroupResponse.code, HttpURLConnection.HTTP_OK);
+     System.out.println(getSpecGroupResponse.body +
+       "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
+     context.assertTrue("librarianPUT".equals(getSpecGroupResponse.body.getString("group")));
+
+     /**get a group bad id*/
+     CompletableFuture<Response> getBadIDCF = new CompletableFuture();
+     String getBadIDURL = url+"/12345678";
+     send(getBadIDURL, context, HttpMethod.GET, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 404, new HTTPNoBodyResponseHandler(getBadIDCF));
+     Response getBadIDResponse = getBadIDCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(getBadIDResponse.code, HttpURLConnection.HTTP_NOT_FOUND);
+     System.out.println(getBadIDResponse.body +
+       "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
+
+     /**put user for next dup test*/
+     CompletableFuture<Response> d1CF = new CompletableFuture();
+     String d1 = url+"/"+groupID+"/users/7261ecaae3a74dc68b468e12a70b1aec";
+     send(d1, context,
+       HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(d1CF));
+     Response d1Response = d1CF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(d1Response.code, HttpURLConnection.HTTP_NO_CONTENT);
+     System.out.println(d1Response.body +
+       "\nStatus - " + d1Response.code + " at " + System.currentTimeMillis() + " for " + d1);
+
+     /**duplicate a user to a group*/
+     CompletableFuture<Response> d2CF = new CompletableFuture();
+     send(d1, context, HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 400,
+       new HTTPNoBodyResponseHandler(d2CF));
+     Response d2Response = d2CF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(d2Response.code, HttpURLConnection.HTTP_BAD_REQUEST);
+     System.out.println(d2Response.body +
+       "\nStatus - " + d2Response.code + " at " + System.currentTimeMillis() + " for " + d1);
+
+     /**delete a group with users should fail*/
+     CompletableFuture<Response> deleteCF = new CompletableFuture();
+     String delete = url+"/"+groupID;
+     send(delete, context, HttpMethod.DELETE, null,
+     SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(deleteCF));
+     Response deleteResponse = deleteCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(deleteResponse.code, HttpURLConnection.HTTP_BAD_REQUEST);
+     System.out.println(deleteResponse.body +
+       "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
+
+
+  } catch (Exception e) {
+    e.printStackTrace();
+    context.fail(e.getMessage());
+  }
  }
 
  private void send(String url, TestContext context, HttpMethod method, String content,
@@ -347,4 +400,49 @@ public class RestVerticleTest {
    request.putHeader("Content-type", contentType);
    request.end(buffer);
  }
+
+ class HTTPResponseHandler implements Handler<HttpClientResponse> {
+
+   CompletableFuture<Response> event;
+   public HTTPResponseHandler(CompletableFuture<Response> cf){
+     event = cf;
+   }
+   @Override
+   public void handle(HttpClientResponse hcr) {
+     hcr.bodyHandler( bh -> {
+       Response r = new Response();
+       r.code = hcr.statusCode();
+       r.body = bh.toJsonObject();
+       event.complete(r);
+     });
+   }
+ }
+
+ class HTTPNoBodyResponseHandler implements Handler<HttpClientResponse> {
+
+   CompletableFuture<Response> event;
+   public HTTPNoBodyResponseHandler(CompletableFuture<Response> cf){
+     event = cf;
+   }
+   @Override
+   public void handle(HttpClientResponse hcr) {
+     Response r = new Response();
+     r.code = hcr.statusCode();
+     event.complete(r);
+   }
+ }
+
+ class Response {
+   int code;
+   JsonObject body;
+ }
+
+ private boolean isSizeMatch(Response r, int size){
+   if(r.body.getInteger("total_records") == size){
+     return true;
+   }
+   return false;
+ }
+
 }
+
