@@ -35,7 +35,7 @@ resourceTypes:
       schemaItem: userdata
   get:
     is: [
-      searchable: {description: "with valid searchable fields", example: "[\"user.active\", \"true\", \"=\"]"},
+      searchable: {description: "with valid searchable fields", example: "active=true"},
       orderable: {fieldsList: "field A, field B"},
       pageable
     ]
@@ -50,7 +50,7 @@ resourceTypes:
     get:
       description: Get a single user
     /groups:
-      description: Return a list of groups for associated with this user
+      description: Return a list of groups associated with this user
       type:
         get-only:
           schema: usergroups
