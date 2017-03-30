@@ -12,13 +12,17 @@ schemas:
   - userdataCollection: !include schemas/userdataCollection.json
   - usergroup: !include schemas/usergroup.json
   - usergroups: !include schemas/usergroups.json
-
+  - errors: !include ../raml-util/schemas/errors.schema
+  - error: !include ../raml-util/schemas/error.schema
+  - parameters: !include ../raml-util/schemas/parameters.schema
+  
 traits:
   - secured: !include ../raml-util/traits/auth.raml
   - orderable: !include ../raml-util/traits/orderable.raml
   - pageable: !include ../raml-util/traits/pageable.raml
   - searchable: !include ../raml-util/traits/searchable.raml
   - language: !include ../raml-util/traits/language.raml
+  - validate: !include ../raml-util/traits/validation.raml
 
 resourceTypes:
   - collection: !include ../raml-util/rtypes/collection.raml
@@ -35,12 +39,13 @@ resourceTypes:
       schemaItem: userdata
   get:
     is: [
-      searchable: {description: "with valid searchable fields", example: "[\"user.active\", \"true\", \"=\"]"},
+      searchable: {description: "with valid searchable fields", example: "active=true"},
       orderable: {fieldsList: "field A, field B"},
       pageable
     ]
     description: Return a list of users
   post:
+    is: [validate]
     description: Create a user
   /{userId}:
     type:
@@ -50,7 +55,7 @@ resourceTypes:
     get:
       description: Get a single user
     /groups:
-      description: Return a list of groups for associated with this user
+      description: Return a list of groups associated with this user
       type:
         get-only:
           schema: usergroups

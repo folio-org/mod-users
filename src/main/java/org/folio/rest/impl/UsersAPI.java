@@ -1,12 +1,5 @@
 package org.folio.rest.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-
 import java.util.List;
 import java.util.Map;
 
@@ -30,9 +23,16 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 
 /**
@@ -188,9 +188,10 @@ public class UsersAPI implements UsersResource {
                     if(userList.size() > 0) {
                       logger.debug("User with this id already exists");
                       asyncResultHandler.handle(Future.succeededFuture(
-                              PostUsersResponse.withPlainBadRequest(
-                                      messages.getMessage(
-                                              lang, MessageConsts.UnableToProcessRequest))));
+                              PostUsersResponse.withJsonUnprocessableEntity(
+                                ValidationHelper.createValidationErrorMessage(
+                                  USER_NAME_FIELD, entity.getUsername(),
+                                  "User with this id already exists"))));
                       //uh oh
                     } else {
                       PostgresClient postgresClient = PostgresClient.getInstance(vertxContext.owner(), tenantId);
@@ -450,5 +451,6 @@ public class UsersAPI implements UsersResource {
     });
 
   }
+
 }
 

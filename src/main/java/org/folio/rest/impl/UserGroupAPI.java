@@ -1,13 +1,5 @@
 package org.folio.rest.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +25,17 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
+
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 /**
  * @author shale
@@ -140,7 +141,8 @@ public class UserGroupAPI implements GroupsResource {
                 log.error(reply.cause().getMessage(), reply.cause());
                 if(isDuplicate(reply.cause().getMessage())){
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                    .withPlainBadRequest("Group exists...")));
+                    .withJsonUnprocessableEntity(ValidationHelper.createValidationErrorMessage(
+                      "group", entity.getGroup(), reply.cause().getMessage()))));
                 }
                 else{
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
@@ -463,7 +465,9 @@ public class UserGroupAPI implements GroupsResource {
                 log.error(reply.cause().getMessage(), reply.cause());
                 if(isDuplicate(reply.cause().getMessage())){
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                    .withPlainBadRequest("User already in group...")));
+                    .withJsonUnprocessableEntity(
+                      ValidationHelper.createValidationErrorMessage(
+                        "userId", userId, "User already in group"))));
                 }
                 else{
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
