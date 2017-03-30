@@ -12,12 +12,16 @@ schemas:
   - usergroups: !include schemas/usergroups.json
   - userdata: !include schemas/userdata.json
   - userdataCollection: !include schemas/userdataCollection.json
-
+  - errors: !include ../raml-util/schemas/errors.schema
+  - error: !include ../raml-util/schemas/error.schema
+  - parameters: !include ../raml-util/schemas/parameters.schema
+  
 traits:
   - secured: !include ../raml-util/traits/auth.raml
   - pageable: !include ../raml-util/traits/pageable.raml
   - searchable: !include ../raml-util/traits/searchable.raml
   - language: !include ../raml-util/traits/language.raml
+  - validate: !include ../raml-util/traits/validation.raml
 
 resourceTypes:
   - collection: !include ../raml-util/rtypes/collection.raml
@@ -38,6 +42,7 @@ resourceTypes:
     ]
     description: Return a list of groups
   post:
+    is: [validate]
     description: Create a group
   /{groupId}:
     type:
@@ -60,6 +65,7 @@ resourceTypes:
         ]
       /{userId}:
         put:
+          is: [validate]
           description: |
             Update group by adding a user (no body, user id from url will be added)
           body:

@@ -212,6 +212,15 @@ public class RestVerticleTest {
      System.out.println(addUserResponse.body +
        "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
+     /**add the same user again*/
+     CompletableFuture<Response> addUserCF2 = new CompletableFuture();
+     send(addUserURL, context, HttpMethod.POST, createUserRequest,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF2));
+     Response addUserResponse2 = addUserCF2.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addUserResponse2.code, 422);
+     System.out.println(addUserResponse2.body +
+       "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+
      /**add a user to the group*/
      CompletableFuture<Response> addUser2GroupCF = new CompletableFuture();
      String addUser2GroupURL = url+"/"+groupID+"/users/7261ecaae3a74dc68b468e12a70b1aec";
@@ -306,9 +315,9 @@ public class RestVerticleTest {
      /**try to add a duplicate group*/
      CompletableFuture<Response> dupCF = new CompletableFuture();
      send(url, context, HttpMethod.POST, putRequest,
-       SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(dupCF));
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPResponseHandler(dupCF));
      Response dupResponse = dupCF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(dupResponse.code, HttpURLConnection.HTTP_BAD_REQUEST);
+     context.assertEquals(dupResponse.code, 422);
      System.out.println(dupResponse.body +
        "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + url);
 
@@ -345,10 +354,10 @@ public class RestVerticleTest {
 
      /**duplicate a user to a group*/
      CompletableFuture<Response> d2CF = new CompletableFuture();
-     send(d1, context, HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 400,
-       new HTTPNoBodyResponseHandler(d2CF));
+     send(d1, context, HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 422,
+       new HTTPResponseHandler(d2CF));
      Response d2Response = d2CF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(d2Response.code, HttpURLConnection.HTTP_BAD_REQUEST);
+     context.assertEquals(d2Response.code, 422);
      System.out.println(d2Response.body +
        "\nStatus - " + d2Response.code + " at " + System.currentTimeMillis() + " for " + d1);
 
