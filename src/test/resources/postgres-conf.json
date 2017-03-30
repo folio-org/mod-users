@@ -1,7 +1,0 @@
-{
-  "host" : "localhost",
-  "port" : 5433,
-  "database" : "test_mod_users",
-  "username" : "postgres",
-  "password" : "postgres"
-}

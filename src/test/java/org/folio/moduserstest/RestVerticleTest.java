@@ -1,10 +1,8 @@
 package org.folio.moduserstest;
 
 import java.net.HttpURLConnection;
-import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
@@ -32,7 +30,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
-public class RestVerticleIT {
+public class RestVerticleTest {
 
   private static final String       SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
   private static final String       SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
@@ -46,44 +44,32 @@ public class RestVerticleIT {
   static int port;
 
   @Rule
-  public Timeout rule = Timeout.seconds(10);
-
-  public static void initDatabase(TestContext context) throws SQLException {
-    PostgresClient postgres = PostgresClient.getInstance(vertx);
-    postgres.dropCreateDatabase("test_mod_users");
-
-    String sql = "drop schema if exists diku_mod_users cascade;\n"
-        + "drop role if exists diku_mod_users;\n";
-    Async async = context.async();
-    PostgresClient.getInstance(vertx).runSQLFile(sql, true, result -> {
-      if (result.failed()) {
-        context.fail(result.cause());
-      } else if (! result.result().isEmpty()) {
-        context.fail("runSQLFile failed with: " + result.result().stream().collect(Collectors.joining(" ")));
-      }
-      async.complete();
-    });
-    async.await();
-  }
+  public Timeout rule = Timeout.seconds(180);  // 3 minutes for loading embedded postgres
 
   @BeforeClass
-  public static void setup(TestContext context) throws SQLException {
-    vertx = Vertx.vertx();
-
-    initDatabase(context);
-
+  public static void setup(TestContext context) {
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
     TenantClient tenantClient = new TenantClient("localhost", port, "diku");
+    vertx = Vertx.vertx();
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
+    try {
+      PostgresClient.setIsEmbedded(true);
+      PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+    } catch(Exception e) {
+      e.printStackTrace();
+      context.fail(e);
+      return;
+    }
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
         tenantClient.post(null, res2 -> {
-          async.complete();
+           async.complete();
         });
       } catch(Exception e) {
-        context.fail(e);
+        e.printStackTrace();
       }
+
     });
   }
 
