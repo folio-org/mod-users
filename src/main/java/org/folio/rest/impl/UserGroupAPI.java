@@ -142,7 +142,7 @@ public class UserGroupAPI implements GroupsResource {
                 if(isDuplicate(reply.cause().getMessage())){
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
                     .withJsonUnprocessableEntity(ValidationHelper.createValidationErrorMessage(
-                      "group", entity.getGroup(), reply.cause().getMessage()))));
+                      "group", entity.getGroup(), "Group exists"))));
                 }
                 else{
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
