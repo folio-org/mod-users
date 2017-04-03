@@ -93,7 +93,7 @@ public class UsersAPI implements UsersResource {
                     UserdataCollection userCollection = new UserdataCollection();
                     List<User> users = (List<User>)reply.result()[0];
                     userCollection.setUsers(users);
-                    userCollection.setTotalRecords(users.size());
+                    userCollection.setTotalRecords((Integer)reply.result()[1]);
                     asyncResultHandler.handle(Future.succeededFuture(
                             GetUsersResponse.withJsonOK(userCollection)));
                   } else {
