@@ -150,7 +150,7 @@ public class RestVerticleTest {
            .end();
    return future;
  }
- 
+
    private Future<Void> postAnotherUser(TestContext context) {
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
@@ -173,7 +173,7 @@ public class RestVerticleTest {
             .end(userObject.encode());
     return future;
   }
- 
+
  private Future<Void> putUserGood(TestContext context) {
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
@@ -196,7 +196,7 @@ public class RestVerticleTest {
             .end(userObject.encode());
     return future;
  }
- 
+
   private Future<Void> putUserBadUsername(TestContext context) {
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
@@ -219,7 +219,7 @@ public class RestVerticleTest {
             .end(userObject.encode());
     return future;
  }
-  
+
   private Future<Void> putUserBadId(TestContext context) {
    Future future = Future.future();
    JsonObject userObject = new JsonObject()

@@ -356,7 +356,7 @@ public class UsersAPI implements UsersResource {
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
-    
+
 
     try {
       vertxContext.runOnContext(v-> {
@@ -370,7 +370,7 @@ public class UsersAPI implements UsersResource {
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
           nameCrit.setValue(entity.getUsername());
-          
+
           try {
             PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
                     User.class, new Criterion(nameCrit), true, false, getReply -> {
