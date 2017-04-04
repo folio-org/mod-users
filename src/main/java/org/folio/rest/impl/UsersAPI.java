@@ -93,7 +93,7 @@ public class UsersAPI implements UsersResource {
                     UserdataCollection userCollection = new UserdataCollection();
                     List<User> users = (List<User>)reply.result()[0];
                     userCollection.setUsers(users);
-                    userCollection.setTotalRecords(users.size());
+                    userCollection.setTotalRecords((Integer)reply.result()[1]);
                     asyncResultHandler.handle(Future.succeededFuture(
                             GetUsersResponse.withJsonOK(userCollection)));
                   } else {
@@ -357,42 +357,79 @@ public class UsersAPI implements UsersResource {
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
 
+
     try {
       vertxContext.runOnContext(v-> {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-        Criteria idCrit = new Criteria();
-        idCrit.addField(USER_ID_FIELD);
-        idCrit.setOperation("=");
-        idCrit.setValue(userId);
-        String tableName = getTableName(tenantId, TABLE_NAME_USER);
-
-        try {
-          PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
-                  tableName, entity, new Criterion(idCrit), true, putReply -> {
-            try {
-              if(putReply.failed()) {
-                asyncResultHandler.handle(Future.succeededFuture(
-                        PutUsersByUserIdResponse.withPlainInternalServerError(putReply.cause().getMessage())));
-              } else {
-                asyncResultHandler.handle(Future.succeededFuture(
-                        PutUsersByUserIdResponse.withNoContent()));
-              }
-            } catch(Exception e) {
-              asyncResultHandler.handle(Future.succeededFuture(
-                              PutUsersByUserIdResponse.withPlainInternalServerError(
-                                      messages.getMessage(lang,
-                                              MessageConsts.InternalServerError))));
-            }
-          });
-        } catch(Exception e) {
+        if(!userId.equals(entity.getId())) {
           asyncResultHandler.handle(Future.succeededFuture(
-                              PutUsersByUserIdResponse.withPlainInternalServerError(
-                                      messages.getMessage(lang,
-                                              MessageConsts.InternalServerError))));
-        }
+                          PutUsersByUserIdResponse.withPlainBadRequest("You cannot change the value of the id field")));
+        } else {
+          String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
+          String tableName = getTableName(tenantId, TABLE_NAME_USER);
+          Criteria nameCrit = new Criteria();
+          nameCrit.addField(USER_NAME_FIELD);
+          nameCrit.setOperation("=");
+          nameCrit.setValue(entity.getUsername());
 
+          try {
+            PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
+                    User.class, new Criterion(nameCrit), true, false, getReply -> {
+              if(getReply.failed()) {
+                //error 500
+                logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
+                asyncResultHandler.handle(Future.succeededFuture(
+                                        PutUsersByUserIdResponse.withPlainInternalServerError(
+                                                messages.getMessage(lang,
+                                                        MessageConsts.InternalServerError))));
+              } else {
+                List<User> userList = (List<User>)getReply.result()[0];
+                if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
+                  //Error 400, that username is in use by somebody else
+                  asyncResultHandler.handle(Future.succeededFuture(
+                          PutUsersByUserIdResponse.withPlainBadRequest(
+                                  "Username " + entity.getUsername() + " is already in use")));
+                } else {
+                  Criteria idCrit = new Criteria();
+                  idCrit.addField(USER_ID_FIELD);
+                  idCrit.setOperation("=");
+                  idCrit.setValue(userId);
+                  try {
+                    PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
+                            tableName, entity, new Criterion(idCrit), true, putReply -> {
+                      try {
+                        if(putReply.failed()) {
+                          asyncResultHandler.handle(Future.succeededFuture(
+                                  PutUsersByUserIdResponse.withPlainInternalServerError(putReply.cause().getMessage())));
+                        } else {
+                          asyncResultHandler.handle(Future.succeededFuture(
+                                  PutUsersByUserIdResponse.withNoContent()));
+                        }
+                      } catch(Exception e) {
+                        asyncResultHandler.handle(Future.succeededFuture(
+                                        PutUsersByUserIdResponse.withPlainInternalServerError(
+                                                messages.getMessage(lang,
+                                                        MessageConsts.InternalServerError))));
+                      }
+                    });
+                  } catch(Exception e) {
+                    asyncResultHandler.handle(Future.succeededFuture(
+                                        PutUsersByUserIdResponse.withPlainInternalServerError(
+                                                messages.getMessage(lang,
+                                                        MessageConsts.InternalServerError))));
+                  }
+                }
+              }
+            });
+          } catch(Exception e) {
+            logger.debug(e.getLocalizedMessage());
+            asyncResultHandler.handle(Future.succeededFuture(
+              PutUsersByUserIdResponse.withPlainInternalServerError(
+                      messages.getMessage(lang, MessageConsts.InternalServerError))));
+          }
+        }
       });
     } catch (Exception e) {
+      logger.debug(e.getLocalizedMessage());
       asyncResultHandler.handle(Future.succeededFuture(
               PutUsersByUserIdResponse.withPlainInternalServerError(
                       messages.getMessage(lang, MessageConsts.InternalServerError))));

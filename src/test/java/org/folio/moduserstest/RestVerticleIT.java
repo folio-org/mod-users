@@ -165,6 +165,98 @@ public class RestVerticleIT {
    return future;
  }
 
+   private Future<Void> postAnotherUser(TestContext context) {
+    Future future = Future.future();
+    JsonObject userObject = new JsonObject()
+            .put("username", "bobcircle")
+            .put("id", "2345678")
+            .put("active", true);
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      if(res.statusCode() == 201) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Error adding new user: Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(userObject.encode());
+    return future;
+  }
+
+ private Future<Void> putUserGood(TestContext context) {
+   Future future = Future.future();
+   JsonObject userObject = new JsonObject()
+            .put("username", "bobcircle")
+            .put("id", "2345678")
+            .put("active", false);
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/2345678", res -> {
+      if(res.statusCode() == 204) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Error adding putting user (good): Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "text/plain")
+            .end(userObject.encode());
+    return future;
+ }
+
+  private Future<Void> putUserBadUsername(TestContext context) {
+   Future future = Future.future();
+   JsonObject userObject = new JsonObject()
+            .put("username", "joeblock")
+            .put("id", "2345678")
+            .put("active", false);
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/2345678", res -> {
+      if(res.statusCode() == 400) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Error adding putting user (bad username): Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "text/plain")
+            .end(userObject.encode());
+    return future;
+ }
+
+  private Future<Void> putUserBadId(TestContext context) {
+   Future future = Future.future();
+   JsonObject userObject = new JsonObject()
+            .put("username", "joeblock")
+            .put("id", "2345677")
+            .put("active", false);
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/2345678", res -> {
+      if(res.statusCode() == 400) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Error adding putting user (bad id): Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "text/plain")
+            .end(userObject.encode());
+    return future;
+ }
+
  @Test
   public void doSequentialTests(TestContext context) {
     Async async = context.async();
@@ -172,13 +264,29 @@ public class RestVerticleIT {
     Future<Void> f1 = Future.future();
     getEmptyUsers(context).setHandler(f1.completer());
     startFuture = f1.compose(v -> {
-      Future<Void> f2 = Future.future();
-      postUser(context).setHandler(f2.completer());
-      return f2;
+      Future<Void> f = Future.future();
+      postUser(context).setHandler(f.completer());
+      return f;
     }).compose(v -> {
-      Future<Void> f3 = Future.future();
-      getUser(context).setHandler(f3.completer());
-      return f3;
+      Future<Void> f = Future.future();
+      getUser(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      postAnotherUser(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      putUserGood(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      putUserBadUsername(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      putUserBadId(context).setHandler(f.completer());
+      return f;
     });
 
     startFuture.setHandler(res -> {
