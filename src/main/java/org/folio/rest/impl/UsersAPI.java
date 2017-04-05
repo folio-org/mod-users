@@ -10,7 +10,8 @@ import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
-import org.folio.rest.jaxrs.resource.GroupsResource.GetGroupsByGroupIdResponse;
+import org.folio.rest.jaxrs.model.Usergroup;
+import org.folio.rest.jaxrs.model.Usergroups;
 import org.folio.rest.jaxrs.resource.UsersResource;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -461,33 +462,33 @@ public class UsersAPI implements UsersResource {
         JoinBy jbOn = new JoinBy(UserGroupAPI.GROUP_USER_JOIN_TABLE, "user2groups", new Criteria().addField("'groupId'") , new String[]{});
 
         PostgresClient.getInstance(vertxContext.owner(), tenantId).join(jbFrom, jbOn, "=", JoinBy.INNER_JOIN,
-          new Criterion(c).toString(), User.class,
+          new Criterion(c).toString(), Usergroup.class,
             reply -> {
               try {
                 if(reply.succeeded()){
-                  List<User> users = (List<User>) ((Object [])reply.result())[0];
+                  List<Usergroup> usergroups = (List<Usergroup>) ((Object [])reply.result())[0];
                  // List<User> users = (List<User>)[0];
-                  UserdataCollection userCollection = new UserdataCollection();
-                  userCollection.setUsers(users);
+                  Usergroups userCollection = new Usergroups();
+                  userCollection.setUsergroups(usergroups);
                   userCollection.setTotalRecords((Integer)((Object [])reply.result())[1]);
                   asyncResultHandler.handle(Future.succeededFuture(
-                          GetUsersResponse.withJsonOK(userCollection)));
+                    GetUsersByUserIdGroupsResponse.withJsonOK(userCollection)));
                 }
                 else{
                   logger.error(reply.cause().getMessage(), reply.cause());
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetUsersByUserIdGroupsResponse
                     .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError)
                       + reply.cause().getMessage())));
                 }
               } catch (Exception e) {
                 logger.error(e.getMessage(), e);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetUsersByUserIdGroupsResponse
                   .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
               }
         });
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
+        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetUsersByUserIdGroupsResponse
           .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
