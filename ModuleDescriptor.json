@@ -4,106 +4,167 @@
   "provides": [
     {
       "id": "users",
-      "version": "0.0.1"
+      "version": "0.0.1",
+      "handlers" : [
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/users*",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "users.read"
+          ],
+          "permissionsDesired": [
+            "users.read.basic",
+            "users.read.restricted"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/users",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "users.create"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/users/{id}",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "users.edit"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/users/{id}",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "users.delete"
+          ]
+        },
+        {
+          "methods": [
+            "GET"
+          ],
+          "pathPattern": "/groups",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "usergroups.read"
+          ]
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/groups",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "usergroups.create"
+          ]
+        },
+        {
+          "methods": [
+            "PUT"
+          ],
+          "pathPattern": "/groups/{id}",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "usergroups.edit"
+          ]
+        },
+        {
+          "methods": [
+            "DELETE"
+          ],
+          "pathPattern": "/groups/{id}",
+          "level": "30",
+          "type": "request-response",
+          "permissionsRequired": [
+            "usergroups.delete"
+          ]
+        }
+      ]
     },
     {
       "id": "_tenant",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "interfaceType" : "system",
+      "routingEntries" : [
+        {
+          "methods" : [ "POST", "DELETE" ],
+          "pathPattern" : "/_/tenant",
+          "level" : "10",
+          "type" : "system"
+        }
+       ]
     }
   ],
-  "routingEntries": [
+  "permissionSets" : [
     {
-      "methods": [
-        "GET"
-      ],
-      "path": "/users",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "users.read"
-      ],
-      "permissionsDesired": [
-        "users.read.basic",
-        "users.read.restricted"
-      ]
+      "permissionName" : "users.read",
+      "displayName" : "users read",
+      "description" : "Read records in the User module"
     },
     {
-      "methods": [
-        "POST"
-      ],
-      "path": "/users",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "users.create"
-      ]
+      "permissionName" : "users.read.basic",
+      "displayName" : "users read-basic",
+      "description" : "Read non-restricted User data information"
     },
     {
-      "methods": [
-        "PUT"
-      ],
-      "path": "/users",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "users.edit"
-      ]
+      "permissionName" : "users.read.restricted",
+      "displayName" : "users read-restricted",
+      "description" : "Read restricted User data information"
     },
     {
-      "methods": [
-        "DELETE"
-      ],
-      "path": "/users",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "users.delete"
-      ]
+      "permissionName" : "users.create",
+      "displayName" : "users create",
+      "description" : "Create new records in the User module"
     },
     {
-      "methods": [
-        "GET"
-      ],
-      "path": "/groups",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "usergroups.read"
-      ]
+      "permissionName" : "users.edit",
+      "displayName" : "users edit",
+      "description" : "Edit existing records in the User module"
     },
     {
-      "methods": [
-        "POST"
-      ],
-      "path": "/groups",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "usergroups.create"
-      ]
+      "permissionName" : "users.delete",
+      "displayName" : "users delete",
+      "description" : "Delete records from the User module"
     },
     {
-      "methods": [
-        "PUT"
-      ],
-      "path": "/groups",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "usergroups.edit"
-      ]
+      "permissionName" : "usergroups.read",
+      "displayName" : "usergroups read",
+      "description" : "Read the list of Groups for users"
     },
     {
-      "methods": [
-        "DELETE"
-      ],
-      "path": "/groups",
-      "level": "30",
-      "type": "request-response",
-      "permissionsRequired": [
-        "usergroups.delete"
-      ]
+      "permissionName" : "usergroups.create",
+      "displayName" : "usergroups create",
+      "description" : "Create new Groups for users"
+    },
+    {
+      "permissionName" : "usergroups.edit",
+      "displayName" : "usergroups edit",
+      "description" : "Edit existing Groups for users"
+    },
+    {
+      "permissionName" : "usergroups.delete",
+      "displayName" : "usergroups delete",
+      "description" : "Delete Groups for users"
     }
-  ],
-  "modulePermissions": []
+
+  ]
 }
