@@ -4,10 +4,10 @@ CREATE SCHEMA myuniversity_mymodule AUTHORIZATION myuniversity_mymodule;
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE IF NOT EXISTS myuniversity_mymodule.users (_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), jsonb JSONB NOT NULL);
+CREATE TABLE IF NOT EXISTS myuniversity_mymodule.users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), jsonb JSONB NOT NULL);
 
 CREATE TABLE IF NOT EXISTS myuniversity_mymodule.groups (
-   _id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
    jsonb jsonb NOT NULL,
    creation_date date not null default current_timestamp,
    update_date date not null default current_timestamp

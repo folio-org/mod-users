@@ -10,7 +10,7 @@
       "type": "string",
       "required": true
     },
-    "_id": {
+    "id": {
       "type": "string"
     }
   }

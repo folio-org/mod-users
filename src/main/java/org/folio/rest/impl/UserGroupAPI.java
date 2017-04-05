@@ -50,14 +50,10 @@ public class UserGroupAPI implements GroupsResource {
   private static final Logger       log                   = LoggerFactory.getLogger(UserGroupAPI.class);
   private final Messages            messages              = Messages.getInstance();
 
-  private String idFieldName                              = "_id";
+  private String idFieldName                              = "id";
 
   public UserGroupAPI(Vertx vertx, String tenantId) {
-    long nano = System.nanoTime();
-    System.out.println("set id to " +idFieldName );
     PostgresClient.getInstance(vertx, tenantId).setIdField(idFieldName);
-    long nanoend = System.nanoTime();
-    System.out.println("total in milli " + ((nanoend-nano)/1000000));
   }
 
   @Validate
@@ -348,7 +344,7 @@ public class UserGroupAPI implements GroupsResource {
         //create a join between the users table and its external (non jsonb) id to the group to user table which
         //only contains a jsonb column (no id) - where in the jsonb column there is a groupId, userId fields
 
-        JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("'id'"), new String[]{"_id","jsonb"});
+        JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("'id'"), new String[]{"id","jsonb"});
 
         /* TO USE a non jsonb field as a constraint for the join - if for example it is the id field and the id field is of
          * type uuid - use the forceCast to cast to a varchar so that it can be compared to a value in a jsonb field that is textual

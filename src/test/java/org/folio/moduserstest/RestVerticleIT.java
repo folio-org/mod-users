@@ -309,7 +309,7 @@ public class RestVerticleIT {
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addGroupCF));
      Response addGroupResponse = addGroupCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(addGroupResponse.code, HttpURLConnection.HTTP_CREATED);
-     String groupID = addGroupResponse.body.getString("_id");
+     String groupID = addGroupResponse.body.getString("id");
      System.out.println(addGroupResponse.body +
        "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
 
