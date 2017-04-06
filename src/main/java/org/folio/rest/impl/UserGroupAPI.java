@@ -13,6 +13,7 @@ import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.model.Usergroups;
 import org.folio.rest.jaxrs.resource.GroupsResource;
+import org.folio.rest.jaxrs.resource.GroupsResource.GetGroupsByGroupIdUsersResponse;
 import org.folio.rest.jaxrs.resource.UsersResource.GetUsersResponse;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -355,7 +356,7 @@ public class UserGroupAPI implements GroupsResource {
         JoinBy jbOn = new JoinBy(GROUP_USER_JOIN_TABLE, "user2groups", new Criteria().addField("'userId'") , new String[]{});
 
         PostgresClient.getInstance(vertxContext.owner(), tenantId).join(jbFrom, jbOn, "=", JoinBy.INNER_JOIN, User.class, cql,
-            reply -> {
+            false, reply -> {
               try {
                 if(reply.succeeded()){
                   List<User> users = (List<User>) ((Object [])reply.result())[0];
