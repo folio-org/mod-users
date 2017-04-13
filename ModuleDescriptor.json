@@ -46,22 +46,22 @@
         },
         {
           "methods" : [ "GET" ],
-          "pathPattern" : "/groups/{id}",
+          "pathPattern" : "/groups/{id}*",
           "permissionsRequired" : [ "usergroups.item.get" ]
         },
         {
           "methods": [ "POST" ],
-          "pathPattern": "/groups",
+          "pathPattern": "/groups*",
           "permissionsRequired": [ "usergroups.item.post" ]
         },
         {
           "methods": [ "PUT" ],
-          "pathPattern": "/groups/{id}",
+          "pathPattern": "/groups/{id}*",
           "permissionsRequired": [ "usergroups.item.put" ]
         },
         {
           "methods": [ "DELETE" ],
-          "pathPattern": "/groups/{id}",
+          "pathPattern": "/groups/{id}*",
           "permissionsRequired": [ "usergroups.item.delete" ]
         }
       ]
