@@ -252,8 +252,10 @@ public class UsersAPI implements UsersResource {
                           }
                         });
                       } catch (Exception e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                        logger.error(e.getLocalizedMessage(), e);
+                        asyncResultHandler.handle(Future.succeededFuture(
+                          PutUsersByUserIdResponse.withPlainInternalServerError(
+                                  messages.getMessage(lang, MessageConsts.InternalServerError))));
                       }
                     }
                  }
