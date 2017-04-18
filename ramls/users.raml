@@ -10,8 +10,6 @@ documentation:
 schemas:
   - userdata: !include schemas/userdata.json
   - userdataCollection: !include schemas/userdataCollection.json
-  - usergroup: !include schemas/usergroup.json
-  - usergroups: !include schemas/usergroups.json
   - errors: !include ../raml-util/schemas/errors.schema
   - error: !include ../raml-util/schemas/error.schema
   - parameters: !include ../raml-util/schemas/parameters.schema
@@ -54,9 +52,3 @@ resourceTypes:
         schema: userdata
     get:
       description: Get a single user
-    /groups:
-      description: Return a list of groups associated with this user
-      type:
-        get-only:
-          schema: usergroups
-          exampleCollection: !include examples/groups.sample

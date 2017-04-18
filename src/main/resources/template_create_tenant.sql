@@ -26,13 +26,8 @@ BEGIN
 END;
 $$ language 'plpgsql';
 CREATE TRIGGER update_date_groups BEFORE UPDATE ON myuniversity_mymodule.groups FOR EACH ROW EXECUTE PROCEDURE  update_modified_column_groups();
--- join table
-CREATE TABLE IF NOT EXISTS myuniversity_mymodule.groups_users (jsonb JSONB NOT NULL);
+
 -- join table composite index to ensure a group/user pair can not be inserted twice
-CREATE UNIQUE INDEX group_user_unique_idx ON myuniversity_mymodule.groups_users(((jsonb->>'groupId')::text), ((jsonb->>'userId')::text));
--- join table index to allow fast retrieval of users for a specific group
-CREATE INDEX IF NOT EXISTS group_user_ongroup_idx ON myuniversity_mymodule.groups_users(((jsonb->>'group_id')::text));
--- join table index to allow fast retrieval od groups for a specific user
-CREATE INDEX IF NOT EXISTS group_user_onuser_idx ON myuniversity_mymodule.groups_users(((jsonb->>'user_id')::text));
+-- CREATE UNIQUE INDEX group_user_unique_idx ON myuniversity_mymodule.groups_users(((jsonb->>'groupId')::text), ((jsonb->>'userId')::text));
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA myuniversity_mymodule TO myuniversity_mymodule;

@@ -1,6 +1,6 @@
 #%RAML 0.8
 title: User Groups
-version: v1
+version: v1.0.1
 baseUri: http://github.com/org/folio/mod-users
 
 documentation:
@@ -26,7 +26,6 @@ traits:
 resourceTypes:
   - collection: !include ../raml-util/rtypes/collection.raml
   - collection-item: !include ../raml-util/rtypes/item-collection.raml
-  - get-delete-only: !include ../raml-util/rtypes/get-delete.raml
 
 /groups:
   type:
@@ -49,42 +48,3 @@ resourceTypes:
       collection-item:
         exampleItem: !include examples/group.sample
         schema: usergroup
-    /users:
-      description: delete all users / get users in this specific group
-      type:
-        get-delete-only:
-          exampleItem: !include examples/user_collection.sample
-          schema: userdataCollection
-      delete:
-        description: delete all users in group
-      get:
-        description: get all users in group, cql as query is run on user table, so no need to include a users. prefix
-        is: [
-          searchable: {description: "with valid searchable fields", example: "name=aaa"},
-          pageable
-        ]
-      /{userId}:
-        put:
-          is: [validate]
-          description: |
-            Update group by adding a user (no body, user id from url will be added)
-          body:
-          responses:
-            204:
-              description: "User successfully added"
-            404:
-              description: "ID not found"
-              body:
-                text/plain:
-                  example: |
-                    "ID not found"
-            400:
-              description: "Bad request"
-              body:
-                text/plain:
-            500:
-              description: "Internal server error"
-              body:
-                text/plain:
-                  example: "internal server error, contact administrator"
-

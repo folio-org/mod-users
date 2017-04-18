@@ -7,13 +7,10 @@ import javax.ws.rs.core.Response;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
-import org.folio.rest.dao.Group2User;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.model.Usergroups;
 import org.folio.rest.jaxrs.resource.GroupsResource;
-import org.folio.rest.jaxrs.resource.GroupsResource.GetGroupsByGroupIdUsersResponse;
 import org.folio.rest.jaxrs.resource.UsersResource.GetUsersResponse;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -21,7 +18,6 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.persist.helpers.JoinBy;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.OutStream;
@@ -46,15 +42,15 @@ public class UserGroupAPI implements GroupsResource {
 
   public static final String       GROUP_TABLE           = "groups";
   public static final String       GROUP_USER_JOIN_TABLE = "groups_users";
+  public static final String       ID_FIELD_NAME         = "id";
 
   private static final String       LOCATION_PREFIX       = "/groups/";
   private static final Logger       log                   = LoggerFactory.getLogger(UserGroupAPI.class);
   private final Messages            messages              = Messages.getInstance();
 
-  private String idFieldName                              = "id";
 
   public UserGroupAPI(Vertx vertx, String tenantId) {
-    PostgresClient.getInstance(vertx, tenantId).setIdField(idFieldName);
+    PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);
   }
 
   @Validate
@@ -172,7 +168,7 @@ public class UserGroupAPI implements GroupsResource {
         String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
 
         Criterion c = new Criterion(
-          new Criteria().addField(idFieldName).setJSONB(false).setOperation("=").setValue("'"+groupId+"'"));
+          new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setValue("'"+groupId+"'"));
 
         PostgresClient.getInstance(vertxContext.owner(), tenantId).get(GROUP_TABLE, Usergroup.class, c, true,
             reply -> {
@@ -212,27 +208,27 @@ public class UserGroupAPI implements GroupsResource {
           .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
-
   }
+
   @Validate
   @Override
   public void deleteGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
 
-    Group2User g2u = new Group2User();
-    g2u.setGroupId(groupId);
-
     vertxContext.runOnContext(v -> {
       System.out.println("sending... deleteGroupsByGroupId");
       String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
       try {
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(GROUP_USER_JOIN_TABLE, g2u, true, false, replyHandler -> {
+        User u = new User();
+        u.setPatronGroup(groupId);
+        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USER, u, true, false,
+          replyHandler -> {
           if(replyHandler.succeeded()){
-            List<Group2User> groupList = (List<Group2User>) replyHandler.result()[0];
-            if(groupList.size() > 0){
-              log.error("Can not delete group, "+ groupId + ". " + groupList.size()  + " users associated with it");
+            List<User> userList = (List<User>) replyHandler.result()[0];
+            if(userList.size() > 0){
+              log.error("Can not delete group, "+ groupId + ". " + userList.size()  + " users associated with it");
               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                .withPlainBadRequest("Can not delete group, " + groupList.size()  + " users associated with it")));
+                .withPlainBadRequest("Can not delete group, " + userList.size()  + " users associated with it")));
               return;
             }
             else{
@@ -282,8 +278,8 @@ public class UserGroupAPI implements GroupsResource {
           .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
-
   }
+
   @Validate
   @Override
   public void putGroupsByGroupId(String groupId, String lang, Usergroup entity,
@@ -323,164 +319,6 @@ public class UserGroupAPI implements GroupsResource {
         log.error(e.getMessage(), e);
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
           .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
-
-  }
-  @Validate
-  @Override
-  public void getGroupsByGroupIdUsers(String groupId, String query,
-      int offset, int limit, String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
-
-    vertxContext.runOnContext(v -> {
-      try {
-        System.out.println("sending... getGroupsByGroupIdUsers");
-        String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
-
-        /* the query filters against the user table */
-        CQLWrapper cql = getCQL("user2groups", "groupId=="+groupId, limit, offset);
-        cql.addWrapper(new CQLWrapper(new CQL2PgJSON("users.jsonb"), query));
-
-        //create a join between the users table and its external (non jsonb) id to the group to user table which
-        //only contains a jsonb column (no id) - where in the jsonb column there is a groupId, userId fields
-
-        JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("'id'"), new String[]{"id","jsonb"});
-
-        /* TO USE a non jsonb field as a constraint for the join - if for example it is the id field and the id field is of
-         * type uuid - use the forceCast to cast to a varchar so that it can be compared to a value in a jsonb field that is textual
-         * JoinBy jbFrom = new JoinBy(UsersAPI.TABLE_NAME_USER, "users", new Criteria().addField("_id").setJSONB(false)
-           .setForceCast("varchar"), new String[]{"jsonb"});*/
-
-        //do not return columns from the join table
-        JoinBy jbOn = new JoinBy(GROUP_USER_JOIN_TABLE, "user2groups", new Criteria().addField("'userId'") , new String[]{});
-
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).join(jbFrom, jbOn, "=", JoinBy.INNER_JOIN, User.class, cql,
-            false, reply -> {
-              try {
-                if(reply.succeeded()){
-                  List<User> users = (List<User>) ((Object [])reply.result())[0];
-                 // List<User> users = (List<User>)[0];
-                  UserdataCollection userCollection = new UserdataCollection();
-                  userCollection.setUsers(users);
-                  userCollection.setTotalRecords((Integer)((Object [])reply.result())[1]);
-                  asyncResultHandler.handle(Future.succeededFuture(
-                    GetGroupsByGroupIdUsersResponse.withJsonOK(userCollection)));
-                }
-                else{
-                  log.error(reply.cause().getMessage(), reply.cause());
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdUsersResponse
-                    .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError)
-                      + reply.cause().getMessage())));
-                }
-              } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdUsersResponse
-                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-              }
-        });
-      }
-      catch(FieldException fe){
-        log.error(fe.getLocalizedMessage(), fe);
-        asyncResultHandler.handle(Future.succeededFuture(GetGroupsByGroupIdUsersResponse.withPlainBadRequest(
-                "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
-      }
-      catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdUsersResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
-
-  }
-
-  @Validate
-  @Override
-  public void deleteGroupsByGroupIdUsers(String groupId, String lang,
-      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) throws Exception {
-
-    Group2User c = new Group2User();
-    c.setGroupId(groupId);
-
-    vertxContext.runOnContext(v -> {
-      System.out.println("sending... deleteGroupsByGroupIdUsers");
-      String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
-      try {
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(GROUP_USER_JOIN_TABLE, c,
-          reply -> {
-            try {
-              if(reply.succeeded()){
-                log.info("All users ("+ reply.result().getUpdated() + ") deleted from group " + groupId);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdUsersResponse
-                  .withNoContent()));
-              }
-              else{
-                log.error(reply.cause().getMessage());
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdUsersResponse
-                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-              }
-            } catch (Exception e) {
-              log.error(e.getMessage(), e);
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdUsersResponse
-                .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-            }
-          });
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdUsersResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
-
-  }
-
-  @Validate
-  @Override
-  public void putGroupsByGroupIdUsersByUserId(String userId, String groupId,
-      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) throws Exception {
-
-    Group2User g2u = new Group2User();
-    g2u.setGroupId(groupId);
-    g2u.setUserId(userId);
-
-    //unique composite index on both fields so that the same entry is not added more than once
-    vertxContext.runOnContext(v -> {
-      try {
-        System.out.println("sending... putGroupsByGroupIdUsersByUserId");
-        String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
-          GROUP_USER_JOIN_TABLE, g2u, false,
-          reply -> {
-            try {
-              if(reply.succeeded()){
-                asyncResultHandler.handle(
-                  io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdUsersByUserIdResponse.withNoContent()));
-              }
-              else{
-                log.error(reply.cause().getMessage(), reply.cause());
-                if(isDuplicate(reply.cause().getMessage())){
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                    .withJsonUnprocessableEntity(
-                      ValidationHelper.createValidationErrorMessage(
-                        "userId", userId, "User already in group"))));
-                }
-                else{
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                    .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
-                }
-              }
-            } catch (Exception e) {
-              log.error(e.getMessage(), e);
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdUsersByUserIdResponse
-                .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
-            }
-          });
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdUsersByUserIdResponse
-          .withPlainInternalServerError(messages.getMessage("en", MessageConsts.InternalServerError))));
       }
     });
   }

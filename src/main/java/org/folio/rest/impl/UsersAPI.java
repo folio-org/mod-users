@@ -6,12 +6,10 @@ import java.util.Map;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
-import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.Usergroup;
-import org.folio.rest.jaxrs.model.Usergroups;
 import org.folio.rest.jaxrs.resource.UsersResource;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -19,7 +17,6 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.persist.helpers.JoinBy;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.OutStream;
@@ -201,39 +198,63 @@ public class UsersAPI implements UsersResource {
                       //uh oh
                     } else {
                       PostgresClient postgresClient = PostgresClient.getInstance(vertxContext.owner(), tenantId);
-                      postgresClient.startTx(beginTx -> {
-                        logger.debug("Attempting to save new record");
-                        try {
-                          postgresClient.save(beginTx, tableName, entity, reply -> {
-                            try {
-                              if(reply.succeeded()) {
-                                logger.debug("Save successful");
-                                final User user = entity;
-                                user.setId(entity.getId());
-                                OutStream stream = new OutStream();
-                                stream.setData(user);
-                                postgresClient.endTx(beginTx, done -> {
-                                  asyncResultHandler.handle(Future.succeededFuture(PostUsersResponse.withJsonCreated(reply.result(), stream)));
-                                });
-                              } else {
-                                asyncResultHandler.handle(Future.succeededFuture(
-                                        PostUsersResponse.withPlainBadRequest(
-                                                messages.getMessage(
-                                                        lang, MessageConsts.UnableToProcessRequest))));
+                      try {
+                        getPG(vertxContext.owner(), tenantId, entity, handler -> {
 
+                          int res = handler.result();
+                          if(res == 0){
+                            String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
+                            logger.error(message);
+                            asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
+                              .withPlainBadRequest(message)));
+                            return;
+                          }
+                          else if(res == -1){
+                            asyncResultHandler.handle(Future.succeededFuture(
+                              PostUsersResponse
+                                .withPlainInternalServerError("")));
+                            return;
+                          }
+                          else{
+                            postgresClient.startTx(beginTx -> {
+                              logger.debug("Attempting to save new record");
+                              try {
+                                postgresClient.save(beginTx, tableName, entity, reply -> {
+                                  try {
+                                    if(reply.succeeded()) {
+                                      logger.debug("Save successful");
+                                      final User user = entity;
+                                      user.setId(entity.getId());
+                                      OutStream stream = new OutStream();
+                                      stream.setData(user);
+                                      postgresClient.endTx(beginTx, done -> {
+                                        asyncResultHandler.handle(Future.succeededFuture(PostUsersResponse.withJsonCreated(reply.result(), stream)));
+                                      });
+                                    } else {
+                                      asyncResultHandler.handle(Future.succeededFuture(
+                                              PostUsersResponse.withPlainBadRequest(
+                                                      messages.getMessage(
+                                                              lang, MessageConsts.UnableToProcessRequest))));
+
+                                    }
+                                  } catch(Exception e) {
+                                    asyncResultHandler.handle(Future.succeededFuture(
+                                        PostUsersResponse.withPlainInternalServerError(
+                                                e.getMessage())));
+                                  }
+                                });
+                              } catch(Exception e) {
+                                asyncResultHandler.handle(Future.succeededFuture(
+                                        PostUsersResponse.withPlainInternalServerError(
+                                                getReply.cause().getMessage())));
                               }
-                            } catch(Exception e) {
-                              asyncResultHandler.handle(Future.succeededFuture(
-                                  PostUsersResponse.withPlainInternalServerError(
-                                          e.getMessage())));
-                            }
-                          });
-                        } catch(Exception e) {
-                          asyncResultHandler.handle(Future.succeededFuture(
-                                  PostUsersResponse.withPlainInternalServerError(
-                                          getReply.cause().getMessage())));
-                        }
-                      });
+                            });
+                          }
+                        });
+                      } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                      }
                     }
                  }
                 });
@@ -441,59 +462,43 @@ public class UsersAPI implements UsersResource {
                       messages.getMessage(lang, MessageConsts.InternalServerError))));
     }
   }
-  @Validate
-  @Override
-  public void getUsersByUserIdGroups(String userId, String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
 
-    vertxContext.runOnContext(v -> {
-      try {
-
-        System.out.println("sending... getUsersByUserIdGroups");
-        String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
-
-        Criteria c = new Criteria().addField("'userId'").setAlias("user2groups").setOperation("=").setValue(userId);
-
-        //create a join between the users table and its external (non jsonb) id to the 'group to user' table which
-        //only contains a jsonb column (no id) - where in the jsonb column there is a groupId and userId fields
-        JoinBy jbFrom = new JoinBy(UserGroupAPI.GROUP_TABLE, "groups", new Criteria().addField("id").setJSONB(false)
-          .setForceCast("varchar"), new String[]{"id","jsonb"});
-        //do not return columns from the join table
-        JoinBy jbOn = new JoinBy(UserGroupAPI.GROUP_USER_JOIN_TABLE, "user2groups", new Criteria().addField("'groupId'") , new String[]{});
-
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).join(jbFrom, jbOn, "=", JoinBy.INNER_JOIN,
-          new Criterion(c).toString(), Usergroup.class,
-            reply -> {
-              try {
-                if(reply.succeeded()){
-                  List<Usergroup> usergroups = (List<Usergroup>) ((Object [])reply.result())[0];
-                 // List<User> users = (List<User>)[0];
-                  Usergroups userCollection = new Usergroups();
-                  userCollection.setUsergroups(usergroups);
-                  userCollection.setTotalRecords((Integer)((Object [])reply.result())[1]);
-                  asyncResultHandler.handle(Future.succeededFuture(
-                    GetUsersByUserIdGroupsResponse.withJsonOK(userCollection)));
-                }
-                else{
-                  logger.error(reply.cause().getMessage(), reply.cause());
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetUsersByUserIdGroupsResponse
-                    .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError)
-                      + reply.cause().getMessage())));
-                }
-              } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetUsersByUserIdGroupsResponse
-                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-              }
-        });
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetUsersByUserIdGroupsResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
-
-  }
+  /**
+  *
+  * @param vertx
+  * @param tenantId
+  * @param item
+  * @param handler
+  * @throws Exception
+  */
+ private void getPG(Vertx vertx, String tenantId, User user, Handler<AsyncResult<Integer>> handler) throws Exception{
+   String pgId = user.getPatronGroup();
+   if(pgId == null){
+     //allow null patron groups so that they can be added after a record is created
+     handler.handle(io.vertx.core.Future.succeededFuture(1));
+   }else{
+     Criterion c = new Criterion(
+       new Criteria().addField(UserGroupAPI.ID_FIELD_NAME).setJSONB(false).
+       setOperation("=").setValue("'"+pgId+"'"));
+     /** check if the patron group exists, if not, can not add the user **/
+     PostgresClient.getInstance(vertx, tenantId).get(
+       UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
+         if(check.succeeded()){
+           List<Usergroup> ug = (List<Usergroup>) check.result()[0];
+           if(ug.size() == 0){
+             handler.handle(io.vertx.core.Future.succeededFuture(0));
+           }
+           else{
+             handler.handle(io.vertx.core.Future.succeededFuture(1));
+           }
+         }
+         else{
+           logger.error(check.cause().getLocalizedMessage(), check.cause());
+           handler.handle(io.vertx.core.Future.succeededFuture(-1));
+         }
+     });
+   }
+ }
 
 }
 

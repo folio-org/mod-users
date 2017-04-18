@@ -2,6 +2,7 @@ package org.folio.moduserstest;
 
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -39,8 +40,6 @@ public class RestVerticleIT {
 
   private static String postRequest = "{\"group\": \"librarianPOST\",\"desc\": \"basic lib group\"}";
   private static String putRequest = "{\"group\": \"librarianPUT\",\"desc\": \"basic lib group\"}";
-  private static String createUserRequest =
-      "{ \"username\": \"jhandey\" , \"id\": \"7261ecaae3a74dc68b468e12a70b1aec\"}";
 
   private static Vertx vertx;
   static int port;
@@ -301,6 +300,8 @@ public class RestVerticleIT {
  @Test
  public void testGroup(TestContext context){
    String url = "http://localhost:"+port+"/groups";
+   String userUrl = "http://localhost:"+port+"/users";
+
    try {
     /**add a group*/
      CompletableFuture<Response> addGroupCF = new CompletableFuture();
@@ -323,10 +324,30 @@ public class RestVerticleIT {
      System.out.println(updateGroupResponse.body +
        "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
 
+     /**delete a group*/
+     CompletableFuture<Response> deleteCleanCF = new CompletableFuture();
+     String deleteCleanURL = url+"/"+groupID;
+     send(deleteCleanURL, context, HttpMethod.DELETE, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(deleteCleanCF));
+     Response deleteCleanResponse = deleteCleanCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(deleteCleanResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
+     System.out.println(deleteCleanResponse.body +
+       "\nStatus - " + deleteCleanResponse.code + " at " + System.currentTimeMillis() + " for " + deleteCleanURL);
+
+     /**re-add a group*/
+     CompletableFuture<Response> addNewGroupCF = new CompletableFuture();
+     send(addGroupURL, context, HttpMethod.POST, putRequest,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addNewGroupCF));
+     Response addNewGroupResponse = addNewGroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addNewGroupResponse.code, HttpURLConnection.HTTP_CREATED);
+     groupID = addNewGroupResponse.body.getString("id");
+     System.out.println(addNewGroupResponse.body +
+       "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
+
     /**add a user*/
      CompletableFuture<Response> addUserCF = new CompletableFuture();
-     String addUserURL = "http://localhost:"+port+"/users";
-     send(addUserURL, context, HttpMethod.POST, createUserRequest,
+     String addUserURL = userUrl;
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF));
      Response addUserResponse = addUserCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(addUserResponse.code, HttpURLConnection.HTTP_CREATED);
@@ -334,29 +355,36 @@ public class RestVerticleIT {
      System.out.println(addUserResponse.body +
        "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
-     /**add the same user again*/
+     /**add the same user name again*/
      CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-     send(addUserURL, context, HttpMethod.POST, createUserRequest,
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF2));
      Response addUserResponse2 = addUserCF2.get(5, TimeUnit.SECONDS);
      context.assertEquals(addUserResponse2.code, 422);
      System.out.println(addUserResponse2.body +
        "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
-     /**add a user to the group*/
-     CompletableFuture<Response> addUser2GroupCF = new CompletableFuture();
-     String addUser2GroupURL = url+"/"+groupID+"/users/7261ecaae3a74dc68b468e12a70b1aec";
-     send(addUser2GroupURL, context,
-       HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(addUser2GroupCF));
-     Response addUser2GroupResponse = addUser2GroupCF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(addUser2GroupResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
-     System.out.println(addUser2GroupResponse.body +
-       "\nStatus - " + addUser2GroupResponse.code + " at " + System.currentTimeMillis() + " for "
-         + addUser2GroupURL);
+     /**add the same user again with same id*/
+     CompletableFuture<Response> addUserCF3 = new CompletableFuture();
+     send(addUserURL, context, HttpMethod.POST, createUser(userID, "jhandley", groupID).encode(),
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF3));
+     Response addUserResponse3 = addUserCF3.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addUserResponse3.code, 422);
+     System.out.println(addUserResponse3.body +
+       "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+
+     /**add a user again with non existant patron group*/
+     CompletableFuture<Response> addUserCF4 = new CompletableFuture();
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 400,  new HTTPNoBodyResponseHandler(addUserCF4));
+     Response addUserResponse4 = addUserCF4.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addUserResponse4.code, 400);
+     System.out.println(addUserResponse4.body +
+       "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
      /**get all users belonging to a specific group*/
      CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
-     String getUsersInGroupURL = url+"/"+groupID+"/users";
+     String getUsersInGroupURL = userUrl+"?query=patron_group=="+groupID;
      send(getUsersInGroupURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF,
        200, new HTTPResponseHandler(getUsersInGroupCF));
      Response getUsersInGroupResponse = getUsersInGroupCF.get(5, TimeUnit.SECONDS);
@@ -378,22 +406,9 @@ public class RestVerticleIT {
          + getAllGroupURL);
      context.assertTrue(isSizeMatch(getAllGroupResponse, 1));
 
-     /**get groups belonging to a user*/
-     CompletableFuture<Response> getAllGroup4UserCF = new CompletableFuture();
-     String getAllGroup4UserURL = "http://localhost:"+port+"/users/7261ecaae3a74dc68b468e12a70b1aec/groups";
-     send(getAllGroup4UserURL,
-       context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
-       new HTTPResponseHandler(getAllGroup4UserCF));
-     Response getAllGroup4UserResponse = getAllGroup4UserCF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(getAllGroup4UserResponse.code, HttpURLConnection.HTTP_OK);
-     System.out.println(getAllGroup4UserResponse.body +
-       "\nStatus - " + getAllGroup4UserResponse.code + " at " + System.currentTimeMillis() + " for "
-         + getAllGroup4UserURL);
-     context.assertTrue(isSizeMatch(getAllGroup4UserResponse, 1));
-
      /**try to get via cql*/
      CompletableFuture<Response> cqlCF = new CompletableFuture();
-     String cqlURL = url+"/"+groupID+"/users?query=username==jhandey";
+     String cqlURL = url+"?query=group==librarianPUT";
      send(cqlURL,
        context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
        new HTTPResponseHandler(cqlCF));
@@ -412,27 +427,6 @@ public class RestVerticleIT {
      context.assertEquals(delete1Response.code, HttpURLConnection.HTTP_BAD_REQUEST);
      System.out.println(delete1Response.body +
        "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
-
-     /**request users from a non existant group*/
-     CompletableFuture<Response> badRequestCF = new CompletableFuture();
-     String badRequestURL = url+"/"+groupID+"abc/users";
-     send(badRequestURL, context, HttpMethod.GET, null,
-       SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, new HTTPResponseHandler(badRequestCF));
-     Response bad1Response = badRequestCF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(bad1Response.code, HttpURLConnection.HTTP_OK);
-     System.out.println(bad1Response.body +
-       "\nStatus - " + bad1Response.code + " at " + System.currentTimeMillis() + " for " + badRequestURL);
-     context.assertEquals(0, bad1Response.body.getJsonArray("users").size());
-
-     /**delete all users in a group*/
-     CompletableFuture<Response> delAllUCF = new CompletableFuture();
-     String delAllURL = url+"/"+groupID+"/users";
-     send(delAllURL, context, HttpMethod.DELETE, null,
-       SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(delAllUCF));
-     Response delAllUResponse = delAllUCF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(delAllUResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
-     System.out.println(delAllUResponse.body +
-       "\nStatus - " + delAllUResponse.code + " at " + System.currentTimeMillis() + " for " + delAllURL);
 
      /**try to add a duplicate group*/
      CompletableFuture<Response> dupCF = new CompletableFuture();
@@ -463,25 +457,6 @@ public class RestVerticleIT {
      context.assertEquals(getBadIDResponse.code, HttpURLConnection.HTTP_NOT_FOUND);
      System.out.println(getBadIDResponse.body +
        "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
-
-     /**put user for next dup test*/
-     CompletableFuture<Response> d1CF = new CompletableFuture();
-     String d1 = url+"/"+groupID+"/users/7261ecaae3a74dc68b468e12a70b1aec";
-     send(d1, context,
-       HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(d1CF));
-     Response d1Response = d1CF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(d1Response.code, HttpURLConnection.HTTP_NO_CONTENT);
-     System.out.println(d1Response.body +
-       "\nStatus - " + d1Response.code + " at " + System.currentTimeMillis() + " for " + d1);
-
-     /**duplicate a user to a group*/
-     CompletableFuture<Response> d2CF = new CompletableFuture();
-     send(d1, context, HttpMethod.PUT, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 422,
-       new HTTPResponseHandler(d2CF));
-     Response d2Response = d2CF.get(5, TimeUnit.SECONDS);
-     context.assertEquals(d2Response.code, 422);
-     System.out.println(d2Response.body +
-       "\nStatus - " + d2Response.code + " at " + System.currentTimeMillis() + " for " + d1);
 
      /**delete a group with users should fail*/
      CompletableFuture<Response> deleteCF = new CompletableFuture();
@@ -573,6 +548,20 @@ public class RestVerticleIT {
      return true;
    }
    return false;
+ }
+
+ private static JsonObject createUser(String id, String name, String pgId) {
+
+   JsonObject user = new JsonObject();
+   if(id !=null){
+     user.put("id", id);
+   }
+   else{
+     user.put("id", UUID.randomUUID().toString());
+   }
+   user.put("username", name);
+   user.put("patron_group", pgId);
+   return user;
  }
 
 }
