@@ -382,6 +382,24 @@ public class RestVerticleIT {
      System.out.println(addUserResponse4.body +
        "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
+     /**update a user again with non existant patron group*/
+     CompletableFuture<Response> updateUserCF = new CompletableFuture();
+     send(addUserURL+"/"+userID, context, HttpMethod.PUT, createUser(userID, "jhandley2nd", "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 400,  new HTTPNoBodyResponseHandler(updateUserCF));
+     Response updateUserResponse = updateUserCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(updateUserResponse.code, 400);
+     System.out.println(updateUserResponse.body +
+       "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL+"/"+userID);
+
+     /**update a user again with existant patron group*/
+     CompletableFuture<Response> updateUser2CF = new CompletableFuture();
+     send(addUserURL+"/"+userID, context, HttpMethod.PUT, createUser(userID, "jhandley2nd", groupID).encode(),
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 204,  new HTTPNoBodyResponseHandler(updateUser2CF));
+     Response updateUser2Response = updateUser2CF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(updateUser2Response.code, 204);
+     System.out.println(updateUser2Response.body +
+       "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + addUserURL+"/"+userID);
+
      /**get all users belonging to a specific group*/
      CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
      String getUsersInGroupURL = userUrl+"?query=patron_group=="+groupID;
