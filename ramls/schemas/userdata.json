@@ -1,14 +1,16 @@
 {
+  "$schema" : "http://json-schema.org/draft-04/schema#",
   "title": "User Schema",
   "type": "object",
   "properties": {
     "username": {
-      "type": "string",
-      "required": true
+      "type": "string"
     },
     "id": {
-      "type": "string",
-      "required": true
+      "type": "string"
+    },
+    "barcode": {
+      "type": "string"
     },
     "active": {
       "type": "boolean"
@@ -16,7 +18,7 @@
     "type": {
       "type": "string"
     },
-    "patron_group": {
+    "patronGroup": {
       "type": "string"
     },
     "meta": {
@@ -25,10 +27,13 @@
     "personal": {
       "type": "object",
       "properties": {
-        "last_name": {
+        "lastName": {
           "type": "string"
         },
-        "first_name": {
+        "firstName": {
+          "type": "string"
+        },
+        "middleName": {
           "type": "string"
         },
         "email": {
@@ -36,8 +41,63 @@
         },
         "phone": {
           "type": "string"
-        }
+        },
+        "mobilePhone": {
+          "type": "string"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "preferredContact": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "enum": [
+                "EMAIL",
+                "MAIL",
+                "TEXT",
+                "PHONE",
+                "MOBILE"
+              ]
+            },
+            "desc": {
+              "type": "string",
+              "enum": [
+                "Email",
+                "Mail (Primary Address)",
+                "Text message",
+                "Phone",
+                "Mobile phone"
+              ]
+            }
+          },
+          "required": [
+            "lastName"
+          ]
+        } 
       }
+    },
+    "openDate": {
+       "type": "string",
+       "format": "date-time"
+    }, 
+    "enrollmentDate": {
+       "type": "string",
+       "format": "date-time"
+    },
+    "expirationDate": {
+       "type": "string",
+       "format": "date-time"
+    },
+    "lastUpdateDate": {
+       "type": "string",
+       "format": "date-time"
     }
-  }
+  },
+  "required": [
+    "username",
+    "id"
+   ]
 }

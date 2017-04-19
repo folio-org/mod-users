@@ -402,7 +402,7 @@ public class RestVerticleIT {
 
      /**get all users belonging to a specific group*/
      CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
-     String getUsersInGroupURL = userUrl+"?query=patron_group=="+groupID;
+     String getUsersInGroupURL = userUrl+"?query=patronGroup=="+groupID;
      send(getUsersInGroupURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF,
        200, new HTTPResponseHandler(getUsersInGroupCF));
      Response getUsersInGroupResponse = getUsersInGroupCF.get(5, TimeUnit.SECONDS);
@@ -578,7 +578,7 @@ public class RestVerticleIT {
      user.put("id", UUID.randomUUID().toString());
    }
    user.put("username", name);
-   user.put("patron_group", pgId);
+   user.put("patronGroup", pgId);
    return user;
  }
 
