@@ -15,7 +15,7 @@
             "users.read.restricted"
           ]
         },
-	      {
+        {
           "methods" : [ "GET" ],
           "pathPattern" : "/users/{id}",
           "permissionsRequired" : [ "users.item.get" ],
