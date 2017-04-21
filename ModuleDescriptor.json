@@ -89,7 +89,7 @@
     {
       "permissionName" : "users.item.get",
       "displayName" : "users item get",
-      "description" : "Read an individual recocord in the User module"
+      "description" : "Read an individual record in the User module"
     },
     {
       "permissionName" : "users.read.basic",
