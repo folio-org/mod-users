@@ -76,13 +76,13 @@
           "required": [
             "lastName"
           ]
-        } 
+        }
       }
     },
     "openDate": {
        "type": "string",
        "format": "date-time"
-    }, 
+    },
     "enrollmentDate": {
        "type": "string",
        "format": "date-time"
