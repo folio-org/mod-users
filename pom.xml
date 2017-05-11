@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>9.0.0-SNAPSHOT</version>
+  <version>9.0.0</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -107,7 +107,7 @@
               <classpathScope>test</classpathScope>
               <arguments>
                 <argument>-classpath</argument>
-                <classpath/>
+                <classpath />
                 <argument>org.folio.rest.persist.PostgresRunner</argument>
                 <argument>${postgresrunner.port}</argument>
                 <argument>${postgres.port}</argument>
@@ -238,13 +238,10 @@
             <phase>prepare-package</phase>
             <configuration>
               <target>
-                <replace token="baseUri: http://github.com/org/folio/mod-users"
-                  value="baseUri: http://localhost:{http.port}"
-                  dir="${basedir}/target/classes/apidocs/raml">
+                <replace token="baseUri: http://github.com/org/folio/mod-users" value="baseUri: http://localhost:{http.port}" dir="${basedir}/target/classes/apidocs/raml">
                   <include name="**/*.raml" />
                 </replace>
-                <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]"
-                  dir="${basedir}/target/classes/apidocs/raml">
+                <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]" dir="${basedir}/target/classes/apidocs/raml">
                   <include name="**/*.raml" />
                 </replace>
               </target>
@@ -358,7 +355,7 @@
     <url>https://github.com/folio-org/mod-users</url>
     <connection>scm:git:git://github.com:folio-org/mod-users.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-users.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v9.0.0</tag>
   </scm>
 
   <properties>
