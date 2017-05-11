@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "users",
-      "version": "8.0",
+      "version": "9.0",
       "handlers" : [
         {
           "methods": [ "GET" ],

@@ -72,12 +72,13 @@
                 "Mobile phone"
               ]
             }
-          },
-          "required": [
-            "lastName"
-          ]
+          }
         }
-      }
+      },
+      "additionalProperties": false,
+      "required": [
+         "lastName"
+      ]
     },
     "openDate": {
        "type": "string",
@@ -96,6 +97,7 @@
        "format": "date-time"
     }
   },
+  "additionalProperties": false,
   "required": [
     "username",
     "id"
