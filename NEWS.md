@@ -1,3 +1,6 @@
+## 10.1.0 2017-05-24
+ * Add optional field to users: externalSystemId
+
 ## 10.0.0 2017-05-23
  * Change dependency to RMB v12.1.0
  * Disallow additional properties in usergroups model.
