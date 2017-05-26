@@ -1,3 +1,6 @@
+## 10.1.1 2017-05-26
+ * Correct interface version in Module Descriptor
+
 ## 10.1.0 2017-05-24
  * Add optional field to users: externalSystemId
 
