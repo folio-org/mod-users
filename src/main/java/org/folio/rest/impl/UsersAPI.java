@@ -521,8 +521,13 @@ public class UsersAPI implements UsersResource {
            }
          }
          else{
-           logger.error(check.cause().getLocalizedMessage(), check.cause());
-           handler.handle(io.vertx.core.Future.succeededFuture(-1));
+           Throwable t = check.cause();
+           logger.error(t.getLocalizedMessage(), t);
+           int retCode = -1;
+           if(t.getLocalizedMessage().contains("invalid input syntax for uuid")){
+             retCode = 0;
+           }
+           handler.handle(io.vertx.core.Future.succeededFuture(retCode));
          }
      });
    }
