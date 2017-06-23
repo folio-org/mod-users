@@ -104,7 +104,7 @@ public class RestVerticleIT {
         res.bodyHandler(buf -> {
           JsonObject userCollectionObject = buf.toJsonObject();
           if(userCollectionObject.getJsonArray("users").size() == 0 &&
-                  userCollectionObject.getInteger("total_records") == 00) {
+                  userCollectionObject.getInteger("totalRecords") == 00) {
             future.complete();
           } else {
             future.fail("Invalid return JSON: " + buf.toString());
@@ -562,7 +562,7 @@ public class RestVerticleIT {
  }
 
  private boolean isSizeMatch(Response r, int size){
-   if(r.body.getInteger("total_records") == size){
+   if(r.body.getInteger("totalRecords") == size){
      return true;
    }
    return false;
