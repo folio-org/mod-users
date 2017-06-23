@@ -2,7 +2,10 @@ package org.folio.rest.impl;
 
 import java.util.List;
 import java.util.Map;
-
+import java.util.Date;
+import java.util.TimeZone;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
@@ -219,6 +222,9 @@ public class UsersAPI implements UsersResource {
                             postgresClient.startTx(beginTx -> {
                               logger.debug("Attempting to save new record");
                               try {
+                                Date now = new Date();
+                                entity.setCreatedDate(now);
+                                entity.setUpdatedDate(now);
                                 postgresClient.save(beginTx, tableName, entity, reply -> {
                                   try {
                                     if(reply.succeeded()) {
@@ -436,10 +442,19 @@ public class UsersAPI implements UsersResource {
                         return;
                       }
                       else{
+                        Date createdDate = null;
+                        Date now = new Date();
+                        if(userList.size() > 0) { 
+                          createdDate = userList.get(0).getCreatedDate(); 
+                        } else {
+                          createdDate = now;
+                        }
                         Criteria idCrit = new Criteria();
                         idCrit.addField(USER_ID_FIELD);
                         idCrit.setOperation("=");
                         idCrit.setValue(userId);
+                        entity.setUpdatedDate(now);
+                        entity.setCreatedDate(createdDate);
                         try {
                           PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
                                   tableName, entity, new Criterion(idCrit), true, putReply -> {
@@ -531,6 +546,15 @@ public class UsersAPI implements UsersResource {
          }
      });
    }
+ }
+
+ /* Get a timestamp in RFC 3339 format, in GMT time */
+ private String getTimeStamp() {
+   Date date = new Date();
+   DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+   TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
+   gmtFormat.setTimeZone(gmtTimeZone);
+   return gmtFormat.format(date);
  }
 
 }

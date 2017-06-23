@@ -29,7 +29,21 @@ END;
 $$ language 'plpgsql';
 CREATE TRIGGER update_date_groups BEFORE UPDATE ON myuniversity_mymodule.groups FOR EACH ROW EXECUTE PROCEDURE  update_modified_column_groups();
 
+CREATE OR REPLACE FUNCTION set_id_injson_groups3()
+RETURNS TRIGGER AS $$
+DECLARE
+  injectedId text;
+BEGIN
+-- NEW to indicate updating the new row value
+  injectedId = '"'||NEW.id||'"';
+  NEW.jsonb = jsonb_set(NEW.jsonb, '{id}' ,  injectedId::jsonb , true);
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+CREATE TRIGGER set_id_injson_groups3 BEFORE INSERT ON myuniversity_mymodule.groups FOR EACH ROW EXECUTE PROCEDURE  set_id_injson_groups3();
+
 -- join table composite index to ensure a group/user pair can not be inserted twice
 -- CREATE UNIQUE INDEX group_user_unique_idx ON myuniversity_mymodule.groups_users(((jsonb->>'groupId')::text), ((jsonb->>'userId')::text));
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA myuniversity_mymodule TO myuniversity_mymodule;
+
