@@ -7,6 +7,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import java.util.Date;
+import java.util.TimeZone;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import javax.xml.bind.DatatypeConverter;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.ISODateTimeFormat;
+
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.persist.PostgresClient;
@@ -148,7 +158,21 @@ public class RestVerticleIT {
        res.bodyHandler(buf -> {
          JsonObject userObject = buf.toJsonObject();
          if(userObject.getString("username").equals("joeblock")) {
-           future.complete();
+           DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
+           Date createdDate = null;
+           try {
+             //createdDate = DatatypeConverter.parseDateTime(userObject.getString("createdDate")).getTime();
+             createdDate = new DateTime(userObject.getString("createdDate")).toDate();
+           } catch(Exception e) {
+             future.fail(e);
+             return;
+           }
+           Date now = new Date();
+           if(createdDate.before(now)) {
+            future.complete(); 
+           } else {
+             future.fail("Bad value for createdDate");
+           }
          } else {
            future.fail("Unable to read proper data from JSON return value: " + buf.toString());
          }
@@ -209,6 +233,46 @@ public class RestVerticleIT {
             .end(userObject.encode());
     return future;
  }
+
+ private Future<Void> getGoodUser(TestContext context) {
+   Future future = Future.future();
+   HttpClient client = vertx.createHttpClient();
+   client.get(port, "localhost", "/users/2345678", res -> {
+     if(res.statusCode() == 200) {
+       res.bodyHandler(buf -> {
+         JsonObject userObject = buf.toJsonObject();
+         if(userObject.getString("username").equals("bobcircle")) {
+           Date createdDate = null;
+           Date updatedDate = null;
+           try {
+             createdDate = new DateTime(userObject.getString("createdDate")).toDate();
+             updatedDate = new DateTime(userObject.getString("updatedDate")).toDate();
+           } catch(Exception e) {
+             future.fail(e);
+             return;
+           }
+           Date now = new Date();
+           if(createdDate.before(now) && updatedDate.before(now) && createdDate.before(updatedDate)) {
+            future.complete(); 
+           } else {
+             future.fail("Bad value for createdDate and/or updatedDate");
+           }
+         } else {
+           future.fail("Unable to read proper data from JSON return value: " + buf.toString());
+         }
+       });
+     } else {
+       future.fail("Bad response: " + res.statusCode());
+     }
+   })
+           .putHeader("X-Okapi-Tenant", "diku")
+           .putHeader("content-type", "application/json")
+           .putHeader("accept", "application/json")
+           .end();
+   return future;
+ }
+
+
 
   private Future<Void> putUserBadUsername(TestContext context) {
    Future future = Future.future();
@@ -281,6 +345,10 @@ public class RestVerticleIT {
     }).compose(v -> {
       Future<Void> f = Future.future();
       putUserBadUsername(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      getGoodUser(context).setHandler(f.completer());
       return f;
     }).compose(v -> {
       Future<Void> f = Future.future();

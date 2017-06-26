@@ -1,3 +1,7 @@
+## 13.0.0 2017-06-26
+ * dateCreated and dateUpdated fields are set automatically on POST/PUT
+ * Return sets use 'totalResults' field instead of 'total_results'
+
 ## 12.0.0 2017-06-14
  * Change timestamp fields to dateCreated and dateUpdated
 
