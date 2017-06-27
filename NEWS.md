@@ -1,3 +1,6 @@
+## 13.0.1 2017-06-27
+ * Update ModuleDescriptor
+
 ## 13.0.0 2017-06-26
  * dateCreated and dateUpdated fields are set automatically on POST/PUT
  * Return sets use 'totalResults' field instead of 'total_results'
