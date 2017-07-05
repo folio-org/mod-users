@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.TimeZone;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -11,6 +12,7 @@ import javax.ws.rs.core.Response;
 
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.resource.UsersResource;
@@ -179,7 +181,11 @@ public class UsersAPI implements UsersResource {
         Criterion crit = new Criterion();
         crit.addCriterion(idCrit, "OR", nameCrit);
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-
+        if(checkForDuplicateAddressTypes(entity) {
+          asyncResultHandler.handle(Future.succeededFuture(
+              PostUsersResponse.withPlainBadRequest("Users are limited to one address per addresstype")));
+          return;
+        }
             try {
               PostgresClient.getInstance(vertxContext.owner(), TenantTool.calculateTenantId(tenantId)).get(tableName,
                       User.class, crit, true, getReply -> {
@@ -555,6 +561,26 @@ public class UsersAPI implements UsersResource {
    TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
    gmtFormat.setTimeZone(gmtTimeZone);
    return gmtFormat.format(date);
+ }
+
+ private boolean checkForDuplicateAddressTypes(User user) {
+   for(Address address : user.getPersonal().getAddresses()) {
+     Map<String, Integer> countMap = new HashMap<>();
+     String addressTypeId = address.getAddressTypeId();
+     if(addressTypeId != null) {
+       if(countMap.containsKey(addressTypeId) {
+           Integer count = countMap.get(addressTypeId);
+           count = count + 1;
+           countMap.put(addressTypeId, count);
+       }
+     }
+   }
+   for(Integer i : countMap.values()) {
+    if(i > 1) {
+      return true;
+    }
+   }
+   return false;
  }
 
 }
