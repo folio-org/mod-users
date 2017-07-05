@@ -320,6 +320,29 @@ public class RestVerticleIT {
     return future;
  }
 
+ private Future<Void> createAddressType(TestContext context) {
+   Future future = Future.future();
+   JsonObject addressTypeObject = new JsonObject()
+            .put("addressType", "home")
+            .put("desc", "The patron's primary residence")
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/addresstype", res -> {
+      if(res.statusCode() == 201) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Error creating new addresstype Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "text/plain")
+            .end(userObject.encode());
+    return future;
+
+ }
+
  @Test
   public void doSequentialTests(TestContext context) {
     Async async = context.async();
@@ -353,6 +376,10 @@ public class RestVerticleIT {
     }).compose(v -> {
       Future<Void> f = Future.future();
       putUserBadId(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createAddressType(context).setHandler(f.completer());
       return f;
     });
 

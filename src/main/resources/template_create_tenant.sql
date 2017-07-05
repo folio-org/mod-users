@@ -14,11 +14,21 @@ CREATE TABLE IF NOT EXISTS myuniversity_mymodule.groups (
    creation_date date not null default current_timestamp,
    update_date date not null default current_timestamp
    );
+
+CREATE TABLE IF NOT EXISTS myuniversity_mymodule.addresstype (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    jsonb jsonb NOT NULL,
+    );
+
 -- index to support @> ops, faster than jsonb_ops
 CREATE INDEX idxgin_groups ON myuniversity_mymodule.groups USING gin (jsonb jsonb_path_ops);
 -- create unique index on groupname group
 CREATE UNIQUE INDEX group_unique_idx ON myuniversity_mymodule.groups((jsonb->>'group'));
 -- update the update_date column when record is updated
+
+-- index to support @> ops, faster than jsonb_ops
+CREATE INDEX idxgin_addresstype ON myuniversity_mymodule.addresstype USING gin (jsonb jsonb_path_ops);
+
 CREATE OR REPLACE FUNCTION update_modified_column_groups()
 RETURNS TRIGGER AS $$
 BEGIN
