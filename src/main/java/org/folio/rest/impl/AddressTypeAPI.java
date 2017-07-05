@@ -88,7 +88,7 @@ public class AddressTypeAPI implements AddresstypesResource {
       try {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(
                 RestVerticle.OKAPI_HEADER_TENANT));
-        CQLWrapper cql = getCQL(query, limit, offset);
+        CQLWrapper cql = getCQL(query, limit, offset, ADDRESS_TYPE_TABLE);
         PostgresClient.getInstance(vertxContext.owner(), tenantId).get(ADDRESS_TYPE_TABLE, AddressType.class,
                 new String[]{"*"}, cql, true, true, reply -> {
                   try {
@@ -242,7 +242,7 @@ public class AddressTypeAPI implements AddresstypesResource {
           //Check to make certain no users' addresses are currently using this type
           /* CQL statement to check for users with addresses that use a particular address type */
           String query = "personal.addresses=" + addresstypeId;
-          CQLWrapper cql = getCQL(query,1,0);
+          CQLWrapper cql = getCQL(query,1,0, UsersAPI.TABLE_NAME_USER);
           PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
                   UsersAPI.TABLE_NAME_USER, User.class, new String[]{"*"},
                     cql, true, false, reply -> {
@@ -355,8 +355,8 @@ public class AddressTypeAPI implements AddresstypesResource {
   }
   
   
-  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException{
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(ADDRESS_TYPE_TABLE + ".jsonb");
+  private CQLWrapper getCQL(String query, int limit, int offset, String tableName) throws FieldException{
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(tableName + ".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
   

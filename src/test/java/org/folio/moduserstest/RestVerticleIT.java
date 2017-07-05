@@ -38,6 +38,7 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -320,13 +321,13 @@ public class RestVerticleIT {
     return future;
  }
 
- private Future<Void> createAddressType(TestContext context) {
-   Future future = Future.future();
-   JsonObject addressTypeObject = new JsonObject()
+  private Future<Void> createAddressType(TestContext context) {
+    Future future = Future.future();
+    JsonObject addressTypeObject = new JsonObject()
             .put("addressType", "home")
-            .put("desc", "The patron's primary residence")
+            .put("desc", "The patron's primary residence");
     HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/addresstype", res -> {
+    client.post(port, "localhost", "/addresstypes", res -> {
       if(res.statusCode() == 201) {
         future.complete();
       } else {
@@ -338,10 +339,124 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
-            .end(userObject.encode());
+            .end(addressTypeObject.encode());
     return future;
 
  }
+
+  private Future<Void> getAddressTypeUpdateUser(TestContext context) {
+    Future future = Future.future();
+    HttpClient client = vertx.createHttpClient();
+    client.get(port,"localhost", "/addresstypes?query=addressType=home", res -> {
+      if(res.statusCode() != 200) {
+        res.bodyHandler(body -> {
+          future.fail("Expected 200, got statusCode " + res.statusCode() + ":" + body.toString());
+        });
+      } else {
+        res.bodyHandler(body -> {
+          JsonObject result = new JsonObject(body.toString());
+          JsonObject addressType = result.getJsonArray("addressTypes").getJsonObject(0);
+          if(!addressType.getString("addressType").equals("home")) {
+            future.fail("addressType is not 'home' in return addresstype");
+          } else {
+            JsonObject userObject = new JsonObject()
+              .put("username", "bobcircle")
+              .put("id", "2345678")
+              .put("active", false)
+              .put("personal", new JsonObject()
+                .put("lastName", "Circle")
+                .put("firstName", "Robert")
+                .put("addresses", new JsonArray()
+                  .add(new JsonObject()
+                    .put("countryId", "USA")
+                    .put("addressLine1", "123 Somestreet")
+                    .put("city", "Somewheresville")
+                    .put("addressTypeId", addressType.getString("id"))
+                  )
+                )
+              );
+            HttpClient putClient = vertx.createHttpClient();
+            putClient.put(port, "localhost", "/users/2345678", putRes -> {
+              putRes.bodyHandler(putBody -> {
+                if(putRes.statusCode() != 204) {
+                  future.fail("Expected status 204. Got " + putRes.statusCode() + ": " + putBody.toString());
+                } else {
+                  HttpClient deleteClient = vertx.createHttpClient();
+                  client.delete(port, "localhost", "/addresstypes/" + 
+                    addressType.getString("id"), deleteRes -> {
+                    deleteRes.bodyHandler(deleteBody -> {
+                      if(deleteRes.statusCode() != 400) {
+                        future.fail("Expected status 400, got " + deleteRes.statusCode() +
+                          " : " + deleteBody.toString());
+                      } else {
+                        future.complete();
+                      }
+                    });
+                  })
+                    .putHeader("X-Okapi-Tenant", "diku")
+                    .putHeader("content-type", "application/json")
+                    .putHeader("accept", "text/plain")
+                    .end();
+                }
+              });
+            })
+              .putHeader("X-Okapi-Tenant", "diku")
+              .putHeader("content-type", "application/json")
+              .putHeader("accept", "text/plain")
+              .end(userObject.encode());
+          }
+        });
+      }
+   })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end();
+    return future;
+
+ }
+
+ private Future<Void> createAndDeleteAddressType(TestContext context) {
+    Future future = Future.future();
+    HttpClient postClient = vertx.createHttpClient();
+    JsonObject addressTypeObject = new JsonObject()
+      .put("addressType", "work")
+      .put("desc", "The patron's work address");
+    postClient.post(port, "localhost", "/addresstypes", postRes -> {
+      postRes.bodyHandler(postBody -> {
+        if(postRes.statusCode() != 201) {
+          future.fail("Expected 201, got " + postRes.statusCode() + " : " +
+            postBody.toString());
+        } else {
+          JsonObject newAddressTypeObject = new JsonObject(postBody.toString());
+          HttpClient deleteClient = vertx.createHttpClient();
+          deleteClient.delete(port, "localhost", "/addresstypes/" +
+            newAddressTypeObject.getString("id"), deleteRes -> {
+            if(deleteRes.statusCode() == 204) {
+              future.complete();
+            } else {
+              deleteRes.bodyHandler(deleteBody -> {
+                future.fail("Expected 204, got " + deleteRes.statusCode() +
+                  " : " + deleteBody.toString());
+              });
+            }
+          })    
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "text/plain")
+            .end();
+        }
+      });
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "text/plain")
+      .end(addressTypeObject.encode());
+
+  return future;
+
+ }
+
 
  @Test
   public void doSequentialTests(TestContext context) {
@@ -380,6 +495,14 @@ public class RestVerticleIT {
     }).compose(v -> {
       Future<Void> f = Future.future();
       createAddressType(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      getAddressTypeUpdateUser(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createAndDeleteAddressType(context).setHandler(f.completer());
       return f;
     });
 

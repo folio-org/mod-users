@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS myuniversity_mymodule.groups (
 
 CREATE TABLE IF NOT EXISTS myuniversity_mymodule.addresstype (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    jsonb jsonb NOT NULL,
+    jsonb jsonb NOT NULL
     );
 
 -- index to support @> ops, faster than jsonb_ops
