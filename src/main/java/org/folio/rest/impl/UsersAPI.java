@@ -190,101 +190,107 @@ public class UsersAPI implements UsersResource {
           return;
         }
         try {
-          checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(res -> {
-            if(res.failed()) {
-            } else if(res.result() == false) {
-            } else {
-            
-            try {
-              PostgresClient.getInstance(vertxContext.owner(), TenantTool.calculateTenantId(tenantId)).get(tableName,
-                      User.class, crit, true, getReply -> {
-                  logger.debug("Attempting to get existing users of same id and/or username");
-                  if(getReply.failed()) {
-                    logger.debug("Attempt to get users failed: " + getReply.cause().getMessage());
-                    asyncResultHandler.handle(Future.succeededFuture(
-                                  PostUsersResponse.withPlainInternalServerError(
-                                          getReply.cause().getMessage())));
-                  } else {
-                    List<User> userList = (List<User>)getReply.result()[0];
-                    if(userList.size() > 0) {
-                      logger.debug("User with this id already exists");
-                      asyncResultHandler.handle(Future.succeededFuture(
-                              PostUsersResponse.withJsonUnprocessableEntity(
-                                ValidationHelper.createValidationErrorMessage(
-                                  USER_NAME_FIELD, entity.getUsername(),
-                                  "User with this id already exists"))));
-                      //uh oh
-                    } else {
-                      PostgresClient postgresClient = PostgresClient.getInstance(vertxContext.owner(), tenantId);
-                      try {
-                        getPG(vertxContext.owner(), tenantId, entity, handler -> {
-
-                          int res = handler.result();
-                          if(res == 0){
-                            String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
-                            logger.error(message);
-                            asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
-                              .withPlainBadRequest(message)));
-                            return;
-                          }
-                          else if(res == -1){
-                            asyncResultHandler.handle(Future.succeededFuture(
-                              PostUsersResponse
-                                .withPlainInternalServerError("")));
-                            return;
-                          }
-                          else{
-                            postgresClient.startTx(beginTx -> {
-                              logger.debug("Attempting to save new record");
-                              try {
-                                Date now = new Date();
-                                entity.setCreatedDate(now);
-                                entity.setUpdatedDate(now);
-                                postgresClient.save(beginTx, tableName, entity, reply -> {
-                                  try {
-                                    if(reply.succeeded()) {
-                                      logger.debug("Save successful");
-                                      final User user = entity;
-                                      user.setId(entity.getId());
-                                      OutStream stream = new OutStream();
-                                      stream.setData(user);
-                                      postgresClient.endTx(beginTx, done -> {
-                                        asyncResultHandler.handle(Future.succeededFuture(PostUsersResponse.withJsonCreated(reply.result(), stream)));
-                                      });
-                                    } else {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                              PostUsersResponse.withPlainBadRequest(
-                                                      messages.getMessage(
-                                                              lang, MessageConsts.UnableToProcessRequest))));
-
-                                    }
-                                  } catch(Exception e) {
-                                    asyncResultHandler.handle(Future.succeededFuture(
-                                        PostUsersResponse.withPlainInternalServerError(
-                                                e.getMessage())));
-                                  }
-                                });
-                              } catch(Exception e) {
-                                asyncResultHandler.handle(Future.succeededFuture(
-                                        PostUsersResponse.withPlainInternalServerError(
-                                                getReply.cause().getMessage())));
-                              }
-                            });
-                          }
-                        });
-                      } catch (Exception e) {
-                        logger.error(e.getLocalizedMessage(), e);
-                        asyncResultHandler.handle(Future.succeededFuture(
-                          PutUsersByUserIdResponse.withPlainInternalServerError(
-                                  messages.getMessage(lang, MessageConsts.InternalServerError))));
-                      }
-                    }
-                 }
-                });
-            } catch(Exception e) {
+          checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
+            if(checkRes.failed()) {
+              logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
               asyncResultHandler.handle(Future.succeededFuture(
-                            PostUsersResponse.withPlainInternalServerError(
-                            messages.getMessage(lang, MessageConsts.InternalServerError))));
+                PostUsersResponse.withPlainInternalServerError(
+                  messages.getMessage(lang, MessageConsts.InternalServerError))));
+            } else if(checkRes.result() == false) {
+              asyncResultHandler.handle(Future.succeededFuture(
+                PostUsersResponse.withPlainBadRequest("You cannot add addresses with non-existant address types")));
+            } else {             
+              try {
+                PostgresClient.getInstance(vertxContext.owner(), TenantTool.calculateTenantId(tenantId)).get(tableName,
+                        User.class, crit, true, getReply -> {
+                    logger.debug("Attempting to get existing users of same id and/or username");
+                    if(getReply.failed()) {
+                      logger.debug("Attempt to get users failed: " + getReply.cause().getMessage());
+                      asyncResultHandler.handle(Future.succeededFuture(
+                                    PostUsersResponse.withPlainInternalServerError(
+                                            getReply.cause().getMessage())));
+                    } else {
+                      List<User> userList = (List<User>)getReply.result()[0];
+                      if(userList.size() > 0) {
+                        logger.debug("User with this id already exists");
+                        asyncResultHandler.handle(Future.succeededFuture(
+                                PostUsersResponse.withJsonUnprocessableEntity(
+                                  ValidationHelper.createValidationErrorMessage(
+                                    USER_NAME_FIELD, entity.getUsername(),
+                                    "User with this id already exists"))));
+                        //uh oh
+                      } else {
+                        PostgresClient postgresClient = PostgresClient.getInstance(vertxContext.owner(), tenantId);
+                        try {
+                          getPG(vertxContext.owner(), tenantId, entity, handler -> {
+
+                            int res = handler.result();
+                            if(res == 0){
+                              String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
+                              logger.error(message);
+                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
+                                .withPlainBadRequest(message)));
+                              return;
+                            }
+                            else if(res == -1){
+                              asyncResultHandler.handle(Future.succeededFuture(
+                                PostUsersResponse
+                                  .withPlainInternalServerError("")));
+                              return;
+                            }
+                            else{
+                              postgresClient.startTx(beginTx -> {
+                                logger.debug("Attempting to save new record");
+                                try {
+                                  Date now = new Date();
+                                  entity.setCreatedDate(now);
+                                  entity.setUpdatedDate(now);
+                                  postgresClient.save(beginTx, tableName, entity, reply -> {
+                                    try {
+                                      if(reply.succeeded()) {
+                                        logger.debug("Save successful");
+                                        final User user = entity;
+                                        user.setId(entity.getId());
+                                        OutStream stream = new OutStream();
+                                        stream.setData(user);
+                                        postgresClient.endTx(beginTx, done -> {
+                                          asyncResultHandler.handle(Future.succeededFuture(PostUsersResponse.withJsonCreated(reply.result(), stream)));
+                                        });
+                                      } else {
+                                        asyncResultHandler.handle(Future.succeededFuture(
+                                                PostUsersResponse.withPlainBadRequest(
+                                                        messages.getMessage(
+                                                                lang, MessageConsts.UnableToProcessRequest))));
+
+                                      }
+                                    } catch(Exception e) {
+                                      asyncResultHandler.handle(Future.succeededFuture(
+                                          PostUsersResponse.withPlainInternalServerError(
+                                                  e.getMessage())));
+                                    }
+                                  });
+                                } catch(Exception e) {
+                                  asyncResultHandler.handle(Future.succeededFuture(
+                                          PostUsersResponse.withPlainInternalServerError(
+                                                  getReply.cause().getMessage())));
+                                }
+                              });
+                            }
+                          });
+                        } catch (Exception e) {
+                          logger.error(e.getLocalizedMessage(), e);
+                          asyncResultHandler.handle(Future.succeededFuture(
+                            PutUsersByUserIdResponse.withPlainInternalServerError(
+                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
+                        }
+                      }
+                   }
+                  });
+              } catch(Exception e) {
+                asyncResultHandler.handle(Future.succeededFuture(
+                              PostUsersResponse.withPlainInternalServerError(
+                              messages.getMessage(lang, MessageConsts.InternalServerError))));
+              }
             }
           });
         } catch(Exception e) {
@@ -434,88 +440,106 @@ public class UsersAPI implements UsersResource {
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
           nameCrit.setValue(entity.getUsername());
-
           try {
-            PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
-                    User.class, new Criterion(nameCrit), true, false, getReply -> {
-              if(getReply.failed()) {
-                //error 500
-                logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
-                asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.withPlainInternalServerError(
-                                                messages.getMessage(lang,
-                                                        MessageConsts.InternalServerError))));
-              } else {
-                List<User> userList = (List<User>)getReply.result()[0];
-                if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
-                  //Error 400, that username is in use by somebody else
+            checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
+              if(checkRes.failed()) {
+                logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
                   asyncResultHandler.handle(Future.succeededFuture(
-                          PutUsersByUserIdResponse.withPlainBadRequest(
-                                  "Username " + entity.getUsername() + " is already in use")));
-                } else {
-                  try {
-                    getPG(vertxContext.owner(), tenantId, entity, handler -> {
-
-                      int res = handler.result();
-                      if(res == 0){
-                        String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
-                        logger.error(message);
-                        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
-                          .withPlainBadRequest(message)));
-                        return;
-                      }
-                      else if(res == -1){
-                        asyncResultHandler.handle(Future.succeededFuture(
-                          PostUsersResponse
-                            .withPlainInternalServerError("")));
-                        return;
-                      }
-                      else{
-                        Date createdDate = null;
-                        Date now = new Date();
-                        if(userList.size() > 0) { 
-                          createdDate = userList.get(0).getCreatedDate(); 
-                        } else {
-                          createdDate = now;
-                        }
-                        Criteria idCrit = new Criteria();
-                        idCrit.addField(USER_ID_FIELD);
-                        idCrit.setOperation("=");
-                        idCrit.setValue(userId);
-                        entity.setUpdatedDate(now);
-                        entity.setCreatedDate(createdDate);
-                        try {
-                          PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
-                                  tableName, entity, new Criterion(idCrit), true, putReply -> {
-                            try {
-                              if(putReply.failed()) {
-                                asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.withPlainInternalServerError(putReply.cause().getMessage())));
-                              } else {
-                                asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.withNoContent()));
-                              }
-                            } catch(Exception e) {
-                              asyncResultHandler.handle(Future.succeededFuture(
+                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                            messages.getMessage(lang, MessageConsts.InternalServerError))));
+              } else if(!checkRes.result()) {
+                asyncResultHandler.handle(Future.succeededFuture(
+                  PostUsersResponse.withPlainBadRequest("All addresses types defined for users must be existing")));
+              } else {
+                try {
+                  PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
+                          User.class, new Criterion(nameCrit), true, false, getReply -> {
+                    if(getReply.failed()) {
+                      //error 500
+                      logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
+                      asyncResultHandler.handle(Future.succeededFuture(
                                               PutUsersByUserIdResponse.withPlainInternalServerError(
                                                       messages.getMessage(lang,
                                                               MessageConsts.InternalServerError))));
+                    } else {
+                      List<User> userList = (List<User>)getReply.result()[0];
+                      if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
+                        //Error 400, that username is in use by somebody else
+                        asyncResultHandler.handle(Future.succeededFuture(
+                                PutUsersByUserIdResponse.withPlainBadRequest(
+                                        "Username " + entity.getUsername() + " is already in use")));
+                      } else {
+                        try {
+                          getPG(vertxContext.owner(), tenantId, entity, handler -> {
+
+                            int res = handler.result();
+                            if(res == 0){
+                              String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
+                              logger.error(message);
+                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
+                                .withPlainBadRequest(message)));
+                              return;
+                            }
+                            else if(res == -1){
+                              asyncResultHandler.handle(Future.succeededFuture(
+                                PostUsersResponse
+                                  .withPlainInternalServerError("")));
+                              return;
+                            }
+                            else{
+                              Date createdDate = null;
+                              Date now = new Date();
+                              if(userList.size() > 0) { 
+                                createdDate = userList.get(0).getCreatedDate(); 
+                              } else {
+                                createdDate = now;
+                              }
+                              Criteria idCrit = new Criteria();
+                              idCrit.addField(USER_ID_FIELD);
+                              idCrit.setOperation("=");
+                              idCrit.setValue(userId);
+                              entity.setUpdatedDate(now);
+                              entity.setCreatedDate(createdDate);
+                              try {
+                                PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
+                                        tableName, entity, new Criterion(idCrit), true, putReply -> {
+                                  try {
+                                    if(putReply.failed()) {
+                                      asyncResultHandler.handle(Future.succeededFuture(
+                                              PutUsersByUserIdResponse.withPlainInternalServerError(putReply.cause().getMessage())));
+                                    } else {
+                                      asyncResultHandler.handle(Future.succeededFuture(
+                                              PutUsersByUserIdResponse.withNoContent()));
+                                    }
+                                  } catch(Exception e) {
+                                    asyncResultHandler.handle(Future.succeededFuture(
+                                                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                                                            messages.getMessage(lang,
+                                                                    MessageConsts.InternalServerError))));
+                                  }
+                                });
+                              } catch(Exception e) {
+                                asyncResultHandler.handle(Future.succeededFuture(
+                                                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                                                            messages.getMessage(lang,
+                                                                    MessageConsts.InternalServerError))));
+                              }
                             }
                           });
-                        } catch(Exception e) {
+                        } catch (Exception e) {
+                          logger.error(e.getLocalizedMessage(), e);
                           asyncResultHandler.handle(Future.succeededFuture(
-                                              PutUsersByUserIdResponse.withPlainInternalServerError(
-                                                      messages.getMessage(lang,
-                                                              MessageConsts.InternalServerError))));
+                            PutUsersByUserIdResponse.withPlainInternalServerError(
+                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
                         }
                       }
-                    });
-                  } catch (Exception e) {
-                    logger.error(e.getLocalizedMessage(), e);
-                    asyncResultHandler.handle(Future.succeededFuture(
-                      PutUsersByUserIdResponse.withPlainInternalServerError(
-                              messages.getMessage(lang, MessageConsts.InternalServerError))));
-                  }
+                    }
+                  });
+                } catch(Exception e) {
+                  logger.debug(e.getLocalizedMessage());
+                  asyncResultHandler.handle(Future.succeededFuture(
+                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                            messages.getMessage(lang, MessageConsts.InternalServerError))));
                 }
               }
             });

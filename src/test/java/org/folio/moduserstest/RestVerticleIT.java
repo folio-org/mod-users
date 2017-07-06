@@ -498,6 +498,42 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> postUserBadAddress(TestContext context) {
+    Future future = Future.future();
+    String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
+    JsonObject userObject = new JsonObject()
+            .put("username", "annarhombus")
+            .put("id", "456789")
+            .put("active", true)
+            .put("personal", new JsonObject()
+                .put("lastName", "Rhombus")
+                .put("firstName", "Anna")
+                .put("addresses", new JsonArray()
+                  .add(new JsonObject()
+                    .put("countryId", "USA")
+                    .put("addressLine1", "456 Somestreet")
+                    .put("city", "Somewheresville")
+                    .put("addressTypeId", addressTypeId)
+                  )
+                )
+              );
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      if(res.statusCode() == 400) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Expected status code 400: Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(userObject.encode());
+    return future;
+  }
+
 
 
  @Test
@@ -549,6 +585,10 @@ public class RestVerticleIT {
     }).compose(v -> {
       Future<Void> f = Future.future();
       postUserWithDuplicateAddressType(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      postUserBadAddress(context).setHandler(f.completer());
       return f;
     });
 
