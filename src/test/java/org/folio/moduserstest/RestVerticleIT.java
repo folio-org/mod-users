@@ -454,8 +454,50 @@ public class RestVerticleIT {
       .end(addressTypeObject.encode());
 
   return future;
-
  }
+ 
+ private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
+    Future future = Future.future();
+    String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
+    JsonObject userObject = new JsonObject()
+            .put("username", "jacktriangle")
+            .put("id", "3456789")
+            .put("active", true)
+            .put("personal", new JsonObject()
+                .put("lastName", "Triangle")
+                .put("firstName", "Jack")
+                .put("addresses", new JsonArray()
+                  .add(new JsonObject()
+                    .put("countryId", "USA")
+                    .put("addressLine1", "123 Somestreet")
+                    .put("city", "Somewheresville")
+                    .put("addressTypeId", addressTypeId)
+                  )
+                 .add(new JsonObject()
+                    .put("countryId", "USA")
+                    .put("addressLine1", "234 Somestreet")
+                    .put("city", "Somewheresville")
+                    .put("addressTypeId", addressTypeId)
+                  )
+                )
+              );
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      if(res.statusCode() == 400) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Expected status code 400: Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(userObject.encode());
+    return future;
+  }
+
 
 
  @Test
@@ -503,6 +545,10 @@ public class RestVerticleIT {
     }).compose(v -> {
       Future<Void> f = Future.future();
       createAndDeleteAddressType(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      postUserWithDuplicateAddressType(context).setHandler(f.completer());
       return f;
     });
 

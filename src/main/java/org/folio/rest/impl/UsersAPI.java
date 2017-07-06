@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.TimeZone;
+import java.util.ArrayList;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import javax.ws.rs.Path;
@@ -13,6 +14,7 @@ import javax.ws.rs.core.Response;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.resource.UsersResource;
@@ -33,6 +35,7 @@ import org.z3950.zing.cql.cql2pgjson.FieldException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
@@ -181,11 +184,17 @@ public class UsersAPI implements UsersResource {
         Criterion crit = new Criterion();
         crit.addCriterion(idCrit, "OR", nameCrit);
         String tableName = getTableName(tenantId, TABLE_NAME_USER);
-        if(checkForDuplicateAddressTypes(entity) {
+        if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
               PostUsersResponse.withPlainBadRequest("Users are limited to one address per addresstype")));
           return;
         }
+        try {
+          checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(res -> {
+            if(res.failed()) {
+            } else if(res.result() == false) {
+            } else {
+            
             try {
               PostgresClient.getInstance(vertxContext.owner(), TenantTool.calculateTenantId(tenantId)).get(tableName,
                       User.class, crit, true, getReply -> {
@@ -277,6 +286,14 @@ public class UsersAPI implements UsersResource {
                             PostUsersResponse.withPlainInternalServerError(
                             messages.getMessage(lang, MessageConsts.InternalServerError))));
             }
+          });
+        } catch(Exception e) {
+          logger.error(e.getLocalizedMessage(), e);
+          asyncResultHandler.handle(Future.succeededFuture(
+                PostUsersResponse.withPlainInternalServerError(
+                  messages.getMessage(lang, MessageConsts.InternalServerError))));
+
+        }
 
       });
     } catch(Exception e) {
@@ -401,6 +418,12 @@ public class UsersAPI implements UsersResource {
 
     try {
       vertxContext.runOnContext(v-> {
+        if(checkForDuplicateAddressTypes(entity)) {
+          asyncResultHandler.handle(Future.succeededFuture(
+              PostUsersResponse.withPlainBadRequest("Users are limited to one address per addresstype")));
+          return;
+        }
+
         if(!userId.equals(entity.getId())) {
           asyncResultHandler.handle(Future.succeededFuture(
                           PutUsersByUserIdResponse.withPlainBadRequest("You cannot change the value of the id field")));
@@ -563,25 +586,106 @@ public class UsersAPI implements UsersResource {
    return gmtFormat.format(date);
  }
 
- private boolean checkForDuplicateAddressTypes(User user) {
-   for(Address address : user.getPersonal().getAddresses()) {
-     Map<String, Integer> countMap = new HashMap<>();
-     String addressTypeId = address.getAddressTypeId();
-     if(addressTypeId != null) {
-       if(countMap.containsKey(addressTypeId) {
-           Integer count = countMap.get(addressTypeId);
-           count = count + 1;
-           countMap.put(addressTypeId, count);
-       }
-     }
-   }
-   for(Integer i : countMap.values()) {
-    if(i > 1) {
-      return true;
+  private boolean checkForDuplicateAddressTypes(User user) {
+    Map<String, Integer> countMap = new HashMap<>();
+    if(user.getPersonal() != null && 
+      user.getPersonal().getAddresses() != null) {
+      for(Address address : user.getPersonal().getAddresses()) {
+        String addressTypeId = address.getAddressTypeId();
+        if(addressTypeId != null) {
+          boolean found = false;
+          for(String key : countMap.keySet()) {
+            if(key.equals(addressTypeId)) {
+              Integer count = countMap.get(key);
+              count = count + 1;
+              countMap.put(key, count);
+              found = true;
+              break;
+            }
+          }
+          if(!found) {
+            countMap.put(addressTypeId, 1);
+          }
+        }
+      }
     }
-   }
-   return false;
- }
+    for(Integer i : countMap.values()) {
+      if(i > 1) {
+        return true;
+      }
+    }
+    return false;
+  }
 
+  private Future<Boolean> checkAddressTypeValid(String addressTypeId, Context vertxContext, String tenantId) {
+    Future<Boolean> future = Future.future();
+    Criterion criterion = new Criterion(
+          new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
+                  setJSONB(false).setOperation("=").setValue("'" + addressTypeId + "'"));
+    vertxContext.runOnContext(v -> {
+      try {
+        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(AddressTypeAPI.ADDRESS_TYPE_TABLE,
+                AddressType.class, criterion, true, reply -> {
+          try {
+            if(reply.failed()) {
+              String message = reply.cause().getLocalizedMessage();
+              logger.error(message, reply.cause());
+              future.fail(reply.cause());
+            } else {
+              List<AddressType> addressTypeList = (List<AddressType>)reply.result()[0];
+              if(addressTypeList.isEmpty()) {
+                future.complete(false);
+              } else {
+                future.complete(true);
+              }
+            }
+          } catch(Exception e) {
+            String message = e.getLocalizedMessage();
+            logger.error(message, e);
+            future.fail(e);
+          }
+        });
+      } catch(Exception e) {
+        String message = e.getLocalizedMessage();
+        logger.error(message, e);
+        future.fail(e);
+      }
+    });
+    return future;
+  }
+
+  private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, String tenantId) {
+    Future<Boolean> future = Future.future();
+    List<Future> futureList = new ArrayList<>();
+    if(user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
+      future.complete(true);
+      return future;
+    }
+    for(Address address : user.getPersonal().getAddresses()) {
+      String addressTypeId = address.getAddressTypeId();
+      Future addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, tenantId);
+      futureList.add(addressTypeExistsFuture);
+    }
+    CompositeFuture compositeFuture = CompositeFuture.all(futureList);
+    compositeFuture.setHandler(res -> {
+      if(res.failed()) {
+        future.fail(res.cause());
+      } else {
+        boolean bad = false;
+        for(Future f : futureList) {
+          Boolean result = ((Future<Boolean>)f).result();
+          if(!result) {
+            future.complete(false);
+            bad = true;
+            break;
+          }
+        }
+        if(!bad) {
+          future.complete(true);
+        }
+      }
+    });
+    return future;
+  }
 }
 
