@@ -63,6 +63,31 @@
           "methods": [ "DELETE" ],
           "pathPattern": "/groups/{id}*",
           "permissionsRequired": [ "usergroups.item.delete" ]
+        },
+        {
+          "methods" : [ "GET" ],
+          "pathPattern" : "/addresstypes",
+          "permissionsRequired" : [ "addresstypes.collection.get" ]
+        },
+        {
+          "methods" : [ "GET" ],
+          "pathPattern" : "/addresstypes/{id}",
+          "permissionsRequired" : [ "addresstypes.item.get" ]
+        },
+        {
+          "methods" : [ "POST" ],
+          "pathPattern" : "/addresstypes",
+          "permissionsRequired" : [ "addresstypes.item.post" ]
+        },
+        {
+          "methods" : [ "PUT" ],
+          "pathPattern" : "/addresstypes/{id}",
+          "permissionsRequired" : [ "addresstypes.item.put" ]
+        },
+        {
+          "methods" : [ "DELETE" ],
+          "pathPattern" : "/addresstypes/{id}",
+          "permissionsRequired" : [ "addresstypes.item.delete" ]
         }
       ]
     },
@@ -142,6 +167,31 @@
       "description" : "Delete Groups for users"
     },
     {
+      "permissionName" : "addresstypes.collection.get",
+      "displayName" : "addresstypes collection get",
+      "description" : "Get a list of addresstype records"
+    },
+    {
+      "permissionName" : "addresstypes.item.get",
+      "displayName" : "addresstypes item get",
+      "description" : "Get a single addresstype record"
+    },
+    {
+      "permissionName" : "addresstypes.item.post",
+      "displayName" : "addresstypes item post",
+      "description" : "Create a new addresstype record"
+    },
+    {
+      "permissionName" : "addresstypes.item.put",
+      "displayName" : "addresstypes item put",
+      "description" : "Edit an addresstype record"
+    },
+    {
+      "permissionName" : "addresstypes.item.delete",
+      "displayName" : "addresstypes item delete",
+      "description" : "Delete an addresstype record"
+    }
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -157,7 +207,12 @@
         "usergroups.item.get",
         "usergroups.item.post",
         "usergroups.item.put",
-        "usergroups.item.delete"
+        "usergroups.item.delete",
+        "addresstypes.collection.get",
+        "addresstypes.item.get",
+        "addresstypes.item.post",
+        "addresstypes.item.put",
+        "addresstypes.item.delete"
       ]
     }
   ]
