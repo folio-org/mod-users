@@ -1,3 +1,8 @@
+## 13.1.0 2017-07-06
+ * Enable /addresstypes endpoint for CRUD on address types
+ * Add restrictions to user data to require that only one address of a given addresstype exist, and that all addresstypeids have a corresponding address type record
+ * Put implementation version into module descriptor
+
 ## 13.0.1 2017-06-27
  * Update ModuleDescriptor
 
