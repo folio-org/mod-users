@@ -190,7 +190,7 @@
       "permissionName" : "addresstypes.item.delete",
       "displayName" : "addresstypes item delete",
       "description" : "Delete an addresstype record"
-    }
+    },
     {
       "permissionName" : "users.all",
       "displayName" : "users all",
