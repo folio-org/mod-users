@@ -1,10 +1,10 @@
 {
-  "id": "users-module",
+  "id": "mod-users-14.0.0",
   "name": "users",
   "provides": [
     {
       "id": "users",
-      "version": "13.0",
+      "version": "14.0",
       "handlers" : [
         {
           "methods": [ "GET" ],
@@ -93,14 +93,12 @@
     },
     {
       "id": "_tenant",
-      "version": "1.0.0",
+      "version": "1.0",
       "interfaceType" : "system",
-      "routingEntries" : [
+      "handlers" : [
         {
           "methods" : [ "POST", "DELETE" ],
-          "pathPattern" : "/_/tenant",
-          "level" : "10",
-          "type" : "system"
+          "pathPattern" : "/_/tenant"
         }
       ]
     }
