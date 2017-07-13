@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.folio.rest.impl;
 
 import io.vertx.core.AsyncResult;
@@ -50,25 +45,25 @@ public class AddressTypeAPI implements AddresstypesResource {
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
   }
-  
+
   public AddressTypeAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);
   }
-  
+
   private String getErrorResponse(String response) {
     if(suppressErrorResponse) {
       return "Internal Server Error: Please contact Admin";
     }
     return response;
   }
-  
+
   private boolean isDuplicate(String errorMessage){
     if(errorMessage != null && errorMessage.contains("duplicate key value violates unique constraint")){
       return true;
     }
     return false;
   }
-  
+
   private boolean isInvalidUUID(String errorMessage){
     if(errorMessage != null && errorMessage.contains("invalid input syntax for uuid")){
       return true;
@@ -77,11 +72,11 @@ public class AddressTypeAPI implements AddresstypesResource {
       return false;
     }
   }
-  
+
   @Validate
   @Override
   public void getAddresstypes(String query, int offset, int limit, String lang,
-          Map<String, String> okapiHeaders, 
+          Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
     vertxContext.runOnContext( v -> {
@@ -104,7 +99,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                       addresstypeCollection.setTotalRecords((Integer)reply.result()[1]);
                       asyncResultHandler.handle(Future.succeededFuture(
                               GetAddresstypesResponse.withJsonOK(addresstypeCollection)));
-                      
+
                     }
                   } catch(Exception e) {
                     String message = e.getLocalizedMessage();
@@ -125,8 +120,8 @@ public class AddressTypeAPI implements AddresstypesResource {
   }
 
   @Override
-  public void postAddresstypes(String lang, AddressType entity, Map<String, 
-          String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, 
+  public void postAddresstypes(String lang, AddressType entity, Map<String,
+          String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
     vertxContext.runOnContext(v -> {
       try {
@@ -178,8 +173,8 @@ public class AddressTypeAPI implements AddresstypesResource {
   }
 
   @Override
-  public void getAddresstypesByAddresstypeId(String addresstypeId, String lang, 
-          Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, 
+  public void getAddresstypesByAddresstypeId(String addresstypeId, String lang,
+          Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
     vertxContext.runOnContext(v -> {
       try {
@@ -229,7 +224,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                 GetAddresstypesByAddresstypeIdResponse.withPlainInternalServerError(
                         getErrorResponse(message))));
       }
-    });    
+    });
   }
 
   @Override
@@ -275,7 +270,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                               DeleteAddresstypesByAddresstypeIdResponse.withNoContent()));
                       } else {
                         String message = Messages.getInstance().getMessage(
-                                lang, MessageConsts.DeletedCountError, 1, 
+                                lang, MessageConsts.DeletedCountError, 1,
                                   deleteReply.result().getUpdated());
                         logger.error(message);
                         asyncResultHandler.handle(Future.succeededFuture(
@@ -283,7 +278,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                       }
                     }
                   });
-                
+
                 } catch(Exception e) {
                   String message = e.getLocalizedMessage();
                   asyncResultHandler.handle(Future.succeededFuture(
@@ -293,7 +288,7 @@ public class AddressTypeAPI implements AddresstypesResource {
               }
             }
           });
-          
+
         } catch(Exception e) {
           String message = e.getLocalizedMessage();
           logger.error(message, e);
@@ -308,7 +303,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                 DeleteAddresstypesByAddresstypeIdResponse.withPlainInternalServerError(
                         getErrorResponse(message))));
       }
-    });      
+    });
   }
 
   @Override
@@ -335,7 +330,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                 asyncResultHandler.handle(Future.succeededFuture(
                    PutAddresstypesByAddresstypeIdResponse.withNoContent()));
               }
-            }        
+            }
           } catch(Exception e) {
            String message = e.getLocalizedMessage();
            logger.error(message, e);
@@ -351,13 +346,13 @@ public class AddressTypeAPI implements AddresstypesResource {
                 PutAddresstypesByAddresstypeIdResponse.withPlainInternalServerError(
                         getErrorResponse(message))));
       }
-    });    
+    });
   }
-  
-  
+
+
   private CQLWrapper getCQL(String query, int limit, int offset, String tableName) throws FieldException{
     CQL2PgJSON cql2pgJson = new CQL2PgJSON(tableName + ".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
-  
+
 }
