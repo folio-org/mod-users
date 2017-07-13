@@ -199,7 +199,7 @@ public class UsersAPI implements UsersResource {
             } else if(checkRes.result() == false) {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.withPlainBadRequest("You cannot add addresses with non-existant address types")));
-            } else {             
+            } else {
               try {
                 PostgresClient.getInstance(vertxContext.owner(), TenantTool.calculateTenantId(tenantId)).get(tableName,
                         User.class, crit, true, getReply -> {
@@ -489,8 +489,8 @@ public class UsersAPI implements UsersResource {
                             else{
                               Date createdDate = null;
                               Date now = new Date();
-                              if(userList.size() > 0) { 
-                                createdDate = userList.get(0).getCreatedDate(); 
+                              if(userList.size() > 0) {
+                                createdDate = userList.get(0).getCreatedDate();
                               } else {
                                 createdDate = now;
                               }
@@ -612,7 +612,7 @@ public class UsersAPI implements UsersResource {
 
   private boolean checkForDuplicateAddressTypes(User user) {
     Map<String, Integer> countMap = new HashMap<>();
-    if(user.getPersonal() != null && 
+    if(user.getPersonal() != null &&
       user.getPersonal().getAddresses() != null) {
       for(Address address : user.getPersonal().getAddresses()) {
         String addressTypeId = address.getAddressTypeId();

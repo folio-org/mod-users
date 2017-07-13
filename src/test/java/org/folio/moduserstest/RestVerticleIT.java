@@ -170,7 +170,7 @@ public class RestVerticleIT {
            }
            Date now = new Date();
            if(createdDate.before(now)) {
-            future.complete(); 
+            future.complete();
            } else {
              future.fail("Bad value for createdDate");
            }
@@ -254,7 +254,7 @@ public class RestVerticleIT {
            }
            Date now = new Date();
            if(createdDate.before(now) && updatedDate.before(now) && createdDate.before(updatedDate)) {
-            future.complete(); 
+            future.complete();
            } else {
              future.fail("Bad value for createdDate and/or updatedDate");
            }
@@ -382,7 +382,7 @@ public class RestVerticleIT {
                   future.fail("Expected status 204. Got " + putRes.statusCode() + ": " + putBody.toString());
                 } else {
                   HttpClient deleteClient = vertx.createHttpClient();
-                  client.delete(port, "localhost", "/addresstypes/" + 
+                  client.delete(port, "localhost", "/addresstypes/" +
                     addressType.getString("id"), deleteRes -> {
                     deleteRes.bodyHandler(deleteBody -> {
                       if(deleteRes.statusCode() != 400) {
@@ -440,7 +440,7 @@ public class RestVerticleIT {
                   " : " + deleteBody.toString());
               });
             }
-          })    
+          })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
@@ -455,7 +455,7 @@ public class RestVerticleIT {
 
   return future;
  }
- 
+
  private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
     Future future = Future.future();
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
