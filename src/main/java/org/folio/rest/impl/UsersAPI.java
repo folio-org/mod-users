@@ -1,20 +1,22 @@
 package org.folio.rest.impl;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.TimeZone;
-import java.util.ArrayList;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 import org.folio.rest.annotations.Validate;
-import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
+import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.resource.UsersResource;
@@ -33,9 +35,9 @@ import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
@@ -49,7 +51,8 @@ import io.vertx.core.logging.LoggerFactory;
 @Path("users")
 public class UsersAPI implements UsersResource {
 
-  public static final String TABLE_NAME_USER = "users";
+  public static final String TABLE_NAME_USERS = "users";
+  public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private final Messages messages = Messages.getInstance();
   //private final String USER_COLLECTION = "user";
@@ -58,22 +61,42 @@ public class UsersAPI implements UsersResource {
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
-
   public UsersAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField("id");
   }
 
-  private String getTableName(String tenantId, String tableBase) {
-    //This hardly deserves to be a method, but since details may change, I'm
-    //trying to keep it flexible
-    //return tenantId + "." + tableBase;
-    return tableBase;
+  /**
+   * right now, just query the join view if a cql was passed in, otherwise work with the
+   * master users table. this can be optimized in the future to check if there is really a need
+   * to use the join view due to cross table cqling - like returning users sorted by group name
+   * @param cql
+   * @return
+   */
+  private String getTableName(String cql) {
+    if(cql != null){
+      return VIEW_NAME_USER_GROUPS_JOIN;
+      //}
+    }
+    return TABLE_NAME_USERS;
   }
 
+  /**
+   * check for entries in the cql which reference the group table, indicating a join is needed
+   * and update the cql accordingly - by replacing the patronGroup. prefix with g. which is what
+   * the view refers to the groups table
+   * @param cql
+   * @return
+   */
+  private String convertQuery(String cql){
+    if(cql != null){
+      return cql.replaceAll("(?i)patronGroup\\.", VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb.");
+    }
+    return cql;
+  }
 
   private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USER+".jsonb");
-    return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(VIEW_NAME_USER_GROUPS_JOIN+".jsonb",VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb"));
+    return new CQLWrapper(cql2pgJson, convertQuery(query)).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
 
   @Validate
@@ -88,7 +111,7 @@ public class UsersAPI implements UsersResource {
       CQLWrapper cql = getCQL(query,limit,offset);
       vertxContext.runOnContext(v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-        String tableName = getTableName(tenantId, TABLE_NAME_USER);
+        String tableName = getTableName(query);
         String[] fieldList = {"*"};
         //Criterion criterion = Criterion.json2Criterion(query);
         //criterion.setLimit(new Limit(limit)).setOffset(new Offset(offset));
@@ -183,7 +206,7 @@ public class UsersAPI implements UsersResource {
         nameCrit.setValue(entity.getUsername());
         Criterion crit = new Criterion();
         crit.addCriterion(idCrit, "OR", nameCrit);
-        String tableName = getTableName(tenantId, TABLE_NAME_USER);
+        String tableName = getTableName(null);
         if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
               PostUsersResponse.withPlainBadRequest("Users are limited to one address per addresstype")));
@@ -280,7 +303,7 @@ public class UsersAPI implements UsersResource {
                         } catch (Exception e) {
                           logger.error(e.getLocalizedMessage(), e);
                           asyncResultHandler.handle(Future.succeededFuture(
-                            PutUsersByUserIdResponse.withPlainInternalServerError(
+                            PostUsersResponse.withPlainInternalServerError(
                                     messages.getMessage(lang, MessageConsts.InternalServerError))));
                         }
                       }
@@ -324,7 +347,7 @@ public class UsersAPI implements UsersResource {
         idCrit.setValue(userId);
         Criterion criterion = new Criterion(idCrit);
         logger.debug("Using criterion: " + criterion.toString());
-        String tableName = getTableName(tenantId, TABLE_NAME_USER);
+        String tableName = getTableName(null);
 
             try {
                PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName, User.class, criterion,
@@ -380,7 +403,7 @@ public class UsersAPI implements UsersResource {
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
         idCrit.setValue(userId);
-        String tableName = getTableName(tenantId, TABLE_NAME_USER);
+        String tableName = getTableName(null);
 
             try {
               PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(
@@ -435,7 +458,7 @@ public class UsersAPI implements UsersResource {
                           PutUsersByUserIdResponse.withPlainBadRequest("You cannot change the value of the id field")));
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-          String tableName = getTableName(tenantId, TABLE_NAME_USER);
+          String tableName = getTableName(null);
           Criteria nameCrit = new Criteria();
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");

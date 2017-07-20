@@ -1,26 +1,21 @@
 package org.folio.moduserstest;
 
 import java.net.HttpURLConnection;
+import java.net.URLEncoder;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import java.util.Date;
-import java.util.TimeZone;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import javax.xml.bind.DatatypeConverter;
-
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.ISODateTimeFormat;
-
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -37,8 +32,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -54,6 +49,8 @@ public class RestVerticleIT {
 
   private static Vertx vertx;
   static int port;
+
+  private String groupID;
 
   @Rule
   public Timeout rule = Timeout.seconds(10);
@@ -84,7 +81,7 @@ public class RestVerticleIT {
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient("localhost", port, "diku");
+    TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
@@ -614,7 +611,7 @@ public class RestVerticleIT {
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addGroupCF));
      Response addGroupResponse = addGroupCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(addGroupResponse.code, HttpURLConnection.HTTP_CREATED);
-     String groupID = addGroupResponse.body.getString("id");
+     groupID = addGroupResponse.body.getString("id");
      System.out.println(addGroupResponse.body +
        "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
 
@@ -797,6 +794,66 @@ public class RestVerticleIT {
   }
  }
 
+ @Test
+ public void testCrossTableQueries(TestContext context) {
+   String url = "http://localhost:"+port+"/users?query=";
+
+   try {
+
+     //query on users and sort by groups
+     String url1 = url+URLEncoder.encode("active=* sortBy patronGroup.group/sort.descending", "UTF-8");
+     String url2 = url+URLEncoder.encode("active=* sortBy patronGroup.group/sort.ascending", "UTF-8");
+     //query and sort on groups via users endpoint
+     String url3 = url+URLEncoder.encode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending", "UTF-8");
+     //query on users sort on users and groups
+     String url4 = url+URLEncoder.encode("active=* sortby patronGroup.group personal.lastName personal.firstName", "UTF-8");
+     //query on users and groups sort by groups
+     String url5 = url+URLEncoder.encode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group", "UTF-8");
+     //query on users and sort by users
+     String url6 = url+URLEncoder.encode("active=true sortBy username", "UTF-8");
+     //non existant group - should be 0 results
+     String url7 = url+URLEncoder.encode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group", "UTF-8");
+
+     CompletableFuture<Response> cqlCF1 = new CompletableFuture();
+     CompletableFuture<Response> cqlCF2 = new CompletableFuture();
+     CompletableFuture<Response> cqlCF3 = new CompletableFuture();
+     CompletableFuture<Response> cqlCF4 = new CompletableFuture();
+     CompletableFuture<Response> cqlCF5 = new CompletableFuture();
+     CompletableFuture<Response> cqlCF6 = new CompletableFuture();
+     CompletableFuture<Response> cqlCF7 = new CompletableFuture();
+
+     String[] urls = new String[]{url1, url2, url3, url4, url5, url6, url7};
+     CompletableFuture<Response>[] cqlCF = new CompletableFuture[]{cqlCF1, cqlCF2, cqlCF3, cqlCF4, cqlCF5, cqlCF6, cqlCF7};
+
+     for(int i=0; i<7; i++){
+       CompletableFuture<Response> cf = cqlCF[i];
+       String cqlURL = urls[i];
+       send(cqlURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
+         new HTTPResponseHandler(cf));
+       Response cqlResponse = cf.get(5, TimeUnit.SECONDS);
+       context.assertEquals(cqlResponse.code, HttpURLConnection.HTTP_OK);
+       System.out.println(cqlResponse.body +
+         "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
+       //requests should have 3 or 4 results
+       if(i==6){
+         context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
+       } else if(i==5){
+         context.assertEquals(2, cqlResponse.body.getInteger("totalRecords"));
+       } else if(i==4){
+         context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
+       } else if(i==0){
+         context.assertEquals("bobcircle" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+       }else if(i==1){
+         context.assertEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+       }else {
+         context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 1);
+       }
+     }
+  } catch (Exception e) {
+    context.fail(e.getMessage());
+  }
+ }
+
  private void send(String url, TestContext context, HttpMethod method, String content,
      String contentType, int errorCode, Handler<HttpClientResponse> handler) {
    HttpClient client = vertx.createHttpClient();
@@ -883,6 +940,7 @@ public class RestVerticleIT {
    }
    user.put("username", name);
    user.put("patronGroup", pgId);
+   user.put("active", true);
    return user;
  }
 

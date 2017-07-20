@@ -221,7 +221,7 @@ public class UserGroupAPI implements GroupsResource {
       try {
         User u = new User();
         u.setPatronGroup(groupId);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USER, u, true, false,
+        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USERS, u, true, false,
           replyHandler -> {
           if(replyHandler.succeeded()){
             List<User> userList = (List<User>) replyHandler.result()[0];

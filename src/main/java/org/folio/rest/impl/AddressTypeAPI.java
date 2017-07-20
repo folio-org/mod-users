@@ -1,27 +1,21 @@
 package org.folio.rest.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import java.util.List;
 import java.util.Map;
+
 import javax.ws.rs.core.Response;
-import org.folio.rest.jaxrs.model.AddressType;
-import org.folio.rest.jaxrs.resource.AddresstypesResource;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
+import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.AddresstypeCollection;
 import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.resource.AddresstypesResource;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
-import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
@@ -30,6 +24,14 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
+
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 /**
  *
  * @author kurt
@@ -237,9 +239,9 @@ public class AddressTypeAPI implements AddresstypesResource {
           //Check to make certain no users' addresses are currently using this type
           /* CQL statement to check for users with addresses that use a particular address type */
           String query = "personal.addresses=" + addresstypeId;
-          CQLWrapper cql = getCQL(query,1,0, UsersAPI.TABLE_NAME_USER);
+          CQLWrapper cql = getCQL(query,1,0, UsersAPI.TABLE_NAME_USERS);
           PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
-                  UsersAPI.TABLE_NAME_USER, User.class, new String[]{"*"},
+                  UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
                     cql, true, false, reply -> {
             if(reply.failed()) {
               String message = reply.cause().getLocalizedMessage();
