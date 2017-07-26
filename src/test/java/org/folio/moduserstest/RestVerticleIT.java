@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.parser.JsonPathParser;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -797,8 +798,26 @@ public class RestVerticleIT {
  @Test
  public void testCrossTableQueries(TestContext context) {
    String url = "http://localhost:"+port+"/users?query=";
+   String userUrl = "http://localhost:"+port+"/users";
 
    try {
+     int inc = 0;
+     CompletableFuture<Response> addUserCF = new CompletableFuture();
+     String addUserURL = userUrl;
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley"+inc++, groupID).encode(),
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF));
+     Response addUserResponse = addUserCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addUserResponse.code, HttpURLConnection.HTTP_CREATED);
+     System.out.println(addUserResponse.body +
+       "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+
+     CompletableFuture<Response> addUserCF2 = new CompletableFuture();
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley"+inc++, groupID).encode(),
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF2));
+     Response addUserResponse2 = addUserCF2.get(5, TimeUnit.SECONDS);
+     context.assertEquals(addUserResponse2.code, HttpURLConnection.HTTP_CREATED);
+     System.out.println(addUserResponse2.body +
+       "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
      //query on users and sort by groups
      String url1 = url+URLEncoder.encode("active=* sortBy patronGroup.group/sort.descending", "UTF-8");
@@ -838,13 +857,15 @@ public class RestVerticleIT {
        if(i==6){
          context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
        } else if(i==5){
-         context.assertEquals(2, cqlResponse.body.getInteger("totalRecords"));
+         context.assertEquals(4, cqlResponse.body.getInteger("totalRecords"));
        } else if(i==4){
          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
        } else if(i==0){
-         context.assertEquals("bobcircle" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+         context.assertEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(4).getString("username"));
        }else if(i==1){
          context.assertEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+       }else if(i==3){
+         context.assertEquals("Triangle0" , new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"));
        }else {
          context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 1);
        }
@@ -931,16 +952,22 @@ public class RestVerticleIT {
 
  private static JsonObject createUser(String id, String name, String pgId) {
 
+   int inc = 0;
    JsonObject user = new JsonObject();
    if(id !=null){
      user.put("id", id);
    }
    else{
-     user.put("id", UUID.randomUUID().toString());
+     id = UUID.randomUUID().toString();
+     user.put("id", id);
    }
    user.put("username", name);
    user.put("patronGroup", pgId);
    user.put("active", true);
+   user.put("personal", new JsonObject()
+     .put("lastName", "Triangle"+inc++)
+     .put("firstName", "Jack"+inc++)
+   );
    return user;
  }
 
