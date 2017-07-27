@@ -1,3 +1,8 @@
+## 14.1.0 2017-07-27
+ * Update RMB to allow for cross table joins (e.g. sorting by patrongroup names)
+ * Adjust CQL handling to accomodate cross table queries
+ * Fix bug causing numeric usernames to be treated as integers
+
 ## 14.0.0 2017-07-06
  * Enable /addresstypes endpoint for CRUD on address types
  * Add restrictions to user data to require that only one address of a given addresstype exist, and that all addresstypeids have a corresponding address type record

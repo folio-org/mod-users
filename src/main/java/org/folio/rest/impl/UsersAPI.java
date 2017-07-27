@@ -196,16 +196,6 @@ public class UsersAPI implements UsersResource {
     try {
       vertxContext.runOnContext( v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-        Criteria idCrit = new Criteria();
-        idCrit.addField(USER_ID_FIELD);
-        idCrit.setOperation("=");
-        idCrit.setValue(entity.getId());
-        Criteria nameCrit = new Criteria();
-        nameCrit.addField(USER_NAME_FIELD);
-        nameCrit.setOperation("=");
-        nameCrit.setValue(entity.getUsername());
-        Criterion crit = new Criterion();
-        crit.addCriterion(idCrit, "OR", nameCrit);
         String tableName = getTableName(null);
         if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
@@ -213,6 +203,17 @@ public class UsersAPI implements UsersResource {
           return;
         }
         try {
+					Criteria idCrit = new Criteria("raml/raml-util/schemas/mod-users/userdata.json");
+					idCrit.addField(USER_ID_FIELD);
+					idCrit.setOperation("=");
+					idCrit.setValue(entity.getId());
+					Criteria nameCrit = new Criteria("raml/raml-util/schemas/mod-users/userdata.json");
+					nameCrit.addField(USER_NAME_FIELD);
+					nameCrit.setOperation("=");
+					nameCrit.setValue(entity.getUsername());
+					Criterion crit = new Criterion();
+					crit.addCriterion(idCrit, "OR", nameCrit);
+
           checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
             if(checkRes.failed()) {
               logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());

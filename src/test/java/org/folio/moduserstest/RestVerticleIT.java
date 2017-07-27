@@ -148,6 +148,28 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> postUserWithNumericName(TestContext context) {
+    Future future = Future.future();
+    JsonObject userObject = new JsonObject()
+            .put("username", "777777")
+            .put("id", "777777")
+            .put("active", true);
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      if(res.statusCode() == 201) {
+        future.complete();
+      } else {
+        future.fail("Got status code: " + res.statusCode());
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(userObject.encode());
+    return future;
+  }
+
+
  private Future<Void> getUser(TestContext context) {
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
@@ -587,6 +609,10 @@ public class RestVerticleIT {
       Future<Void> f = Future.future();
       postUserBadAddress(context).setHandler(f.completer());
       return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      postUserWithNumericName(context).setHandler(f.completer());
+      return f;
     });
 
     startFuture.setHandler(res -> {
@@ -838,15 +864,15 @@ public class RestVerticleIT {
        if(i==6){
          context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
        } else if(i==5){
-         context.assertEquals(2, cqlResponse.body.getInteger("totalRecords"));
+         context.assertEquals(3, cqlResponse.body.getInteger("totalRecords"));
        } else if(i==4){
          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
        } else if(i==0){
-         context.assertEquals("bobcircle" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+         context.assertNotEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
        }else if(i==1){
          context.assertEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
        }else {
-         context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 1);
+         context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
        }
      }
   } catch (Exception e) {
