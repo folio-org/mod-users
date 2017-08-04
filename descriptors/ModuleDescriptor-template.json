@@ -1,5 +1,5 @@
 {
-  "id": "mod-users-14.0.0",
+  "id": "${artifactId}-${version}",
   "name": "users",
   "provides": [
     {
