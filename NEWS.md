@@ -1,3 +1,6 @@
+## 14.1.1 2017-07-27
+ * Fix MD to contain implementation number in id
+
 ## 14.1.0 2017-07-27
  * Update RMB to allow for cross table joins (e.g. sorting by patrongroup names)
  * Adjust CQL handling to accommodate cross table queries
