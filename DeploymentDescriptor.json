@@ -1,5 +1,5 @@
 {
-  "srvcId": "users-module",
+  "srvcId": "mod-users-14.1.2-SNAPSHOT",
   "nodeId": "localhost",
   "descriptor": {
     "exec": "java -jar ../mod-users/target/mod-users-fat.jar -Dhttp.port=%p embed_postgres=true"
