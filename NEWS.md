@@ -1,3 +1,9 @@
+## 14.2.0 2017-08-23
+ * Add 'proxyFor' field to userdata
+
+## 14.1.2 2017-08-23
+ * Fix bug with numeric IDs
+
 ## 14.1.1 2017-07-27
  * Fix MD to contain implementation number in id
 
