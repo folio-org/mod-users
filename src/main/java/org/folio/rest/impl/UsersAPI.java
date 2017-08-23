@@ -342,15 +342,14 @@ public class UsersAPI implements UsersResource {
      try {
       vertxContext.runOnContext(v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-        Criteria idCrit = new Criteria();
-        idCrit.addField(USER_ID_FIELD);
-        idCrit.setOperation("=");
-        idCrit.setValue(userId);
-        Criterion criterion = new Criterion(idCrit);
-        logger.debug("Using criterion: " + criterion.toString());
         String tableName = getTableName(null);
-
             try {
+              Criteria idCrit = new Criteria("apidocs/raml/raml-util/schemas/mod-users/userdata.json");
+              idCrit.addField(USER_ID_FIELD);
+              idCrit.setOperation("=");
+              idCrit.setValue(userId);
+              Criterion criterion = new Criterion(idCrit);
+              logger.debug("Using criterion: " + criterion.toString());
                PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName, User.class, criterion,
                        true, false, getReply -> {
                  if(getReply.failed()) {
