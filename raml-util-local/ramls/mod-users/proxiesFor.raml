@@ -25,7 +25,7 @@ resourceTypes:
   - collection: !include ../../rtypes/collection.raml
   - collection-item: !include ../../rtypes/item-collection.raml
 
-/proxiesFor:
+/proxiesfor:
   type:
     collection:
       exampleCollection: !include ../../examples/mod-users/proxyforCollection.sample
@@ -41,7 +41,7 @@ resourceTypes:
   post:
     is: [validate]
     description: Create a proxyFor relationship
-  {proxyForId}:
+  /{proxyforId}:
     type:
       collection-item:
         exampleItem: !include ../../examples/mod-users/proxyfor.sample
