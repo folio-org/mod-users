@@ -9,9 +9,6 @@
     "proxyUserId": {
       "type": "string"
     },
-    "meta" : {
-      "type" : "object"
-	},
     "id": {
       "type": "string"
     }
