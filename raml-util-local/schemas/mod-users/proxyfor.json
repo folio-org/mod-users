@@ -11,7 +11,10 @@
     },
     "id": {
       "type": "string"
-    }
+    },
+    "meta" : {
+      "type" : "object"
+	}
   },
   "additionalProperties": false
 }

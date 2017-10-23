@@ -20,6 +20,11 @@ CREATE TABLE IF NOT EXISTS myuniversity_mymodule.addresstype (
     jsonb jsonb NOT NULL
     );
 
+CREATE TABLE IF NOT EXISTS myuniversity_mymodule.proxyfor (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	jsonb jsonb NOT NULL
+	);
+
 -- left join so that we have all the users even if there is no group associated with them
 CREATE VIEW myuniversity_mymodule.users_groups_view AS select u.id,u.jsonb as jsonb, g.jsonb as group_jsonb from myuniversity_mymodule.users u
 left join myuniversity_mymodule.groups g on u.jsonb->>'patronGroup' = g.jsonb->>'id'; -- order by g.jsonb->>'group' desc;
@@ -32,6 +37,9 @@ CREATE UNIQUE INDEX group_unique_idx ON myuniversity_mymodule.groups((jsonb->>'g
 
 -- index to support @> ops, faster than jsonb_ops
 CREATE INDEX idxgin_addresstype ON myuniversity_mymodule.addresstype USING gin (jsonb jsonb_path_ops);
+
+CREATE INDEX idxgin_proxyfor ON myuniversity_mymodule.proxyfor USING gin (jsonb jsonb_path_ops);
+CREATE UNIQUE INDEX proxy_unique_idx ON myuniversity_mymodule.proxyfor((jsonb->>'userId'), (jsonb->>'proxyUserId'));
 
 CREATE OR REPLACE FUNCTION update_modified_column_groups()
 RETURNS TRIGGER AS $$

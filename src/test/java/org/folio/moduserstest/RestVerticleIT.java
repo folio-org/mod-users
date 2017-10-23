@@ -553,6 +553,280 @@ public class RestVerticleIT {
             .end(userObject.encode());
     return future;
   }
+  
+  private Future<Void> createProxyfor(TestContext context) {
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 201) {
+          future.fail("Expected code 201, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(proxyObject.encode());
+    return future;
+  }
+  private Future<Void> createProxyforWithSameUserId(TestContext context) {
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "5b0a9a0b-6eb6-447c-bc31-9c99940a29c5");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 201) {
+          future.fail("Expected code 201, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(proxyObject.encode());
+
+    return future;
+  }
+  private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 201) {
+          future.fail("Expected code 201, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(proxyObject.encode());
+    return future;
+  }
+  private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 422) {
+          future.fail("Expected code 422, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end(proxyObject.encode());
+    return future;
+  }
+  private Future<Void> getProxyforCollection(TestContext context) {    
+    Future future = Future.future();
+    HttpClient client = vertx.createHttpClient();
+    client.get(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 200) {
+          future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          JsonObject resultJson = body.toJsonObject();
+          JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+          if(proxyForArray.size() == 3) {
+            future.complete();
+          } else {
+            future.fail("Expected 3 entries, found " + proxyForArray.size());
+          }
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .end();
+    return future;
+  }
+  private Future<Void> findAndGetProxyfor(TestContext context) {    
+    Future future = Future.future();
+    try {
+      HttpClient client = vertx.createHttpClient();
+      System.out.println("Making CQL request\n");
+      client.get(port, "localhost", 
+              "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
+              res -> {
+        res.bodyHandler(body -> {
+          try {
+            if(res.statusCode() != 200) {
+              future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+            } else {
+              JsonObject resultJson = body.toJsonObject();
+              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+              if(proxyForArray.size() != 1) {
+                future.fail("Expected 1 entry, found " + proxyForArray.size());
+              } else {
+                JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+                String proxyForId = proxyForObject.getString("id");
+                System.out.println("Making get-by-id request\n");
+                client.get(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+                  res2.bodyHandler(body2 -> {
+                    if(res2.statusCode() != 200) {
+                      future.fail("Expected code 200, got " + res.statusCode() + " : " + body2.toString());
+                    } else {
+                      future.complete();
+                    }
+                  });
+                })
+                        .putHeader("X-Okapi-Tenant", "diku")
+                        .putHeader("content-type", "application/json")
+                        .putHeader("accept", "application/json")
+                        .exceptionHandler( e -> { future.fail(e); })
+                        .end();
+              }
+            }
+          } catch(Exception e) {
+            future.fail(e);
+          }
+        });      
+      })
+              .putHeader("X-Okapi-Tenant", "diku")
+              .putHeader("content-type", "application/json")
+              .putHeader("accept", "application/json")
+              .exceptionHandler( e -> { future.fail(e); })
+              .end();
+    } catch(Exception e) {
+      future.fail(e);
+    }
+    return future;
+  }
+  private Future<Void> findAndUpdateProxyfor(TestContext context) {
+    Future future = Future.future();
+    JsonObject modifiedProxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa")
+            .put("meta", new JsonObject()
+              .put("fookey", "foovalue")
+            );
+    try {
+      HttpClient client = vertx.createHttpClient();
+      System.out.println("Making CQL request\n");
+      client.get(port, "localhost", 
+              "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
+              res -> {
+        res.bodyHandler(body -> {
+          try {
+            if(res.statusCode() != 200) {
+              future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+            } else {
+              JsonObject resultJson = body.toJsonObject();
+              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+              if(proxyForArray.size() != 1) {
+                future.fail("Expected 1 entry, found " + proxyForArray.size());
+              } else {
+                JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+                String proxyForId = proxyForObject.getString("id");
+                System.out.println("Making put-by-id request\n");
+                client.put(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+                  res2.bodyHandler(body2 -> {
+                    if(res2.statusCode() != 204) {
+                      future.fail("Expected code 204, got " + res.statusCode() + " : " + body2.toString());
+                    } else {
+                      future.complete();
+                    }
+                  });
+                })
+                        .putHeader("X-Okapi-Tenant", "diku")
+                        .putHeader("content-type", "application/json")
+                        .putHeader("accept", "application/json")
+                        .putHeader("accept", "text/plain")
+                        .exceptionHandler( e -> { future.fail(e); })
+                        .end(modifiedProxyObject.encode());
+              }
+            }
+          } catch(Exception e) {
+            future.fail(e);
+          }
+        });      
+      })
+              .putHeader("X-Okapi-Tenant", "diku")
+              .putHeader("content-type", "application/json")
+              .putHeader("accept", "application/json")
+              .exceptionHandler( e -> { future.fail(e); })
+              .end();
+    } catch(Exception e) {
+      future.fail(e);
+    }
+    return future;
+  }
+  private Future<Void> findAndDeleteProxyfor(TestContext context) {
+    Future future = Future.future();
+       try {
+      HttpClient client = vertx.createHttpClient();
+      System.out.println("Making CQL request\n");
+      client.get(port, "localhost", 
+              "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
+              res -> {
+        res.bodyHandler(body -> {
+          try {
+            if(res.statusCode() != 200) {
+              future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+            } else {
+              JsonObject resultJson = body.toJsonObject();
+              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+              if(proxyForArray.size() != 1) {
+                future.fail("Expected 1 entry, found " + proxyForArray.size());
+              } else {
+                JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+                String proxyForId = proxyForObject.getString("id");
+                System.out.println("Making delete-by-id request\n");
+                client.delete(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+                  res2.bodyHandler(body2 -> {
+                    if(res2.statusCode() != 204) {
+                      future.fail("Expected code 204, got " + res.statusCode() + " : " + body2.toString());
+                    } else {
+                      future.complete();
+                    }
+                  });
+                })
+                        .putHeader("X-Okapi-Tenant", "diku")
+                        .putHeader("content-type", "application/json")
+                        .putHeader("accept", "application/json")
+                        .putHeader("accept", "text/plain")
+                        .exceptionHandler( e -> { future.fail(e); })
+                        .end();
+              }
+            }
+          } catch(Exception e) {
+            future.fail(e);
+          }
+        });      
+      })
+              .putHeader("X-Okapi-Tenant", "diku")
+              .putHeader("content-type", "application/json")
+              .putHeader("accept", "application/json")
+              .exceptionHandler( e -> { future.fail(e); })
+              .end();
+    } catch(Exception e) {
+      future.fail(e);
+    }
+    return future;
+  }
 
 
 
@@ -614,7 +888,40 @@ public class RestVerticleIT {
       Future<Void> f = Future.future();
       postUserWithNumericName(context).setHandler(f.completer());
       return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createProxyforWithSameUserId(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createProxyforWithSameProxyUserId(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      failToCreateDuplicateProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      getProxyforCollection(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      findAndGetProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      findAndUpdateProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      findAndDeleteProxyfor(context).setHandler(f.completer());
+      return f;
     });
+    
 
     startFuture.setHandler(res -> {
       if(res.succeeded()) {
