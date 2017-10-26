@@ -125,9 +125,9 @@ public class UsersAPI implements UsersResource {
                 try {
                   if(reply.succeeded()) {
                     UserdataCollection userCollection = new UserdataCollection();
-                    List<User> users = (List<User>)reply.result()[0];
+                    List<User> users = (List<User>)reply.result().getResults();
                     userCollection.setUsers(users);
-                    userCollection.setTotalRecords((Integer)reply.result()[1]);
+                    userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
                     asyncResultHandler.handle(Future.succeededFuture(
                             GetUsersResponse.withJsonOK(userCollection)));
                   } else {
@@ -234,7 +234,7 @@ public class UsersAPI implements UsersResource {
                                     PostUsersResponse.withPlainInternalServerError(
                                             getReply.cause().getMessage())));
                     } else {
-                      List<User> userList = (List<User>)getReply.result()[0];
+                      List<User> userList = (List<User>)getReply.result().getResults();
                       if(userList.size() > 0) {
                         logger.debug("User with this id already exists");
                         asyncResultHandler.handle(Future.succeededFuture(
@@ -357,7 +357,7 @@ public class UsersAPI implements UsersResource {
                            GetUsersByUserIdResponse.withPlainInternalServerError(
                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
                  } else {
-                   List<User> userList = (List<User>)getReply.result()[0];
+                   List<User> userList = (List<User>)getReply.result().getResults();
                    if(userList.size() < 1) {
                      asyncResultHandler.handle(Future.succeededFuture(
                             GetUsersByUserIdResponse.withPlainNotFound("User" +
@@ -485,7 +485,7 @@ public class UsersAPI implements UsersResource {
                                                       messages.getMessage(lang,
                                                               MessageConsts.InternalServerError))));
                     } else {
-                      List<User> userList = (List<User>)getReply.result()[0];
+                      List<User> userList = (List<User>)getReply.result().getResults();
                       if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
                         //Error 400, that username is in use by somebody else
                         asyncResultHandler.handle(Future.succeededFuture(
@@ -603,7 +603,7 @@ public class UsersAPI implements UsersResource {
      PostgresClient.getInstance(vertx, tenantId).get(
        UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
          if(check.succeeded()){
-           List<Usergroup> ug = (List<Usergroup>) check.result()[0];
+           List<Usergroup> ug = (List<Usergroup>) check.result().getResults();
            if(ug.size() == 0){
              handler.handle(io.vertx.core.Future.succeededFuture(0));
            }
@@ -679,7 +679,7 @@ public class UsersAPI implements UsersResource {
               logger.error(message, reply.cause());
               future.fail(reply.cause());
             } else {
-              List<AddressType> addressTypeList = (List<AddressType>)reply.result()[0];
+              List<AddressType> addressTypeList = (List<AddressType>)reply.result().getResults();
               if(addressTypeList.isEmpty()) {
                 future.complete(false);
               } else {

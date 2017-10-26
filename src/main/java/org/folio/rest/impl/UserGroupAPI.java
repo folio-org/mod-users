@@ -75,9 +75,9 @@ public class UserGroupAPI implements GroupsResource {
                 if(reply.succeeded()){
                   Usergroups groups = new Usergroups();
                   @SuppressWarnings("unchecked")
-                  List<Usergroup> groupList = (List<Usergroup>) reply.result()[0];
+                  List<Usergroup> groupList = (List<Usergroup>) reply.result().getResults();
                   groups.setUsergroups(groupList);
-                  groups.setTotalRecords((Integer)reply.result()[1]);
+                  groups.setTotalRecords((Integer)reply.result().getResultInfo().getTotalRecords());
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse.withJsonOK(
                     groups)));
                 }
@@ -175,7 +175,7 @@ public class UserGroupAPI implements GroupsResource {
               try {
                 if(reply.succeeded()){
                   @SuppressWarnings("unchecked")
-                  List<Usergroup> userGroup = (List<Usergroup>) reply.result()[0];
+                  List<Usergroup> userGroup = (List<Usergroup>) reply.result().getResults();
                   if(userGroup.isEmpty()){
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
                       .withPlainNotFound(groupId)));
@@ -224,7 +224,7 @@ public class UserGroupAPI implements GroupsResource {
         PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USERS, u, true, false,
           replyHandler -> {
           if(replyHandler.succeeded()){
-            List<User> userList = (List<User>) replyHandler.result()[0];
+            List<User> userList = (List<User>) replyHandler.result().getResults();
             if(userList.size() > 0){
               log.error("Can not delete group, "+ groupId + ". " + userList.size()  + " users associated with it");
               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse

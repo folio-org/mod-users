@@ -96,9 +96,9 @@ public class AddressTypeAPI implements AddresstypesResource {
                               GetAddresstypesResponse.withPlainBadRequest(message)));
                     } else {
                       AddresstypeCollection addresstypeCollection = new AddresstypeCollection();
-                      List<AddressType> addressTypeList = (List<AddressType>)reply.result()[0];
+                      List<AddressType> addressTypeList = (List<AddressType>)reply.result().getResults();
                       addresstypeCollection.setAddressTypes(addressTypeList);
-                      addresstypeCollection.setTotalRecords((Integer)reply.result()[1]);
+                      addresstypeCollection.setTotalRecords((Integer)reply.result().getResultInfo().getTotalRecords());
                       asyncResultHandler.handle(Future.succeededFuture(
                               GetAddresstypesResponse.withJsonOK(addresstypeCollection)));
 
@@ -202,7 +202,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                         getErrorResponse(message))));
               }
             } else {
-              List<AddressType> addressTypeList = (List<AddressType>)reply.result()[0];
+              List<AddressType> addressTypeList = (List<AddressType>)reply.result().getResults();
               if(addressTypeList.isEmpty()) {
                 asyncResultHandler.handle(Future.succeededFuture(
                         GetAddresstypesByAddresstypeIdResponse.withPlainNotFound(addresstypeId)));
@@ -250,7 +250,7 @@ public class AddressTypeAPI implements AddresstypesResource {
                       DeleteAddresstypesByAddresstypeIdResponse.withPlainInternalServerError(
                               getErrorResponse(message))));
             } else {
-              List<User> userList = (List<User>)reply.result()[0];
+              List<User> userList = (List<User>)reply.result().getResults();
               if(userList.size() > 0) {
                 String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
                 logger.error(message);
