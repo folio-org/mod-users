@@ -1,24 +1,56 @@
 {
-	"scripts" : [],
-	"tables" : [
-	  {
-	    "tableName" : "users",
-	    "generateId" : true,
-	    "fromModuleVersion" : "15.0",
-	    "populateJsonWithId" : true,
-	    "withMetadata" : true,
-	    "ginIndex" : true,
-	    "uniqueIndex" : [
+  "scripts" : [],
+  "tables" : [
+    {
+      "tableName" : "users",
+      "generateId" : true,
+      "fromModuleVersion" : "15.0",
+      "populateJsonWithId" : false,
+      "withMetadata" : true,
+      "ginIndex" : true,
+      "uniqueIndex" : [
         {
           "fieldName" : "username",
-          "tOps" : "ADD",
-          "caseSensitive" : false,
-          "whereClause" : "WHERE (jsonb->>'enabled')::boolean = true"
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "id",
+          "tOps" : "ADD"
         }
       ]
-	  }
-	],
-	"views" : [
+    },
+    {
+      "tableName" : "groups",
+      "generateId" : true,
+      "fromModuleVersion" : "15.0",
+      "populateJsonWithId" : true,
+      "withMetadata" : true,
+      "ginIndex" : true,
+      "uniqueIndex" : [
+        {
+          "fieldName" : "group",
+          "tOps" : "ADD"
+        }
+      ]
+    },
+    {
+      "tableName" : "addresstype",
+      "generateId" : true,
+      "fromModuleVersion" : "15.0",
+      "populateJsonWithId" : true,
+      "withMetadata" : true,
+      "ginIndex" : true
+    },
+    {
+      "tableName" : "proxyfor",
+      "generateId" : true,
+      "fromModuleVersion" : "15.0",
+      "populateJsonWithId" : true,
+      "withMetadata" : true,
+      "ginIndex" : true
+    }
+  ],
+  "views" : [
     {
       "viewName" : "users_groups_view",
       "mode" : "new",
@@ -32,5 +64,5 @@
         "jsonFieldAlias" : "group_jsonb"
       }
     }
-	]
+  ]
 }

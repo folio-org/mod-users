@@ -102,6 +102,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getEmptyUsers(TestContext context) {
+    System.out.println("Getting an empty user set\n");
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users", res -> {
@@ -125,11 +126,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end();
     return future;
   }
 
   private Future<Void> postUser(TestContext context) {
+    System.out.println("Creating a new user\n");
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
@@ -146,11 +149,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
   private Future<Void> postUserWithNumericName(TestContext context) {
+    System.out.println("Creating a user with a numeric name\n");
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "777777")
@@ -167,12 +172,14 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
 
  private Future<Void> getUser(TestContext context) {
+   System.out.println("Retrieving a user\n");
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
    client.get(port, "localhost", "/users/1234567", res -> {
@@ -206,11 +213,13 @@ public class RestVerticleIT {
            .putHeader("X-Okapi-Tenant", "diku")
            .putHeader("content-type", "application/json")
            .putHeader("accept", "application/json")
+           .exceptionHandler(e -> { future.fail(e); })
            .end();
    return future;
  }
 
    private Future<Void> postAnotherUser(TestContext context) {
+    System.out.println("Creating another user\n");
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "bobcircle")
@@ -229,11 +238,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
  private Future<Void> putUserGood(TestContext context) {
+   System.out.println("Making a valid user modification\n");
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "bobcircle")
@@ -252,11 +263,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
  }
 
  private Future<Void> getGoodUser(TestContext context) {
+   System.out.println("Getting the modified user\n");
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
    client.get(port, "localhost", "/users/2345678", res -> {
@@ -290,6 +303,7 @@ public class RestVerticleIT {
            .putHeader("X-Okapi-Tenant", "diku")
            .putHeader("content-type", "application/json")
            .putHeader("accept", "application/json")
+           .exceptionHandler(e -> { future.fail(e); })
            .end();
    return future;
  }
@@ -297,6 +311,7 @@ public class RestVerticleIT {
 
 
   private Future<Void> putUserBadUsername(TestContext context) {
+   System.out.println("Trying to assign an invalid username \n");
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
@@ -315,11 +330,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
  }
 
   private Future<Void> putUserBadId(TestContext context) {
+   System.out.println("Trying to assign an invalid id \n");
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
@@ -338,11 +355,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
  }
 
   private Future<Void> createAddressType(TestContext context) {
+    System.out.println("Creating an address type\n");
     Future future = Future.future();
     JsonObject addressTypeObject = new JsonObject()
             .put("addressType", "home")
@@ -360,12 +379,14 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(addressTypeObject.encode());
     return future;
 
  }
 
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
+    System.out.println("Getting the new addresstype, updating a user with it\n");
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port,"localhost", "/addresstypes?query=addressType=home", res -> {
@@ -417,6 +438,7 @@ public class RestVerticleIT {
                     .putHeader("X-Okapi-Tenant", "diku")
                     .putHeader("content-type", "application/json")
                     .putHeader("accept", "text/plain")
+                    .exceptionHandler(e -> { future.fail(e); })
                     .end();
                 }
               });
@@ -424,6 +446,7 @@ public class RestVerticleIT {
               .putHeader("X-Okapi-Tenant", "diku")
               .putHeader("content-type", "application/json")
               .putHeader("accept", "text/plain")
+              .exceptionHandler(e -> { future.fail(e); })
               .end(userObject.encode());
           }
         });
@@ -432,12 +455,14 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end();
     return future;
 
  }
 
  private Future<Void> createAndDeleteAddressType(TestContext context) {
+   System.out.println("Creating and deleting an address type\n");
     Future future = Future.future();
     HttpClient postClient = vertx.createHttpClient();
     JsonObject addressTypeObject = new JsonObject()
@@ -465,6 +490,7 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end();
         }
       });
@@ -472,12 +498,14 @@ public class RestVerticleIT {
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", "application/json")
       .putHeader("accept", "text/plain")
+      .exceptionHandler(e -> { future.fail(e); })
       .end(addressTypeObject.encode());
 
   return future;
  }
 
  private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
+   System.out.println("Attempting to create a user with two of the same address types");
     Future future = Future.future();
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
     JsonObject userObject = new JsonObject()
@@ -515,11 +543,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
   private Future<Void> postUserBadAddress(TestContext context) {
+    System.out.println("Trying to create a bad address\n");
     Future future = Future.future();
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
     JsonObject userObject = new JsonObject()
@@ -551,11 +581,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
   
   private Future<Void> createProxyfor(TestContext context) {
+    System.out.println("Creating a new proxyfor entry\n");
     Future future = Future.future();
     JsonObject proxyObject = new JsonObject()
             .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
@@ -573,10 +605,12 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(proxyObject.encode());
     return future;
   }
   private Future<Void> createProxyforWithSameUserId(TestContext context) {
+    System.out.println("Trying to create a proxyfor with an existing userid\n");
     Future future = Future.future();
     JsonObject proxyObject = new JsonObject()
             .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
@@ -594,11 +628,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(proxyObject.encode());
 
     return future;
   }
   private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
+    System.out.println("Trying to create a proxyfor with an existing proxy userid\n");
     Future future = Future.future();
     JsonObject proxyObject = new JsonObject()
             .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
@@ -616,10 +652,12 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(proxyObject.encode());
     return future;
   }
   private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
+    System.out.println("Trying to create a proxyfor entry with the same id and proxy user id\n");
     Future future = Future.future();
     JsonObject proxyObject = new JsonObject()
             .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
@@ -637,10 +675,12 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(proxyObject.encode());
     return future;
   }
-  private Future<Void> getProxyforCollection(TestContext context) {    
+  private Future<Void> getProxyforCollection(TestContext context) {  
+    System.out.println("Getting proxyfor entries\n");
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/proxiesfor", res -> {
@@ -661,10 +701,12 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end();
     return future;
   }
-  private Future<Void> findAndGetProxyfor(TestContext context) {    
+  private Future<Void> findAndGetProxyfor(TestContext context) { 
+    System.out.println("Find and retrieve a particular proxyfor entry\n");
     Future future = Future.future();
     try {
       HttpClient client = vertx.createHttpClient();
@@ -717,6 +759,7 @@ public class RestVerticleIT {
     return future;
   }
   private Future<Void> findAndUpdateProxyfor(TestContext context) {
+    System.out.println("Find and update a particular proxyfor entry\n");
     Future future = Future.future();
     JsonObject modifiedProxyObject = new JsonObject()
             .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
