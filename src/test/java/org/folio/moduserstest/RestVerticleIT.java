@@ -1,5 +1,19 @@
 package org.folio.moduserstest;
 
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.sql.SQLException;
@@ -24,20 +38,7 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+
 
 @RunWith(VertxUnitRunner.class)
 public class RestVerticleIT {
@@ -101,6 +102,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getEmptyUsers(TestContext context) {
+    System.out.println("Getting an empty user set\n");
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users", res -> {
@@ -124,11 +126,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end();
     return future;
   }
 
   private Future<Void> postUser(TestContext context) {
+    System.out.println("Creating a new user\n");
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
@@ -145,11 +149,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
   private Future<Void> postUserWithNumericName(TestContext context) {
+    System.out.println("Creating a user with a numeric name\n");
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "777777")
@@ -166,12 +172,14 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
 
  private Future<Void> getUser(TestContext context) {
+   System.out.println("Retrieving a user\n");
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
    client.get(port, "localhost", "/users/1234567", res -> {
@@ -205,11 +213,13 @@ public class RestVerticleIT {
            .putHeader("X-Okapi-Tenant", "diku")
            .putHeader("content-type", "application/json")
            .putHeader("accept", "application/json")
+           .exceptionHandler(e -> { future.fail(e); })
            .end();
    return future;
  }
 
    private Future<Void> postAnotherUser(TestContext context) {
+    System.out.println("Creating another user\n");
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "bobcircle")
@@ -228,11 +238,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
  private Future<Void> putUserGood(TestContext context) {
+   System.out.println("Making a valid user modification\n");
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "bobcircle")
@@ -251,11 +263,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
  }
 
  private Future<Void> getGoodUser(TestContext context) {
+   System.out.println("Getting the modified user\n");
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
    client.get(port, "localhost", "/users/2345678", res -> {
@@ -289,6 +303,7 @@ public class RestVerticleIT {
            .putHeader("X-Okapi-Tenant", "diku")
            .putHeader("content-type", "application/json")
            .putHeader("accept", "application/json")
+           .exceptionHandler(e -> { future.fail(e); })
            .end();
    return future;
  }
@@ -296,6 +311,7 @@ public class RestVerticleIT {
 
 
   private Future<Void> putUserBadUsername(TestContext context) {
+   System.out.println("Trying to assign an invalid username \n");
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
@@ -314,11 +330,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
  }
 
   private Future<Void> putUserBadId(TestContext context) {
+   System.out.println("Trying to assign an invalid id \n");
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
@@ -337,11 +355,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
  }
 
   private Future<Void> createAddressType(TestContext context) {
+    System.out.println("Creating an address type\n");
     Future future = Future.future();
     JsonObject addressTypeObject = new JsonObject()
             .put("addressType", "home")
@@ -359,12 +379,14 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(addressTypeObject.encode());
     return future;
 
  }
 
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
+    System.out.println("Getting the new addresstype, updating a user with it\n");
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port,"localhost", "/addresstypes?query=addressType=home", res -> {
@@ -416,6 +438,7 @@ public class RestVerticleIT {
                     .putHeader("X-Okapi-Tenant", "diku")
                     .putHeader("content-type", "application/json")
                     .putHeader("accept", "text/plain")
+                    .exceptionHandler(e -> { future.fail(e); })
                     .end();
                 }
               });
@@ -423,6 +446,7 @@ public class RestVerticleIT {
               .putHeader("X-Okapi-Tenant", "diku")
               .putHeader("content-type", "application/json")
               .putHeader("accept", "text/plain")
+              .exceptionHandler(e -> { future.fail(e); })
               .end(userObject.encode());
           }
         });
@@ -431,12 +455,14 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end();
     return future;
 
  }
 
  private Future<Void> createAndDeleteAddressType(TestContext context) {
+   System.out.println("Creating and deleting an address type\n");
     Future future = Future.future();
     HttpClient postClient = vertx.createHttpClient();
     JsonObject addressTypeObject = new JsonObject()
@@ -464,6 +490,7 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
             .end();
         }
       });
@@ -471,12 +498,14 @@ public class RestVerticleIT {
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", "application/json")
       .putHeader("accept", "text/plain")
+      .exceptionHandler(e -> { future.fail(e); })
       .end(addressTypeObject.encode());
 
   return future;
  }
 
  private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
+   System.out.println("Attempting to create a user with two of the same address types");
     Future future = Future.future();
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
     JsonObject userObject = new JsonObject()
@@ -514,11 +543,13 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
     return future;
   }
 
   private Future<Void> postUserBadAddress(TestContext context) {
+    System.out.println("Trying to create a bad address\n");
     Future future = Future.future();
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
     JsonObject userObject = new JsonObject()
@@ -550,7 +581,294 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
             .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
             .end(userObject.encode());
+    return future;
+  }
+  
+  private Future<Void> createProxyfor(TestContext context) {
+    System.out.println("Creating a new proxyfor entry\n");
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 201) {
+          future.fail("Expected code 201, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end(proxyObject.encode());
+    return future;
+  }
+  private Future<Void> createProxyforWithSameUserId(TestContext context) {
+    System.out.println("Trying to create a proxyfor with an existing userid\n");
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "5b0a9a0b-6eb6-447c-bc31-9c99940a29c5");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 201) {
+          future.fail("Expected code 201, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end(proxyObject.encode());
+
+    return future;
+  }
+  private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
+    System.out.println("Trying to create a proxyfor with an existing proxy userid\n");
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 201) {
+          future.fail("Expected code 201, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end(proxyObject.encode());
+    return future;
+  }
+  private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
+    System.out.println("Trying to create a proxyfor entry with the same id and proxy user id\n");
+    Future future = Future.future();
+    JsonObject proxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 422) {
+          future.fail("Expected code 422, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          future.complete();
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end(proxyObject.encode());
+    return future;
+  }
+  private Future<Void> getProxyforCollection(TestContext context) {  
+    System.out.println("Getting proxyfor entries\n");
+    Future future = Future.future();
+    HttpClient client = vertx.createHttpClient();
+    client.get(port, "localhost", "/proxiesfor", res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 200) {
+          future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+        } else {
+          JsonObject resultJson = body.toJsonObject();
+          JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+          if(proxyForArray.size() == 3) {
+            future.complete();
+          } else {
+            future.fail("Expected 3 entries, found " + proxyForArray.size());
+          }
+        }
+      });      
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end();
+    return future;
+  }
+  private Future<Void> findAndGetProxyfor(TestContext context) { 
+    System.out.println("Find and retrieve a particular proxyfor entry\n");
+    Future future = Future.future();
+    try {
+      HttpClient client = vertx.createHttpClient();
+      System.out.println("Making CQL request\n");
+      client.get(port, "localhost", 
+              "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
+              res -> {
+        res.bodyHandler(body -> {
+          try {
+            if(res.statusCode() != 200) {
+              future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+            } else {
+              JsonObject resultJson = body.toJsonObject();
+              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+              if(proxyForArray.size() != 1) {
+                future.fail("Expected 1 entry, found " + proxyForArray.size());
+              } else {
+                JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+                String proxyForId = proxyForObject.getString("id");
+                System.out.println("Making get-by-id request\n");
+                client.get(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+                  res2.bodyHandler(body2 -> {
+                    if(res2.statusCode() != 200) {
+                      future.fail("Expected code 200, got " + res.statusCode() + " : " + body2.toString());
+                    } else {
+                      future.complete();
+                    }
+                  });
+                })
+                        .putHeader("X-Okapi-Tenant", "diku")
+                        .putHeader("content-type", "application/json")
+                        .putHeader("accept", "application/json")
+                        .exceptionHandler( e -> { future.fail(e); })
+                        .end();
+              }
+            }
+          } catch(Exception e) {
+            future.fail(e);
+          }
+        });      
+      })
+              .putHeader("X-Okapi-Tenant", "diku")
+              .putHeader("content-type", "application/json")
+              .putHeader("accept", "application/json")
+              .exceptionHandler( e -> { future.fail(e); })
+              .end();
+    } catch(Exception e) {
+      future.fail(e);
+    }
+    return future;
+  }
+  private Future<Void> findAndUpdateProxyfor(TestContext context) {
+    System.out.println("Find and update a particular proxyfor entry\n");
+    Future future = Future.future();
+    JsonObject modifiedProxyObject = new JsonObject()
+            .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa")
+            .put("meta", new JsonObject()
+              .put("fookey", "foovalue")
+            );
+    try {
+      HttpClient client = vertx.createHttpClient();
+      System.out.println("Making CQL request\n");
+      client.get(port, "localhost", 
+              "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
+              res -> {
+        res.bodyHandler(body -> {
+          try {
+            if(res.statusCode() != 200) {
+              future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+            } else {
+              JsonObject resultJson = body.toJsonObject();
+              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+              if(proxyForArray.size() != 1) {
+                future.fail("Expected 1 entry, found " + proxyForArray.size());
+              } else {
+                JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+                String proxyForId = proxyForObject.getString("id");
+                System.out.println("Making put-by-id request\n");
+                client.put(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+                  res2.bodyHandler(body2 -> {
+                    if(res2.statusCode() != 204) {
+                      future.fail("Expected code 204, got " + res.statusCode() + " : " + body2.toString());
+                    } else {
+                      future.complete();
+                    }
+                  });
+                })
+                        .putHeader("X-Okapi-Tenant", "diku")
+                        .putHeader("content-type", "application/json")
+                        .putHeader("accept", "application/json")
+                        .putHeader("accept", "text/plain")
+                        .exceptionHandler( e -> { future.fail(e); })
+                        .end(modifiedProxyObject.encode());
+              }
+            }
+          } catch(Exception e) {
+            future.fail(e);
+          }
+        });      
+      })
+              .putHeader("X-Okapi-Tenant", "diku")
+              .putHeader("content-type", "application/json")
+              .putHeader("accept", "application/json")
+              .exceptionHandler( e -> { future.fail(e); })
+              .end();
+    } catch(Exception e) {
+      future.fail(e);
+    }
+    return future;
+  }
+  private Future<Void> findAndDeleteProxyfor(TestContext context) {
+    Future future = Future.future();
+       try {
+      HttpClient client = vertx.createHttpClient();
+      System.out.println("Making CQL request\n");
+      client.get(port, "localhost", 
+              "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
+              res -> {
+        res.bodyHandler(body -> {
+          try {
+            if(res.statusCode() != 200) {
+              future.fail("Expected code 200, got " + res.statusCode() + " : " + body.toString());
+            } else {
+              JsonObject resultJson = body.toJsonObject();
+              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
+              if(proxyForArray.size() != 1) {
+                future.fail("Expected 1 entry, found " + proxyForArray.size());
+              } else {
+                JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+                String proxyForId = proxyForObject.getString("id");
+                System.out.println("Making delete-by-id request\n");
+                client.delete(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+                  res2.bodyHandler(body2 -> {
+                    if(res2.statusCode() != 204) {
+                      future.fail("Expected code 204, got " + res.statusCode() + " : " + body2.toString());
+                    } else {
+                      future.complete();
+                    }
+                  });
+                })
+                        .putHeader("X-Okapi-Tenant", "diku")
+                        .putHeader("content-type", "application/json")
+                        .putHeader("accept", "application/json")
+                        .putHeader("accept", "text/plain")
+                        .exceptionHandler( e -> { future.fail(e); })
+                        .end();
+              }
+            }
+          } catch(Exception e) {
+            future.fail(e);
+          }
+        });      
+      })
+              .putHeader("X-Okapi-Tenant", "diku")
+              .putHeader("content-type", "application/json")
+              .putHeader("accept", "application/json")
+              .exceptionHandler( e -> { future.fail(e); })
+              .end();
+    } catch(Exception e) {
+      future.fail(e);
+    }
     return future;
   }
 
@@ -614,12 +932,46 @@ public class RestVerticleIT {
       Future<Void> f = Future.future();
       postUserWithNumericName(context).setHandler(f.completer());
       return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createProxyforWithSameUserId(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      createProxyforWithSameProxyUserId(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      failToCreateDuplicateProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      getProxyforCollection(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      findAndGetProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      findAndUpdateProxyfor(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      findAndDeleteProxyfor(context).setHandler(f.completer());
+      return f;
     });
+    
 
     startFuture.setHandler(res -> {
       if(res.succeeded()) {
         async.complete();
       } else {
+        res.cause().printStackTrace();
         context.fail(res.cause());
       }
     });
