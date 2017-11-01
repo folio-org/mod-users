@@ -971,6 +971,7 @@ public class RestVerticleIT {
       if(res.succeeded()) {
         async.complete();
       } else {
+        res.cause().printStackTrace();
         context.fail(res.cause());
       }
     });
