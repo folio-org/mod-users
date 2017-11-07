@@ -43,7 +43,7 @@
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
       <version>2.9.9</version>
-	</dependency>
+    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
@@ -60,7 +60,7 @@
       <version>3.3.3</version>
       <scope>test</scope>
       <type>jar</type>
-	</dependency>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
