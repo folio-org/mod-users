@@ -214,30 +214,30 @@
       "displayName" : "addresstypes item delete",
       "description" : "Delete an addresstype record"
     },
-    { 
+    {
       "permissionName" : "proxiesfor.collection.get",
       "displayName" : "proxiesfor collection get",
-      "description" : "Get a list of proxyfor records"    
+      "description" : "Get a list of proxyfor records"
     },
-    { 
+    {
       "permissionName" : "proxiesfor.item.get",
       "displayName" : "proxiesfor item get",
-      "description" : "Get a single proxyfor record"    
+      "description" : "Get a single proxyfor record"
     },
-    { 
+    {
       "permissionName" : "proxiesfor.item.post",
       "displayName" : "proxiesfor item post",
-      "description" : "Create a new proxyfor record"    
+      "description" : "Create a new proxyfor record"
     },
-    { 
+    {
       "permissionName" : "proxiesfor.item.put",
       "displayName" : "proxiesfor item put",
-      "description" : "Edit a proxyfor record"    
+      "description" : "Edit a proxyfor record"
     },
-    { 
+    {
       "permissionName" : "proxiesfor.item.delete",
       "displayName" : "proxiesfor.item.delete",
-      "description" : "Delete a proxyfor record"    
+      "description" : "Delete a proxyfor record"
     },
     {
       "permissionName" : "users.all",

@@ -585,7 +585,7 @@ public class RestVerticleIT {
             .end(userObject.encode());
     return future;
   }
-  
+
   private Future<Void> createProxyfor(TestContext context) {
     System.out.println("Creating a new proxyfor entry\n");
     Future future = Future.future();
@@ -600,7 +600,7 @@ public class RestVerticleIT {
         } else {
           future.complete();
         }
-      });      
+      });
     })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
@@ -623,7 +623,7 @@ public class RestVerticleIT {
         } else {
           future.complete();
         }
-      });      
+      });
     })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
@@ -647,7 +647,7 @@ public class RestVerticleIT {
         } else {
           future.complete();
         }
-      });      
+      });
     })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
@@ -670,7 +670,7 @@ public class RestVerticleIT {
         } else {
           future.complete();
         }
-      });      
+      });
     })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
@@ -679,7 +679,7 @@ public class RestVerticleIT {
             .end(proxyObject.encode());
     return future;
   }
-  private Future<Void> getProxyforCollection(TestContext context) {  
+  private Future<Void> getProxyforCollection(TestContext context) {
     System.out.println("Getting proxyfor entries\n");
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
@@ -696,7 +696,7 @@ public class RestVerticleIT {
             future.fail("Expected 3 entries, found " + proxyForArray.size());
           }
         }
-      });      
+      });
     })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
@@ -705,13 +705,13 @@ public class RestVerticleIT {
             .end();
     return future;
   }
-  private Future<Void> findAndGetProxyfor(TestContext context) { 
+  private Future<Void> findAndGetProxyfor(TestContext context) {
     System.out.println("Find and retrieve a particular proxyfor entry\n");
     Future future = Future.future();
     try {
       HttpClient client = vertx.createHttpClient();
       System.out.println("Making CQL request\n");
-      client.get(port, "localhost", 
+      client.get(port, "localhost",
               "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
               res -> {
         res.bodyHandler(body -> {
@@ -746,7 +746,7 @@ public class RestVerticleIT {
           } catch(Exception e) {
             future.fail(e);
           }
-        });      
+        });
       })
               .putHeader("X-Okapi-Tenant", "diku")
               .putHeader("content-type", "application/json")
@@ -770,7 +770,7 @@ public class RestVerticleIT {
     try {
       HttpClient client = vertx.createHttpClient();
       System.out.println("Making CQL request\n");
-      client.get(port, "localhost", 
+      client.get(port, "localhost",
               "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
               res -> {
         res.bodyHandler(body -> {
@@ -806,7 +806,7 @@ public class RestVerticleIT {
           } catch(Exception e) {
             future.fail(e);
           }
-        });      
+        });
       })
               .putHeader("X-Okapi-Tenant", "diku")
               .putHeader("content-type", "application/json")
@@ -823,7 +823,7 @@ public class RestVerticleIT {
        try {
       HttpClient client = vertx.createHttpClient();
       System.out.println("Making CQL request\n");
-      client.get(port, "localhost", 
+      client.get(port, "localhost",
               "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
               res -> {
         res.bodyHandler(body -> {
@@ -859,7 +859,7 @@ public class RestVerticleIT {
           } catch(Exception e) {
             future.fail(e);
           }
-        });      
+        });
       })
               .putHeader("X-Okapi-Tenant", "diku")
               .putHeader("content-type", "application/json")
@@ -965,7 +965,7 @@ public class RestVerticleIT {
       findAndDeleteProxyfor(context).setHandler(f.completer());
       return f;
     });
-    
+
 
     startFuture.setHandler(res -> {
       if(res.succeeded()) {
