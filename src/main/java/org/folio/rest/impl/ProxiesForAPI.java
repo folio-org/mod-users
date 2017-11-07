@@ -40,11 +40,11 @@ public class ProxiesForAPI implements ProxiesforResource {
   public static final String URL_PREFIX = "/proxiesfor";
   private static final Logger logger = LoggerFactory.getLogger(ProxiesForAPI.class);
   private boolean suppressErrorResponse = false;
-  
+
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
   }
-  
+
   public ProxiesForAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);
   }
@@ -71,13 +71,13 @@ public class ProxiesForAPI implements ProxiesforResource {
       return false;
     }
   }
-  
+
   private String logAndSaveError(Throwable err) {
     String message = err.getLocalizedMessage();
     logger.error(message, err);
     return message;
   }
-  
+
   private CQLWrapper getCQL(String query, int limit, int offset, String tableName) throws FieldException {
     CQL2PgJSON cql2pgJson = new CQL2PgJSON(tableName + ".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
@@ -86,7 +86,7 @@ public class ProxiesForAPI implements ProxiesforResource {
   private String getTenant(Map<String, String> headers)  {
     return TenantTool.calculateTenantId(headers.get(RestVerticle.OKAPI_HEADER_TENANT));
   }
-  
+
   @Override
   public void getProxiesfor(String query,
           int offset, int limit,
@@ -198,9 +198,9 @@ public class ProxiesForAPI implements ProxiesforResource {
 
   @Override
   public void getProxiesforById(String id,
-          String lang, 
-          Map<String, String> okapiHeaders, 
-          Handler<AsyncResult<Response>> asyncResultHandler, 
+          String lang,
+          Map<String, String> okapiHeaders,
+          Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
     vertxContext.runOnContext(v -> {
       try {
@@ -247,10 +247,10 @@ public class ProxiesForAPI implements ProxiesforResource {
   }
 
   @Override
-  public void deleteProxiesforById(String id, 
-          String lang, 
-          Map<String, String> okapiHeaders, 
-          Handler<AsyncResult<Response>> asyncResultHandler, 
+  public void deleteProxiesforById(String id,
+          String lang,
+          Map<String, String> okapiHeaders,
+          Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
     vertxContext.runOnContext(v->{
       try {
@@ -274,7 +274,7 @@ public class ProxiesForAPI implements ProxiesforResource {
                       DeleteProxiesforByIdResponse.withPlainNotFound(message)));
             }
           }
-        });     
+        });
       } catch(Exception e) {
         String message = logAndSaveError(e);
         asyncResultHandler.handle(Future.succeededFuture(
@@ -287,7 +287,7 @@ public class ProxiesForAPI implements ProxiesforResource {
   @Override
   public void putProxiesforById(String id,
           String lang,
-          ProxiesFor entity, 
+          ProxiesFor entity,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
@@ -329,11 +329,11 @@ public class ProxiesForAPI implements ProxiesforResource {
       }
     });
   }
-  
+
   private Future<Boolean> userAndProxyUserComboExists(
           String userId,
           String proxyUserId,
-          String tenantId, 
+          String tenantId,
           Context vertxContext) {
     Future<Boolean> future = Future.future();
     vertxContext.runOnContext(v -> {
@@ -364,8 +364,8 @@ public class ProxiesForAPI implements ProxiesforResource {
       } catch(Exception e) {
         future.fail(e);
       }
-    });    
+    });
     return future;
   }
-  
+
 }
