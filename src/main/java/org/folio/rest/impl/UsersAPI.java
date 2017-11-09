@@ -26,6 +26,8 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
+import org.folio.rest.persist.facets.FacetField;
+import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.OutStream;
@@ -102,13 +104,16 @@ public class UsersAPI implements UsersResource {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-          Order order, int offset, int limit, String lang,
-          Map <String, String> okapiHeaders,
+          Order order, int offset, int limit, List<String> facets,
+          String lang, Map <String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
     logger.debug("Getting users");
     try {
       CQLWrapper cql = getCQL(query,limit,offset);
+
+      List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
+
       vertxContext.runOnContext(v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(query);
@@ -121,7 +126,7 @@ public class UsersAPI implements UsersResource {
 
             try {
               PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
-                      User.class, fieldList, cql, true, false, reply -> {
+                      User.class, fieldList, cql, true, false, facetList, reply -> {
                 try {
                   if(reply.succeeded()) {
                     UserdataCollection userCollection = new UserdataCollection();
@@ -735,4 +740,3 @@ public class UsersAPI implements UsersResource {
     return future;
   }
 }
-
