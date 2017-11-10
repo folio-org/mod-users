@@ -133,6 +133,7 @@ public class UsersAPI implements UsersResource {
                     List<User> users = (List<User>)reply.result().getResults();
                     userCollection.setUsers(users);
                     userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
+                    userCollection.setResultInfo(reply.result().getResultInfo());
                     asyncResultHandler.handle(Future.succeededFuture(
                             GetUsersResponse.withJsonOK(userCollection)));
                   } else {
