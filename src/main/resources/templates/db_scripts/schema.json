@@ -4,7 +4,7 @@
     {
       "tableName" : "users",
       "generateId" : true,
-      "fromModuleVersion" : "15.0",
+      "fromModuleVersion" : "14.3",
       "populateJsonWithId" : false,
       "withMetadata" : true,
       "ginIndex" : true,
@@ -22,7 +22,7 @@
     {
       "tableName" : "groups",
       "generateId" : true,
-      "fromModuleVersion" : "15.0",
+      "fromModuleVersion" : "14.3",
       "populateJsonWithId" : true,
       "withMetadata" : true,
       "ginIndex" : true,
@@ -36,7 +36,7 @@
     {
       "tableName" : "addresstype",
       "generateId" : true,
-      "fromModuleVersion" : "15.0",
+      "fromModuleVersion" : "14.3",
       "populateJsonWithId" : true,
       "withMetadata" : true,
       "ginIndex" : true
@@ -44,7 +44,7 @@
     {
       "tableName" : "proxyfor",
       "generateId" : true,
-      "fromModuleVersion" : "15.0",
+      "fromModuleVersion" : "14.3",
       "populateJsonWithId" : true,
       "withMetadata" : true,
       "ginIndex" : true
