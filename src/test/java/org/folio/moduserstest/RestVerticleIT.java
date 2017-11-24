@@ -59,6 +59,7 @@ public class RestVerticleIT {
 
   public static void initDatabase(TestContext context) throws SQLException {
     PostgresClient postgres = PostgresClient.getInstance(vertx);
+    postgres.setIsEmbedded(true);
     postgres.dropCreateDatabase("test_mod_users");
 
     String sql = "drop schema if exists diku_mod_users cascade;\n"
@@ -79,12 +80,23 @@ public class RestVerticleIT {
   public static void setup(TestContext context) throws SQLException {
     vertx = Vertx.vertx();
 
-    initDatabase(context);
+    try {
+      PostgresClient.setIsEmbedded(true);
+      PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+      PostgresClient.getInstance(vertx).dropCreateDatabase("test_mod_users");
+    } catch(Exception e) {
+      e.printStackTrace();
+      context.fail(e);
+      return;
+    }
+    
+    //initDatabase(context);
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
     TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
+    
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
         tenantClient.post(null, res2 -> {
