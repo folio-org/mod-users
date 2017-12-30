@@ -117,6 +117,7 @@ public class UserGroupAPI implements GroupsResource {
       try {
         System.out.println("sending... postGroups");
         String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
+        
         PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
           GROUP_TABLE,
           entity,
