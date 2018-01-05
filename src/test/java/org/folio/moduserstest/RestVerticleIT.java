@@ -49,6 +49,11 @@ public class RestVerticleIT {
   private static String postRequest = "{\"group\": \"librarianPOST\",\"desc\": \"basic lib group\"}";
   private static String putRequest = "{\"group\": \"librarianPUT\",\"desc\": \"basic lib group\"}";
 
+  private static String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
+  private static String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
+  private static String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
+  private static String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
+  
   private static Vertx vertx;
   static int port;
 
@@ -148,7 +153,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
-            .put("id", "1234567")
+            .put("id", joeBlockId)
             .put("active", true);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
@@ -171,7 +176,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "777777")
-            .put("id", "777777")
+            .put("id", "72bd29f7-bf29-48bb-8259-d5ce78378a56")
             .put("active", true);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
@@ -194,7 +199,7 @@ public class RestVerticleIT {
    System.out.println("Retrieving a user\n");
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
-   client.get(port, "localhost", "/users/1234567", res -> {
+   client.get(port, "localhost", "/users/" + joeBlockId, res -> {
      if(res.statusCode() == 200) {
        res.bodyHandler(buf -> {
          JsonObject userObject = buf.toJsonObject();
@@ -235,7 +240,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "bobcircle")
-            .put("id", "2345678")
+            .put("id", bobCircleId)
             .put("active", true);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
@@ -260,10 +265,10 @@ public class RestVerticleIT {
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "bobcircle")
-            .put("id", "2345678")
+            .put("id", bobCircleId)
             .put("active", false);
     HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/2345678", res -> {
+    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
       if(res.statusCode() == 204) {
         future.complete();
       } else {
@@ -284,7 +289,7 @@ public class RestVerticleIT {
    System.out.println("Getting the modified user\n");
    Future future = Future.future();
    HttpClient client = vertx.createHttpClient();
-   client.get(port, "localhost", "/users/2345678", res -> {
+   client.get(port, "localhost", "/users/" + bobCircleId, res -> {
      if(res.statusCode() == 200) {
        res.bodyHandler(buf -> {
          JsonObject userObject = buf.toJsonObject();
@@ -327,10 +332,10 @@ public class RestVerticleIT {
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
             .put("username", "joeblock")
-            .put("id", "2345678")
+            .put("id", bobCircleId)
             .put("active", false);
     HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/2345678", res -> {
+    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
       if(res.statusCode() == 400) {
         future.complete();
       } else {
@@ -351,11 +356,11 @@ public class RestVerticleIT {
    System.out.println("Trying to assign an invalid id \n");
    Future future = Future.future();
    JsonObject userObject = new JsonObject()
-            .put("username", "joeblock")
-            .put("id", "2345677")
+            .put("username", "bobcircle")
+            .put("id", joeBlockId)
             .put("active", false);
     HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/2345678", res -> {
+    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
       if(res.statusCode() == 400) {
         future.complete();
       } else {
@@ -415,7 +420,7 @@ public class RestVerticleIT {
           } else {
             JsonObject userObject = new JsonObject()
               .put("username", "bobcircle")
-              .put("id", "2345678")
+              .put("id", bobCircleId)
               .put("active", false)
               .put("personal", new JsonObject()
                 .put("lastName", "Circle")
@@ -430,7 +435,7 @@ public class RestVerticleIT {
                 )
               );
             HttpClient putClient = vertx.createHttpClient();
-            putClient.put(port, "localhost", "/users/2345678", putRes -> {
+            putClient.put(port, "localhost", "/users/" + bobCircleId, putRes -> {
               putRes.bodyHandler(putBody -> {
                 if(putRes.statusCode() != 204) {
                   future.fail("Expected status 204. Got " + putRes.statusCode() + ": " + putBody.toString());
@@ -522,7 +527,7 @@ public class RestVerticleIT {
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
     JsonObject userObject = new JsonObject()
             .put("username", "jacktriangle")
-            .put("id", "3456789")
+            .put("id", jackTriangleId)
             .put("active", true)
             .put("personal", new JsonObject()
                 .put("lastName", "Triangle")
@@ -566,7 +571,7 @@ public class RestVerticleIT {
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
     JsonObject userObject = new JsonObject()
             .put("username", "annarhombus")
-            .put("id", "456789")
+            .put("id", annaRhombusId)
             .put("active", true)
             .put("personal", new JsonObject()
                 .put("lastName", "Rhombus")
