@@ -220,55 +220,82 @@ public class UserGroupAPI implements GroupsResource {
       System.out.println("sending... deleteGroupsByGroupId");
       String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
       try {
-        User u = new User();
-        u.setPatronGroup(groupId);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USERS, u, true, false,
-          replyHandler -> {
-          if(replyHandler.succeeded()){
-            List<User> userList = (List<User>) replyHandler.result().getResults();
-            if(userList.size() > 0){
-              log.error("Can not delete group, "+ groupId + ". " + userList.size()  + " users associated with it");
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                .withPlainBadRequest("Can not delete group, " + userList.size()  + " users associated with it")));
-              return;
-            }
-            else{
-              log.info("Deleting empty group, "+ groupId);
-            }
-            try {
-              PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(GROUP_TABLE, groupId,
-                reply -> {
+        Criterion criterion = new Criterion(
+          new Criteria()
+            .addField(ID_FIELD_NAME)
+            .setJSONB(false)
+            .setOperation("=")
+            .setValue("'"+ groupId +"'"));
+        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
+                GROUP_TABLE, Usergroup.class, criterion, true, getReply -> {
+          try {
+            if(getReply.failed()) {
+               log.error(getReply.cause().getMessage(), getReply.cause());
+               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                 .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+            } else {   
+              List<Usergroup> userGroup = (List<Usergroup>) getReply.result().getResults();
+              if(userGroup.isEmpty()) {
+                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                        .withPlainNotFound(groupId)));
+                return;
+              }
+              User u = new User();
+              u.setPatronGroup(groupId);
+              PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USERS, u, true, false,
+                replyHandler -> {
+                if(replyHandler.succeeded()) {
+                  List<User> userList = (List<User>) replyHandler.result().getResults();
+                  if(userList.size() > 0){
+                    log.error("Can not delete group, "+ groupId + ". " + userList.size()  + " users associated with it");
+                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                      .withPlainBadRequest("Can not delete group, " + userList.size()  + " users associated with it")));
+                    return;
+                  }
+                  else{
+                    log.info("Deleting empty group, "+ groupId);
+                  }
                   try {
-                    if(reply.succeeded()){
-                      if(reply.result().getUpdated() == 1){
-                        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                          .withNoContent()));
-                      }
-                      else{
-                        log.error(messages.getMessage(lang, MessageConsts.DeletedCountError, 1, reply.result().getUpdated()));
-                        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                          .withPlainNotFound(messages.getMessage(lang, MessageConsts.DeletedCountError,1 , reply.result().getUpdated()))));
-                      }
-                    }
-                    else{
-                      log.error(reply.cause().getMessage(), reply.cause());
-                      asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                        .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-                    }
+                    PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(GROUP_TABLE, groupId,
+                      reply -> {
+                        try {
+                          if(reply.succeeded()){
+                            if(reply.result().getUpdated() == 1){
+                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                                .withNoContent()));
+                            }
+                            else{
+                              log.error(messages.getMessage(lang, MessageConsts.DeletedCountError, 1, reply.result().getUpdated()));
+                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                                .withPlainNotFound(messages.getMessage(lang, MessageConsts.DeletedCountError,1 , reply.result().getUpdated()))));
+                            }
+                          }
+                          else{
+                            log.error(reply.cause().getMessage(), reply.cause());
+                            asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                              .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                          }
+                        } catch (Exception e) {
+                          log.error(e.getMessage(), e);
+                          asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                            .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                        }
+                      });
                   } catch (Exception e) {
                     log.error(e.getMessage(), e);
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
                       .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
                   }
-                });
-            } catch (Exception e) {
-              log.error(e.getMessage(), e);
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-            }
-          }
-          else{
-            log.error(replyHandler.cause().getMessage(), replyHandler.cause());
+                }
+                else{
+                  log.error(replyHandler.cause().getMessage(), replyHandler.cause());
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+                    .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                }
+              });
+            }  
+          } catch(Exception e) {
+            log.error(e.getMessage(), e);
             asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
               .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
           }

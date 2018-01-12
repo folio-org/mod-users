@@ -62,6 +62,7 @@ public class UsersAPI implements UsersResource {
   private static final String USER_NAME_FIELD = "'username'";
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
+  private static final String RAML_PATH = "apidocs/raml/raml-util";
 
   public UsersAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField("id");
@@ -209,11 +210,11 @@ public class UsersAPI implements UsersResource {
           return;
         }
         try {
-          Criteria idCrit = new Criteria("raml/raml-util/schemas/mod-users/userdata.json");
+          Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
           idCrit.addField(USER_ID_FIELD);
           idCrit.setOperation("=");
           idCrit.setValue(entity.getId());
-          Criteria nameCrit = new Criteria("raml/raml-util/schemas/mod-users/userdata.json");
+          Criteria nameCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
           nameCrit.setValue(entity.getUsername());
@@ -350,7 +351,7 @@ public class UsersAPI implements UsersResource {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(null);
             try {
-              Criteria idCrit = new Criteria("apidocs/raml/raml-util/schemas/mod-users/userdata.json");
+              Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
               idCrit.addField(USER_ID_FIELD);
               idCrit.setOperation("=");
               idCrit.setValue(userId);

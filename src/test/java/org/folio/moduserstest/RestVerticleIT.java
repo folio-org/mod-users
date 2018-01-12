@@ -46,8 +46,10 @@ public class RestVerticleIT {
   private static final String       SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
   private static final String       SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
 
-  private static String postRequest = "{\"group\": \"librarianPOST\",\"desc\": \"basic lib group\"}";
-  private static String putRequest = "{\"group\": \"librarianPUT\",\"desc\": \"basic lib group\"}";
+  private static String postGroupData = "{\"group\": \"librarianPOST\",\"desc\": \"basic lib group\"}";
+  private static String putGroupData = "{\"group\": \"librarianPUT\",\"desc\": \"another basic lib group\"}";
+  private static String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
+  private static String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
   private static String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
@@ -57,29 +59,11 @@ public class RestVerticleIT {
   private static Vertx vertx;
   static int port;
 
-  private String groupID;
+  private String groupID1;
+  private String groupID2;
 
   @Rule
   public Timeout rule = Timeout.seconds(10);
-
-  public static void initDatabase(TestContext context) throws SQLException {
-    PostgresClient postgres = PostgresClient.getInstance(vertx);
-    postgres.setIsEmbedded(true);
-    postgres.dropCreateDatabase("test_mod_users");
-
-    String sql = "drop schema if exists diku_mod_users cascade;\n"
-        + "drop role if exists diku_mod_users;\n";
-    Async async = context.async();
-    PostgresClient.getInstance(vertx).runSQLFile(sql, true, result -> {
-      if (result.failed()) {
-        context.fail(result.cause());
-      } else if (! result.result().isEmpty()) {
-        context.fail("runSQLFile failed with: " + result.result().stream().collect(Collectors.joining(" ")));
-      }
-      async.complete();
-    });
-    async.await();
-  }
 
   @BeforeClass
   public static void setup(TestContext context) throws SQLException {
@@ -88,7 +72,7 @@ public class RestVerticleIT {
     try {
       PostgresClient.setIsEmbedded(true);
       PostgresClient.getInstance(vertx).startEmbeddedPostgres();
-      PostgresClient.getInstance(vertx).dropCreateDatabase("test_mod_users");
+      //PostgresClient.getInstance(vertx).dropCreateDatabase("test_mod_users");
     } catch(Exception e) {
       e.printStackTrace();
       context.fail(e);
@@ -115,7 +99,11 @@ public class RestVerticleIT {
 
   @AfterClass
   public static void teardown(TestContext context) {
-    context.async().complete();
+    Async async = context.async();
+    vertx.close(context.asyncAssertSuccess(res -> {
+      PostgresClient.stopEmbeddedPostgres();
+      async.complete();
+    }));
   }
 
   private Future<Void> getEmptyUsers(TestContext context) {
@@ -401,6 +389,29 @@ public class RestVerticleIT {
     return future;
 
  }
+  
+  private Future<Void> createBadAddressType(TestContext context) {
+    System.out.println("Creating a bad address type\n");
+    Future future = Future.future();
+    JsonObject addressTypeObject = new JsonObject()
+            .put("desc", "The patron's summer residence");
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/addresstypes", res -> {
+      if(res.statusCode() == 422) {
+        future.complete();
+      } else {
+        res.bodyHandler(body -> {
+          future.fail("Expected 422, Got status code: " + res.statusCode() + ": " + body.toString());
+        });
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end(addressTypeObject.encode());
+    return future;
+  }
 
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
     System.out.println("Getting the new addresstype, updating a user with it\n");
@@ -930,6 +941,8 @@ public class RestVerticleIT {
       createAddressType(context).setHandler(f.completer());
       return f;
     }).compose(v -> {
+      return createBadAddressType(context);
+    }).compose(v -> {
       Future<Void> f = Future.future();
       getAddressTypeUpdateUser(context).setHandler(f.completer());
       return f;
@@ -1003,18 +1016,18 @@ public class RestVerticleIT {
     /**add a group*/
      CompletableFuture<Response> addGroupCF = new CompletableFuture();
      String addGroupURL = url;
-     send(addGroupURL, context, HttpMethod.POST, postRequest,
+     send(addGroupURL, context, HttpMethod.POST, fooGroupData,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addGroupCF));
      Response addGroupResponse = addGroupCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(addGroupResponse.code, HttpURLConnection.HTTP_CREATED);
-     groupID = addGroupResponse.body.getString("id");
+     groupID1 = addGroupResponse.body.getString("id");
      System.out.println(addGroupResponse.body +
        "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
 
      /**update a group*/
      CompletableFuture<Response> updateGroupCF = new CompletableFuture();
-     String updateGroupURL = url +"/"+groupID;
-     send(updateGroupURL, context, HttpMethod.PUT, putRequest,
+     String updateGroupURL = url +"/"+groupID1;
+     send(updateGroupURL, context, HttpMethod.PUT, barGroupData,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 204,  new HTTPNoBodyResponseHandler(updateGroupCF));
      Response updateGroupResponse = updateGroupCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(updateGroupResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
@@ -1023,7 +1036,7 @@ public class RestVerticleIT {
 
      /**delete a group*/
      CompletableFuture<Response> deleteCleanCF = new CompletableFuture();
-     String deleteCleanURL = url+"/"+groupID;
+     String deleteCleanURL = url+"/"+groupID1;
      send(deleteCleanURL, context, HttpMethod.DELETE, null,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(deleteCleanCF));
      Response deleteCleanResponse = deleteCleanCF.get(5, TimeUnit.SECONDS);
@@ -1033,18 +1046,18 @@ public class RestVerticleIT {
 
      /**re-add a group*/
      CompletableFuture<Response> addNewGroupCF = new CompletableFuture();
-     send(addGroupURL, context, HttpMethod.POST, putRequest,
+     send(addGroupURL, context, HttpMethod.POST, fooGroupData,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addNewGroupCF));
      Response addNewGroupResponse = addNewGroupCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(addNewGroupResponse.code, HttpURLConnection.HTTP_CREATED);
-     groupID = addNewGroupResponse.body.getString("id");
+     groupID1 = addNewGroupResponse.body.getString("id");
      System.out.println(addNewGroupResponse.body +
        "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
 
     /**add a user*/
      CompletableFuture<Response> addUserCF = new CompletableFuture();
      String addUserURL = userUrl;
-     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID).encode(),
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID1).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF));
      Response addUserResponse = addUserCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(addUserResponse.code, HttpURLConnection.HTTP_CREATED);
@@ -1054,7 +1067,7 @@ public class RestVerticleIT {
 
      /**add the same user name again*/
      CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID).encode(),
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID1).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF2));
      Response addUserResponse2 = addUserCF2.get(5, TimeUnit.SECONDS);
      context.assertEquals(addUserResponse2.code, 422);
@@ -1063,14 +1076,14 @@ public class RestVerticleIT {
 
      /**add the same user again with same id*/
      CompletableFuture<Response> addUserCF3 = new CompletableFuture();
-     send(addUserURL, context, HttpMethod.POST, createUser(userID, "jhandley", groupID).encode(),
+     send(addUserURL, context, HttpMethod.POST, createUser(userID, "jhandley", groupID1).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF3));
      Response addUserResponse3 = addUserCF3.get(5, TimeUnit.SECONDS);
      context.assertEquals(addUserResponse3.code, 422);
      System.out.println(addUserResponse3.body +
        "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
-     /**add a user again with non existant patron group*/
+     /**add a user again with non existent patron group*/
      CompletableFuture<Response> addUserCF4 = new CompletableFuture();
      send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 400,  new HTTPNoBodyResponseHandler(addUserCF4));
@@ -1079,7 +1092,7 @@ public class RestVerticleIT {
      System.out.println(addUserResponse4.body +
        "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
-     /**update a user again with non existant patron group*/
+     /**update a user again with non existent patron group*/
      CompletableFuture<Response> updateUserCF = new CompletableFuture();
      send(addUserURL+"/"+userID, context, HttpMethod.PUT, createUser(userID, "jhandley2nd", "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 400,  new HTTPNoBodyResponseHandler(updateUserCF));
@@ -1088,9 +1101,9 @@ public class RestVerticleIT {
      System.out.println(updateUserResponse.body +
        "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL+"/"+userID);
 
-     /**update a user again with existant patron group*/
+     /**update a user again with existent patron group*/
      CompletableFuture<Response> updateUser2CF = new CompletableFuture();
-     send(addUserURL+"/"+userID, context, HttpMethod.PUT, createUser(userID, "jhandley2nd", groupID).encode(),
+     send(addUserURL+"/"+userID, context, HttpMethod.PUT, createUser(userID, "jhandley2nd", groupID1).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 204,  new HTTPNoBodyResponseHandler(updateUser2CF));
      Response updateUser2Response = updateUser2CF.get(5, TimeUnit.SECONDS);
      context.assertEquals(updateUser2Response.code, 204);
@@ -1099,7 +1112,7 @@ public class RestVerticleIT {
 
      /**get all users belonging to a specific group*/
      CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
-     String getUsersInGroupURL = userUrl+"?query=patronGroup=="+groupID;
+     String getUsersInGroupURL = userUrl+"?query=patronGroup=="+groupID1;
      send(getUsersInGroupURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF,
        200, new HTTPResponseHandler(getUsersInGroupCF));
      Response getUsersInGroupResponse = getUsersInGroupCF.get(5, TimeUnit.SECONDS);
@@ -1123,7 +1136,7 @@ public class RestVerticleIT {
 
      /**try to get via cql*/
      CompletableFuture<Response> cqlCF = new CompletableFuture();
-     String cqlURL = url+"?query=group==librarianPUT";
+     String cqlURL = url+"?query=group==librarianFOO";
      send(cqlURL,
        context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
        new HTTPResponseHandler(cqlCF));
@@ -1135,7 +1148,7 @@ public class RestVerticleIT {
 
      /**delete a group - should fail as there is a user associated with the group*/
      CompletableFuture<Response> delete1CF = new CompletableFuture();
-     String delete1URL = url+"/"+groupID;
+     String delete1URL = url+"/"+groupID1;
      send(delete1URL, context, HttpMethod.DELETE, null,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(delete1CF));
      Response delete1Response = delete1CF.get(5, TimeUnit.SECONDS);
@@ -1143,9 +1156,19 @@ public class RestVerticleIT {
      System.out.println(delete1Response.body +
        "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
 
+     /**delete a nonexistent group - should return 404 */
+     CompletableFuture<Response> deleteNEGCF = new CompletableFuture();
+     String deleteNEGURL = url+"/a492ffd2-b848-48bf-b716-1a645822279e";
+     send(deleteNEGURL, context, HttpMethod.DELETE, null,
+       SUPPORTED_CONTENT_TYPE_JSON_DEF, 404, new HTTPNoBodyResponseHandler(deleteNEGCF));
+     Response deleteNEGResponse = deleteNEGCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(deleteNEGResponse.code, HttpURLConnection.HTTP_NOT_FOUND);
+     System.out.println(deleteNEGResponse.body +
+       "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
+     
      /**try to add a duplicate group*/
      CompletableFuture<Response> dupCF = new CompletableFuture();
-     send(url, context, HttpMethod.POST, putRequest,
+     send(url, context, HttpMethod.POST, fooGroupData,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPResponseHandler(dupCF));
      Response dupResponse = dupCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(dupResponse.code, 422);
@@ -1154,18 +1177,18 @@ public class RestVerticleIT {
 
      /**get a group*/
      CompletableFuture<Response> getSpecGroupCF = new CompletableFuture();
-     String getSpecGroupURL = url+"/"+groupID;
+     String getSpecGroupURL = url+"/"+groupID1;
      send(getSpecGroupURL, context, HttpMethod.GET, null,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, new HTTPResponseHandler(getSpecGroupCF));
      Response getSpecGroupResponse = getSpecGroupCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(getSpecGroupResponse.code, HttpURLConnection.HTTP_OK);
      System.out.println(getSpecGroupResponse.body +
        "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
-     context.assertTrue("librarianPUT".equals(getSpecGroupResponse.body.getString("group")));
+     context.assertTrue("librarianFOO".equals(getSpecGroupResponse.body.getString("group")));
 
      /**get a group bad id*/
      CompletableFuture<Response> getBadIDCF = new CompletableFuture();
-     String getBadIDURL = url+"/12345678";
+     String getBadIDURL = url+"/3748ec8d-8dbc-4717-819d-87c839e6905e";
      send(getBadIDURL, context, HttpMethod.GET, null,
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 404, new HTTPNoBodyResponseHandler(getBadIDCF));
      Response getBadIDResponse = getBadIDCF.get(5, TimeUnit.SECONDS);
@@ -1175,7 +1198,7 @@ public class RestVerticleIT {
 
      /**delete a group with users should fail*/
      CompletableFuture<Response> deleteCF = new CompletableFuture();
-     String delete = url+"/"+groupID;
+     String delete = url+"/"+groupID1;
      send(delete, context, HttpMethod.DELETE, null,
      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(deleteCF));
      Response deleteResponse = deleteCF.get(5, TimeUnit.SECONDS);
@@ -1196,10 +1219,19 @@ public class RestVerticleIT {
    String userUrl = "http://localhost:"+port+"/users";
 
    try {
+     CompletableFuture<Response> postGroupCF = new CompletableFuture();
+     String postGroupURL = "http://localhost:" + port + "/groups";
+     send(postGroupURL, context, HttpMethod.POST, barGroupData, SUPPORTED_CONTENT_TYPE_JSON_DEF,
+       201, new HTTPResponseHandler(postGroupCF));
+     Response postGroupResponse = postGroupCF.get(5, TimeUnit.SECONDS);
+     context.assertEquals(postGroupResponse.code, HttpURLConnection.HTTP_CREATED);
+     String barGroupId = postGroupResponse.body.getString("id");
+     context.assertNotNull(barGroupId);
+             
      int inc = 0;
      CompletableFuture<Response> addUserCF = new CompletableFuture();
      String addUserURL = userUrl;
-     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley"+inc++, groupID).encode(),
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley"+inc++, barGroupId).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF));
      Response addUserResponse = addUserCF.get(5, TimeUnit.SECONDS);
      context.assertEquals(addUserResponse.code, HttpURLConnection.HTTP_CREATED);
@@ -1207,7 +1239,7 @@ public class RestVerticleIT {
        "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
      CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley"+inc++, groupID).encode(),
+     send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley"+inc++, barGroupId).encode(),
        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,  new HTTPResponseHandler(addUserCF2));
      Response addUserResponse2 = addUserCF2.get(5, TimeUnit.SECONDS);
      context.assertEquals(addUserResponse2.code, HttpURLConnection.HTTP_CREATED);
@@ -1215,12 +1247,14 @@ public class RestVerticleIT {
        "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
      //query on users and sort by groups
-     String url1 = url+URLEncoder.encode("active=* sortBy patronGroup.group/sort.descending", "UTF-8");
-     String url2 = url+URLEncoder.encode("active=* sortBy patronGroup.group/sort.ascending", "UTF-8");
+     String url0 = userUrl;
+     String url1 = url+URLEncoder.encode("cql.allRecords=1 sortBy patronGroup.group/sort.descending", "UTF-8");
+     //String url1 = userUrl;
+     String url2 = url+URLEncoder.encode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending", "UTF-8");
      //query and sort on groups via users endpoint
      String url3 = url+URLEncoder.encode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending", "UTF-8");
      //query on users sort on users and groups
-     String url4 = url+URLEncoder.encode("active=* sortby patronGroup.group personal.lastName personal.firstName", "UTF-8");
+     String url4 = url+URLEncoder.encode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName", "UTF-8");
      //query on users and groups sort by groups
      String url5 = url+URLEncoder.encode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group", "UTF-8");
      //query on users and sort by users
@@ -1228,6 +1262,7 @@ public class RestVerticleIT {
      //non existant group - should be 0 results
      String url7 = url+URLEncoder.encode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group", "UTF-8");
 
+     CompletableFuture<Response> cqlCF0 = new CompletableFuture();
      CompletableFuture<Response> cqlCF1 = new CompletableFuture();
      CompletableFuture<Response> cqlCF2 = new CompletableFuture();
      CompletableFuture<Response> cqlCF3 = new CompletableFuture();
@@ -1236,10 +1271,10 @@ public class RestVerticleIT {
      CompletableFuture<Response> cqlCF6 = new CompletableFuture();
      CompletableFuture<Response> cqlCF7 = new CompletableFuture();
 
-     String[] urls = new String[]{url1, url2, url3, url4, url5, url6, url7};
-     CompletableFuture<Response>[] cqlCF = new CompletableFuture[]{cqlCF1, cqlCF2, cqlCF3, cqlCF4, cqlCF5, cqlCF6, cqlCF7};
+     String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7};
+     CompletableFuture<Response>[] cqlCF = new CompletableFuture[]{cqlCF0, cqlCF1, cqlCF2, cqlCF3, cqlCF4, cqlCF5, cqlCF6, cqlCF7};
 
-     for(int i=0; i<7; i++){
+     for(int i=0; i<8; i++){
        CompletableFuture<Response> cf = cqlCF[i];
        String cqlURL = urls[i];
        send(cqlURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
@@ -1247,21 +1282,25 @@ public class RestVerticleIT {
        Response cqlResponse = cf.get(5, TimeUnit.SECONDS);
        context.assertEquals(cqlResponse.code, HttpURLConnection.HTTP_OK);
        System.out.println(cqlResponse.body +
-         "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
+         "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
        //requests should have 3 or 4 results
-       if(i==6){
+       if(i==7){
          context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
+       } else if(i==6){
+         context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
        } else if(i==5){
-         context.assertEquals(5, cqlResponse.body.getInteger("totalRecords"));
-       } else if(i==4){
          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
-       } else if(i==0){
-         context.assertNotEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-       }else if(i==1){
+       } else if(i==1){
+         context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 1);
          context.assertEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-       }else if(i==3){
-         context.assertEquals("Triangle0" , new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"));
-       }else {
+       } else if(i==2){
+         context.assertNotEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+       } else if(i==4){
+         context.assertTrue(((String)(new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))).startsWith("Triangle") );
+       } else if(i==0) {
+         //Baseline test
+         context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 3);
+       } else {
          context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
        }
      }
@@ -1295,7 +1334,7 @@ public class RestVerticleIT {
      context.fail(error.getMessage());
    })
    .handler(handler);
-   request.putHeader("Authorization", "diku");
+   //request.putHeader("Authorization", "diku");
    request.putHeader("x-okapi-tenant", "diku");
    request.putHeader("Accept", "application/json,text/plain");
    request.putHeader("Content-type", contentType);
@@ -1345,9 +1384,10 @@ public class RestVerticleIT {
    return false;
  }
 
+ private static int userInc = 0;
+ 
  private static JsonObject createUser(String id, String name, String pgId) {
-
-   int inc = 0;
+   userInc++;
    JsonObject user = new JsonObject();
    if(id !=null){
      user.put("id", id);
@@ -1360,8 +1400,8 @@ public class RestVerticleIT {
    user.put("patronGroup", pgId);
    user.put("active", true);
    user.put("personal", new JsonObject()
-     .put("lastName", "Triangle"+inc++)
-     .put("firstName", "Jack"+inc++)
+     .put("lastName", "Triangle"+userInc)
+     .put("firstName", "Jack"+userInc)
    );
    return user;
  }
