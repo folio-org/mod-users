@@ -1,3 +1,9 @@
+## 14.4;.0 2018-01-12
+ * Update to RMB 16.0.3
+ * Add standard metadata field support to userdata
+ * Fix bug allowing for type-less address types
+ * Add check for deleting nonexistent groups
+
 ## 14.2.0 2017-08-23
  * Add 'proxyFor' field to userdata
 

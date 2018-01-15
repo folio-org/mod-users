@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>14.3.0-SNAPSHOT</version>
+  <version>14.4.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -27,12 +27,6 @@
       <artifactId>junit</artifactId>
       <version>4.12</version>
       <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>postgres-runner</artifactId>
-      <version>${raml-module-builder.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
@@ -116,55 +110,6 @@
             <goals>
               <goal>exec</goal>
             </goals>
-          </execution>
-          <execution>
-            <id>start-postgres</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>java</executable>
-              <async>true</async>
-              <classpathScope>test</classpathScope>
-              <arguments>
-                <argument>-classpath</argument>
-                <classpath />
-                <argument>org.folio.rest.persist.PostgresRunner</argument>
-                <argument>${postgresrunner.port}</argument>
-                <argument>${postgres.port}</argument>
-                <argument>postgres</argument>  <!-- username -->
-                <argument>postgres</argument>  <!-- password -->
-              </arguments>
-            </configuration>
-          </execution>
-          <execution>
-            <id>wait-for-postgres</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>java</goal>
-            </goals>
-            <configuration>
-              <classpathScope>test</classpathScope>
-              <mainClass>org.folio.rest.persist.PostgresWaiter</mainClass>
-              <arguments>
-                <argument>${postgresrunner.port}</argument>
-              </arguments>
-            </configuration>
-          </execution>
-          <execution>
-            <id>stop-postgres</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>java</goal>
-            </goals>
-            <configuration>
-              <classpathScope>test</classpathScope>
-              <mainClass>org.folio.rest.persist.PostgresStopper</mainClass>
-              <arguments>
-                <argument>${postgresrunner.port}</argument>
-              </arguments>
-            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -326,7 +271,7 @@
                 <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]" dir="${basedir}/target/classes/apidocs/raml">
                   <include name="**/*.raml" />
                 </replace>
-                <replace token="../.." value="../raml-util-local" dir="${basedir}/target/classes/apidocs/raml">
+                <replace token="../.." value="../raml-util" dir="${basedir}/target/classes/apidocs/raml">
                   <include name="**/*.raml" />
                 </replace>
               </target>
@@ -448,7 +393,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <raml-module-builder.version>15.0.2</raml-module-builder.version>
+    <raml-module-builder.version>16.0.3</raml-module-builder.version>
     <ramlfiles_path>${basedir}/raml-util/ramls/mod-users</ramlfiles_path>
     <ramlfiles_util_path>${basedir}/raml-util</ramlfiles_util_path>
     <postgresrunner.port>5434</postgresrunner.port>
