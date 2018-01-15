@@ -7,7 +7,6 @@
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : false,
       "withMetadata" : true,
-      "ginIndex" : true,
       "uniqueIndex" : [
         {
           "fieldName" : "username",
@@ -25,7 +24,6 @@
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : true,
       "withMetadata" : true,
-      "ginIndex" : true,
       "uniqueIndex" : [
         {
           "fieldName" : "group",
@@ -38,16 +36,14 @@
       "generateId" : true,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : true,
-      "withMetadata" : true,
-      "ginIndex" : true
+      "withMetadata" : true
     },
     {
       "tableName" : "proxyfor",
       "generateId" : true,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : true,
-      "withMetadata" : true,
-      "ginIndex" : true
+      "withMetadata" : true
     }
   ],
   "views" : [
