@@ -76,7 +76,7 @@ public class UsersAPI implements UsersResource {
    * @return
    */
   private String getTableName(String cql) {
-    if(cql != null){
+    if(cql != null && cql.contains("patronGroup.")){
       return VIEW_NAME_USER_GROUPS_JOIN;
       //}
     }
@@ -98,8 +98,14 @@ public class UsersAPI implements UsersResource {
   }
 
   private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(VIEW_NAME_USER_GROUPS_JOIN+".jsonb",VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb"));
-    return new CQLWrapper(cql2pgJson, convertQuery(query)).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+    if(query != null && query.contains("patronGroup.")) {
+      query = convertQuery(query);
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(VIEW_NAME_USER_GROUPS_JOIN+".jsonb",VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb"));
+      return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+    } else {
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(TABLE_NAME_USERS+".jsonb"));
+      return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+    }
   }
 
   @Validate
