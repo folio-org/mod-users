@@ -1,4 +1,7 @@
-## 14.4;.0 2018-01-12
+## 14.4.1 2018-01-16
+ * Implement fix to CQL generation to handle users without patrongroups
+
+## 14.4.0 2018-01-12
  * Update to RMB 16.0.3
  * Add standard metadata field support to userdata
  * Fix bug allowing for type-less address types

@@ -14,6 +14,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.sql.SQLException;
@@ -222,8 +223,49 @@ public class RestVerticleIT {
            .end();
    return future;
  }
+ 
+ private Future<Void> getUserByCQL(TestContext context) {
+   System.out.println("Getting user via CQL, by username\n");
+   Future future = Future.future();
+   HttpClient client = vertx.createHttpClient();
+   try {
+    client.get(port, "localhost", "/users?query=" + URLEncoder.encode("username==joeblock", "UTF-8"), res -> {
+      if(res.statusCode() == 200) {
+        res.bodyHandler(buf -> {
+          try {
+            JsonObject resultObject = buf.toJsonObject();
+            int totalRecords = resultObject.getInteger("totalRecords");
+            if(totalRecords != 1) {
+              future.fail("Expected 1 record, got " + totalRecords);
+              return;
+            }
+            JsonArray userList = resultObject.getJsonArray("users");
+            JsonObject userObject = userList.getJsonObject(0);
+            if(userObject.getString("username").equals("joeblock")) {
+              future.complete();
+            } else {
+              future.fail("Unable to read proper data from JSON return value: " + buf.toString());
+            }
+          } catch(Exception e) {
+            future.fail(e);
+          }
+        });
+      } else {
+        future.fail("Bad response: " + res.statusCode());
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end();
+   } catch(Exception e) {
+     future.fail(e);
+   }
+   return future;
+ }
 
-   private Future<Void> postAnotherUser(TestContext context) {
+ private Future<Void> postAnotherUser(TestContext context) {
     System.out.println("Creating another user\n");
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
@@ -312,8 +354,6 @@ public class RestVerticleIT {
            .end();
    return future;
  }
-
-
 
   private Future<Void> putUserBadUsername(TestContext context) {
    System.out.println("Trying to assign an invalid username \n");
@@ -916,6 +956,8 @@ public class RestVerticleIT {
       Future<Void> f = Future.future();
       getUser(context).setHandler(f.completer());
       return f;
+    }).compose(v -> {
+      return getUserByCQL(context);
     }).compose(v -> {
       Future<Void> f = Future.future();
       postAnotherUser(context).setHandler(f.completer());
