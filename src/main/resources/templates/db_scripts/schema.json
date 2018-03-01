@@ -48,17 +48,21 @@
   ],
   "views" : [
     {
-      "viewName" : "users_groups_view",
-      "mode" : "new",
-      "table" : {
-        "tableName" : "users",
-        "joinOnField" : "patronGroup"
-      },
-      "joinTable" : {
-        "tableName" : "groups",
-        "joinOnField" : "id",
-        "jsonFieldAlias" : "group_jsonb"
-      }
+      "viewName": "users_groups_view",
+      "pkColumnName": "id",
+      "join": [
+        {
+          "table": {
+            "tableName": "users",
+            "joinOnField": "patronGroup"
+          },
+          "joinTable": {
+            "tableName": "groups",
+            "joinOnField": "id",
+            "jsonFieldAlias": "group_jsonb"
+          }
+        }
+      ]
     }
   ]
 }
