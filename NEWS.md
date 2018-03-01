@@ -1,3 +1,7 @@
+## 14.5.0 2018-03-01
+ * Remove required 'desc' field for usergroups
+ * Update to RMB 18.0.1
+
 ## 14.4.1 2018-01-16
  * Implement fix to CQL generation to handle users without patrongroups
 
