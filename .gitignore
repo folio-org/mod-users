@@ -1,4 +1,3 @@
-client/
 #mvn build
 target/
 #vert.x
