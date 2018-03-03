@@ -1,3 +1,6 @@
+## Not yet released
+ * MODUSERS-58: Update shared raml-util. The metadata schema was missing when processing RAML files in a different order.
+
 ## 14.5.0 2018-03-01
  * Remove required 'desc' field for usergroups
  * Update to RMB 18.0.1
