@@ -56,18 +56,6 @@ dataDirs=${dataDirs:-'.'}
 modEndpoints='groups addresstypes'
 method=POST
 
-curlBaseOpts="-s -w '\n' --connect-timeout 10 \
- -H 'Content-type: application/json' \
- -H 'Accept: application/json' \
- -H 'X-Okapi-Tenant: $tenant'"
-
-if [ "$auth_required" = true ]; then
-  authOpt="-H 'X-Okapi-Token: $authToken'"
-  curlOpts="$curlBaseOpts $authOpt"
-else
-  curlOpts=$curlBaseOpts
-fi
-
 for dir in "${dataDirs[@]}"; 
 do
   for endpoint in $modEndpoints 
@@ -76,7 +64,20 @@ do
       json=$(ls ${dir}/${endpoint}/*.json)
       for j in $json 
       do 
-        curl $curlOpts -X $method -d @$j ${okapiUrl}/${endpoint}
+        if [ "$auth_required" = true ]; then
+          curl -w '\n' --connect-timeout 10 \
+            -H 'Content-type: application/json' \
+            -H 'Accept: application/json' \
+            -H "X-Okapi-Tenant: $tenant" \
+            -H "X-Okapi-Token: $authToken" \
+            -X $method -d @$j ${okapiUrl}/${endpoint}
+        else 
+          curl -w '\n' --connect-timeout 10 \
+            -H 'Content-type: application/json' \
+            -H 'Accept: application/json' \
+            -H "X-Okapi-Tenant: $tenant" \
+            -X $method -d @$j ${okapiUrl}/${endpoint}
+        fi
       done
     fi
   done
