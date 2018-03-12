@@ -56,7 +56,7 @@ public class RestVerticleIT {
   private static String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
   private static String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
-  
+
   private static Vertx vertx;
   static int port;
 
@@ -79,14 +79,14 @@ public class RestVerticleIT {
       context.fail(e);
       return;
     }
-    
+
     //initDatabase(context);
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
     TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
-    
+
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
         tenantClient.post(null, res2 -> {
@@ -223,7 +223,7 @@ public class RestVerticleIT {
            .end();
    return future;
  }
- 
+
  private Future<Void> getUserByCQL(TestContext context) {
    System.out.println("Getting user via CQL, by username\n");
    Future future = Future.future();
@@ -429,7 +429,7 @@ public class RestVerticleIT {
     return future;
 
  }
-  
+
   private Future<Void> createBadAddressType(TestContext context) {
     System.out.println("Creating a bad address type\n");
     Future future = Future.future();
@@ -1207,7 +1207,7 @@ public class RestVerticleIT {
      context.assertEquals(deleteNEGResponse.code, HttpURLConnection.HTTP_NOT_FOUND);
      System.out.println(deleteNEGResponse.body +
        "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
-     
+
      /**try to add a duplicate group*/
      CompletableFuture<Response> dupCF = new CompletableFuture();
      send(url, context, HttpMethod.POST, fooGroupData,
@@ -1269,7 +1269,7 @@ public class RestVerticleIT {
      context.assertEquals(postGroupResponse.code, HttpURLConnection.HTTP_CREATED);
      String barGroupId = postGroupResponse.body.getString("id");
      context.assertNotNull(barGroupId);
-             
+
      int inc = 0;
      CompletableFuture<Response> addUserCF = new CompletableFuture();
      String addUserURL = userUrl;
@@ -1427,7 +1427,7 @@ public class RestVerticleIT {
  }
 
  private static int userInc = 0;
- 
+
  private static JsonObject createUser(String id, String name, String pgId) {
    userInc++;
    JsonObject user = new JsonObject();

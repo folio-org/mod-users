@@ -117,7 +117,7 @@ public class UserGroupAPI implements GroupsResource {
       try {
         System.out.println("sending... postGroups");
         String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
-        
+
         PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
           GROUP_TABLE,
           entity,
@@ -233,7 +233,7 @@ public class UserGroupAPI implements GroupsResource {
                log.error(getReply.cause().getMessage(), getReply.cause());
                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
-            } else {   
+            } else {
               List<Usergroup> userGroup = (List<Usergroup>) getReply.result().getResults();
               if(userGroup.isEmpty()) {
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
@@ -293,7 +293,7 @@ public class UserGroupAPI implements GroupsResource {
                     .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
                 }
               });
-            }  
+            }
           } catch(Exception e) {
             log.error(e.getMessage(), e);
             asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
