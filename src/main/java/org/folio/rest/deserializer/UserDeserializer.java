@@ -2,6 +2,7 @@ package org.folio.rest.deserializer;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Optional;
 
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.tools.utils.ObjectMapperTool;
@@ -22,10 +23,12 @@ public class UserDeserializer extends JsonDeserializer<User> {
     ObjectCodec objectCodec = parser.getCodec();
     JsonNode node = objectCodec.readTree(parser);
     User user = mapper.treeToValue(node, User.class);
-    Date expirationDate = user.getExpirationDate();
-    Date now = new Date();
-    if (now.compareTo(expirationDate) > 0) {
-      user.setActive(false);
+    Optional<Date> expirationDate = Optional.ofNullable(user.getExpirationDate());
+    if (expirationDate.isPresent()) {
+      Date now = new Date();
+      if (now.compareTo(expirationDate.get()) > 0) {
+        user.setActive(false);
+      }
     }
     return user;
   }
