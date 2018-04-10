@@ -1247,6 +1247,39 @@ public class RestVerticleIT {
      context.assertEquals(deleteResponse.code, HttpURLConnection.HTTP_BAD_REQUEST);
      System.out.println(deleteResponse.body +
        "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
+     
+     /* Create a user with a past-due expiration date */
+     UUID expiredUserId = UUID.randomUUID();
+     {
+       Date now = new Date();
+       Date pastDate = new Date(now.getTime() - (10 * 24 * 60 * 60 * 1000));
+       String dateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(pastDate);
+       JsonObject expiredUserJson = new JsonObject()
+               .put("id", expiredUserId.toString())
+               .put("username", "bmoses")
+               .put("patronGroup", groupID1)
+               .put("active", true)
+               .put("expirationDate", dateString)
+               .put("personal", new JsonObject()
+                 .put("lastName", "Brown")
+                 .put("firstName", "Moses")
+                );
+       CompletableFuture<Response> addExpiredUserCF = new CompletableFuture();
+       send(addUserURL, context, HttpMethod.POST, expiredUserJson.encode(),
+               SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,
+               new HTTPResponseHandler(addExpiredUserCF));
+       Response addExpiredUserResponse = addExpiredUserCF.get(5, TimeUnit.SECONDS);
+       System.out.println(addExpiredUserResponse.body +
+               "\nStatus - " + addExpiredUserResponse.code + " at " 
+               + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
+       context.assertEquals(addExpiredUserResponse.code, 201);
+       CompletableFuture<Response> getExpiredUserCF = new CompletableFuture();
+       send(addUserURL + "/" + expiredUserId.toString(), context, HttpMethod.GET, null,
+               SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
+               new HTTPResponseHandler(getExpiredUserCF));
+       Response getExpiredUserResponse = getExpiredUserCF.get(5, TimeUnit.SECONDS);
+       context.assertEquals(getExpiredUserResponse.body.getBoolean("active"), false);
+     }
 
 
   } catch (Exception e) {
