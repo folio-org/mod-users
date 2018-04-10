@@ -1,7 +1,10 @@
+## 14.7.0
+ * Add custom JSON deserializer to automatically set "active" to false if the user expiration date has passed
+
 ## 14.6.0
  * Update RAML traits to raise (to maxint) the number of results that can be requested
 
-## 14.5,1
+## 14.5.1
  * MODUSERS-58: Update shared raml-util. The metadata schema was missing when processing RAML files in a different order.
 
 ## 14.5.0 2018-03-01
