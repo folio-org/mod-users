@@ -36,7 +36,13 @@
       "generateId" : true,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : true,
-      "withMetadata" : true
+      "withMetadata" : true,
+      "uniqueIndex" : [
+        {
+          "fieldName" : "addressType",
+          "tOps" : "ADD"
+        }
+      ]
     },
     {
       "tableName" : "proxyfor",
