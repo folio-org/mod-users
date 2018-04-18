@@ -1,3 +1,7 @@
+## 14.8.0
+ * Make 'username' field now optional for User records
+ * Enable standard metadata on AddressType records
+
 ## 14.7.0
  * Add custom JSON deserializer to automatically set "active" to false if the user expiration date has passed
 
