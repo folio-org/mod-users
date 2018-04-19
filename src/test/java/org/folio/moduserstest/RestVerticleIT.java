@@ -138,11 +138,11 @@ public class RestVerticleIT {
   }
 
   private static void addTags(JsonObject u) {
-    JsonArray taglist = new JsonArray();
-    taglist.add("foo-tag");
-    taglist.add("bar-tag");
+    JsonArray tagList = new JsonArray();
+    tagList.add("foo-tag");
+    tagList.add("bar-tag");
     JsonObject tagobj = new JsonObject();
-    tagobj.put("taglist", taglist);
+    tagobj.put("tagList", tagList);
     u.put("tags", tagobj);
   }
 
@@ -204,7 +204,7 @@ public class RestVerticleIT {
          JsonObject userObject = buf.toJsonObject();
          if (userObject.getString("username").equals("joeblock")) {
            JsonObject tags = userObject.getJsonObject("tags");
-           if (tags == null || !tags.encode().equals("{\"taglist\":[\"foo-tag\",\"bar-tag\"]}")) {
+           if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
              future.fail("Bad value for tag list. " + buf.toString());
            } else {
              DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
