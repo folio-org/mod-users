@@ -137,13 +137,23 @@ public class RestVerticleIT {
     return future;
   }
 
+  private static void addTags(JsonObject u) {
+    JsonArray tagList = new JsonArray();
+    tagList.add("foo-tag");
+    tagList.add("bar-tag");
+    JsonObject tagobj = new JsonObject();
+    tagobj.put("tagList", tagList);
+    u.put("tags", tagobj);
+  }
+
   private Future<Void> postUser(TestContext context) {
     System.out.println("Creating a new user\n");
-    Future future = Future.future();
+    Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
-            .put("username", "joeblock")
-            .put("id", joeBlockId)
-            .put("active", true);
+      .put("username", "joeblock")
+      .put("id", joeBlockId)
+      .put("active", true);
+    addTags(userObject);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       if(res.statusCode() >= 200 && res.statusCode() < 300) {
@@ -192,21 +202,26 @@ public class RestVerticleIT {
      if(res.statusCode() == 200) {
        res.bodyHandler(buf -> {
          JsonObject userObject = buf.toJsonObject();
-         if(userObject.getString("username").equals("joeblock")) {
-           DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
-           Date createdDate = null;
-           try {
-             //createdDate = DatatypeConverter.parseDateTime(userObject.getString("createdDate")).getTime();
-             createdDate = new DateTime(userObject.getString("createdDate")).toDate();
-           } catch(Exception e) {
-             future.fail(e);
-             return;
-           }
-           Date now = new Date();
-           if(createdDate.before(now)) {
-            future.complete();
+         if (userObject.getString("username").equals("joeblock")) {
+           JsonObject tags = userObject.getJsonObject("tags");
+           if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
+             future.fail("Bad value for tag list. " + buf.toString());
            } else {
-             future.fail("Bad value for createdDate");
+             DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
+             Date createdDate = null;
+             try {
+               //createdDate = DatatypeConverter.parseDateTime(userObject.getString("createdDate")).getTime();
+               createdDate = new DateTime(userObject.getString("createdDate")).toDate();
+             } catch (Exception e) {
+               future.fail(e);
+               return;
+             }
+             Date now = new Date();
+             if (createdDate.before(now)) {
+               future.complete();
+             } else {
+               future.fail("Bad value for createdDate");
+             }
            }
          } else {
            future.fail("Unable to read proper data from JSON return value: " + buf.toString());
@@ -886,6 +901,7 @@ public class RestVerticleIT {
     }
     return future;
   }
+
   private Future<Void> findAndDeleteProxyfor(TestContext context) {
     Future future = Future.future();
        try {
@@ -1049,7 +1065,7 @@ public class RestVerticleIT {
     });
   }
 
- @Test
+  @Test
  public void testGroup(TestContext context){
    String url = "http://localhost:"+port+"/groups";
    String userUrl = "http://localhost:"+port+"/users";
@@ -1247,7 +1263,7 @@ public class RestVerticleIT {
      context.assertEquals(deleteResponse.code, HttpURLConnection.HTTP_BAD_REQUEST);
      System.out.println(deleteResponse.body +
        "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
-     
+
      /* Create a user with a past-due expiration date */
      UUID expiredUserId = UUID.randomUUID();
      {
@@ -1270,7 +1286,7 @@ public class RestVerticleIT {
                new HTTPResponseHandler(addExpiredUserCF));
        Response addExpiredUserResponse = addExpiredUserCF.get(5, TimeUnit.SECONDS);
        System.out.println(addExpiredUserResponse.body +
-               "\nStatus - " + addExpiredUserResponse.code + " at " 
+               "\nStatus - " + addExpiredUserResponse.code + " at "
                + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
        context.assertEquals(addExpiredUserResponse.code, 201);
        CompletableFuture<Response> getExpiredUserCF = new CompletableFuture();
@@ -1336,6 +1352,8 @@ public class RestVerticleIT {
      String url6 = url+URLEncoder.encode("active=true sortBy username", "UTF-8");
      //non existant group - should be 0 results
      String url7 = url+URLEncoder.encode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group", "UTF-8");
+     //query by tag, should get one record
+     String url8 = url + URLEncoder.encode("tags=foo", "UTF-8");
 
      CompletableFuture<Response> cqlCF0 = new CompletableFuture();
      CompletableFuture<Response> cqlCF1 = new CompletableFuture();
@@ -1345,11 +1363,12 @@ public class RestVerticleIT {
      CompletableFuture<Response> cqlCF5 = new CompletableFuture();
      CompletableFuture<Response> cqlCF6 = new CompletableFuture();
      CompletableFuture<Response> cqlCF7 = new CompletableFuture();
+     CompletableFuture<Response> cqlCF8 = new CompletableFuture();
 
-     String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7};
-     CompletableFuture<Response>[] cqlCF = new CompletableFuture[]{cqlCF0, cqlCF1, cqlCF2, cqlCF3, cqlCF4, cqlCF5, cqlCF6, cqlCF7};
+     String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7, url8};
+     CompletableFuture<Response>[] cqlCF = new CompletableFuture[]{cqlCF0, cqlCF1, cqlCF2, cqlCF3, cqlCF4, cqlCF5, cqlCF6, cqlCF7, cqlCF8};
 
-     for(int i=0; i<8; i++){
+     for (int i = 0; i < 9; i++) {
        CompletableFuture<Response> cf = cqlCF[i];
        String cqlURL = urls[i];
        send(cqlURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
@@ -1358,25 +1377,37 @@ public class RestVerticleIT {
        context.assertEquals(cqlResponse.code, HttpURLConnection.HTTP_OK);
        System.out.println(cqlResponse.body +
          "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
-       //requests should have 3 or 4 results
-       if(i==7){
-         context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
-       } else if(i==6){
-         context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
-       } else if(i==5){
-         context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
-       } else if(i==1){
-         context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 1);
-         context.assertEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-       } else if(i==2){
-         context.assertNotEquals("jhandley2nd" , cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-       } else if(i==4){
-         context.assertTrue(((String)(new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))).startsWith("Triangle") );
-       } else if(i==0) {
-         //Baseline test
-         context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 3);
-       } else {
-         context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
+       //requests should usually have 3 or 4 results
+       switch (i) {
+         case 8:
+           context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
+           break;
+         case 7:
+           context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
+           break;
+         case 6:
+           context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
+           break;
+         case 5:
+           context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
+           break;
+         case 1:
+           context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 1);
+           context.assertEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+           break;
+         case 2:
+           context.assertNotEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+           break;
+         case 4:
+           context.assertTrue(((String) (new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))).startsWith("Triangle"));
+           break;
+         case 0:
+           //Baseline test
+           context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 3);
+           break;
+         default:
+           context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
+           break;
        }
      }
   } catch (Exception e) {
