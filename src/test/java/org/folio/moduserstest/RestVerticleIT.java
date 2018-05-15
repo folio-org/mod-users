@@ -64,6 +64,17 @@ public class RestVerticleIT {
   private JsonObject testGroup = new JsonObject().put("group", "dropouts")
           .put("desc", "Freaks and Geeks")
           .put("id", UUID.randomUUID().toString());
+  
+  private JsonObject testProxyFor = new JsonObject()
+          .put("userId", UUID.randomUUID().toString())
+          .put("proxyUserId", UUID.randomUUID().toString())
+          .put("status", "Active")
+          .put("expirationDate", 
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date()))
+          .put("requestForSponsor", "Yes")
+          .put("notificationsTo", "Proxy")
+          .put("accrueTo", "Sponsor");
+          
 
   private static Vertx vertx;
   static int port;
@@ -1121,6 +1132,8 @@ public class RestVerticleIT {
       return createTestDeleteObjectById(context, testAddress, "/addresstypes");
     }).compose(v -> {
       return createTestDeleteObjectById(context, testGroup, "/groups");
+    }).compose(v -> {
+      return createTestDeleteObjectById(context, testProxyFor, "/proxiesfor");
     });
 
 

@@ -1,3 +1,6 @@
+## 14.10.0 2018-05-15
+ * Define fields in proxyFor schema to replace the use of catch-all 'meta' field
+
 ## 14.9.0
  * Allow groups and addresstypes to be supplied an optional id on creation
 
