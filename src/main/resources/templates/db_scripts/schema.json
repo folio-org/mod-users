@@ -20,9 +20,9 @@
     },
     {
       "tableName" : "groups",
-      "generateId" : true,
+      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : true,
+      "populateJsonWithId" : false,
       "withMetadata" : true,
       "uniqueIndex" : [
         {
@@ -33,9 +33,9 @@
     },
     {
       "tableName" : "addresstype",
-      "generateId" : true,
+      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : true,
+      "populateJsonWithId" : false,
       "withMetadata" : true,
       "uniqueIndex" : [
         {
@@ -46,9 +46,9 @@
     },
     {
       "tableName" : "proxyfor",
-      "generateId" : true,
+      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : true,
+      "populateJsonWithId" : false,
       "withMetadata" : true
     }
   ],

@@ -8,6 +8,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import javax.ws.rs.core.Response;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Errors;
@@ -148,8 +149,13 @@ public class ProxiesForAPI implements ProxiesforResource {
                               PostProxiesforResponse.withJsonUnprocessableEntity(existsError)));
           } else {
             try {
+              String id = entity.getId();
+              if(id == null) {
+                id = UUID.randomUUID().toString();
+                entity.setId(id);
+              }
               PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
-                      PROXY_FOR_TABLE, entity, reply -> {
+                      PROXY_FOR_TABLE, id, entity, reply -> {
                 try {
                   if(reply.failed()) {
                     String message = logAndSaveError(reply.cause());

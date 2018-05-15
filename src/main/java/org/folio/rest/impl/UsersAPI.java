@@ -215,7 +215,8 @@ public class UsersAPI implements UsersResource {
         String tableName = getTableName(null);
         if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
-              PostUsersResponse.withPlainBadRequest("Users are limited to one address per addresstype")));
+              PostUsersResponse.withPlainBadRequest(
+                      "Users are limited to one address per addresstype")));
           return;
         }
         try {
@@ -230,7 +231,8 @@ public class UsersAPI implements UsersResource {
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
 
-          checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
+          checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(
+                  checkRes -> {
             if(checkRes.failed()) {
               logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
               asyncResultHandler.handle(Future.succeededFuture(
@@ -238,14 +240,17 @@ public class UsersAPI implements UsersResource {
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
             } else if(checkRes.result() == false) {
               asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.withPlainBadRequest("You cannot add addresses with non-existant address types")));
+                PostUsersResponse.withPlainBadRequest(
+                        "You cannot add addresses with non-existant address types")));
             } else {
               try {
-                PostgresClient.getInstance(vertxContext.owner(), TenantTool.calculateTenantId(tenantId)).get(tableName,
+                PostgresClient.getInstance(vertxContext.owner(),
+                        TenantTool.calculateTenantId(tenantId)).get(tableName,
                         User.class, crit, true, getReply -> {
                     logger.debug("Attempting to get existing users of same id and/or username");
                     if(getReply.failed()) {
-                      logger.debug("Attempt to get users failed: " + getReply.cause().getMessage());
+                      logger.debug("Attempt to get users failed: " +
+                              getReply.cause().getMessage());
                       asyncResultHandler.handle(Future.succeededFuture(
                                     PostUsersResponse.withPlainInternalServerError(
                                             getReply.cause().getMessage())));
@@ -260,16 +265,20 @@ public class UsersAPI implements UsersResource {
                                     "User with this id already exists"))));
                         //uh oh
                       } else {
-                        PostgresClient postgresClient = PostgresClient.getInstance(vertxContext.owner(), tenantId);
+                        PostgresClient postgresClient = PostgresClient
+                                .getInstance(vertxContext.owner(), tenantId);
                         try {
                           getPG(vertxContext.owner(), tenantId, entity, handler -> {
 
                             int res = handler.result();
                             if(res == 0){
-                              String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
+                              String message = "Cannot add " + 
+                                      entity.getPatronGroup() + 
+                                      ". Patron group not found";
                               logger.error(message);
-                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
-                                .withPlainBadRequest(message)));
+                              asyncResultHandler.handle(Future.succeededFuture(
+                                      PostUsersResponse.withPlainBadRequest(
+                                      message)));
                               return;
                             }
                             else if(res == -1){
@@ -279,13 +288,14 @@ public class UsersAPI implements UsersResource {
                               return;
                             }
                             else{
-                              postgresClient.startTx(beginTx -> {
+                              postgresClient.startTx(connection -> {
                                 logger.debug("Attempting to save new record");
                                 try {
                                   Date now = new Date();
                                   entity.setCreatedDate(now);
                                   entity.setUpdatedDate(now);
-                                  postgresClient.save(beginTx, tableName, entity, reply -> {
+                                  postgresClient.save(connection, tableName, entity,
+                                          reply -> {
                                     try {
                                       if(reply.succeeded()) {
                                         logger.debug("Save successful");
@@ -293,15 +303,20 @@ public class UsersAPI implements UsersResource {
                                         user.setId(entity.getId());
                                         OutStream stream = new OutStream();
                                         stream.setData(user);
-                                        postgresClient.endTx(beginTx, done -> {
-                                          asyncResultHandler.handle(Future.succeededFuture(PostUsersResponse.withJsonCreated(reply.result(), stream)));
+                                        postgresClient.endTx(connection, done -> {
+                                          asyncResultHandler.handle(
+                                                  Future.succeededFuture(
+                                                  PostUsersResponse
+                                                  .withJsonCreated(
+                                                  reply.result(), stream)));
                                         });
                                       } else {
-                                        asyncResultHandler.handle(Future.succeededFuture(
-                                                PostUsersResponse.withPlainBadRequest(
-                                                        messages.getMessage(
-                                                                lang, MessageConsts.UnableToProcessRequest))));
-
+                                        postgresClient.rollbackTx(connection, rollback -> {
+                                          asyncResultHandler.handle(Future.succeededFuture(
+                                                  PostUsersResponse.withPlainBadRequest(
+                                                  messages.getMessage(lang,
+                                                  MessageConsts.UnableToProcessRequest))));
+                                        });
                                       }
                                     } catch(Exception e) {
                                       asyncResultHandler.handle(Future.succeededFuture(
@@ -310,9 +325,11 @@ public class UsersAPI implements UsersResource {
                                     }
                                   });
                                 } catch(Exception e) {
-                                  asyncResultHandler.handle(Future.succeededFuture(
-                                          PostUsersResponse.withPlainInternalServerError(
-                                                  getReply.cause().getMessage())));
+                                  postgresClient.rollbackTx(connection, rollback -> {
+                                    asyncResultHandler.handle(Future.succeededFuture(
+                                            PostUsersResponse.withPlainInternalServerError(
+                                            getReply.cause().getMessage())));
+                                  });
                                 }
                               });
                             }
@@ -320,16 +337,16 @@ public class UsersAPI implements UsersResource {
                         } catch (Exception e) {
                           logger.error(e.getLocalizedMessage(), e);
                           asyncResultHandler.handle(Future.succeededFuture(
-                            PostUsersResponse.withPlainInternalServerError(
-                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
+                                  PostUsersResponse.withPlainInternalServerError(
+                                  messages.getMessage(lang, MessageConsts.InternalServerError))));
                         }
                       }
                    }
                   });
               } catch(Exception e) {
                 asyncResultHandler.handle(Future.succeededFuture(
-                              PostUsersResponse.withPlainInternalServerError(
-                              messages.getMessage(lang, MessageConsts.InternalServerError))));
+                        PostUsersResponse.withPlainInternalServerError(
+                        messages.getMessage(lang, MessageConsts.InternalServerError))));
               }
             }
           });
