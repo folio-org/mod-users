@@ -32,6 +32,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import java.util.UUID;
 /**
  *
  * @author kurt
@@ -129,8 +130,13 @@ public class AddressTypeAPI implements AddresstypesResource {
       try {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(
                 RestVerticle.OKAPI_HEADER_TENANT));
+        String id = entity.getId();
+        if(id == null) {
+          id = UUID.randomUUID().toString();
+          entity.setId(id);
+        }
         PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
-                ADDRESS_TYPE_TABLE, entity, reply -> {
+                ADDRESS_TYPE_TABLE, id, entity, reply -> {
           try {
             if(reply.failed()) {
               String message = reply.cause().getLocalizedMessage();

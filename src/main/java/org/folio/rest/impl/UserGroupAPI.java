@@ -33,6 +33,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import java.util.UUID;
 
 /**
  * @author shale
@@ -110,49 +111,60 @@ public class UserGroupAPI implements GroupsResource {
 
   @Validate
   @Override
-  public void postGroups(String lang, Usergroup entity, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
+  public void postGroups(String lang, Usergroup entity,
+          Map<String, String> okapiHeaders, 
+          Handler<AsyncResult<Response>> asyncResultHandler,
+          Context vertxContext) throws Exception {
 
     vertxContext.runOnContext(v -> {
       try {
         System.out.println("sending... postGroups");
-        String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
-
+        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(
+                RestVerticle.OKAPI_HEADER_TENANT));
+        String id = entity.getId();
+        if(id == null) {
+          id = UUID.randomUUID().toString();
+          entity.setId(id);
+        }
         PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
-          GROUP_TABLE,
-          entity,
-          reply -> {
+          GROUP_TABLE, id, entity, reply -> {
             try {
               if(reply.succeeded()){
                 Object ret = reply.result();
                 entity.setId((String) ret);
                 OutStream stream = new OutStream();
                 stream.setData(entity);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse.withJsonCreated(
-                  LOCATION_PREFIX + ret, stream)));
+                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
+                        PostGroupsResponse.withJsonCreated(LOCATION_PREFIX + ret,
+                        stream)));
               }
               else{
                 log.error(reply.cause().getMessage(), reply.cause());
                 if(isDuplicate(reply.cause().getMessage())){
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                    .withJsonUnprocessableEntity(ValidationHelper.createValidationErrorMessage(
-                      "group", entity.getGroup(), "Group exists"))));
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
+                          PostGroupsResponse.withJsonUnprocessableEntity(
+                          ValidationHelper.createValidationErrorMessage(
+                          "group", entity.getGroup(), "Group exists"))));
                 }
                 else{
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                    .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
+                          PostGroupsResponse.withPlainInternalServerError(
+                          messages.getMessage(lang,
+                          MessageConsts.InternalServerError))));
                 }
               }
             } catch (Exception e) {
               log.error(e.getMessage(), e);
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-                .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
+                      PostGroupsResponse.withPlainInternalServerError(
+                      messages.getMessage(lang, MessageConsts.InternalServerError))));
             }
           });
       } catch (Exception e) {
         log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostGroupsResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
+                PostGroupsResponse.withPlainInternalServerError(
+                messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
 

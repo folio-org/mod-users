@@ -1,3 +1,6 @@
+## 14.9.0
+ * Allow groups and addresstypes to be supplied an optional id on creation
+
 ## 14.8.0
  * Make 'username' field now optional for User records
  * Enable standard metadata on AddressType records

@@ -56,6 +56,14 @@ public class RestVerticleIT {
   private static String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
   private static String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
+  
+  private JsonObject testAddress = new JsonObject().put("addressType", "school")
+          .put("desc", "Patron's School")
+          .put("id", UUID.randomUUID().toString());
+  
+  private JsonObject testGroup = new JsonObject().put("group", "dropouts")
+          .put("desc", "Freaks and Geeks")
+          .put("id", UUID.randomUUID().toString());
 
   private static Vertx vertx;
   static int port;
@@ -304,6 +312,7 @@ public class RestVerticleIT {
             .end(userObject.encode());
     return future;
   }
+ 
 
  private Future<Void> putUserGood(TestContext context) {
    System.out.println("Making a valid user modification\n");
@@ -955,6 +964,62 @@ public class RestVerticleIT {
     }
     return future;
   }
+  
+  private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
+         String endpoint) {
+    Future future = Future.future();
+    System.out.println(String.format(
+            "Creating object %s at endpoint %s", ob.encode(), endpoint));
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", endpoint, res -> {
+      res.bodyHandler(body -> {
+        if(res.statusCode() != 201) {
+          future.fail(String.format("Expected 201, got %s: %s", res.statusCode(),
+                  body.toString()));
+        } else {
+          //Get the object by id
+          String id = body.toJsonObject().getString("id");
+          client.get(port, "localhost", endpoint + "/" + id, res2 -> {
+            res2.bodyHandler(body2 -> {
+              if(res2.statusCode() != 200) {
+                future.fail(String.format("Expected 200, got %s: %s", res2.statusCode(),
+                        body2.toString()));
+              } else {
+                //delete the object by id
+                client.delete(port, "localhost", endpoint + "/" + id, res3 -> {
+                  res3.bodyHandler(body3 -> {
+                    if(res3.statusCode() != 204) {
+                      future.fail(String.format("Expected 204, got %s: %s",
+                              res3.statusCode(), body3.toString()));
+                    } else {
+                      future.complete();
+                    }
+                  });                   
+                })
+                        .putHeader("X-Okapi-Tenant", "diku")
+                        .putHeader("Content-Type", "application/json")
+                        .putHeader("Accept", "application/json,text/plain")
+                        .exceptionHandler(e -> { future.fail(e); })
+                        .end();                         
+              }
+            });
+          })
+                  .putHeader("X-Okapi-Tenant", "diku")
+                  .putHeader("Content-Type", "application/json")
+                  .putHeader("Accept", "application/json,text/plain")
+                  .exceptionHandler(e -> { future.fail(e); })
+                  .end(); 
+          
+        }
+      });
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("Content-Type", "application/json")
+            .putHeader("Accept", "application/json,text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end(ob.encode());
+    return future;
+  }
 
 
 
@@ -1052,6 +1117,10 @@ public class RestVerticleIT {
       Future<Void> f = Future.future();
       findAndDeleteProxyfor(context).setHandler(f.completer());
       return f;
+    }).compose(v -> {
+      return createTestDeleteObjectById(context, testAddress, "/addresstypes");
+    }).compose(v -> {
+      return createTestDeleteObjectById(context, testGroup, "/groups");
     });
 
 
