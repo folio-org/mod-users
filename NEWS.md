@@ -1,3 +1,6 @@
+## 14.11.0 2018-05-22
+ * Add standard metadata field to proxyfor schema
+
 ## 14.10.0 2018-05-15
  * Define fields in proxyFor schema to replace the use of catch-all 'meta' field
 
