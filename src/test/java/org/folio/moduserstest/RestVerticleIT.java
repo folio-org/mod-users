@@ -17,9 +17,11 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -977,11 +979,12 @@ public class RestVerticleIT {
   }
   
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
-         String endpoint) {
+         String endpoint, boolean checkMeta) {
     Future future = Future.future();
     System.out.println(String.format(
             "Creating object %s at endpoint %s", ob.encode(), endpoint));
     HttpClient client = vertx.createHttpClient();
+    String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
     client.post(port, "localhost", endpoint, res -> {
       res.bodyHandler(body -> {
         if(res.statusCode() != 201) {
@@ -996,6 +999,29 @@ public class RestVerticleIT {
                 future.fail(String.format("Expected 200, got %s: %s", res2.statusCode(),
                         body2.toString()));
               } else {
+                if(checkMeta) {
+                  DateFormat gmtFormat = new SimpleDateFormat(
+                          "yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
+                  Date createdDate = null;
+                  try {
+                    JsonObject resultOb = body2.toJsonObject();
+                    JsonObject metadata = resultOb.getJsonObject("metadata");
+                    if(metadata == null) {
+                      future.fail(String.format("No 'metadata' field in result: %s",
+                              body2.toString()));
+                      return;
+                    }
+                    createdDate = new DateTime(metadata.getString("createdDate")).toDate();
+                  } catch (Exception e) {
+                    future.fail(e);
+                    return;
+                  }
+                  Date now = new Date();
+                  if(!createdDate.before(now)) {
+                    future.fail("metadata createdDate is not correct");
+                    return;
+                  }
+                }
                 //delete the object by id
                 client.delete(port, "localhost", endpoint + "/" + id, res3 -> {
                   res3.bodyHandler(body3 -> {
@@ -1027,6 +1053,7 @@ public class RestVerticleIT {
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("Content-Type", "application/json")
             .putHeader("Accept", "application/json,text/plain")
+            .putHeader("X-Okapi-Token", fakeJWT)
             .exceptionHandler(e -> { future.fail(e); })
             .end(ob.encode());
     return future;
@@ -1129,11 +1156,14 @@ public class RestVerticleIT {
       findAndDeleteProxyfor(context).setHandler(f.completer());
       return f;
     }).compose(v -> {
-      return createTestDeleteObjectById(context, testAddress, "/addresstypes");
+      return createTestDeleteObjectById(context, testAddress, "/addresstypes",
+              true);
     }).compose(v -> {
-      return createTestDeleteObjectById(context, testGroup, "/groups");
+      return createTestDeleteObjectById(context, testGroup, "/groups",
+              true);
     }).compose(v -> {
-      return createTestDeleteObjectById(context, testProxyFor, "/proxiesfor");
+      return createTestDeleteObjectById(context, testProxyFor, "/proxiesfor",
+              true);
     });
 
 
@@ -1592,6 +1622,23 @@ public class RestVerticleIT {
      .put("firstName", "Jack"+userInc)
    );
    return user;
+ }
+ 
+ private static String makeFakeJWT(String username, String id, String tenant) {
+   JsonObject header = new JsonObject()
+           .put("alg", "HS512");
+   JsonObject payload = new JsonObject()
+           .put("sub", username)
+           .put("user_id", id)
+           .put("tenant", tenant);
+   return String.format("%s.%s.%s", 
+           Base64.getEncoder().encodeToString(header.encode()
+                   .getBytes(StandardCharsets.UTF_8)),
+           Base64.getEncoder().encodeToString(payload.encode()
+                   .getBytes(StandardCharsets.UTF_8)),
+           Base64.getEncoder().encodeToString((header.encode() + payload.encode())
+                   .getBytes(StandardCharsets.UTF_8)));
+   
  }
 
 }
