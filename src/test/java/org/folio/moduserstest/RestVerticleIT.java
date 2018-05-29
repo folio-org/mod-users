@@ -58,25 +58,25 @@ public class RestVerticleIT {
   private static String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
   private static String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
-  
+
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
           .put("desc", "Patron's School")
           .put("id", UUID.randomUUID().toString());
-  
+
   private JsonObject testGroup = new JsonObject().put("group", "dropouts")
           .put("desc", "Freaks and Geeks")
           .put("id", UUID.randomUUID().toString());
-  
+
   private JsonObject testProxyFor = new JsonObject()
           .put("userId", UUID.randomUUID().toString())
           .put("proxyUserId", UUID.randomUUID().toString())
           .put("status", "Active")
-          .put("expirationDate", 
+          .put("expirationDate",
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date()))
           .put("requestForSponsor", "Yes")
           .put("notificationsTo", "Proxy")
           .put("accrueTo", "Sponsor");
-          
+
 
   private static Vertx vertx;
   static int port;
@@ -325,7 +325,7 @@ public class RestVerticleIT {
             .end(userObject.encode());
     return future;
   }
- 
+
 
  private Future<Void> putUserGood(TestContext context) {
    System.out.println("Making a valid user modification\n");
@@ -977,7 +977,7 @@ public class RestVerticleIT {
     }
     return future;
   }
-  
+
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
          String endpoint, boolean checkMeta) {
     Future future = Future.future();
@@ -1031,13 +1031,13 @@ public class RestVerticleIT {
                     } else {
                       future.complete();
                     }
-                  });                   
+                  });
                 })
                         .putHeader("X-Okapi-Tenant", "diku")
                         .putHeader("Content-Type", "application/json")
                         .putHeader("Accept", "application/json,text/plain")
                         .exceptionHandler(e -> { future.fail(e); })
-                        .end();                         
+                        .end();
               }
             });
           })
@@ -1045,8 +1045,8 @@ public class RestVerticleIT {
                   .putHeader("Content-Type", "application/json")
                   .putHeader("Accept", "application/json,text/plain")
                   .exceptionHandler(e -> { future.fail(e); })
-                  .end(); 
-          
+                  .end();
+
         }
       });
     })
@@ -1623,7 +1623,7 @@ public class RestVerticleIT {
    );
    return user;
  }
- 
+
  private static String makeFakeJWT(String username, String id, String tenant) {
    JsonObject header = new JsonObject()
            .put("alg", "HS512");
@@ -1631,14 +1631,14 @@ public class RestVerticleIT {
            .put("sub", username)
            .put("user_id", id)
            .put("tenant", tenant);
-   return String.format("%s.%s.%s", 
+   return String.format("%s.%s.%s",
            Base64.getEncoder().encodeToString(header.encode()
                    .getBytes(StandardCharsets.UTF_8)),
            Base64.getEncoder().encodeToString(payload.encode()
                    .getBytes(StandardCharsets.UTF_8)),
            Base64.getEncoder().encodeToString((header.encode() + payload.encode())
                    .getBytes(StandardCharsets.UTF_8)));
-   
+
  }
 
 }

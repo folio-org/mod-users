@@ -112,7 +112,7 @@ public class UserGroupAPI implements GroupsResource {
   @Validate
   @Override
   public void postGroups(String lang, Usergroup entity,
-          Map<String, String> okapiHeaders, 
+          Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) throws Exception {
 

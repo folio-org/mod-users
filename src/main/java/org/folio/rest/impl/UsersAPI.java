@@ -272,8 +272,8 @@ public class UsersAPI implements UsersResource {
 
                             int res = handler.result();
                             if(res == 0){
-                              String message = "Cannot add " + 
-                                      entity.getPatronGroup() + 
+                              String message = "Cannot add " +
+                                      entity.getPatronGroup() +
                                       ". Patron group not found";
                               logger.error(message);
                               asyncResultHandler.handle(Future.succeededFuture(
