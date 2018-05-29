@@ -1,3 +1,7 @@
+## 14.11.2 2018-05-29
+ * Update RMB to 19.1.0
+ * Update Vertx to 3.5.1
+
 ## 14.11.1 2018-05-29
  * Update raml definitions to include metadata schema
 
