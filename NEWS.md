@@ -1,3 +1,6 @@
+## 14.11.1 2018-05-29
+ * Update raml definitions to include metadata schema
+
 ## 14.11.0 2018-05-22
  * Add standard metadata field to proxyfor schema
 
