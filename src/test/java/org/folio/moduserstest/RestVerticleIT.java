@@ -868,10 +868,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     JsonObject modifiedProxyObject = new JsonObject()
             .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
-            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa")
-            .put("meta", new JsonObject()
-              .put("fookey", "foovalue")
-            );
+            .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     try {
       HttpClient client = vertx.createHttpClient();
       System.out.println("Making CQL request\n");
