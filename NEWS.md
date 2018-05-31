@@ -1,3 +1,6 @@
+## 15.0.0
+ * Remove 'meta' field from proxyFor schema
+
 ## 14.11.2 2018-05-29
  * Update RMB to 19.1.0
  * Update Vertx to 3.5.1
