@@ -11,12 +11,14 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import java.text.DateFormat;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import org.folio.rest.impl.UsersAPI;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
@@ -29,7 +31,10 @@ import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
  */
 public class ExpirationTool {
   
+  
   public static void doExpiration(Vertx vertx, Context context) {
+    final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
+    logger.info("Calling doExpiration()");
     context.runOnContext(v -> {
       //Get a list of tenants
       PostgresClient pgClient = PostgresClient.getInstance(vertx);
@@ -39,14 +44,25 @@ public class ExpirationTool {
           List<JsonObject> obList = reply.result().getRows();
           for(JsonObject ob : obList) {
             String tenant = ob.getString("nspname");
+            logger.info("Calling doExpirationForTenant for tenant " + tenant);
             Future<Integer> expireFuture = doExpirationForTenant(vertx, context, tenant);
+            expireFuture.setHandler(res -> {
+              if(res.failed()) {
+                logger.info(String.format("Attempt to expire records for tenant %s failed: %s",
+                        tenant, res.cause().getLocalizedMessage()));
+              }
+            });
           }
+        } else {
+          logger.info(String.format("TenantQuery '%s' failed: %s", tenantQuery,
+                  reply.cause().getLocalizedMessage()));
         }
       });
     });    
   }
 
   private static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
+    final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     Future<Integer> future = Future.future();
     String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
     context.runOnContext(v -> {
@@ -64,7 +80,11 @@ public class ExpirationTool {
       }
       pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, reply -> {
         if(reply.failed()) {
+        	logger.info(String.format("Error executing postgres query: '%s', %s",
+        				query, reply.cause().getLocalizedMessage()));
           future.fail(reply.cause());
+        } else if(reply.result().getResults().isEmpty()) {
+          logger.info(String.format("No results found for query %s", query));
         } else {
           List<Object> userList = (List<Object>) reply.result().getResults();
           List<Future> futureList = new ArrayList<>();
