@@ -1403,8 +1403,12 @@ public class RestVerticleIT {
                "\nStatus - " + addExpiredUserResponse.code + " at "
                + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
        context.assertEquals(addExpiredUserResponse.code, 201);
-       //ExpirationTool.doExpiration(vertx, vertxContext);
-       TimeUnit.SECONDS.sleep(15);
+       CompletableFuture<Void> getExpirationCF = new CompletableFuture();
+       ExpirationTool.doExpirationForTenant(vertx, vertxContext, "diku").setHandler(res -> {
+       	 getExpirationCF.complete(null);
+       });
+       getExpirationCF.get(5, TimeUnit.SECONDS);
+       //TimeUnit.SECONDS.sleep(15);
        CompletableFuture<Response> getExpiredUserCF = new CompletableFuture();
        send(addUserURL + "/" + expiredUserId.toString(), context, HttpMethod.GET, null,
                SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,

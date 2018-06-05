@@ -70,7 +70,7 @@ public class ExpirationTool {
     });    
   }
 
-  private static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
+  public static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     Future<Integer> future = Future.future();
     String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());

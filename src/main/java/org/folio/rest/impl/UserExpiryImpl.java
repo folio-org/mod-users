@@ -19,7 +19,7 @@ public class UserExpiryImpl implements PeriodicAPI {
 
   @Override
   public long runEvery() {
-    return 10000;
+    return 5000 * 60;
   }
 
   @Override
