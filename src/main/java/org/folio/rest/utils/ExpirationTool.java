@@ -20,10 +20,14 @@ import java.util.Date;
 import java.util.List;
 import org.folio.rest.impl.UsersAPI;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
+import static org.folio.rest.impl.UsersAPI.RAML_PATH;
+import static org.folio.rest.impl.UsersAPI.USER_ID_FIELD;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
+import org.folio.rest.persist.Criteria.Criteria;
+import org.folio.rest.persist.Criteria.Criterion;
 
 /**
  *
@@ -43,14 +47,19 @@ public class ExpirationTool {
         if(reply.succeeded()) {
           List<JsonObject> obList = reply.result().getRows();
           for(JsonObject ob : obList) {
-            String tenant = ob.getString("nspname");
+            String nsTenant = ob.getString("nspname");
+            String suffix = "_mod_users";
+            int suffixLength = nsTenant.length() - suffix.length();
+            final String tenant = nsTenant.substring(0, suffixLength);
             logger.info("Calling doExpirationForTenant for tenant " + tenant);
             Future<Integer> expireFuture = doExpirationForTenant(vertx, context, tenant);
             expireFuture.setHandler(res -> {
               if(res.failed()) {
                 logger.info(String.format("Attempt to expire records for tenant %s failed: %s",
                         tenant, res.cause().getLocalizedMessage()));
-              }
+              } else {
+              	logger.info(String.format("Expired %s users", res.result()));
+							}
             });
           }
         } else {
@@ -78,7 +87,7 @@ public class ExpirationTool {
         future.fail(e.getLocalizedMessage());
         return;
       }
-      pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, reply -> {
+      pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
         if(reply.failed()) {
         	logger.info(String.format("Error executing postgres query: '%s', %s",
         				query, reply.cause().getLocalizedMessage()));
@@ -111,16 +120,30 @@ public class ExpirationTool {
   }
   
   private static Future<Void> saveUser(Vertx vertx, Context context, String tenant, User user) {
+    final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
+    logger.info(String.format("Updating user with id %s", user.getId()));
     Future<Void> future = Future.future();
     context.runOnContext(v -> {
-      PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
-      pgClient.save(TABLE_NAME_USERS, user, saveReply -> {
-        if(saveReply.failed()) {
-          future.fail(saveReply.cause());
-        } else {
-          future.complete();
-        }
-      });
+    	try {
+				PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
+				Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+				idCrit.addField(USER_ID_FIELD);
+				idCrit.setOperation("=");
+				idCrit.setValue(user.getId());
+				Criterion criterion = new Criterion(idCrit);
+
+				pgClient.update(TABLE_NAME_USERS, user, criterion, true, updateReply -> {
+					if(updateReply.failed()) {
+						logger.info(String.format("Error updating user %s: %s", user.getId(),
+								updateReply.cause().getLocalizedMessage()));
+						future.fail(updateReply.cause());
+					} else {
+						future.complete();
+					}
+				});
+			} catch(Exception e) {
+				future.tryFail(e);
+			}
     });
     return future;
   }

@@ -109,7 +109,9 @@ public class RestVerticleIT {
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
     TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
-    DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
+    DeploymentOptions options = new DeploymentOptions()
+    	.setConfig(new JsonObject().put("http.port", port))
+    	.setWorker(true);
 
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {

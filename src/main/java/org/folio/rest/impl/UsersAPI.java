@@ -60,11 +60,11 @@ public class UsersAPI implements UsersResource {
 
   private final Messages messages = Messages.getInstance();
   //private final String USER_COLLECTION = "user";
-  private static final String USER_ID_FIELD = "'id'";
-  private static final String USER_NAME_FIELD = "'username'";
+  public static final String USER_ID_FIELD = "'id'";
+  public static final String USER_NAME_FIELD = "'username'";
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
-  private static final String RAML_PATH = "apidocs/raml/raml-util";
+  public static final String RAML_PATH = "apidocs/raml/raml-util";
 
   public UsersAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField("id");
