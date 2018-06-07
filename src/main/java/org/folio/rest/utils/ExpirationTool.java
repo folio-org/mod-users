@@ -35,6 +35,10 @@ import org.folio.rest.persist.Criteria.Criterion;
  */
 public class ExpirationTool {
   
+  private ExpirationTool() {
+    //do nothing
+  }
+  
   
   public static void doExpiration(Vertx vertx, Context context) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);

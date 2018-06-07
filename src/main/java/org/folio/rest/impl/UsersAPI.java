@@ -14,7 +14,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 import org.folio.rest.annotations.Validate;
-//import org.folio.rest.deserializer.UserDeserializer;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.User;
@@ -59,7 +58,6 @@ public class UsersAPI implements UsersResource {
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private final Messages messages = Messages.getInstance();
-  //private final String USER_COLLECTION = "user";
   public static final String USER_ID_FIELD = "'id'";
   public static final String USER_NAME_FIELD = "'username'";
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
@@ -68,7 +66,6 @@ public class UsersAPI implements UsersResource {
 
   public UsersAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField("id");
-    //ObjectMapperTool.registerDeserializer(User.class, new UserDeserializer());
   }
 
   /**
