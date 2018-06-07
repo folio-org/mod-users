@@ -1,5 +1,6 @@
 package org.folio.moduserstest;
 
+import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -33,6 +34,7 @@ import org.folio.rest.client.TenantClient;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.parser.JsonPathParser;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.utils.ExpirationTool;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -79,18 +81,19 @@ public class RestVerticleIT {
 
 
   private static Vertx vertx;
+  private static Context vertxContext;
   static int port;
 
   private String groupID1;
   private String groupID2;
 
   @Rule
-  public Timeout rule = Timeout.seconds(10);
+  public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) throws SQLException {
     vertx = Vertx.vertx();
-
+    vertxContext = vertx.getOrCreateContext();
     try {
       PostgresClient.setIsEmbedded(true);
       PostgresClient.getInstance(vertx).startEmbeddedPostgres();
@@ -106,7 +109,9 @@ public class RestVerticleIT {
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
     TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
-    DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
+    DeploymentOptions options = new DeploymentOptions()
+    	.setConfig(new JsonObject().put("http.port", port))
+    	.setWorker(true);
 
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
@@ -1398,6 +1403,12 @@ public class RestVerticleIT {
                "\nStatus - " + addExpiredUserResponse.code + " at "
                + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
        context.assertEquals(addExpiredUserResponse.code, 201);
+       CompletableFuture<Void> getExpirationCF = new CompletableFuture();
+       ExpirationTool.doExpirationForTenant(vertx, vertxContext, "diku").setHandler(res -> {
+       	 getExpirationCF.complete(null);
+       });
+       getExpirationCF.get(5, TimeUnit.SECONDS);
+       //TimeUnit.SECONDS.sleep(15);
        CompletableFuture<Response> getExpiredUserCF = new CompletableFuture();
        send(addUserURL + "/" + expiredUserId.toString(), context, HttpMethod.GET, null,
                SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
