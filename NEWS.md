@@ -1,3 +1,6 @@
+## 15.1.0
+ * Change user expiration to use the periodic API instead of deserializer.
+
 ## 15.0.0
  * Remove 'meta' field from proxyFor schema
 
