@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.folio.rest.impl;
 
 import io.vertx.core.Context;
@@ -27,7 +22,7 @@ public class UserExpiryImpl implements PeriodicAPI {
 
   @Override
   public void run(Vertx vertx, Context context) {
-    context.runOnContext(v -> {      
+    context.runOnContext(v -> {
       ExpirationTool.doExpiration(vertx, context);
     });
   }

@@ -110,8 +110,8 @@ public class RestVerticleIT {
     port = NetworkUtils.nextFreePort();
     TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-    	.setConfig(new JsonObject().put("http.port", port))
-    	.setWorker(true);
+      .setConfig(new JsonObject().put("http.port", port))
+      .setWorker(true);
 
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
@@ -1405,7 +1405,7 @@ public class RestVerticleIT {
        context.assertEquals(addExpiredUserResponse.code, 201);
        CompletableFuture<Void> getExpirationCF = new CompletableFuture();
        ExpirationTool.doExpirationForTenant(vertx, vertxContext, "diku").setHandler(res -> {
-       	 getExpirationCF.complete(null);
+         getExpirationCF.complete(null);
        });
        getExpirationCF.get(5, TimeUnit.SECONDS);
        //TimeUnit.SECONDS.sleep(15);

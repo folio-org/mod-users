@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.folio.rest.utils;
 
 
@@ -34,12 +29,12 @@ import org.folio.rest.persist.Criteria.Criterion;
  * @author kurt
  */
 public class ExpirationTool {
-  
+
   private ExpirationTool() {
     //do nothing
   }
-  
-  
+
+
   public static void doExpiration(Vertx vertx, Context context) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     logger.info("Calling doExpiration()");
@@ -62,8 +57,8 @@ public class ExpirationTool {
                 logger.info(String.format("Attempt to expire records for tenant %s failed: %s",
                         tenant, res.cause().getLocalizedMessage()));
               } else {
-              	logger.info(String.format("Expired %s users", res.result()));
-							}
+                logger.info(String.format("Expired %s users", res.result()));
+              }
             });
           }
         } else {
@@ -71,7 +66,7 @@ public class ExpirationTool {
                   reply.cause().getLocalizedMessage()));
         }
       });
-    });    
+    });
   }
 
   public static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
@@ -93,8 +88,8 @@ public class ExpirationTool {
       }
       pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
         if(reply.failed()) {
-        	logger.info(String.format("Error executing postgres query: '%s', %s",
-        				query, reply.cause().getLocalizedMessage()));
+          logger.info(String.format("Error executing postgres query: '%s', %s",
+            query, reply.cause().getLocalizedMessage()));
           future.fail(reply.cause());
         } else if(reply.result().getResults().isEmpty()) {
           logger.info(String.format("No results found for query %s", query));
@@ -122,34 +117,34 @@ public class ExpirationTool {
     });
     return future;
   }
-  
+
   private static Future<Void> saveUser(Vertx vertx, Context context, String tenant, User user) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     logger.info(String.format("Updating user with id %s", user.getId()));
     Future<Void> future = Future.future();
     context.runOnContext(v -> {
-    	try {
-				PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
-				Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
-				idCrit.addField(USER_ID_FIELD);
-				idCrit.setOperation("=");
-				idCrit.setValue(user.getId());
-				Criterion criterion = new Criterion(idCrit);
+      try {
+        PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
+        Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+        idCrit.addField(USER_ID_FIELD);
+        idCrit.setOperation("=");
+        idCrit.setValue(user.getId());
+        Criterion criterion = new Criterion(idCrit);
 
-				pgClient.update(TABLE_NAME_USERS, user, criterion, true, updateReply -> {
-					if(updateReply.failed()) {
-						logger.info(String.format("Error updating user %s: %s", user.getId(),
-								updateReply.cause().getLocalizedMessage()));
-						future.fail(updateReply.cause());
-					} else {
-						future.complete();
-					}
-				});
-			} catch(Exception e) {
-				future.tryFail(e);
-			}
+        pgClient.update(TABLE_NAME_USERS, user, criterion, true, updateReply -> {
+          if(updateReply.failed()) {
+            logger.info(String.format("Error updating user %s: %s", user.getId(),
+              updateReply.cause().getLocalizedMessage()));
+            future.fail(updateReply.cause());
+          } else {
+            future.complete();
+          }
+        });
+      } catch(Exception e) {
+        future.tryFail(e);
+      }
     });
     return future;
   }
-  
+
 }
