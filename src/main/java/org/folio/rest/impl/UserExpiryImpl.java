@@ -27,7 +27,7 @@ public class UserExpiryImpl implements PeriodicAPI {
 
   @Override
   public void run(Vertx vertx, Context context) {
-    context.runOnContext(v -> {      
+    context.runOnContext(v -> {
       ExpirationTool.doExpiration(vertx, context);
     });
   }

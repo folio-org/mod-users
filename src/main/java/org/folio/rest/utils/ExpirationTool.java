@@ -34,12 +34,12 @@ import org.folio.rest.persist.Criteria.Criterion;
  * @author kurt
  */
 public class ExpirationTool {
-  
+
   private ExpirationTool() {
     //do nothing
   }
-  
-  
+
+
   public static void doExpiration(Vertx vertx, Context context) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     logger.info("Calling doExpiration()");
@@ -71,7 +71,7 @@ public class ExpirationTool {
                   reply.cause().getLocalizedMessage()));
         }
       });
-    });    
+    });
   }
 
   public static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
@@ -122,7 +122,7 @@ public class ExpirationTool {
     });
     return future;
   }
-  
+
   private static Future<Void> saveUser(Vertx vertx, Context context, String tenant, User user) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     logger.info(String.format("Updating user with id %s", user.getId()));
@@ -151,5 +151,5 @@ public class ExpirationTool {
     });
     return future;
   }
-  
+
 }
