@@ -13,9 +13,9 @@ Module to provide central user management for FOLIO systems.
 
 The [raml-module-builder](https://github.com/folio-org/raml-module-builder) framework.
 
-Other [modules](http://dev.folio.org/source-code/#server-side).
+Other [modules](https://dev.folio.org/source-code/#server-side).
 
 See project [MODUSERS](https://issues.folio.org/browse/MODUSERS)
-at the [FOLIO issue tracker](http://dev.folio.org/community/guide-issues).
+at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker).
 
-Other FOLIO Developer documentation is at [dev.folio.org](http://dev.folio.org/)
+Other FOLIO Developer documentation is at [dev.folio.org](https://dev.folio.org/)
