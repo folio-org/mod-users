@@ -19,7 +19,7 @@ import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.Usergroup;
-import org.folio.rest.jaxrs.resource.UsersResource;
+import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -30,8 +30,6 @@ import org.folio.rest.persist.facets.FacetField;
 import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.ObjectMapperTool;
-import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -45,6 +43,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.folio.rest.jaxrs.model.UsersGetOrder;
 
 
 /**
@@ -52,7 +51,7 @@ import io.vertx.core.logging.LoggerFactory;
  * @author kurt
  */
 @Path("users")
-public class UsersAPI implements UsersResource {
+public class UsersAPI implements Users {
 
   public static final String TABLE_NAME_USERS = "users";
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
@@ -111,10 +110,10 @@ public class UsersAPI implements UsersResource {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-          Order order, int offset, int limit, List<String> facets,
+          UsersGetOrder order, int offset, int limit, List<String> facets,
           String lang, Map <String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     logger.debug("Getting users");
     try {
       CQLWrapper cql = getCQL(query,limit,offset);
@@ -142,23 +141,23 @@ public class UsersAPI implements UsersResource {
                     userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
                     userCollection.setResultInfo(reply.result().getResultInfo());
                     asyncResultHandler.handle(Future.succeededFuture(
-                            GetUsersResponse.withJsonOK(userCollection)));
+                            GetUsersResponse.respond200WithApplicationJson(userCollection)));
                   } else {
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                            GetUsersResponse.withPlainInternalServerError(
-                                    reply.cause().getMessage())));
+                            GetUsersResponse.respond500WithTextPlain(
+                              reply.cause().getMessage())));
                   }
                 } catch(Exception e) {
                   logger.debug(e.getLocalizedMessage());
 
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                            GetUsersResponse.withPlainInternalServerError(
+                            GetUsersResponse.respond500WithTextPlain(
                                     reply.cause().getMessage())));
                 }
               });
             } catch (IllegalStateException e) {
               logger.debug("IllegalStateException: " + e.getLocalizedMessage());
-              asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+              asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
                         "CQL Illegal State Error for '" + query + "': " + e.getLocalizedMessage())));
             }
               catch(Exception e) {
@@ -169,11 +168,11 @@ public class UsersAPI implements UsersResource {
               logger.debug("Got error " + cause.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
               if(cause.getClass().getSimpleName().contains("CQLParseException")) {
                 logger.debug("BAD CQL");
-                asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+                asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
                         "CQL Parsing Error for '" + query + "': " + cause.getLocalizedMessage())));
               } else {
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                              GetUsersResponse.withPlainInternalServerError(
+                              GetUsersResponse.respond500WithTextPlain(
                                       messages.getMessage(lang,
                                               MessageConsts.InternalServerError))));
               }
@@ -182,18 +181,18 @@ public class UsersAPI implements UsersResource {
     }
     catch(FieldException fe){
       logger.error("BAD CQL " + fe.getLocalizedMessage());
-      asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+      asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
               "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
     }
     catch(Exception e) {
       logger.error(e.getLocalizedMessage(), e);
       if(e.getCause() != null && e.getCause().getClass().getSimpleName().contains("CQLParseException")) {
         logger.debug("BAD CQL");
-        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
                 "CQL Parsing Error for '" + query + "': " + e.getLocalizedMessage())));
       } else {
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                          GetUsersResponse.withPlainInternalServerError(
+                          GetUsersResponse.respond500WithTextPlain(
                                   messages.getMessage(lang,
                                           MessageConsts.InternalServerError))));
       }
@@ -205,14 +204,14 @@ public class UsersAPI implements UsersResource {
   public void postUsers(String lang, User entity,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     try {
       vertxContext.runOnContext( v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(null);
         if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
-              PostUsersResponse.withPlainBadRequest(
+              PostUsersResponse.respond400WithTextPlain(
                       "Users are limited to one address per addresstype")));
           return;
         }
@@ -233,11 +232,11 @@ public class UsersAPI implements UsersResource {
             if(checkRes.failed()) {
               logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
               asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.withPlainInternalServerError(
+                PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
             } else if(checkRes.result() == false) {
               asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.withPlainBadRequest(
+                PostUsersResponse.respond400WithTextPlain(
                         "You cannot add addresses with non-existant address types")));
             } else {
               try {
@@ -249,14 +248,14 @@ public class UsersAPI implements UsersResource {
                       logger.debug("Attempt to get users failed: " +
                               getReply.cause().getMessage());
                       asyncResultHandler.handle(Future.succeededFuture(
-                                    PostUsersResponse.withPlainInternalServerError(
+                                    PostUsersResponse.respond500WithTextPlain(
                                             getReply.cause().getMessage())));
                     } else {
                       List<User> userList = (List<User>)getReply.result().getResults();
                       if(userList.size() > 0) {
                         logger.debug("User with this id already exists");
                         asyncResultHandler.handle(Future.succeededFuture(
-                                PostUsersResponse.withJsonUnprocessableEntity(
+                                PostUsersResponse.respond422WithApplicationJson(
                                   ValidationHelper.createValidationErrorMessage(
                                     USER_NAME_FIELD, entity.getUsername(),
                                     "User with this id already exists"))));
@@ -274,14 +273,14 @@ public class UsersAPI implements UsersResource {
                                       ". Patron group not found";
                               logger.error(message);
                               asyncResultHandler.handle(Future.succeededFuture(
-                                      PostUsersResponse.withPlainBadRequest(
+                                      PostUsersResponse.respond400WithTextPlain(
                                       message)));
                               return;
                             }
                             else if(res == -1){
                               asyncResultHandler.handle(Future.succeededFuture(
                                 PostUsersResponse
-                                  .withPlainInternalServerError("")));
+                                  .respond500WithTextPlain("")));
                               return;
                             }
                             else{
@@ -298,33 +297,30 @@ public class UsersAPI implements UsersResource {
                                         logger.debug("Save successful");
                                         final User user = entity;
                                         user.setId(entity.getId());
-                                        OutStream stream = new OutStream();
-                                        stream.setData(user);
                                         postgresClient.endTx(connection, done -> {
                                           asyncResultHandler.handle(
                                                   Future.succeededFuture(
-                                                  PostUsersResponse
-                                                  .withJsonCreated(
-                                                  reply.result(), stream)));
+                                                    PostUsersResponse.respond201WithApplicationJson(user, 
+                                                     PostUsersResponse.headersFor201().withLocation(reply.result()))));
                                         });
                                       } else {
                                         postgresClient.rollbackTx(connection, rollback -> {
                                           asyncResultHandler.handle(Future.succeededFuture(
-                                                  PostUsersResponse.withPlainBadRequest(
+                                                  PostUsersResponse.respond400WithTextPlain(
                                                   messages.getMessage(lang,
                                                   MessageConsts.UnableToProcessRequest))));
                                         });
                                       }
                                     } catch(Exception e) {
                                       asyncResultHandler.handle(Future.succeededFuture(
-                                          PostUsersResponse.withPlainInternalServerError(
+                                          PostUsersResponse.respond500WithTextPlain(
                                                   e.getMessage())));
                                     }
                                   });
                                 } catch(Exception e) {
                                   postgresClient.rollbackTx(connection, rollback -> {
                                     asyncResultHandler.handle(Future.succeededFuture(
-                                            PostUsersResponse.withPlainInternalServerError(
+                                            PostUsersResponse.respond500WithTextPlain(
                                             getReply.cause().getMessage())));
                                   });
                                 }
@@ -334,7 +330,7 @@ public class UsersAPI implements UsersResource {
                         } catch (Exception e) {
                           logger.error(e.getLocalizedMessage(), e);
                           asyncResultHandler.handle(Future.succeededFuture(
-                                  PostUsersResponse.withPlainInternalServerError(
+                                  PostUsersResponse.respond500WithTextPlain(
                                   messages.getMessage(lang, MessageConsts.InternalServerError))));
                         }
                       }
@@ -342,7 +338,7 @@ public class UsersAPI implements UsersResource {
                   });
               } catch(Exception e) {
                 asyncResultHandler.handle(Future.succeededFuture(
-                        PostUsersResponse.withPlainInternalServerError(
+                        PostUsersResponse.respond500WithTextPlain(
                         messages.getMessage(lang, MessageConsts.InternalServerError))));
               }
             }
@@ -350,7 +346,7 @@ public class UsersAPI implements UsersResource {
         } catch(Exception e) {
           logger.error(e.getLocalizedMessage(), e);
           asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.withPlainInternalServerError(
+                PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
 
         }
@@ -358,7 +354,7 @@ public class UsersAPI implements UsersResource {
       });
     } catch(Exception e) {
       asyncResultHandler.handle(Future.succeededFuture(
-              PostUsersResponse.withPlainInternalServerError(
+              PostUsersResponse.respond500WithTextPlain(
               messages.getMessage(lang, MessageConsts.InternalServerError))));
     }
   }
@@ -368,7 +364,7 @@ public class UsersAPI implements UsersResource {
   public void getUsersByUserId(String userId, String lang,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
      try {
       vertxContext.runOnContext(v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
@@ -384,38 +380,38 @@ public class UsersAPI implements UsersResource {
                        true, false, getReply -> {
                  if(getReply.failed()) {
                    asyncResultHandler.handle(Future.succeededFuture(
-                           GetUsersByUserIdResponse.withPlainInternalServerError(
+                           GetUsersByUserIdResponse.respond500WithTextPlain(
                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
                  } else {
                    List<User> userList = (List<User>)getReply.result().getResults();
                    if(userList.size() < 1) {
                      asyncResultHandler.handle(Future.succeededFuture(
-                            GetUsersByUserIdResponse.withPlainNotFound("User" +
+                            GetUsersByUserIdResponse.respond404WithTextPlain("User" +
                                     messages.getMessage(lang,
                                             MessageConsts.ObjectDoesNotExist))));
                    } else if(userList.size() > 1) {
                      logger.debug("Multiple users found with the same id");
                      asyncResultHandler.handle(Future.succeededFuture(
-                          GetUsersByUserIdResponse.withPlainInternalServerError(
+                          GetUsersByUserIdResponse.respond500WithTextPlain(
                                   messages.getMessage(lang,
                                           MessageConsts.InternalServerError))));
                    } else {
                      asyncResultHandler.handle(Future.succeededFuture(
-                            GetUsersByUserIdResponse.withJsonOK(userList.get(0))));
+                            GetUsersByUserIdResponse.respond200WithApplicationJson(userList.get(0))));
                    }
                  }
                });
              } catch(Exception e) {
                logger.debug("Error occurred: " + e.getMessage());
                asyncResultHandler.handle(Future.succeededFuture(
-                      GetUsersResponse.withPlainInternalServerError(messages.getMessage(
+                      GetUsersResponse.respond500WithTextPlain(messages.getMessage(
                               lang, MessageConsts.InternalServerError))));
              }
 
        });
     } catch(Exception e) {
       asyncResultHandler.handle(Future.succeededFuture(
-              GetUsersResponse.withPlainInternalServerError(messages.getMessage(
+              GetUsersResponse.respond500WithTextPlain(messages.getMessage(
                       lang, MessageConsts.InternalServerError))));
     }
   }
@@ -425,7 +421,7 @@ public class UsersAPI implements UsersResource {
   public void deleteUsersByUserId(String userId, String lang,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     try {
       vertxContext.runOnContext(v-> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
@@ -441,17 +437,17 @@ public class UsersAPI implements UsersResource {
                 if(deleteReply.failed()) {
                   logger.debug("Delete failed: " + deleteReply.cause().getMessage());
                   asyncResultHandler.handle(Future.succeededFuture(
-                            DeleteUsersByUserIdResponse.withPlainNotFound("Not found")));
+                            DeleteUsersByUserIdResponse.respond404WithTextPlain("Not found")));
                 } else {
                    asyncResultHandler.handle(Future.succeededFuture(
-                            DeleteUsersByUserIdResponse.withNoContent()));
+                            DeleteUsersByUserIdResponse.respond204()));
                 }
               });
             } catch(Exception e) {
               logger.debug("Delete failed: " + e.getMessage());
               asyncResultHandler.handle(
                 Future.succeededFuture(
-                        DeleteUsersByUserIdResponse.withPlainInternalServerError(
+                        DeleteUsersByUserIdResponse.respond500WithTextPlain(
                                 messages.getMessage(lang,
                                         MessageConsts.InternalServerError))));
             }
@@ -460,7 +456,7 @@ public class UsersAPI implements UsersResource {
     } catch(Exception e) {
       asyncResultHandler.handle(
             Future.succeededFuture(
-                    DeleteUsersByUserIdResponse.withPlainInternalServerError(
+                    DeleteUsersByUserIdResponse.respond500WithTextPlain(
                             messages.getMessage(lang,
                                     MessageConsts.InternalServerError))));
     }
@@ -472,20 +468,18 @@ public class UsersAPI implements UsersResource {
           String lang, User entity,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
-
-
+          Context vertxContext) {
     try {
       vertxContext.runOnContext(v-> {
         if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
-              PostUsersResponse.withPlainBadRequest("Users are limited to one address per addresstype")));
+              PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
           return;
         }
 
         if(!userId.equals(entity.getId())) {
           asyncResultHandler.handle(Future.succeededFuture(
-                          PutUsersByUserIdResponse.withPlainBadRequest("You cannot change the value of the id field")));
+                          PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           String tableName = getTableName(null);
@@ -498,11 +492,11 @@ public class UsersAPI implements UsersResource {
               if(checkRes.failed()) {
                 logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
                   asyncResultHandler.handle(Future.succeededFuture(
-                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                    PutUsersByUserIdResponse.respond500WithTextPlain(
                             messages.getMessage(lang, MessageConsts.InternalServerError))));
               } else if(!checkRes.result()) {
                 asyncResultHandler.handle(Future.succeededFuture(
-                  PostUsersResponse.withPlainBadRequest("All addresses types defined for users must be existing")));
+                  PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
               } else {
                 try {
                   PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
@@ -511,7 +505,7 @@ public class UsersAPI implements UsersResource {
                       //error 500
                       logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
                       asyncResultHandler.handle(Future.succeededFuture(
-                                              PutUsersByUserIdResponse.withPlainInternalServerError(
+                                              PutUsersByUserIdResponse.respond500WithTextPlain(
                                                       messages.getMessage(lang,
                                                               MessageConsts.InternalServerError))));
                     } else {
@@ -519,7 +513,7 @@ public class UsersAPI implements UsersResource {
                       if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
                         //Error 400, that username is in use by somebody else
                         asyncResultHandler.handle(Future.succeededFuture(
-                                PutUsersByUserIdResponse.withPlainBadRequest(
+                                PutUsersByUserIdResponse.respond400WithTextPlain(
                                         "Username " + entity.getUsername() + " is already in use")));
                       } else {
                         try {
@@ -530,13 +524,13 @@ public class UsersAPI implements UsersResource {
                               String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
                               logger.error(message);
                               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
-                                .withPlainBadRequest(message)));
+                                .respond400WithTextPlain(message)));
                               return;
                             }
                             else if(res == -1){
                               asyncResultHandler.handle(Future.succeededFuture(
                                 PostUsersResponse
-                                  .withPlainInternalServerError("")));
+                                  .respond500WithTextPlain("")));
                               return;
                             }
                             else{
@@ -559,21 +553,22 @@ public class UsersAPI implements UsersResource {
                                   try {
                                     if(putReply.failed()) {
                                       asyncResultHandler.handle(Future.succeededFuture(
-                                              PutUsersByUserIdResponse.withPlainInternalServerError(putReply.cause().getMessage())));
+                                              PutUsersByUserIdResponse.respond500WithTextPlain(
+                                                putReply.cause().getMessage())));
                                     } else {
                                       asyncResultHandler.handle(Future.succeededFuture(
-                                              PutUsersByUserIdResponse.withNoContent()));
+                                              PutUsersByUserIdResponse.respond204()));
                                     }
                                   } catch(Exception e) {
                                     asyncResultHandler.handle(Future.succeededFuture(
-                                                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                                                    PutUsersByUserIdResponse.respond500WithTextPlain(
                                                             messages.getMessage(lang,
                                                                     MessageConsts.InternalServerError))));
                                   }
                                 });
                               } catch(Exception e) {
                                 asyncResultHandler.handle(Future.succeededFuture(
-                                                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                                                    PutUsersByUserIdResponse.respond500WithTextPlain(
                                                             messages.getMessage(lang,
                                                                     MessageConsts.InternalServerError))));
                               }
@@ -582,7 +577,7 @@ public class UsersAPI implements UsersResource {
                         } catch (Exception e) {
                           logger.error(e.getLocalizedMessage(), e);
                           asyncResultHandler.handle(Future.succeededFuture(
-                            PutUsersByUserIdResponse.withPlainInternalServerError(
+                            PutUsersByUserIdResponse.respond500WithTextPlain(
                                     messages.getMessage(lang, MessageConsts.InternalServerError))));
                         }
                       }
@@ -591,7 +586,7 @@ public class UsersAPI implements UsersResource {
                 } catch(Exception e) {
                   logger.debug(e.getLocalizedMessage());
                   asyncResultHandler.handle(Future.succeededFuture(
-                    PutUsersByUserIdResponse.withPlainInternalServerError(
+                    PutUsersByUserIdResponse.respond500WithTextPlain(
                             messages.getMessage(lang, MessageConsts.InternalServerError))));
                 }
               }
@@ -599,7 +594,7 @@ public class UsersAPI implements UsersResource {
           } catch(Exception e) {
             logger.debug(e.getLocalizedMessage());
             asyncResultHandler.handle(Future.succeededFuture(
-              PutUsersByUserIdResponse.withPlainInternalServerError(
+              PutUsersByUserIdResponse.respond500WithTextPlain(
                       messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
         }
@@ -607,7 +602,7 @@ public class UsersAPI implements UsersResource {
     } catch (Exception e) {
       logger.debug(e.getLocalizedMessage());
       asyncResultHandler.handle(Future.succeededFuture(
-              PutUsersByUserIdResponse.withPlainInternalServerError(
+              PutUsersByUserIdResponse.respond500WithTextPlain(
                       messages.getMessage(lang, MessageConsts.InternalServerError))));
     }
   }

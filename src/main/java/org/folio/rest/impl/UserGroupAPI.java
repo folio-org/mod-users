@@ -10,8 +10,8 @@ import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.model.Usergroups;
-import org.folio.rest.jaxrs.resource.GroupsResource;
-import org.folio.rest.jaxrs.resource.UsersResource.GetUsersResponse;
+import org.folio.rest.jaxrs.resource.Groups;
+import org.folio.rest.jaxrs.resource.Users.GetUsersResponse;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -20,7 +20,6 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -39,7 +38,7 @@ import java.util.UUID;
  * @author shale
  *
  */
-public class UserGroupAPI implements GroupsResource {
+public class UserGroupAPI implements Groups {
 
   public static final String       GROUP_TABLE           = "groups";
   public static final String       GROUP_USER_JOIN_TABLE = "groups_users";
@@ -58,7 +57,7 @@ public class UserGroupAPI implements GroupsResource {
   @Override
   public void getGroups(String query, int offset, int limit,
       String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     /**
     * http://host:port/groups
@@ -79,31 +78,31 @@ public class UserGroupAPI implements GroupsResource {
                   List<Usergroup> groupList = (List<Usergroup>) reply.result().getResults();
                   groups.setUsergroups(groupList);
                   groups.setTotalRecords((Integer)reply.result().getResultInfo().getTotalRecords());
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse.withJsonOK(
-                    groups)));
+                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
+                    .respond200WithApplicationJson(groups)));
                 }
                 else{
                   log.error(reply.cause().getMessage(), reply.cause());
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-                    .withPlainBadRequest(reply.cause().getMessage())));
+                    .respond400WithTextPlain(reply.cause().getMessage())));
                 }
               } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-                  .withPlainInternalServerError(messages.getMessage(
+                  .respond500WithTextPlain(messages.getMessage(
                     lang, MessageConsts.InternalServerError))));
               }
             });
       }
       catch(FieldException fe){
         log.error(fe.getLocalizedMessage(), fe);
-        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.withPlainBadRequest(
+        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
                 "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
       }
       catch (Exception e) {
         log.error(e.getMessage(), e);
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
 
@@ -114,7 +113,7 @@ public class UserGroupAPI implements GroupsResource {
   public void postGroups(String lang, Usergroup entity,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
 
     vertxContext.runOnContext(v -> {
       try {
@@ -130,25 +129,23 @@ public class UserGroupAPI implements GroupsResource {
           GROUP_TABLE, id, entity, reply -> {
             try {
               if(reply.succeeded()){
-                Object ret = reply.result();
-                entity.setId((String) ret);
-                OutStream stream = new OutStream();
-                stream.setData(entity);
+                String ret = reply.result();
+                entity.setId(ret);
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                        PostGroupsResponse.withJsonCreated(LOCATION_PREFIX + ret,
-                        stream)));
+                  PostGroupsResponse.respond201WithApplicationJson(entity, 
+                    PostGroupsResponse.headersFor201().withLocation(LOCATION_PREFIX + ret))));
               }
               else{
                 log.error(reply.cause().getMessage(), reply.cause());
                 if(isDuplicate(reply.cause().getMessage())){
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                          PostGroupsResponse.withJsonUnprocessableEntity(
+                          PostGroupsResponse.respond422WithApplicationJson(
                           ValidationHelper.createValidationErrorMessage(
                           "group", entity.getGroup(), "Group exists"))));
                 }
                 else{
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                          PostGroupsResponse.withPlainInternalServerError(
+                          PostGroupsResponse.respond500WithTextPlain(
                           messages.getMessage(lang,
                           MessageConsts.InternalServerError))));
                 }
@@ -156,14 +153,14 @@ public class UserGroupAPI implements GroupsResource {
             } catch (Exception e) {
               log.error(e.getMessage(), e);
               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                      PostGroupsResponse.withPlainInternalServerError(
+                      PostGroupsResponse.respond500WithTextPlain(
                       messages.getMessage(lang, MessageConsts.InternalServerError))));
             }
           });
       } catch (Exception e) {
         log.error(e.getMessage(), e);
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                PostGroupsResponse.withPlainInternalServerError(
+                PostGroupsResponse.respond500WithTextPlain(
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
@@ -173,7 +170,7 @@ public class UserGroupAPI implements GroupsResource {
   @Validate
   @Override
   public void getGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     vertxContext.runOnContext(v -> {
       try {
@@ -191,34 +188,34 @@ public class UserGroupAPI implements GroupsResource {
                   List<Usergroup> userGroup = (List<Usergroup>) reply.result().getResults();
                   if(userGroup.isEmpty()){
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .withPlainNotFound(groupId)));
+                      .respond404WithTextPlain(groupId)));
                   }
                   else{
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .withJsonOK(userGroup.get(0))));
+                      .respond200WithApplicationJson(userGroup.get(0))));
                   }
                 }
                 else{
                   log.error(reply.cause().getMessage(), reply.cause());
                   if(isInvalidUUID(reply.cause().getMessage())){
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .withPlainNotFound(groupId)));
+                      .respond404WithTextPlain(groupId)));
                   }
                   else{
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                      .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
                   }
                 }
               } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                  .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
               }
         });
       } catch (Exception e) {
         log.error(e.getMessage(), e);
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
   }
@@ -226,7 +223,7 @@ public class UserGroupAPI implements GroupsResource {
   @Validate
   @Override
   public void deleteGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     vertxContext.runOnContext(v -> {
       System.out.println("sending... deleteGroupsByGroupId");
@@ -244,12 +241,12 @@ public class UserGroupAPI implements GroupsResource {
             if(getReply.failed()) {
                log.error(getReply.cause().getMessage(), getReply.cause());
                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                 .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                 .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
             } else {
               List<Usergroup> userGroup = (List<Usergroup>) getReply.result().getResults();
               if(userGroup.isEmpty()) {
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                        .withPlainNotFound(groupId)));
+                        .respond404WithTextPlain(groupId)));
                 return;
               }
               User u = new User();
@@ -261,7 +258,7 @@ public class UserGroupAPI implements GroupsResource {
                   if(userList.size() > 0){
                     log.error("Can not delete group, "+ groupId + ". " + userList.size()  + " users associated with it");
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                      .withPlainBadRequest("Can not delete group, " + userList.size()  + " users associated with it")));
+                      .respond400WithTextPlain("Can not delete group, " + userList.size()  + " users associated with it")));
                     return;
                   }
                   else{
@@ -274,48 +271,48 @@ public class UserGroupAPI implements GroupsResource {
                           if(reply.succeeded()){
                             if(reply.result().getUpdated() == 1){
                               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                                .withNoContent()));
+                                .respond204()));
                             }
                             else{
                               log.error(messages.getMessage(lang, MessageConsts.DeletedCountError, 1, reply.result().getUpdated()));
                               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                                .withPlainNotFound(messages.getMessage(lang, MessageConsts.DeletedCountError,1 , reply.result().getUpdated()))));
+                                .respond404WithTextPlain(messages.getMessage(lang, MessageConsts.DeletedCountError,1 , reply.result().getUpdated()))));
                             }
                           }
                           else{
                             log.error(reply.cause().getMessage(), reply.cause());
                             asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                              .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                              .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
                           }
                         } catch (Exception e) {
                           log.error(e.getMessage(), e);
                           asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                            .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                            .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
                         }
                       });
                   } catch (Exception e) {
                     log.error(e.getMessage(), e);
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                      .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                      .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
                   }
                 }
                 else{
                   log.error(replyHandler.cause().getMessage(), replyHandler.cause());
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                    .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                    .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
                 }
               });
             }
           } catch(Exception e) {
             log.error(e.getMessage(), e);
             asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-              .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+              .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
         });
       } catch (Exception e) {
         log.error(e.getMessage(), e);
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
   }
@@ -324,7 +321,7 @@ public class UserGroupAPI implements GroupsResource {
   @Override
   public void putGroupsByGroupId(String groupId, String lang, Usergroup entity,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) throws Exception {
+      Context vertxContext) {
 
     vertxContext.runOnContext(v -> {
       System.out.println("sending... putGroupsByGroupId");
@@ -337,28 +334,28 @@ public class UserGroupAPI implements GroupsResource {
               if(reply.succeeded()){
                 if(reply.result().getUpdated() == 0){
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                    .withPlainNotFound(messages.getMessage(lang, MessageConsts.NoRecordsUpdated))));
+                    .respond404WithTextPlain(messages.getMessage(lang, MessageConsts.NoRecordsUpdated))));
                 }
                 else{
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                    .withNoContent()));
+                    .respond204()));
                 }
               }
               else{
                 log.error(reply.cause().getMessage());
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                  .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                  .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
               }
             } catch (Exception e) {
               log.error(e.getMessage(), e);
               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+                .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
             }
           });
       } catch (Exception e) {
         log.error(e.getMessage(), e);
         asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-          .withPlainInternalServerError(messages.getMessage(lang, MessageConsts.InternalServerError))));
+          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
   }
