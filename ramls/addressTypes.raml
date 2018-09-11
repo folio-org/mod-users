@@ -1,0 +1,45 @@
+#%RAML 1.0
+title: Address Types
+version: v1.0.1
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users Address Types API
+    content: This documents the API calls that can be made to query and manage user address types of the system
+
+types:
+  addressType: !include addresstype.json
+  addresstypeCollection: !include addresstypeCollection.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  language: !include raml-util/traits/language.raml
+  validate: !include raml-util/traits/validation.raml
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+
+/addresstypes:
+  type:
+    collection:
+      exampleCollection: !include examples/addresstypeCollection.sample
+      exampleItem: !include examples/addresstype.sample
+      schemaCollection: addresstypeCollection
+      schemaItem: addressType
+  get:
+    is: [
+      searchable: {description: "", example: "addressType=primary"},
+      pageable
+    ]
+    description: Return a list of address types
+  post:
+    is: [validate]
+    description: Create an address type
+  /{addresstypeId}:
+    type:
+      collection-item:
+        exampleItem: !include examples/addresstype.sample
+        schema: addressType
