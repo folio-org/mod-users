@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>15.2.0-SNAPSHOT</version>
+  <version>15.2.0</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -405,7 +405,7 @@
     <url>https://github.com/folio-org/mod-users</url>
     <connection>scm:git:git://github.com:folio-org/mod-users.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-users.git</developerConnection>
-    <tag>v14.1.0</tag>
+    <tag>v15.2.0</tag>
   </scm>
 
   <properties>
