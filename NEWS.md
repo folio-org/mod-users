@@ -1,3 +1,6 @@
+## 15.2.0 2018-09-12
+ * Upgrade to RMB 21.x.x, use RAML 1.0
+
 ## 15.1.0
  * Change user expiration to use the periodic API instead of deserializer.
 

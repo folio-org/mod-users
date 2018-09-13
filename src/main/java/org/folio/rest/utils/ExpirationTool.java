@@ -94,10 +94,9 @@ public class ExpirationTool {
         } else if(reply.result().getResults().isEmpty()) {
           logger.info(String.format("No results found for query %s", query));
         } else {
-          List<Object> userList = (List<Object>) reply.result().getResults();
+          List<User> userList = reply.result().getResults();
           List<Future> futureList = new ArrayList<>();
-          for(Object ob : userList) {
-            User user = (User)ob;
+          for(User user : userList) {
             user.setActive(Boolean.FALSE);
             Future<Void> saveFuture = saveUser(vertx, context, tenant, user);
             futureList.add(saveFuture);

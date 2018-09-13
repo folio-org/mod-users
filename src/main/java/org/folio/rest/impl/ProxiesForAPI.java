@@ -14,8 +14,7 @@ import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.ProxiesFor;
 import org.folio.rest.jaxrs.model.ProxyforCollection;
-import org.folio.rest.jaxrs.resource.ProxiesforResource;
-import org.folio.rest.jaxrs.resource.support.ResponseWrapper;
+import org.folio.rest.jaxrs.resource.Proxiesfor;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
@@ -24,7 +23,6 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.OutStream;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -33,7 +31,7 @@ import org.z3950.zing.cql.cql2pgjson.FieldException;
  *
  * @author kurt
  */
-public class ProxiesForAPI implements ProxiesforResource {
+public class ProxiesForAPI implements Proxiesfor {
   public static final String PROXY_FOR_TABLE = "proxyfor";
   public static final String ID_FIELD_NAME = "id";
   public static final String USERID_FIELD_NAME = "'userId'";
@@ -94,7 +92,7 @@ public class ProxiesForAPI implements ProxiesforResource {
           String lang,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
         String tenantId = getTenant(okapiHeaders);
@@ -105,21 +103,21 @@ public class ProxiesForAPI implements ProxiesforResource {
           if(getReply.failed()) {
             String message = logAndSaveError(getReply.cause());
             asyncResultHandler.handle(Future.succeededFuture(
-                        GetProxiesforResponse.withPlainInternalServerError(
+                        GetProxiesforResponse.respond500WithTextPlain(
                                 getErrorResponse(message))));
           } else {
             ProxyforCollection collection = new ProxyforCollection();
-            List<ProxiesFor> proxyforList = (List<ProxiesFor>)getReply.result().getResults();
+            List<ProxiesFor> proxyforList = getReply.result().getResults();
             collection.setProxiesFor(proxyforList);
             collection.setTotalRecords((Integer)getReply.result().getResultInfo().getTotalRecords());
             asyncResultHandler.handle(Future.succeededFuture(
-                    GetProxiesforResponse.withJsonOK(collection)));
+                    GetProxiesforResponse.respond200WithApplicationJson(collection)));
           }
         });
       } catch(Exception e) {
         String message = logAndSaveError(e);
         asyncResultHandler.handle(Future.succeededFuture(
-                    GetProxiesforResponse.withPlainInternalServerError(
+                    GetProxiesforResponse.respond500WithTextPlain(
                             getErrorResponse(message))));
       }
     });
@@ -131,7 +129,7 @@ public class ProxiesForAPI implements ProxiesforResource {
           ProxiesFor entity,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
         String tenantId = getTenant(okapiHeaders);
@@ -140,13 +138,13 @@ public class ProxiesForAPI implements ProxiesforResource {
           if(existsRes.failed()) {
             String message = logAndSaveError(existsRes.cause());
             asyncResultHandler.handle(Future.succeededFuture(
-                    PostProxiesforResponse.withPlainInternalServerError(
+                    PostProxiesforResponse.respond500WithTextPlain(
                               getErrorResponse(message))));
           } else if(existsRes.result() == true) {
             Errors existsError = ValidationHelper.createValidationErrorMessage(
                               "proxyFor", entity.getId(), "Proxy relationship already exists");
                       asyncResultHandler.handle(Future.succeededFuture(
-                              PostProxiesforResponse.withJsonUnprocessableEntity(existsError)));
+                              PostProxiesforResponse.respond422WithApplicationJson(existsError)));
           } else {
             try {
               String id = entity.getId();
@@ -163,32 +161,30 @@ public class ProxiesForAPI implements ProxiesforResource {
                       Errors existsError = ValidationHelper.createValidationErrorMessage(
                               "proxyFor", entity.getId(), "Proxy relationship already exists");
                       asyncResultHandler.handle(Future.succeededFuture(
-                              PostProxiesforResponse.withJsonUnprocessableEntity(existsError)));
+                              PostProxiesforResponse.respond422WithApplicationJson(existsError)));
                     } else {
                       asyncResultHandler.handle(Future.succeededFuture(
-                              PostProxiesforResponse.withPlainInternalServerError(
+                              PostProxiesforResponse.respond500WithTextPlain(
                                       getErrorResponse(message))));
                     }
                   } else {
-                    Object returnObject = reply.result();
-                    entity.setId((String) returnObject);
-                    OutStream stream = new OutStream();
-                    stream.setData(entity);
+                    String returnObject = reply.result();
+                    entity.setId(returnObject);
                     asyncResultHandler.handle(Future.succeededFuture(
-                            PostProxiesforResponse.withJsonCreated(
-                                    URL_PREFIX + returnObject, stream)));
+                      PostProxiesforResponse.respond201WithApplicationJson(entity,
+                        PostProxiesforResponse.headersFor201().withLocation(URL_PREFIX + returnObject))));
                   }
                 } catch(Exception e) {
                   String message = logAndSaveError(e);
                   asyncResultHandler.handle(Future.succeededFuture(
-                              PostProxiesforResponse.withPlainInternalServerError(
+                              PostProxiesforResponse.respond500WithTextPlain(
                                       getErrorResponse(message))));
                 }
               });
             } catch(Exception e) {
               String message = logAndSaveError(e);
               asyncResultHandler.handle(Future.succeededFuture(
-                      PostProxiesforResponse.withPlainInternalServerError(
+                      PostProxiesforResponse.respond500WithTextPlain(
                               getErrorResponse(message))));
             }
           }
@@ -196,7 +192,7 @@ public class ProxiesForAPI implements ProxiesforResource {
       } catch(Exception e) {
         String message = logAndSaveError(e);
         asyncResultHandler.handle(Future.succeededFuture(
-                    PostProxiesforResponse.withPlainInternalServerError(
+                    PostProxiesforResponse.respond500WithTextPlain(
                             getErrorResponse(message))));
       }
     });
@@ -207,7 +203,7 @@ public class ProxiesForAPI implements ProxiesforResource {
           String lang,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
         String tenantId = getTenant(okapiHeaders);
@@ -220,33 +216,33 @@ public class ProxiesForAPI implements ProxiesforResource {
               String message = logAndSaveError(getReply.cause());
               if(isInvalidUUID(message)) {
                 asyncResultHandler.handle(Future.succeededFuture(
-                        GetProxiesforByIdResponse.withPlainNotFound(id)));
+                        GetProxiesforByIdResponse.respond404WithTextPlain(id)));
               } else {
                 asyncResultHandler.handle(Future.succeededFuture(
-                            GetProxiesforByIdResponse.withPlainInternalServerError(
+                            GetProxiesforByIdResponse.respond500WithTextPlain(
                                     getErrorResponse(message))));
               }
             } else {
               List<ProxiesFor> proxyforList = (List<ProxiesFor>)getReply.result().getResults();
               if(proxyforList.isEmpty()) {
                 asyncResultHandler.handle(Future.succeededFuture(
-                        GetProxiesforByIdResponse.withPlainNotFound(id)));
+                        GetProxiesforByIdResponse.respond404WithTextPlain(id)));
               } else {
                 asyncResultHandler.handle(Future.succeededFuture(
-                        GetProxiesforByIdResponse.withJsonOK(proxyforList.get(0))));
+                        GetProxiesforByIdResponse.respond200WithApplicationJson(proxyforList.get(0))));
               }
             }
           } catch(Exception e) {
             String message = logAndSaveError(e);
             asyncResultHandler.handle(Future.succeededFuture(
-                        GetProxiesforByIdResponse.withPlainInternalServerError(
+                        GetProxiesforByIdResponse.respond500WithTextPlain(
                                 getErrorResponse(message))));
           }
         });
       } catch(Exception e) {
         String message = logAndSaveError(e);
         asyncResultHandler.handle(Future.succeededFuture(
-                    GetProxiesforByIdResponse.withPlainInternalServerError(
+                    GetProxiesforByIdResponse.respond500WithTextPlain(
                             getErrorResponse(message))));
       }
     });
@@ -257,7 +253,7 @@ public class ProxiesForAPI implements ProxiesforResource {
           String lang,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     vertxContext.runOnContext(v->{
       try {
         String tenantId = getTenant(okapiHeaders);
@@ -265,26 +261,26 @@ public class ProxiesForAPI implements ProxiesforResource {
           if(deleteReply.failed()) {
             String message = logAndSaveError(deleteReply.cause());
             asyncResultHandler.handle(Future.succeededFuture(
-                        DeleteProxiesforByIdResponse.withPlainInternalServerError(
+                        DeleteProxiesforByIdResponse.respond500WithTextPlain(
                                 getErrorResponse(message))));
           } else {
             if(deleteReply.result().getUpdated() == 1) {
               asyncResultHandler.handle(Future.succeededFuture(
-                      DeleteProxiesforByIdResponse.withNoContent()));
+                      DeleteProxiesforByIdResponse.respond204()));
             } else {
               String message = Messages.getInstance().getMessage(
                       lang, MessageConsts.DeletedCountError,
                       1, deleteReply.result().getUpdated());
               logger.error(message);
               asyncResultHandler.handle(Future.succeededFuture(
-                      DeleteProxiesforByIdResponse.withPlainNotFound(message)));
+                      DeleteProxiesforByIdResponse.respond404WithTextPlain(message)));
             }
           }
         });
       } catch(Exception e) {
         String message = logAndSaveError(e);
         asyncResultHandler.handle(Future.succeededFuture(
-                    DeleteProxiesforByIdResponse.withPlainInternalServerError(
+                    DeleteProxiesforByIdResponse.respond500WithTextPlain(
                             getErrorResponse(message))));
       }
     });
@@ -296,7 +292,7 @@ public class ProxiesForAPI implements ProxiesforResource {
           ProxiesFor entity,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) throws Exception {
+          Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
         String tenantId = getTenant(okapiHeaders);
@@ -306,7 +302,7 @@ public class ProxiesForAPI implements ProxiesforResource {
             if(putReply.failed()) {
               String message = logAndSaveError(putReply.cause());
               asyncResultHandler.handle(Future.succeededFuture(
-                          PutProxiesforByIdResponse.withPlainInternalServerError(
+                          PutProxiesforByIdResponse.respond500WithTextPlain(
                                   getErrorResponse(message))));
             } else {
               if(putReply.result().getUpdated() == 0) {
@@ -314,23 +310,23 @@ public class ProxiesForAPI implements ProxiesforResource {
                 logger.error(message);
                 asyncResultHandler.handle(
                         Future.succeededFuture(
-                                PutProxiesforByIdResponse.withPlainNotFound(message)));
+                                PutProxiesforByIdResponse.respond404WithTextPlain(message)));
               } else {
                 asyncResultHandler.handle(
-                        Future.succeededFuture(PutProxiesforByIdResponse.withNoContent()));
+                        Future.succeededFuture(PutProxiesforByIdResponse.respond204()));
               }
             }
           } catch(Exception e) {
             String message = logAndSaveError(e);
             asyncResultHandler.handle(Future.succeededFuture(
-                        PutProxiesforByIdResponse.withPlainInternalServerError(
+                        PutProxiesforByIdResponse.respond500WithTextPlain(
                                 getErrorResponse(message))));
           }
         });
       } catch(Exception e) {
         String message = logAndSaveError(e);
         asyncResultHandler.handle(Future.succeededFuture(
-                    PutProxiesforByIdResponse.withPlainInternalServerError(
+                    PutProxiesforByIdResponse.respond500WithTextPlain(
                             getErrorResponse(message))));
       }
     });

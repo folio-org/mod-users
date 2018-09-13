@@ -1,0 +1,48 @@
+#%RAML 1.0
+title: Proxies For
+version: v0.1
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users Proxy For API
+    content: This documents the API calls that can be made to query and manage proxy relationships for users
+
+types:
+  proxiesFor: !include proxyfor.json
+  proxyforCollection: !include proxyforCollection.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  language: !include raml-util/traits/language.raml
+  validate: !include raml-util/traits/validation.raml
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+
+/proxiesfor:
+  type:
+    collection:
+      exampleCollection: !include examples/proxyforCollection.sample
+      exampleItem: !include examples/proxyfor.sample
+      schemaCollection: proxyforCollection
+      schemaItem: proxiesFor
+  get:
+    is : [
+      searchable: {description: "with valid searchable fields", example: "name=aaa"},
+      pageable
+    ]
+    description: Return a list of all proxy relationships
+  post:
+    is: [validate]
+    description: Create a proxyFor relationship
+  /{id}:
+    type:
+      collection-item:
+        exampleItem: !include examples/proxyfor.sample
+        schema: proxiesFor
+
+
+

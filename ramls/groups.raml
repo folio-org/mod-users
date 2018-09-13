@@ -1,0 +1,45 @@
+#%RAML 1.0
+title: User Groups
+version: v1.0.1
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users Groups API
+    content: This documents the API calls that can be made to query and manage user groups of the system
+
+types:
+  usergroup: !include usergroup.json
+  usergroups: !include usergroups.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  language: !include raml-util/traits/language.raml
+  validate: !include raml-util/traits/validation.raml
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+
+/groups:
+  type:
+    collection:
+      exampleCollection: !include examples/groups.sample
+      exampleItem: !include examples/group.sample
+      schemaCollection: usergroups
+      schemaItem: usergroup
+  get:
+    is: [
+      searchable: {description: "", example: "group=*grad*"},
+      pageable
+    ]
+    description: Return a list of groups
+  post:
+    is: [validate]
+    description: Create a group
+  /{groupId}:
+    type:
+      collection-item:
+        exampleItem: !include examples/group.sample
+        schema: usergroup
