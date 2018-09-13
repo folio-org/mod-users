@@ -300,7 +300,7 @@ public class UsersAPI implements Users {
                                         postgresClient.endTx(connection, done -> {
                                           asyncResultHandler.handle(
                                                   Future.succeededFuture(
-                                                    PostUsersResponse.respond201WithApplicationJson(user, 
+                                                    PostUsersResponse.respond201WithApplicationJson(user,
                                                      PostUsersResponse.headersFor201().withLocation(reply.result()))));
                                         });
                                       } else {
