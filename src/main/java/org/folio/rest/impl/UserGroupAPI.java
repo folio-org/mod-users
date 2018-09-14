@@ -132,7 +132,7 @@ public class UserGroupAPI implements Groups {
                 String ret = reply.result();
                 entity.setId(ret);
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                  PostGroupsResponse.respond201WithApplicationJson(entity, 
+                  PostGroupsResponse.respond201WithApplicationJson(entity,
                     PostGroupsResponse.headersFor201().withLocation(LOCATION_PREFIX + ret))));
               }
               else{

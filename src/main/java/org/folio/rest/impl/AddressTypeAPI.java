@@ -237,7 +237,7 @@ public class AddressTypeAPI implements Addresstypes {
   public void deleteAddresstypesByAddresstypeId(String addresstypeId, String lang,
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
-    
+
     vertxContext.runOnContext(v -> {
       try {
         String tenantId = TenantTool.calculateTenantId(
