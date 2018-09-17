@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.function.Function;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -32,6 +33,7 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
+import org.z3950.zing.cql.CQLParseException;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
 
@@ -107,95 +109,75 @@ public class UsersAPI implements Users {
     }
   }
 
+  private void handle(String message, Throwable e, Handler<AsyncResult<Response>> asyncResultHandler, String lang,
+      Function<String,Response> report400, Function<String,Response> report500) {
+    logger.error(message, e);
+
+    Throwable cause = e;
+    do {
+      if (cause instanceof CQLParseException || cause instanceof FieldException) {
+        asyncResultHandler.handle(Future.succeededFuture(report400.apply(
+            "CQL Parsing Error for '" + message + "': " + cause.getMessage())));
+        return;
+      }
+      if (cause instanceof IllegalStateException) {
+        asyncResultHandler.handle(Future.succeededFuture(report400.apply(
+            "CQL Illegal State Error for '" + message + "': " + cause.getMessage())));
+        return;
+      }
+      cause = cause.getCause();
+    } while (cause != null);
+
+    asyncResultHandler.handle(Future.succeededFuture(report500.apply(
+                messages.getMessage(lang, MessageConsts.InternalServerError))));
+  }
+
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-          UsersGetOrder order, int offset, int limit, List<String> facets,
-          String lang, Map <String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) {
+      UsersGetOrder order, int offset, int limit, List<String> facets,
+      String lang, Map <String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     logger.debug("Getting users");
     try {
       CQLWrapper cql = getCQL(query,limit,offset);
 
       List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
-      vertxContext.runOnContext(v -> {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-        String tableName = getTableName(query);
-        String[] fieldList = {"*"};
-        //Criterion criterion = Criterion.json2Criterion(query);
-        //criterion.setLimit(new Limit(limit)).setOffset(new Offset(offset));
-        logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
-        //logger.debug("Using criterion: " + criterion.toString());
-        logger.debug("tenantId = " + tenantId);
+      String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
+      String tableName = getTableName(query);
+      String[] fieldList = {"*"};
+      logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
+      logger.debug("tenantId = " + tenantId);
 
-            try {
-              PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
-                      User.class, fieldList, cql, true, false, facetList, reply -> {
-                try {
-                  if(reply.succeeded()) {
-                    UserdataCollection userCollection = new UserdataCollection();
-                    List<User> users = (List<User>)reply.result().getResults();
-                    userCollection.setUsers(users);
-                    userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
-                    userCollection.setResultInfo(reply.result().getResultInfo());
-                    asyncResultHandler.handle(Future.succeededFuture(
-                            GetUsersResponse.respond200WithApplicationJson(userCollection)));
-                  } else {
-                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                            GetUsersResponse.respond500WithTextPlain(
-                              reply.cause().getMessage())));
-                  }
-                } catch(Exception e) {
-                  logger.debug(e.getLocalizedMessage());
-
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                            GetUsersResponse.respond500WithTextPlain(
-                                    reply.cause().getMessage())));
-                }
-              });
-            } catch (IllegalStateException e) {
-              logger.debug("IllegalStateException: " + e.getLocalizedMessage());
-              asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
-                        "CQL Illegal State Error for '" + query + "': " + e.getLocalizedMessage())));
-            }
-              catch(Exception e) {
-              Throwable cause = e;
-              while(cause.getCause() != null) {
-                  cause = cause.getCause();
-              }
-              logger.debug("Got error " + cause.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
-              if(cause.getClass().getSimpleName().contains("CQLParseException")) {
-                logger.debug("BAD CQL");
-                asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
-                        "CQL Parsing Error for '" + query + "': " + cause.getLocalizedMessage())));
-              } else {
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                              GetUsersResponse.respond500WithTextPlain(
-                                      messages.getMessage(lang,
-                                              MessageConsts.InternalServerError))));
-              }
-            }
-        });
-    }
-    catch(FieldException fe){
-      logger.error("BAD CQL " + fe.getLocalizedMessage());
-      asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
-              "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
-    }
-    catch(Exception e) {
-      logger.error(e.getLocalizedMessage(), e);
-      if(e.getCause() != null && e.getCause().getClass().getSimpleName().contains("CQLParseException")) {
-        logger.debug("BAD CQL");
-        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
-                "CQL Parsing Error for '" + query + "': " + e.getLocalizedMessage())));
-      } else {
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                          GetUsersResponse.respond500WithTextPlain(
-                                  messages.getMessage(lang,
-                                          MessageConsts.InternalServerError))));
-      }
+      PostgresClient.getInstance(vertxContext.owner(), tenantId)
+          .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
+        try {
+          if (reply.succeeded()) {
+            UserdataCollection userCollection = new UserdataCollection();
+            List<User> users = reply.result().getResults();
+            userCollection.setUsers(users);
+            userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
+            userCollection.setResultInfo(reply.result().getResultInfo());
+            asyncResultHandler.handle(Future.succeededFuture(
+                GetUsersResponse.respond200WithApplicationJson(userCollection)));
+          } else {
+            handle(query, reply.cause(), asyncResultHandler, lang,
+                GetUsersResponse::respond400WithTextPlain,
+                GetUsersResponse::respond500WithTextPlain);
+          }
+        } catch (Exception e) {
+          handle(query, e, asyncResultHandler, lang,
+              GetUsersResponse::respond400WithTextPlain,
+              GetUsersResponse::respond500WithTextPlain);
+        }
+      });
+    } catch(Exception e) {
+      handle(query, e, asyncResultHandler, lang,
+          GetUsersResponse::respond400WithTextPlain,
+          GetUsersResponse::respond500WithTextPlain);
     }
   }
 
@@ -251,7 +233,7 @@ public class UsersAPI implements Users {
                                     PostUsersResponse.respond500WithTextPlain(
                                             getReply.cause().getMessage())));
                     } else {
-                      List<User> userList = (List<User>)getReply.result().getResults();
+                      List<User> userList = getReply.result().getResults();
                       if(userList.size() > 0) {
                         logger.debug("User with this id already exists");
                         asyncResultHandler.handle(Future.succeededFuture(
@@ -383,7 +365,7 @@ public class UsersAPI implements Users {
                            GetUsersByUserIdResponse.respond500WithTextPlain(
                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
                  } else {
-                   List<User> userList = (List<User>)getReply.result().getResults();
+                   List<User> userList = getReply.result().getResults();
                    if(userList.size() < 1) {
                      asyncResultHandler.handle(Future.succeededFuture(
                             GetUsersByUserIdResponse.respond404WithTextPlain("User" +
@@ -509,7 +491,7 @@ public class UsersAPI implements Users {
                                                       messages.getMessage(lang,
                                                               MessageConsts.InternalServerError))));
                     } else {
-                      List<User> userList = (List<User>)getReply.result().getResults();
+                      List<User> userList = getReply.result().getResults();
                       if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
                         //Error 400, that username is in use by somebody else
                         asyncResultHandler.handle(Future.succeededFuture(
@@ -615,7 +597,7 @@ public class UsersAPI implements Users {
   * @param handler
   * @throws Exception
   */
- private void getPG(Vertx vertx, String tenantId, User user, Handler<AsyncResult<Integer>> handler) throws Exception{
+ private void getPG(Vertx vertx, String tenantId, User user, Handler<AsyncResult<Integer>> handler) {
    String pgId = user.getPatronGroup();
    if(pgId == null){
      //allow null patron groups so that they can be added after a record is created
@@ -628,7 +610,7 @@ public class UsersAPI implements Users {
      PostgresClient.getInstance(vertx, tenantId).get(
        UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
          if(check.succeeded()){
-           List<Usergroup> ug = (List<Usergroup>) check.result().getResults();
+           List<Usergroup> ug = check.result().getResults();
            if(ug.size() == 0){
              handler.handle(io.vertx.core.Future.succeededFuture(0));
            }
@@ -704,7 +686,7 @@ public class UsersAPI implements Users {
               logger.error(message, reply.cause());
               future.fail(reply.cause());
             } else {
-              List<AddressType> addressTypeList = (List<AddressType>)reply.result().getResults();
+              List<AddressType> addressTypeList = reply.result().getResults();
               if(addressTypeList.isEmpty()) {
                 future.complete(false);
               } else {
