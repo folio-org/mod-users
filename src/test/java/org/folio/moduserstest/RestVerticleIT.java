@@ -306,6 +306,30 @@ public class RestVerticleIT {
    return future;
  }
 
+ private Future<Void> getUserByInvalidCQL(TestContext context) {
+   System.out.println("Getting user via invalid CQL\n");
+   Future<Void> future = Future.future();
+   HttpClient client = vertx.createHttpClient();
+   try {
+     // empty CQL query triggers parse exception
+     client.get(port, "localhost", "/users?query=", res -> {
+       if (res.statusCode() == 400) {
+         future.complete();
+       } else {
+         future.fail("Expected 400 response code, got " + res.statusCode());
+       }
+     })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end();
+   } catch (Exception e) {
+     future.fail(e);
+   }
+   return future;
+ }
+
  private Future<Void> postAnotherUser(TestContext context) {
     System.out.println("Creating another user\n");
     Future future = Future.future();
@@ -1079,6 +1103,8 @@ public class RestVerticleIT {
       return f;
     }).compose(v -> {
       return getUserByCQL(context);
+    }).compose(v -> {
+      return getUserByInvalidCQL(context);
     }).compose(v -> {
       Future<Void> f = Future.future();
       postAnotherUser(context).setHandler(f.completer());
