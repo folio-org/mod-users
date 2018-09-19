@@ -1,5 +1,6 @@
-## 15.2.1 UNRELEASED
- * NEWS cleanup
+## 15.2.1 2018-09-19
+ * MODUSERS-89 Bage pageable
+ * MODUSERS-84 use shared raml without mod-users duplicates
 
 ## 15.2.0 2018-09-12
  * Upgrade to RMB 21.x.x, use RAML 1.0
