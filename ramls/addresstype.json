@@ -4,12 +4,15 @@
   "type": "object",
   "properties": {
     "addressType": {
+      "description": "A unique name for this address type",
       "type": "string"
     },
     "desc": {
+      "description": "An explanation of this address type",
       "type": "string"
     },
     "id": {
+      "description": "A UUID identifying this address type",
       "type": "string"
     },
     "metadata" : {
