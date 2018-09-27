@@ -1,11 +1,14 @@
 package org.folio.rest.impl;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -30,9 +33,11 @@ import org.folio.rest.persist.facets.FacetField;
 import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
+import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
+import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 import io.vertx.core.AsyncResult;
@@ -62,6 +67,25 @@ public class UsersAPI implements Users {
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
   public static final String RAML_PATH = "apidocs/raml/raml-util";
+  private static final String USER_SCHEMA_PATH = RAML_PATH + "/schemas/mod-users/userdata.json";
+  private static final String USER_SCHEMA = schema(USER_SCHEMA_PATH);
+  private static final LinkedHashMap<String,String> fieldsAndSchemas = getFieldsAndSchemas();
+
+  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
+  private static String schema(String path) {
+    try {
+      return ResourceUtils.resource2String(path);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private static LinkedHashMap<String,String> getFieldsAndSchemas() {
+    LinkedHashMap<String,String> map = new LinkedHashMap<>();
+    map.put(VIEW_NAME_USER_GROUPS_JOIN+".jsonb", USER_SCHEMA);
+    map.put(VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb", UserGroupAPI.GROUP_SCHEMA);
+    return map;
+  }
 
   public UsersAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField("id");
@@ -89,20 +113,20 @@ public class UsersAPI implements Users {
    * @param cql
    * @return
    */
-  private String convertQuery(String cql){
+  private static String convertQuery(String cql){
     if(cql != null){
       return cql.replaceAll("(?i)patronGroup\\.", VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb.");
     }
     return cql;
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
+  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
     if(query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(VIEW_NAME_USER_GROUPS_JOIN+".jsonb",VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb"));
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(fieldsAndSchemas);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     } else {
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(TABLE_NAME_USERS+".jsonb"));
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS+".jsonb", USER_SCHEMA);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     }
   }
@@ -136,7 +160,7 @@ public class UsersAPI implements Users {
                 try {
                   if(reply.succeeded()) {
                     UserdataCollection userCollection = new UserdataCollection();
-                    List<User> users = (List<User>)reply.result().getResults();
+                    List<User> users = reply.result().getResults();
                     userCollection.setUsers(users);
                     userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
                     userCollection.setResultInfo(reply.result().getResultInfo());
@@ -216,11 +240,11 @@ public class UsersAPI implements Users {
           return;
         }
         try {
-          Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+          Criteria idCrit = new Criteria(USER_SCHEMA_PATH);
           idCrit.addField(USER_ID_FIELD);
           idCrit.setOperation("=");
           idCrit.setValue(entity.getId());
-          Criteria nameCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+          Criteria nameCrit = new Criteria(USER_SCHEMA_PATH);
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
           nameCrit.setValue(entity.getUsername());
@@ -251,7 +275,7 @@ public class UsersAPI implements Users {
                                     PostUsersResponse.respond500WithTextPlain(
                                             getReply.cause().getMessage())));
                     } else {
-                      List<User> userList = (List<User>)getReply.result().getResults();
+                      List<User> userList = getReply.result().getResults();
                       if(userList.size() > 0) {
                         logger.debug("User with this id already exists");
                         asyncResultHandler.handle(Future.succeededFuture(
@@ -370,7 +394,7 @@ public class UsersAPI implements Users {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(null);
             try {
-              Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+              Criteria idCrit = new Criteria(USER_SCHEMA_PATH);
               idCrit.addField(USER_ID_FIELD);
               idCrit.setOperation("=");
               idCrit.setValue(userId);
@@ -383,7 +407,7 @@ public class UsersAPI implements Users {
                            GetUsersByUserIdResponse.respond500WithTextPlain(
                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
                  } else {
-                   List<User> userList = (List<User>)getReply.result().getResults();
+                   List<User> userList = getReply.result().getResults();
                    if(userList.size() < 1) {
                      asyncResultHandler.handle(Future.succeededFuture(
                             GetUsersByUserIdResponse.respond404WithTextPlain("User" +
@@ -483,13 +507,13 @@ public class UsersAPI implements Users {
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           String tableName = getTableName(null);
-          
+
           try {
-        	Criteria nameCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+            Criteria nameCrit = new Criteria(USER_SCHEMA_PATH);
             nameCrit.addField(USER_NAME_FIELD);
             nameCrit.setOperation("=");
             nameCrit.setValue(entity.getUsername());
-            
+
             checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
               if(checkRes.failed()) {
                 logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
@@ -511,7 +535,7 @@ public class UsersAPI implements Users {
                                                       messages.getMessage(lang,
                                                               MessageConsts.InternalServerError))));
                     } else {
-                      List<User> userList = (List<User>)getReply.result().getResults();
+                      List<User> userList = getReply.result().getResults();
                       if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
                         //Error 400, that username is in use by somebody else
                         asyncResultHandler.handle(Future.succeededFuture(
@@ -630,7 +654,7 @@ public class UsersAPI implements Users {
      PostgresClient.getInstance(vertx, tenantId).get(
        UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
          if(check.succeeded()){
-           List<Usergroup> ug = (List<Usergroup>) check.result().getResults();
+           List<Usergroup> ug = check.result().getResults();
            if(ug.size() == 0){
              handler.handle(io.vertx.core.Future.succeededFuture(0));
            }
@@ -706,7 +730,7 @@ public class UsersAPI implements Users {
               logger.error(message, reply.cause());
               future.fail(reply.cause());
             } else {
-              List<AddressType> addressTypeList = (List<AddressType>)reply.result().getResults();
+              List<AddressType> addressTypeList = reply.result().getResults();
               if(addressTypeList.isEmpty()) {
                 future.complete(false);
               } else {

@@ -1,5 +1,7 @@
 package org.folio.rest.impl;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 
@@ -20,9 +22,11 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
+import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
+import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 import io.vertx.core.AsyncResult;
@@ -48,6 +52,17 @@ public class UserGroupAPI implements Groups {
   private static final Logger       log                   = LoggerFactory.getLogger(UserGroupAPI.class);
   private final Messages            messages              = Messages.getInstance();
 
+  private static final String GROUP_SCHEMA_PATH = UsersAPI.RAML_PATH + "/schemas/mod-users/usergroup.json";
+  static final String GROUP_SCHEMA = schema(GROUP_SCHEMA_PATH);
+
+  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
+  private static String schema(String path) {
+    try {
+      return ResourceUtils.resource2String(path);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
 
   public UserGroupAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);
@@ -75,9 +90,9 @@ public class UserGroupAPI implements Groups {
                 if(reply.succeeded()){
                   Usergroups groups = new Usergroups();
                   @SuppressWarnings("unchecked")
-                  List<Usergroup> groupList = (List<Usergroup>) reply.result().getResults();
+                  List<Usergroup> groupList = reply.result().getResults();
                   groups.setUsergroups(groupList);
-                  groups.setTotalRecords((Integer)reply.result().getResultInfo().getTotalRecords());
+                  groups.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
                   asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
                     .respond200WithApplicationJson(groups)));
                 }
@@ -185,7 +200,7 @@ public class UserGroupAPI implements Groups {
               try {
                 if(reply.succeeded()){
                   @SuppressWarnings("unchecked")
-                  List<Usergroup> userGroup = (List<Usergroup>) reply.result().getResults();
+                  List<Usergroup> userGroup = reply.result().getResults();
                   if(userGroup.isEmpty()){
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
                       .respond404WithTextPlain(groupId)));
@@ -243,7 +258,7 @@ public class UserGroupAPI implements Groups {
                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
                  .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
             } else {
-              List<Usergroup> userGroup = (List<Usergroup>) getReply.result().getResults();
+              List<Usergroup> userGroup = getReply.result().getResults();
               if(userGroup.isEmpty()) {
                 asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
                         .respond404WithTextPlain(groupId)));
@@ -254,7 +269,7 @@ public class UserGroupAPI implements Groups {
               PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USERS, u, true, false,
                 replyHandler -> {
                 if(replyHandler.succeeded()) {
-                  List<User> userList = (List<User>) replyHandler.result().getResults();
+                  List<User> userList = replyHandler.result().getResults();
                   if(userList.size() > 0){
                     log.error("Can not delete group, "+ groupId + ". " + userList.size()  + " users associated with it");
                     asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
@@ -360,13 +375,9 @@ public class UserGroupAPI implements Groups {
     });
   }
 
-  private CQLWrapper getCQL(String table, String query, int limit, int offset) throws FieldException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(table+".jsonb");
+  private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(GROUP_TABLE + ".jsonb", GROUP_SCHEMA);
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
-  }
-
-  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
-    return getCQL(GROUP_TABLE, query, limit, offset);
   }
 
   private boolean isDuplicate(String errorMessage){

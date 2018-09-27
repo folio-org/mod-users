@@ -1,5 +1,6 @@
 ## 15.2.1 UNRELEASED
  * NEWS cleanup
+ * MODUSERS-90: Put numeric username; add schemas for type detection
 
 ## 15.2.0 2018-09-12
  * Upgrade to RMB 21.x.x, use RAML 1.0
