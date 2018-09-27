@@ -483,11 +483,13 @@ public class UsersAPI implements Users {
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           String tableName = getTableName(null);
-          Criteria nameCrit = new Criteria();
-          nameCrit.addField(USER_NAME_FIELD);
-          nameCrit.setOperation("=");
-          nameCrit.setValue(entity.getUsername());
+          
           try {
+        	Criteria nameCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+            nameCrit.addField(USER_NAME_FIELD);
+            nameCrit.setOperation("=");
+            nameCrit.setValue(entity.getUsername());
+            
             checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
               if(checkRes.failed()) {
                 logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
