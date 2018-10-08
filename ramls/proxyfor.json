@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "ProxyFor Schema",
+  "description": "A proxy for a user",
   "type": "object",
   "properties": {
     "userId": {

@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "User Schema",
+  "description": "A user",
   "type": "object",
   "properties": {
     "username": {
