@@ -1,8 +1,10 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
+  "description": "Collection of user proxies",
   "properties": {
     "proxiesFor": {
+      "description": "List of user proxy items",
       "type": "array",
       "id": "proxyFor",
       "items": {
