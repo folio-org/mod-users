@@ -1,5 +1,7 @@
 package org.folio.rest.impl;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 
@@ -19,10 +21,11 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
+import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.FieldException;
+import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -43,6 +46,17 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String URL_PREFIX = "/addresstypes";
   private static final Logger logger = LoggerFactory.getLogger(AddressTypeAPI.class);
   private boolean suppressErrorResponse = false;
+  private static final String ADDRESS_TYPE_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/schemas/mod-users/addresstype.json";
+  private static final String ADDRESS_TYPE_TABLE_SCHEMA = schema(ADDRESS_TYPE_TABLE_SCHEMA_PATH);
+
+  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
+  private static String schema(String path) {
+    try {
+      return ResourceUtils.resource2String(path);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
@@ -85,7 +99,7 @@ public class AddressTypeAPI implements Addresstypes {
       try {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(
                 RestVerticle.OKAPI_HEADER_TENANT));
-        CQLWrapper cql = getCQL(query, limit, offset, ADDRESS_TYPE_TABLE);
+        CQLWrapper cql = getCQL(query, limit, offset);
         PostgresClient.getInstance(vertxContext.owner(), tenantId).get(ADDRESS_TYPE_TABLE, AddressType.class,
                 new String[]{"*"}, cql, true, true, reply -> {
                   try {
@@ -96,9 +110,9 @@ public class AddressTypeAPI implements Addresstypes {
                               GetAddresstypesResponse.respond400WithTextPlain(message)));
                     } else {
                       AddresstypeCollection addresstypeCollection = new AddresstypeCollection();
-                      List<AddressType> addressTypeList = (List<AddressType>)reply.result().getResults();
+                      List<AddressType> addressTypeList = reply.result().getResults();
                       addresstypeCollection.setAddressTypes(addressTypeList);
-                      addresstypeCollection.setTotalRecords((Integer)reply.result().getResultInfo().getTotalRecords());
+                      addresstypeCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
                       asyncResultHandler.handle(Future.succeededFuture(
                               GetAddresstypesResponse.respond200WithApplicationJson(addresstypeCollection)));
 
@@ -246,7 +260,7 @@ public class AddressTypeAPI implements Addresstypes {
           //Check to make certain no users' addresses are currently using this type
           /* CQL statement to check for users with addresses that use a particular address type */
           String query = "personal.addresses=" + addresstypeId;
-          CQLWrapper cql = getCQL(query,1,0, UsersAPI.TABLE_NAME_USERS);
+          CQLWrapper cql = UsersAPI.getCQL(query, 1, 0);
           PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
                   UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
                     cql, true, false, reply -> {
@@ -257,7 +271,7 @@ public class AddressTypeAPI implements Addresstypes {
                       DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
                               getErrorResponse(message))));
             } else {
-              List<User> userList = (List<User>)reply.result().getResults();
+              List<User> userList = reply.result().getResults();
               if(userList.size() > 0) {
                 String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
                 logger.error(message);
@@ -362,9 +376,8 @@ public class AddressTypeAPI implements Addresstypes {
     });
   }
 
-
-  private CQLWrapper getCQL(String query, int limit, int offset, String tableName) throws FieldException{
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(tableName + ".jsonb");
+  private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(ADDRESS_TYPE_TABLE + ".jsonb", ADDRESS_TYPE_TABLE_SCHEMA);
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
 
