@@ -1,11 +1,13 @@
 package org.folio.rest.impl;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -31,10 +33,12 @@ import org.folio.rest.persist.facets.FacetField;
 import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
+import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.CQLParseException;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
+import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 import io.vertx.core.AsyncResult;
@@ -64,6 +68,25 @@ public class UsersAPI implements Users {
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
   public static final String RAML_PATH = "apidocs/raml/raml-util";
+  private static final String USER_SCHEMA_PATH = RAML_PATH + "/schemas/mod-users/userdata.json";
+  private static final String USER_SCHEMA = schema(USER_SCHEMA_PATH);
+  private static final LinkedHashMap<String,String> fieldsAndSchemas = getFieldsAndSchemas();
+
+  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
+  private static String schema(String path) {
+    try {
+      return ResourceUtils.resource2String(path);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private static LinkedHashMap<String,String> getFieldsAndSchemas() {
+    LinkedHashMap<String,String> map = new LinkedHashMap<>();
+    map.put(VIEW_NAME_USER_GROUPS_JOIN+".jsonb", USER_SCHEMA);
+    map.put(VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb", UserGroupAPI.GROUP_SCHEMA);
+    return map;
+  }
 
   public UsersAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField("id");
@@ -91,20 +114,20 @@ public class UsersAPI implements Users {
    * @param cql
    * @return
    */
-  private String convertQuery(String cql){
+  private static String convertQuery(String cql){
     if(cql != null){
       return cql.replaceAll("(?i)patronGroup\\.", VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb.");
     }
     return cql;
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
+  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
     if(query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(VIEW_NAME_USER_GROUPS_JOIN+".jsonb",VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb"));
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(fieldsAndSchemas);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     } else {
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(TABLE_NAME_USERS+".jsonb"));
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS+".jsonb", USER_SCHEMA);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     }
   }
@@ -198,11 +221,11 @@ public class UsersAPI implements Users {
           return;
         }
         try {
-          Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+          Criteria idCrit = new Criteria(USER_SCHEMA_PATH);
           idCrit.addField(USER_ID_FIELD);
           idCrit.setOperation("=");
           idCrit.setValue(entity.getId());
-          Criteria nameCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+          Criteria nameCrit = new Criteria(USER_SCHEMA_PATH);
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
           nameCrit.setValue(entity.getUsername());
@@ -352,7 +375,7 @@ public class UsersAPI implements Users {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(null);
             try {
-              Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+              Criteria idCrit = new Criteria(USER_SCHEMA_PATH);
               idCrit.addField(USER_ID_FIELD);
               idCrit.setOperation("=");
               idCrit.setValue(userId);
@@ -465,11 +488,13 @@ public class UsersAPI implements Users {
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           String tableName = getTableName(null);
-          Criteria nameCrit = new Criteria();
-          nameCrit.addField(USER_NAME_FIELD);
-          nameCrit.setOperation("=");
-          nameCrit.setValue(entity.getUsername());
+
           try {
+            Criteria nameCrit = new Criteria(USER_SCHEMA_PATH);
+            nameCrit.addField(USER_NAME_FIELD);
+            nameCrit.setOperation("=");
+            nameCrit.setValue(entity.getUsername());
+
             checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
               if(checkRes.failed()) {
                 logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());

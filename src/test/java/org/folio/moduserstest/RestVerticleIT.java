@@ -15,7 +15,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +26,6 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
@@ -49,17 +47,15 @@ import org.junit.runner.RunWith;
 public class RestVerticleIT {
 
   private static final String       SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
-  private static final String       SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
 
-  private static String postGroupData = "{\"group\": \"librarianPOST\",\"desc\": \"basic lib group\"}";
-  private static String putGroupData = "{\"group\": \"librarianPUT\",\"desc\": \"another basic lib group\"}";
-  private static String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
-  private static String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
+  private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
+  private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
-  private static String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
-  private static String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
-  private static String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
-  private static String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
+  private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
+  private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
+  private static final String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
+  private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
+  private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
           .put("desc", "Patron's School")
@@ -201,7 +197,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     JsonObject userObject = new JsonObject()
             .put("username", "777777")
-            .put("id", "72bd29f7-bf29-48bb-8259-d5ce78378a56")
+            .put("id", user777777Id)
             .put("active", true);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
@@ -218,7 +214,6 @@ public class RestVerticleIT {
             .end(userObject.encode());
     return future;
   }
-
 
  private Future<Void> getUser(TestContext context) {
    System.out.println("Retrieving a user\n");
@@ -470,6 +465,31 @@ public class RestVerticleIT {
             .end(userObject.encode());
     return future;
  }
+
+  // https://issues.folio.org/browse/MODUSERS-90
+  private Future<Void> putUserWithNumericName(TestContext context) {
+    System.out.println("Changing a user with numeric name\n");
+    Future future = Future.future();
+    JsonObject userObject = new JsonObject()
+            .put("username", "777777")
+            .put("id", user777777Id)
+            .put("active", false);
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + user777777Id, res -> {
+      if(res.statusCode() == 204) {
+        future.complete();
+      } else {
+        future.fail("Expected 204 for putUserWithNumericName, got status code: "
+            + res.statusCode() + " " + res.statusMessage());
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "text/plain")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end(userObject.encode());
+    return future;
+  }
 
   private Future<Void> createAddressType(TestContext context) {
     System.out.println("Creating an address type\n");
@@ -1124,6 +1144,10 @@ public class RestVerticleIT {
     }).compose(v -> {
       Future<Void> f = Future.future();
       putUserBadId(context).setHandler(f.completer());
+      return f;
+    }).compose(v -> {
+      Future<Void> f = Future.future();
+      putUserWithNumericName(context).setHandler(f.completer());
       return f;
     }).compose(v -> {
       Future<Void> f = Future.future();

@@ -1,50 +1,22 @@
+## 15.2.1 UNRELEASED
+ * NEWS cleanup
+ * MODUSERS-90: Put numeric username; add schemas for type detection
+
 ## 15.2.0 2018-09-12
  * Upgrade to RMB 21.x.x, use RAML 1.0
-
-## 15.1.0
  * Change user expiration to use the periodic API instead of deserializer.
-
-## 15.0.0
  * Remove 'meta' field from proxyFor schema
-
-## 14.11.2 2018-05-29
- * Update RMB to 19.1.0
- * Update Vertx to 3.5.1
-
-## 14.11.1 2018-05-29
  * Update raml definitions to include metadata schema
-
-## 14.11.0 2018-05-22
  * Add standard metadata field to proxyfor schema
-
-## 14.10.0 2018-05-15
  * Define fields in proxyFor schema to replace the use of catch-all 'meta' field
-
-## 14.9.0
  * Allow groups and addresstypes to be supplied an optional id on creation
-
-## 14.8.0
  * Make 'username' field now optional for User records
  * Enable standard metadata on AddressType records
-
-## 14.7.0
  * Add custom JSON deserializer to automatically set "active" to false if the user expiration date has passed
-
-## 14.6.0
  * Update RAML traits to raise (to maxint) the number of results that can be requested
-
-## 14.5.1
  * MODUSERS-58: Update shared raml-util. The metadata schema was missing when processing RAML files in a different order.
-
-## 14.5.0 2018-03-01
  * Remove required 'desc' field for usergroups
- * Update to RMB 18.0.1
-
-## 14.4.1 2018-01-16
  * Implement fix to CQL generation to handle users without patrongroups
-
-## 14.4.0 2018-01-12
- * Update to RMB 16.0.3
  * Add standard metadata field support to userdata
  * Fix bug allowing for type-less address types
  * Add check for deleting nonexistent groups

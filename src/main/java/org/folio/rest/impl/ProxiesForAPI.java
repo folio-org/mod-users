@@ -6,6 +6,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,10 +26,11 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
+import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.FieldException;
+import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 /**
  *
  * @author kurt
@@ -39,6 +43,17 @@ public class ProxiesForAPI implements Proxiesfor {
   public static final String URL_PREFIX = "/proxiesfor";
   private static final Logger logger = LoggerFactory.getLogger(ProxiesForAPI.class);
   private boolean suppressErrorResponse = false;
+  private static final String PROXY_FOR_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/schemas/mod-users/proxyfor.json";
+  private static final String PROXY_FOR_TABLE_SCHEMA = schema(PROXY_FOR_TABLE_SCHEMA_PATH);
+
+  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
+  private static String schema(String path) {
+    try {
+      return ResourceUtils.resource2String(path);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
@@ -77,8 +92,8 @@ public class ProxiesForAPI implements Proxiesfor {
     return message;
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset, String tableName) throws FieldException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(tableName + ".jsonb");
+  private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(PROXY_FOR_TABLE + ".jsonb", PROXY_FOR_TABLE_SCHEMA);
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
 
@@ -96,7 +111,7 @@ public class ProxiesForAPI implements Proxiesfor {
     vertxContext.runOnContext(v -> {
       try {
         String tenantId = getTenant(okapiHeaders);
-        CQLWrapper cql = getCQL(query, limit, offset, PROXY_FOR_TABLE);
+        CQLWrapper cql = getCQL(query, limit, offset);
         PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
                 PROXY_FOR_TABLE, ProxiesFor.class, new String[]{"*"}, cql,
                 true, true, getReply -> {
@@ -109,7 +124,7 @@ public class ProxiesForAPI implements Proxiesfor {
             ProxyforCollection collection = new ProxyforCollection();
             List<ProxiesFor> proxyforList = getReply.result().getResults();
             collection.setProxiesFor(proxyforList);
-            collection.setTotalRecords((Integer)getReply.result().getResultInfo().getTotalRecords());
+            collection.setTotalRecords(getReply.result().getResultInfo().getTotalRecords());
             asyncResultHandler.handle(Future.succeededFuture(
                     GetProxiesforResponse.respond200WithApplicationJson(collection)));
           }
@@ -223,7 +238,7 @@ public class ProxiesForAPI implements Proxiesfor {
                                     getErrorResponse(message))));
               }
             } else {
-              List<ProxiesFor> proxyforList = (List<ProxiesFor>)getReply.result().getResults();
+              List<ProxiesFor> proxyforList = getReply.result().getResults();
               if(proxyforList.isEmpty()) {
                 asyncResultHandler.handle(Future.succeededFuture(
                         GetProxiesforByIdResponse.respond404WithTextPlain(id)));
@@ -352,7 +367,7 @@ public class ProxiesForAPI implements Proxiesfor {
             if(getReply.failed()) {
               future.fail(getReply.cause());
             } else {
-              List<ProxiesFor> proxyForList = (List<ProxiesFor>)getReply.result().getResults();
+              List<ProxiesFor> proxyForList = getReply.result().getResults();
               if(proxyForList.isEmpty()) {
                 future.complete(false);
               } else {

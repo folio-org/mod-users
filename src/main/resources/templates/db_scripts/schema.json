@@ -16,6 +16,16 @@
           "fieldName" : "id",
           "tOps" : "ADD"
         }
+      ],
+      "index" : [
+        {
+          "fieldName" : "externalSystemId",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "username",
+          "tOps" : "ADD"
+        }
       ]
     },
     {
