@@ -36,14 +36,15 @@ import org.folio.rest.utils.ExpirationTool;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
-
-
+import org.junit.runners.MethodSorters;
 
 @RunWith(VertxUnitRunner.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RestVerticleIT {
 
   private static final String       SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
@@ -1108,7 +1109,7 @@ public class RestVerticleIT {
 
 
  @Test
-  public void doSequentialTests(TestContext context) {
+  public void test1Sequential(TestContext context) {
     Async async = context.async();
     Future<Void> startFuture;
     Future<Void> f1 = Future.future();
@@ -1230,7 +1231,7 @@ public class RestVerticleIT {
   }
 
   @Test
- public void testGroup(TestContext context){
+ public void test2Group(TestContext context){
    String url = "http://localhost:"+port+"/groups";
    String userUrl = "http://localhost:"+port+"/users";
 
@@ -1475,7 +1476,7 @@ public class RestVerticleIT {
  }
 
  @Test
- public void testCrossTableQueries(TestContext context) {
+ public void test3CrossTableQueries(TestContext context) {
    String url = "http://localhost:"+port+"/users?query=";
    String userUrl = "http://localhost:"+port+"/users";
 
@@ -1573,7 +1574,8 @@ public class RestVerticleIT {
            break;
          case 0:
            //Baseline test
-           context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 3);
+           int totalRecords = cqlResponse.body.getInteger("totalRecords");
+           context.assertTrue(totalRecords > 3, "totalRecords = " + totalRecords + " > 3");
            break;
          default:
            context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
