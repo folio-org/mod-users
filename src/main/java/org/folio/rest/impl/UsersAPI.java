@@ -1,7 +1,6 @@
 package org.folio.rest.impl;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
