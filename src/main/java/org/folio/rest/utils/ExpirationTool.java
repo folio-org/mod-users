@@ -124,7 +124,7 @@ public class ExpirationTool {
     context.runOnContext(v -> {
       try {
         PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
-        Criteria idCrit = new Criteria(RAML_PATH + "/schemas/mod-users/userdata.json");
+        Criteria idCrit = new Criteria(RAML_PATH + "/userdata.json");
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
         idCrit.setValue(user.getId());

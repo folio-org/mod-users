@@ -67,19 +67,10 @@ public class UsersAPI implements Users {
   public static final String USER_NAME_FIELD = "'username'";
   private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
-  public static final String RAML_PATH = "apidocs/raml/raml-util";
-  private static final String USER_SCHEMA_PATH = RAML_PATH + "/schemas/mod-users/userdata.json";
-  private static final String USER_SCHEMA = schema(USER_SCHEMA_PATH);
+  public static final String RAML_PATH = "ramls";
+  private static final String USER_SCHEMA_PATH = RAML_PATH + "/userdata.json";
+  private static final String USER_SCHEMA = ResourceUtils.resource2String(USER_SCHEMA_PATH);
   private static final LinkedHashMap<String,String> fieldsAndSchemas = getFieldsAndSchemas();
-
-  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
-  private static String schema(String path) {
-    try {
-      return ResourceUtils.resource2String(path);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
 
   private static LinkedHashMap<String,String> getFieldsAndSchemas() {
     LinkedHashMap<String,String> map = new LinkedHashMap<>();

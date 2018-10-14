@@ -52,17 +52,8 @@ public class UserGroupAPI implements Groups {
   private static final Logger       log                   = LoggerFactory.getLogger(UserGroupAPI.class);
   private final Messages            messages              = Messages.getInstance();
 
-  private static final String GROUP_SCHEMA_PATH = UsersAPI.RAML_PATH + "/schemas/mod-users/usergroup.json";
-  static final String GROUP_SCHEMA = schema(GROUP_SCHEMA_PATH);
-
-  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
-  private static String schema(String path) {
-    try {
-      return ResourceUtils.resource2String(path);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
+  private static final String GROUP_SCHEMA_PATH = UsersAPI.RAML_PATH + "/usergroup.json";
+  static final String GROUP_SCHEMA = ResourceUtils.resource2String(GROUP_SCHEMA_PATH);
 
   public UserGroupAPI(Vertx vertx, String tenantId) {
     PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);

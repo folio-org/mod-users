@@ -46,17 +46,8 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String URL_PREFIX = "/addresstypes";
   private static final Logger logger = LoggerFactory.getLogger(AddressTypeAPI.class);
   private boolean suppressErrorResponse = false;
-  private static final String ADDRESS_TYPE_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/schemas/mod-users/addresstype.json";
-  private static final String ADDRESS_TYPE_TABLE_SCHEMA = schema(ADDRESS_TYPE_TABLE_SCHEMA_PATH);
-
-  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
-  private static String schema(String path) {
-    try {
-      return ResourceUtils.resource2String(path);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
+  private static final String ADDRESS_TYPE_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/addresstype.json";
+  private static final String ADDRESS_TYPE_TABLE_SCHEMA = ResourceUtils.resource2String(ADDRESS_TYPE_TABLE_SCHEMA_PATH);
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
