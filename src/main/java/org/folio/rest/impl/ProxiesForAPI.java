@@ -8,7 +8,6 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,17 +42,8 @@ public class ProxiesForAPI implements Proxiesfor {
   public static final String URL_PREFIX = "/proxiesfor";
   private static final Logger logger = LoggerFactory.getLogger(ProxiesForAPI.class);
   private boolean suppressErrorResponse = false;
-  private static final String PROXY_FOR_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/schemas/mod-users/proxyfor.json";
-  private static final String PROXY_FOR_TABLE_SCHEMA = schema(PROXY_FOR_TABLE_SCHEMA_PATH);
-
-  // TODO: replace by ResourceUtils.resource2String: https://issues.folio.org/browse/RMB-258
-  private static String schema(String path) {
-    try {
-      return ResourceUtils.resource2String(path);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
+  private static final String PROXY_FOR_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/proxyfor.json";
+  private static final String PROXY_FOR_TABLE_SCHEMA = ResourceUtils.resource2String(PROXY_FOR_TABLE_SCHEMA_PATH);
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;

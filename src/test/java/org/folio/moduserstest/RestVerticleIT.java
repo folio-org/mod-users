@@ -110,15 +110,16 @@ public class RestVerticleIT {
       .setConfig(new JsonObject().put("http.port", port))
       .setWorker(true);
 
-    vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
+    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       try {
         tenantClient.postTenant(null, res2 -> {
+          context.assertEquals(201, res2.statusCode(), res2.statusMessage());
           async.complete();
         });
       } catch(Exception e) {
         context.fail(e);
       }
-    });
+    }));
   }
 
   @AfterClass
