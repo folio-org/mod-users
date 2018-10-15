@@ -3,6 +3,7 @@
   "tables" : [
     {
       "tableName" : "users",
+      "pkColumnName": "id",
       "generateId" : true,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : false,
