@@ -322,13 +322,10 @@ public class RestVerticleIT {
         try {
           JsonObject resultObject = buf.toJsonObject();
           int totalRecords = resultObject.getInteger("totalRecords");
-          // TODO: fix in RMB needed
-          /*
           assertThat(totalRecords, is(1));
           JsonArray userList = resultObject.getJsonArray("users");
           JsonObject userObject = userList.getJsonObject(0);
           assertThat("username of " + buf, userObject.getString("username"), is("joeblock"));
-          */
           future.complete();
         } catch(Exception e) {
           future.fail(e);
