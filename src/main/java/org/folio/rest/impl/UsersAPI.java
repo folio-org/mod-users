@@ -1,15 +1,12 @@
 package org.folio.rest.impl;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.function.Function;
 
 import javax.ws.rs.Path;
@@ -33,7 +30,7 @@ import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.ResourceUtils;
-import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.CQLParseException;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -45,7 +42,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
@@ -64,7 +60,6 @@ public class UsersAPI implements Users {
   private final Messages messages = Messages.getInstance();
   public static final String USER_ID_FIELD = "'id'";
   public static final String USER_NAME_FIELD = "'username'";
-  private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
   public static final String RAML_PATH = "ramls";
   private static final String USER_SCHEMA_PATH = RAML_PATH + "/userdata.json";
@@ -76,10 +71,6 @@ public class UsersAPI implements Users {
     map.put(VIEW_NAME_USER_GROUPS_JOIN+".jsonb", USER_SCHEMA);
     map.put(VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb", UserGroupAPI.GROUP_SCHEMA);
     return map;
-  }
-
-  public UsersAPI(Vertx vertx, String tenantId) {
-    PostgresClient.getInstance(vertx, tenantId).setIdField("id");
   }
 
   /**
@@ -159,13 +150,11 @@ public class UsersAPI implements Users {
 
       List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
-      String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
       String tableName = getTableName(query);
       String[] fieldList = {"*"};
       logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
-      logger.debug("tenantId = " + tenantId);
 
-      PostgresClient.getInstance(vertxContext.owner(), tenantId)
+      PostgresClientUtil.getInstance(vertxContext, okapiHeaders)
           .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
         try {
           if (reply.succeeded()) {
@@ -202,7 +191,6 @@ public class UsersAPI implements Users {
           Context vertxContext) {
     try {
       vertxContext.runOnContext( v -> {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(null);
         if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
@@ -221,8 +209,9 @@ public class UsersAPI implements Users {
           nameCrit.setValue(entity.getUsername());
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
+          PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
-          checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(
+          checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(
                   checkRes -> {
             if(checkRes.failed()) {
               logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
@@ -235,8 +224,7 @@ public class UsersAPI implements Users {
                         "You cannot add addresses with non-existant address types")));
             } else {
               try {
-                PostgresClient.getInstance(vertxContext.owner(),
-                        TenantTool.calculateTenantId(tenantId)).get(tableName,
+                postgresClient.get(tableName,
                         User.class, crit, true, getReply -> {
                     logger.debug("Attempting to get existing users of same id and/or username");
                     if(getReply.failed()) {
@@ -256,10 +244,8 @@ public class UsersAPI implements Users {
                                     "User with this id already exists"))));
                         //uh oh
                       } else {
-                        PostgresClient postgresClient = PostgresClient
-                                .getInstance(vertxContext.owner(), tenantId);
                         try {
-                          getPG(vertxContext.owner(), tenantId, entity, handler -> {
+                          getPG(postgresClient, entity, handler -> {
 
                             int res = handler.result();
                             if(res == 0){
@@ -285,7 +271,7 @@ public class UsersAPI implements Users {
                                   Date now = new Date();
                                   entity.setCreatedDate(now);
                                   entity.setUpdatedDate(now);
-                                  postgresClient.save(connection, tableName, entity,
+                                  postgresClient.save(connection, tableName, entity.getId(), entity,
                                           reply -> {
                                     try {
                                       if(reply.succeeded()) {
@@ -362,7 +348,6 @@ public class UsersAPI implements Users {
           Context vertxContext) {
      try {
       vertxContext.runOnContext(v -> {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         String tableName = getTableName(null);
             try {
               Criteria idCrit = new Criteria(USER_SCHEMA_PATH);
@@ -371,7 +356,7 @@ public class UsersAPI implements Users {
               idCrit.setValue(userId);
               Criterion criterion = new Criterion(idCrit);
               logger.debug("Using criterion: " + criterion.toString());
-               PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName, User.class, criterion,
+              PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(tableName, User.class, criterion,
                        true, false, getReply -> {
                  if(getReply.failed()) {
                    asyncResultHandler.handle(Future.succeededFuture(
@@ -419,7 +404,6 @@ public class UsersAPI implements Users {
           Context vertxContext) {
     try {
       vertxContext.runOnContext(v-> {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         Criteria idCrit = new Criteria();
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
@@ -427,7 +411,7 @@ public class UsersAPI implements Users {
         String tableName = getTableName(null);
 
             try {
-              PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(
+              PostgresClientUtil.getInstance(vertxContext, okapiHeaders).delete(
                       tableName, new Criterion(idCrit), deleteReply -> {
                 if(deleteReply.failed()) {
                   logger.debug("Delete failed: " + deleteReply.cause().getMessage());
@@ -476,7 +460,6 @@ public class UsersAPI implements Users {
           asyncResultHandler.handle(Future.succeededFuture(
                           PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
         } else {
-          String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           String tableName = getTableName(null);
 
           try {
@@ -484,8 +467,9 @@ public class UsersAPI implements Users {
             nameCrit.addField(USER_NAME_FIELD);
             nameCrit.setOperation("=");
             nameCrit.setValue(entity.getUsername());
+            PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
-            checkAllAddressTypesValid(entity, vertxContext, tenantId).setHandler(checkRes -> {
+            checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
               if(checkRes.failed()) {
                 logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
                   asyncResultHandler.handle(Future.succeededFuture(
@@ -496,8 +480,7 @@ public class UsersAPI implements Users {
                   PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
               } else {
                 try {
-                  PostgresClient.getInstance(vertxContext.owner(), tenantId).get(tableName,
-                          User.class, new Criterion(nameCrit), true, false, getReply -> {
+                  postgresClient.get(tableName, User.class, new Criterion(nameCrit), true, false, getReply -> {
                     if(getReply.failed()) {
                       //error 500
                       logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
@@ -514,7 +497,7 @@ public class UsersAPI implements Users {
                                         "Username " + entity.getUsername() + " is already in use")));
                       } else {
                         try {
-                          getPG(vertxContext.owner(), tenantId, entity, handler -> {
+                          getPG(postgresClient, entity, handler -> {
 
                             int res = handler.result();
                             if(res == 0){
@@ -545,8 +528,7 @@ public class UsersAPI implements Users {
                               entity.setUpdatedDate(now);
                               entity.setCreatedDate(createdDate);
                               try {
-                                PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
-                                        tableName, entity, new Criterion(idCrit), true, putReply -> {
+                                postgresClient.update(tableName, entity, new Criterion(idCrit), true, putReply -> {
                                   try {
                                     if(putReply.failed()) {
                                       asyncResultHandler.handle(Future.succeededFuture(
@@ -612,7 +594,7 @@ public class UsersAPI implements Users {
   * @param handler
   * @throws Exception
   */
- private void getPG(Vertx vertx, String tenantId, User user, Handler<AsyncResult<Integer>> handler) {
+ private void getPG(PostgresClient postgresClient, User user, Handler<AsyncResult<Integer>> handler) {
    String pgId = user.getPatronGroup();
    if(pgId == null){
      //allow null patron groups so that they can be added after a record is created
@@ -622,7 +604,7 @@ public class UsersAPI implements Users {
        new Criteria().addField(UserGroupAPI.ID_FIELD_NAME).setJSONB(false).
        setOperation("=").setValue("'"+pgId+"'"));
      /** check if the patron group exists, if not, can not add the user **/
-     PostgresClient.getInstance(vertx, tenantId).get(
+     postgresClient.get(
        UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
          if(check.succeeded()){
            List<Usergroup> ug = check.result().getResults();
@@ -644,15 +626,6 @@ public class UsersAPI implements Users {
          }
      });
    }
- }
-
- /* Get a timestamp in RFC 3339 format, in GMT time */
- private String getTimeStamp() {
-   Date date = new Date();
-   DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-   TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
-   gmtFormat.setTimeZone(gmtTimeZone);
-   return gmtFormat.format(date);
  }
 
   private boolean checkForDuplicateAddressTypes(User user) {
@@ -686,15 +659,16 @@ public class UsersAPI implements Users {
     return false;
   }
 
-  private Future<Boolean> checkAddressTypeValid(String addressTypeId, Context vertxContext, String tenantId) {
+  private Future<Boolean> checkAddressTypeValid(
+      String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
+
     Future<Boolean> future = Future.future();
     Criterion criterion = new Criterion(
           new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
                   setJSONB(false).setOperation("=").setValue("'" + addressTypeId + "'"));
     vertxContext.runOnContext(v -> {
       try {
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(AddressTypeAPI.ADDRESS_TYPE_TABLE,
-                AddressType.class, criterion, true, reply -> {
+        postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true, reply -> {
           try {
             if(reply.failed()) {
               String message = reply.cause().getLocalizedMessage();
@@ -723,7 +697,7 @@ public class UsersAPI implements Users {
     return future;
   }
 
-  private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, String tenantId) {
+  private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
     Future<Boolean> future = Future.future();
     List<Future> futureList = new ArrayList<>();
     if(user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
@@ -732,7 +706,7 @@ public class UsersAPI implements Users {
     }
     for(Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
-      Future addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, tenantId);
+      Future addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
       futureList.add(addressTypeExistsFuture);
     }
     CompositeFuture compositeFuture = CompositeFuture.all(futureList);

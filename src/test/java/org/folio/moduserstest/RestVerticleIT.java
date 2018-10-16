@@ -15,6 +15,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -113,7 +118,7 @@ public class RestVerticleIT {
     vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       try {
         tenantClient.postTenant(null, res2 -> {
-          context.assertEquals(201, res2.statusCode(), res2.statusMessage());
+          context.assertEquals(201, res2.statusCode(), "postTenant: " + res2.statusMessage());
           async.complete();
         });
       } catch(Exception e) {
@@ -291,6 +296,41 @@ public class RestVerticleIT {
       } else {
         future.fail("Bad response: " + res.statusCode());
       }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end();
+   } catch(Exception e) {
+     future.fail(e);
+   }
+   return future;
+ }
+
+ private Future<Void> getUserByCqlById(TestContext context) {
+   System.out.println("Getting user via CQL, by user id\n");
+   Future future = Future.future();
+   HttpClient client = vertx.createHttpClient();
+   try {
+    client.get(port, "localhost", "/users?query=" + urlencode("(id==" + joeBlockId + ")"), res -> {
+      if (res.statusCode() != 200) {
+        future.fail("Bad response, expected 200: " + res.statusCode());
+        return;
+      }
+      res.bodyHandler(buf -> {
+        try {
+          JsonObject resultObject = buf.toJsonObject();
+          int totalRecords = resultObject.getInteger("totalRecords");
+          assertThat(totalRecords, is(1));
+          JsonArray userList = resultObject.getJsonArray("users");
+          JsonObject userObject = userList.getJsonObject(0);
+          assertThat("username of " + buf, userObject.getString("username"), is("joeblock"));
+          future.complete();
+        } catch(Exception e) {
+          future.fail(e);
+        }
+      });
     })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", "application/json")
@@ -1126,6 +1166,8 @@ public class RestVerticleIT {
     }).compose(v -> {
       return getUserByCQL(context);
     }).compose(v -> {
+      return getUserByCqlById(context);
+    }).compose(v -> {
       return getUserByInvalidCQL(context);
     }).compose(v -> {
       Future<Void> f = Future.future();
@@ -1702,5 +1744,12 @@ public class RestVerticleIT {
 
  }
 
+ private static String urlencode(String s) {
+   try {
+    return URLEncoder.encode(s, "UTF-8");
+  } catch (UnsupportedEncodingException e) {
+    throw new RuntimeException(e);
+  }
+ }
 }
 

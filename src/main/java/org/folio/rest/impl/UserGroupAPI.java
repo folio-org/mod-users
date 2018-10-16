@@ -6,7 +6,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
-import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.Usergroup;
@@ -22,7 +21,7 @@ import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.ResourceUtils;
-import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
@@ -32,7 +31,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.UUID;
@@ -54,10 +52,6 @@ public class UserGroupAPI implements Groups {
   private static final String GROUP_SCHEMA_PATH = UsersAPI.RAML_PATH + "/usergroup.json";
   static final String GROUP_SCHEMA = ResourceUtils.resource2String(GROUP_SCHEMA_PATH);
 
-  public UserGroupAPI(Vertx vertx, String tenantId) {
-    PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);
-  }
-
   @Validate
   @Override
   public void getGroups(String query, int offset, int limit,
@@ -70,10 +64,9 @@ public class UserGroupAPI implements Groups {
     vertxContext.runOnContext(v -> {
       try {
         System.out.println("sending... getGroups");
-        String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
         CQLWrapper cql = getCQL(query,limit, offset);
 
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(GROUP_TABLE, Usergroup.class,
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class,
           new String[]{"*"}, cql, true, true,
             reply -> {
               try {
@@ -123,14 +116,12 @@ public class UserGroupAPI implements Groups {
     vertxContext.runOnContext(v -> {
       try {
         System.out.println("sending... postGroups");
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(
-                RestVerticle.OKAPI_HEADER_TENANT));
         String id = entity.getId();
         if(id == null) {
           id = UUID.randomUUID().toString();
           entity.setId(id);
         }
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).save(
           GROUP_TABLE, id, entity, reply -> {
             try {
               if(reply.succeeded()){
@@ -180,12 +171,11 @@ public class UserGroupAPI implements Groups {
     vertxContext.runOnContext(v -> {
       try {
         System.out.println("sending... getGroupsByGroupId");
-        String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
 
         Criterion c = new Criterion(
           new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setValue("'"+groupId+"'"));
 
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(GROUP_TABLE, Usergroup.class, c, true,
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, true,
             reply -> {
               try {
                 if(reply.succeeded()){
@@ -232,7 +222,6 @@ public class UserGroupAPI implements Groups {
 
     vertxContext.runOnContext(v -> {
       System.out.println("sending... deleteGroupsByGroupId");
-      String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
       try {
         Criterion criterion = new Criterion(
           new Criteria()
@@ -240,8 +229,8 @@ public class UserGroupAPI implements Groups {
             .setJSONB(false)
             .setOperation("=")
             .setValue("'"+ groupId +"'"));
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
-                GROUP_TABLE, Usergroup.class, criterion, true, getReply -> {
+        PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+        postgresClient.get(GROUP_TABLE, Usergroup.class, criterion, true, getReply -> {
           try {
             if(getReply.failed()) {
                log.error(getReply.cause().getMessage(), getReply.cause());
@@ -256,8 +245,7 @@ public class UserGroupAPI implements Groups {
               }
               User u = new User();
               u.setPatronGroup(groupId);
-              PostgresClient.getInstance(vertxContext.owner(), tenantId).get(UsersAPI.TABLE_NAME_USERS, u, true, false,
-                replyHandler -> {
+              postgresClient.get(UsersAPI.TABLE_NAME_USERS, u, true, false, replyHandler -> {
                 if(replyHandler.succeeded()) {
                   List<User> userList = replyHandler.result().getResults();
                   if(userList.size() > 0){
@@ -270,8 +258,7 @@ public class UserGroupAPI implements Groups {
                     log.info("Deleting empty group, "+ groupId);
                   }
                   try {
-                    PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(GROUP_TABLE, groupId,
-                      reply -> {
+                    postgresClient.delete(GROUP_TABLE, groupId, reply -> {
                         try {
                           if(reply.succeeded()){
                             if(reply.result().getUpdated() == 1){
@@ -330,9 +317,8 @@ public class UserGroupAPI implements Groups {
 
     vertxContext.runOnContext(v -> {
       System.out.println("sending... putGroupsByGroupId");
-      String tenantId = TenantTool.calculateTenantId( okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT) );
       try {
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).update(
           GROUP_TABLE, entity, groupId,
           reply -> {
             try {

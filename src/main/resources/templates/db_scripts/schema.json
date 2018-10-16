@@ -3,6 +3,7 @@
   "tables" : [
     {
       "tableName" : "users",
+      "pkColumnName": "id",
       "generateId" : true,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : false,
@@ -30,6 +31,7 @@
     },
     {
       "tableName" : "groups",
+      "pkColumnName": "id",
       "generateId" : false,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : false,
@@ -43,6 +45,7 @@
     },
     {
       "tableName" : "addresstype",
+      "pkColumnName": "id",
       "generateId" : false,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : false,
@@ -56,6 +59,7 @@
     },
     {
       "tableName" : "proxyfor",
+      "pkColumnName": "id",
       "generateId" : false,
       "fromModuleVersion" : "14.3",
       "populateJsonWithId" : false,

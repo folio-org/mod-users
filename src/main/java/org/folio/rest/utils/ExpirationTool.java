@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import org.folio.rest.impl.UsersAPI;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
 import static org.folio.rest.impl.UsersAPI.RAML_PATH;
 import static org.folio.rest.impl.UsersAPI.USER_ID_FIELD;
@@ -75,6 +74,7 @@ public class ExpirationTool {
     String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
     context.runOnContext(v -> {
       PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
+      pgClient.setIdField("id");
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
       CQL2PgJSON cql2pgJson = null;
       CQLWrapper cqlWrapper = null;
@@ -124,6 +124,7 @@ public class ExpirationTool {
     context.runOnContext(v -> {
       try {
         PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
+        pgClient.setIdField("id");
         Criteria idCrit = new Criteria(RAML_PATH + "/userdata.json");
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");

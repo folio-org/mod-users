@@ -6,7 +6,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
-import org.folio.rest.RestVerticle;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.AddresstypeCollection;
@@ -21,7 +20,7 @@ import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.ResourceUtils;
-import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
@@ -30,7 +29,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.UUID;
@@ -50,10 +48,6 @@ public class AddressTypeAPI implements Addresstypes {
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
-  }
-
-  public AddressTypeAPI(Vertx vertx, String tenantId) {
-    PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);
   }
 
   private String getErrorResponse(String response) {
@@ -87,10 +81,8 @@ public class AddressTypeAPI implements Addresstypes {
           Context vertxContext) {
     vertxContext.runOnContext( v -> {
       try {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(
-                RestVerticle.OKAPI_HEADER_TENANT));
         CQLWrapper cql = getCQL(query, limit, offset);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(ADDRESS_TYPE_TABLE, AddressType.class,
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(ADDRESS_TYPE_TABLE, AddressType.class,
                 new String[]{"*"}, cql, true, true, reply -> {
                   try {
                     if(reply.failed()) {
@@ -131,14 +123,12 @@ public class AddressTypeAPI implements Addresstypes {
           Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(
-                RestVerticle.OKAPI_HEADER_TENANT));
         String id = entity.getId();
         if(id == null) {
           id = UUID.randomUUID().toString();
           entity.setId(id);
         }
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).save(
                 ADDRESS_TYPE_TABLE, id, entity, reply -> {
           try {
             if(reply.failed()) {
@@ -188,12 +178,10 @@ public class AddressTypeAPI implements Addresstypes {
           Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = TenantTool.calculateTenantId(
-                okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT));
         Criterion criterion = new Criterion(
           new Criteria().addField(ID_FIELD_NAME).
                   setJSONB(false).setOperation("=").setValue("'" + addresstypeId + "'"));
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(ADDRESS_TYPE_TABLE,
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(ADDRESS_TYPE_TABLE,
                 AddressType.class, criterion, true, reply -> {
           try {
             if(reply.failed()) {
@@ -244,72 +232,61 @@ public class AddressTypeAPI implements Addresstypes {
 
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = TenantTool.calculateTenantId(
-                okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT));
-        try {
-          //Check to make certain no users' addresses are currently using this type
-          /* CQL statement to check for users with addresses that use a particular address type */
-          String query = "personal.addresses=" + addresstypeId;
-          CQLWrapper cql = UsersAPI.getCQL(query, 1, 0);
-          PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
-                  UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
-                    cql, true, false, reply -> {
-            if(reply.failed()) {
-              String message = reply.cause().getLocalizedMessage();
-              logger.error(message, reply.cause());
-              asyncResultHandler.handle(Future.succeededFuture(
-                      DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                              getErrorResponse(message))));
+        //Check to make certain no users' addresses are currently using this type
+        /* CQL statement to check for users with addresses that use a particular address type */
+        String query = "personal.addresses=" + addresstypeId;
+        CQLWrapper cql = UsersAPI.getCQL(query, 1, 0);
+        PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+        postgresClient.get(
+                UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
+                  cql, true, false, reply -> {
+          if(reply.failed()) {
+            String message = reply.cause().getLocalizedMessage();
+            logger.error(message, reply.cause());
+            asyncResultHandler.handle(Future.succeededFuture(
+                    DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
+                            getErrorResponse(message))));
+          } else {
+            List<User> userList = reply.result().getResults();
+            if(userList.size() > 0) {
+              String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
+              logger.error(message);
+              asyncResultHandler.handle(Future.succeededFuture(DeleteAddresstypesByAddresstypeIdResponse
+                .respond400WithTextPlain(message)));
             } else {
-              List<User> userList = reply.result().getResults();
-              if(userList.size() > 0) {
-                String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
-                logger.error(message);
-                asyncResultHandler.handle(Future.succeededFuture(DeleteAddresstypesByAddresstypeIdResponse
-                  .respond400WithTextPlain(message)));
-              } else {
-                logger.info("Removing non-associated address type '" + addresstypeId + "'");
-                try {
-                  PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(
-                          ADDRESS_TYPE_TABLE, addresstypeId, deleteReply -> {
-                    if(deleteReply.failed()) {
-                      String message = deleteReply.cause().getLocalizedMessage();
-                      logger.error(message, deleteReply.cause());
+              logger.info("Removing non-associated address type '" + addresstypeId + "'");
+              try {
+                postgresClient.delete(ADDRESS_TYPE_TABLE, addresstypeId, deleteReply -> {
+                  if(deleteReply.failed()) {
+                    String message = deleteReply.cause().getLocalizedMessage();
+                    logger.error(message, deleteReply.cause());
+                    asyncResultHandler.handle(Future.succeededFuture(
+                            DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
+                                    getErrorResponse(message))));
+                  } else {
+                    if(deleteReply.result().getUpdated() == 1) {
                       asyncResultHandler.handle(Future.succeededFuture(
-                              DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                                      getErrorResponse(message))));
+                            DeleteAddresstypesByAddresstypeIdResponse.respond204()));
                     } else {
-                      if(deleteReply.result().getUpdated() == 1) {
-                        asyncResultHandler.handle(Future.succeededFuture(
-                              DeleteAddresstypesByAddresstypeIdResponse.respond204()));
-                      } else {
-                        String message = Messages.getInstance().getMessage(
-                                lang, MessageConsts.DeletedCountError, 1,
-                                  deleteReply.result().getUpdated());
-                        logger.error(message);
-                        asyncResultHandler.handle(Future.succeededFuture(
-                          DeleteAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(message)));
-                      }
+                      String message = Messages.getInstance().getMessage(
+                              lang, MessageConsts.DeletedCountError, 1,
+                                deleteReply.result().getUpdated());
+                      logger.error(message);
+                      asyncResultHandler.handle(Future.succeededFuture(
+                        DeleteAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(message)));
                     }
-                  });
+                  }
+                });
 
-                } catch(Exception e) {
-                  String message = e.getLocalizedMessage();
-                  asyncResultHandler.handle(Future.succeededFuture(
-                          DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                                  getErrorResponse(message))));
-                }
+              } catch(Exception e) {
+                String message = e.getLocalizedMessage();
+                asyncResultHandler.handle(Future.succeededFuture(
+                        DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
+                                getErrorResponse(message))));
               }
             }
-          });
-
-        } catch(Exception e) {
-          String message = e.getLocalizedMessage();
-          logger.error(message, e);
-          asyncResultHandler.handle(Future.succeededFuture(
-                  DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                          getErrorResponse(message))));
-        }
+          }
+        });
       } catch(Exception e) {
         String message = e.getLocalizedMessage();
         logger.error(message, e);
@@ -327,9 +304,8 @@ public class AddressTypeAPI implements Addresstypes {
 
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = TenantTool.calculateTenantId(
-                okapiHeaders.get(RestVerticle.OKAPI_HEADER_TENANT));
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).update(ADDRESS_TYPE_TABLE, entity, addresstypeId, reply -> {
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).update(
+            ADDRESS_TYPE_TABLE, entity, addresstypeId, reply -> {
           try {
             if(reply.failed()) {
               String message = reply.cause().getLocalizedMessage();
