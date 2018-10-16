@@ -3,7 +3,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
-import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.ProxiesFor;
 import org.folio.rest.jaxrs.model.ProxyforCollection;
@@ -26,7 +24,7 @@ import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.ResourceUtils;
-import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
@@ -47,10 +45,6 @@ public class ProxiesForAPI implements Proxiesfor {
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
-  }
-
-  public ProxiesForAPI(Vertx vertx, String tenantId) {
-    PostgresClient.getInstance(vertx, tenantId).setIdField(ID_FIELD_NAME);
   }
 
   private String getErrorResponse(String response) {
@@ -87,10 +81,6 @@ public class ProxiesForAPI implements Proxiesfor {
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
 
-  private String getTenant(Map<String, String> headers)  {
-    return TenantTool.calculateTenantId(headers.get(RestVerticle.OKAPI_HEADER_TENANT));
-  }
-
   @Override
   public void getProxiesfor(String query,
           int offset, int limit,
@@ -100,9 +90,8 @@ public class ProxiesForAPI implements Proxiesfor {
           Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = getTenant(okapiHeaders);
         CQLWrapper cql = getCQL(query, limit, offset);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(
                 PROXY_FOR_TABLE, ProxiesFor.class, new String[]{"*"}, cql,
                 true, true, getReply -> {
           if(getReply.failed()) {
@@ -137,9 +126,9 @@ public class ProxiesForAPI implements Proxiesfor {
           Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = getTenant(okapiHeaders);
+        PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
         userAndProxyUserComboExists(entity.getUserId(), entity.getProxyUserId(),
-                tenantId, vertxContext).setHandler(existsRes -> {
+                postgresClient, vertxContext).setHandler(existsRes -> {
           if(existsRes.failed()) {
             String message = logAndSaveError(existsRes.cause());
             asyncResultHandler.handle(Future.succeededFuture(
@@ -157,8 +146,7 @@ public class ProxiesForAPI implements Proxiesfor {
                 id = UUID.randomUUID().toString();
                 entity.setId(id);
               }
-              PostgresClient.getInstance(vertxContext.owner(), tenantId).save(
-                      PROXY_FOR_TABLE, id, entity, reply -> {
+              postgresClient.save(PROXY_FOR_TABLE, id, entity, reply -> {
                 try {
                   if(reply.failed()) {
                     String message = logAndSaveError(reply.cause());
@@ -211,10 +199,9 @@ public class ProxiesForAPI implements Proxiesfor {
           Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = getTenant(okapiHeaders);
         Criterion criterion = new Criterion(new Criteria().addField(ID_FIELD_NAME)
           .setJSONB(false).setOperation("=").setValue("'" + id + "'"));
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(
                 PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply-> {
           try {
             if(getReply.failed()) {
@@ -261,8 +248,7 @@ public class ProxiesForAPI implements Proxiesfor {
           Context vertxContext) {
     vertxContext.runOnContext(v->{
       try {
-        String tenantId = getTenant(okapiHeaders);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).delete(PROXY_FOR_TABLE, id, deleteReply -> {
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).delete(PROXY_FOR_TABLE, id, deleteReply -> {
           if(deleteReply.failed()) {
             String message = logAndSaveError(deleteReply.cause());
             asyncResultHandler.handle(Future.succeededFuture(
@@ -300,8 +286,7 @@ public class ProxiesForAPI implements Proxiesfor {
           Context vertxContext) {
     vertxContext.runOnContext(v -> {
       try {
-        String tenantId = getTenant(okapiHeaders);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).update(
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).update(
                 PROXY_FOR_TABLE, entity, id, putReply -> {
           try {
             if(putReply.failed()) {
@@ -340,7 +325,7 @@ public class ProxiesForAPI implements Proxiesfor {
   private Future<Boolean> userAndProxyUserComboExists(
           String userId,
           String proxyUserId,
-          String tenantId,
+          PostgresClient postgresClient,
           Context vertxContext) {
     Future<Boolean> future = Future.future();
     vertxContext.runOnContext(v -> {
@@ -351,8 +336,7 @@ public class ProxiesForAPI implements Proxiesfor {
                 setOperation("=").setValue("'" + proxyUserId + "'").setJSONB(true);
         Criterion criterion = new Criterion();
         criterion.addCriterion(userCrit, "AND", proxyUserCrit);
-        PostgresClient.getInstance(vertxContext.owner(), tenantId).get(
-                PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {
+        postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {
           try {
             if(getReply.failed()) {
               future.fail(getReply.cause());
