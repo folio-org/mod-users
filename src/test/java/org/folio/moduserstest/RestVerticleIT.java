@@ -17,6 +17,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 
 import java.io.UnsupportedEncodingException;
@@ -26,8 +27,10 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -392,6 +395,46 @@ public class RestVerticleIT {
     return future;
   }
 
+ private Future<Void> getUsersByCQL(TestContext context, String cql, String ... expectedUsernames) {
+   System.out.println("Query users via CQL\n");
+   Future future = Future.future();
+   HttpClient client = vertx.createHttpClient();
+   try {
+    client.get(port, "localhost", "/users?query=" + URLEncoder.encode(cql, "UTF-8"), res -> {
+      if (res.statusCode() != 200) {
+        future.fail("Expected status code 200, but got response: " + res.statusCode());
+        return;
+      }
+      res.bodyHandler(buf -> {
+        try {
+          JsonObject resultObject = buf.toJsonObject();
+          int totalRecords = resultObject.getInteger("totalRecords");
+          JsonArray userList = resultObject.getJsonArray("users");
+          if (userList.size() != totalRecords) {
+            future.fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
+            return;
+          }
+          List<String> usernames = new ArrayList<>();
+          for (int i=0; i<userList.size(); i++) {
+            usernames.add(userList.getJsonObject(i).getString("username"));
+          }
+          assertThat(usernames, containsInAnyOrder(expectedUsernames));
+          future.complete();
+        } catch(Exception e) {
+          future.fail(e);
+        }
+      });
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end();
+   } catch(Exception e) {
+     future.fail(e);
+   }
+   return future;
+ }
 
  private Future<Void> putUserGood(TestContext context) {
    System.out.println("Making a valid user modification\n");
@@ -1151,117 +1194,49 @@ public class RestVerticleIT {
 
  @Test
   public void test1Sequential(TestContext context) {
+    /** The CQL used for searching when a single j has been entered into the search slot */
+    final String jSearch = "(((username=\"j*\" or personal.firstName=\"j*\" or "
+        + "personal.lastName=\"j*\" or personal.email=\"j*\" or barcode=\"j*\" or "
+        + "id=\"j*\" or externalSystemId=\"j*\")) and active=\"true\") "
+        + "sortby personal.lastName personal.firstName";
+
     Async async = context.async();
     Future<Void> startFuture;
     Future<Void> f1 = Future.future();
     getEmptyUsers(context).setHandler(f1.completer());
-    startFuture = f1.compose(v -> {
-      Future<Void> f = Future.future();
-      postUser(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      getUser(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      return getUserByCQL(context);
-    }).compose(v -> {
-      return getUserByCqlById(context);
-    }).compose(v -> {
-      return getUserByInvalidCQL(context);
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      postAnotherUser(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      putUserGood(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      putUserBadUsername(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      getGoodUser(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      putUserBadId(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      putUserWithNumericName(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      createAddressType(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      return createBadAddressType(context);
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      getAddressTypeUpdateUser(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      createAndDeleteAddressType(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      postUserWithDuplicateAddressType(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      postUserBadAddress(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      postUserWithNumericName(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      createProxyfor(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      createProxyforWithSameUserId(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      createProxyforWithSameProxyUserId(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      failToCreateDuplicateProxyfor(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      getProxyforCollection(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      findAndGetProxyfor(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      findAndUpdateProxyfor(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      Future<Void> f = Future.future();
-      findAndDeleteProxyfor(context).setHandler(f.completer());
-      return f;
-    }).compose(v -> {
-      return createTestDeleteObjectById(context, testAddress, "/addresstypes",
-              true);
-    }).compose(v -> {
-      return createTestDeleteObjectById(context, testGroup, "/groups",
-              true);
-    }).compose(v -> {
-      return createTestDeleteObjectById(context, testProxyFor, "/proxiesfor",
-              true);
-    });
-
+    startFuture = f1
+        .compose(v -> postUser(context))
+        .compose(v -> getUser(context))
+        .compose(v -> getUserByCQL(context))
+        .compose(v -> getUserByCqlById(context))
+        .compose(v -> getUserByInvalidCQL(context))
+        .compose(v -> postAnotherUser(context))
+        .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
+        .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
+        .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
+        .compose(v -> putUserGood(context))
+        .compose(v -> putUserBadUsername(context))
+        .compose(v -> getGoodUser(context))
+        .compose(v -> putUserBadId(context))
+        .compose(v -> putUserWithNumericName(context))
+        .compose(v -> createAddressType(context))
+        .compose(v -> createBadAddressType(context))
+        .compose(v -> getAddressTypeUpdateUser(context))
+        .compose(v -> createAndDeleteAddressType(context))
+        .compose(v -> postUserWithDuplicateAddressType(context))
+        .compose(v -> postUserBadAddress(context))
+        .compose(v -> postUserWithNumericName(context))
+        .compose(v -> createProxyfor(context))
+        .compose(v -> createProxyforWithSameUserId(context))
+        .compose(v -> createProxyforWithSameProxyUserId(context))
+        .compose(v -> failToCreateDuplicateProxyfor(context))
+        .compose(v -> getProxyforCollection(context))
+        .compose(v -> findAndGetProxyfor(context))
+        .compose(v -> findAndUpdateProxyfor(context))
+        .compose(v -> findAndDeleteProxyfor(context))
+        .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
+        .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
+        .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
 
     startFuture.setHandler(res -> {
       if(res.succeeded()) {
