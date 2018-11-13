@@ -117,32 +117,24 @@
       ]
     },
     {
-      "id": "_jsonSchema",
+      "id": "_jsonSchemas",
       "version": "1.0",
       "interfaceType" : "multiple",
       "handlers" : [
         {
           "methods" : [ "GET" ],
-          "pathPattern" : "/_/jsonSchema"
-        },
-        {
-          "methods" : [ "GET" ],
-          "pathPattern" : "/_/jsonSchema/{jsonSchemaName}"
+          "pathPattern" : "/_/jsonSchemas"
         }
       ]
     },
     {
-      "id": "_raml",
+      "id": "_ramls",
       "version": "1.0",
       "interfaceType" : "multiple",
       "handlers" : [
         {
           "methods" : [ "GET" ],
-          "pathPattern" : "/_/raml"
-        },
-        {
-          "methods" : [ "GET" ],
-          "pathPattern" : "/_/raml/{ramlName}"
+          "pathPattern" : "/_/ramls"
         }
       ]
     },
