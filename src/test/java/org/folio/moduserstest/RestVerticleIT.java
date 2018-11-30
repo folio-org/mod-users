@@ -1190,9 +1190,26 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> getGroupByInvalidUuid(TestContext context) {
+    System.out.println("Retrieving a group by invalid uuid\n");
+    Future<Void> future = Future.future();
+    HttpClient client = vertx.createHttpClient();
+    client.get(port, "localhost", "/groups/q", res -> {
+      if(res.statusCode() == 404) {
+        future.complete();
+      } else {
+        future.fail("Expected response code 404 but got " + res.statusCode());
+      }
+    })
+            .putHeader("X-Okapi-Tenant", "diku")
+            .putHeader("content-type", "application/json")
+            .putHeader("accept", "application/json")
+            .exceptionHandler(e -> { future.fail(e); })
+            .end();
+    return future;
+  }
 
-
- @Test
+  @Test
   public void test1Sequential(TestContext context) {
     /** The CQL used for searching when a single j has been entered into the search slot */
     final String jSearch = "(((username=\"j*\" or personal.firstName=\"j*\" or "
@@ -1237,6 +1254,11 @@ public class RestVerticleIT {
         .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
         .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
         .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
+
+    // It hung after 5-12 invocations. MODUSERS-100
+    for (int i=0; i<25; i++) {
+      startFuture = startFuture.compose(v -> getGroupByInvalidUuid(context));
+    }
 
     startFuture.setHandler(res -> {
       if(res.succeeded()) {

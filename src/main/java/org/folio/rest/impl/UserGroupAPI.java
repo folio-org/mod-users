@@ -175,7 +175,7 @@ public class UserGroupAPI implements Groups {
         Criterion c = new Criterion(
           new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setValue("'"+groupId+"'"));
 
-        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, true,
+        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, false,
             reply -> {
               try {
                 if(reply.succeeded()){
@@ -357,18 +357,10 @@ public class UserGroupAPI implements Groups {
   }
 
   private boolean isDuplicate(String errorMessage){
-    if(errorMessage != null && errorMessage.contains("duplicate key value violates unique constraint")){
-      return true;
-    }
-    return false;
+    return errorMessage != null && errorMessage.contains("duplicate key value violates unique constraint");
   }
 
   private boolean isInvalidUUID(String errorMessage){
-    if(errorMessage != null && errorMessage.contains("invalid input syntax for uuid")){
-      return true;
-    }
-    else{
-      return false;
-    }
+    return errorMessage != null && errorMessage.contains("uuid");
   }
 }
