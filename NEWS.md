@@ -1,6 +1,15 @@
-## 15.2.1 UNRELEASED
- * NEWS cleanup
- * MODUSERS-90: Put numeric username; add schemas for type detection
+## 15.3.0 2018-12-05
+ * Clean up RAML directory (MODUSERS-84)
+ * Add missing documentation for fieldnames in schemas (MODUSERS-87)
+ * Correct exception thrown for CQL errors (MODUSERS-88)
+ * Correct issue with pagaeable trait in RAML (MODUSERS-89)
+ * Put numeric username; add schemas for type detection (MODUSERS-90)
+ * Enforce order in which unit tests fire (MODUSERS-92)
+ * Correct issue with CQL field name validation (MODUSERS-93)
+ * Correct issue with database primary key assignment (MODUSERS-94, MODUSERS-95)
+ * Correct issue with type determination for values in CQL queries (MODUSERS-96)
+ * Fix issue that causes mod-users to hang when a bad query to /groups is received (MODUSERS-97)
+ * Expand unit test coverage (MODUSERS-100)
 
 ## 15.2.0 2018-09-12
  * Upgrade to RMB 21.x.x, use RAML 1.0
