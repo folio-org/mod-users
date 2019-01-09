@@ -199,22 +199,6 @@
             </configuration>
           </execution>
           <execution>
-            <id>copy-resources-3</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${basedir}/src/main/resources</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${ramlfiles_path}</directory>
-                  <filtering>true</filtering>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-          <execution>
             <id>filter-descriptor-inputs</id>
             <phase>generate-resources</phase>
             <goals>
