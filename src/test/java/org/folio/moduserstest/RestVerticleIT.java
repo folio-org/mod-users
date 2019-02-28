@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.parser.JsonPathParser;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -109,14 +112,19 @@ public class RestVerticleIT {
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
+    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port))
       .setWorker(true);
 
     vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       try {
-        tenantClient.postTenant(null, res2 -> {
+        TenantAttributes ta = new TenantAttributes();
+        ta.setModuleTo("mod-users-1.0.0");
+        List<Parameter> parameters = new LinkedList<>();
+        parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+        ta.setParameters(parameters);
+        tenantClient.postTenant(ta, res2 -> {
           context.assertEquals(201, res2.statusCode(), "postTenant: " + res2.statusMessage());
           async.complete();
         });
@@ -604,7 +612,7 @@ public class RestVerticleIT {
     System.out.println("Creating an address type\n");
     Future future = Future.future();
     JsonObject addressTypeObject = new JsonObject()
-      .put("addressType", "home")
+      .put("addressType", "sweethome")
       .put("desc", "The patron's primary residence");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/addresstypes", res -> {
@@ -656,7 +664,7 @@ public class RestVerticleIT {
     System.out.println("Getting the new addresstype, updating a user with it\n");
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/addresstypes?query=addressType=home", res -> {
+    client.get(port, "localhost", "/addresstypes?query=addressType=sweethome", res -> {
       if (res.statusCode() != 200) {
         res.bodyHandler(body -> {
           future.fail("Expected 200, got statusCode " + res.statusCode() + ":" + body.toString());
@@ -665,8 +673,8 @@ public class RestVerticleIT {
         res.bodyHandler(body -> {
           JsonObject result = new JsonObject(body.toString());
           JsonObject addressType = result.getJsonArray("addressTypes").getJsonObject(0);
-          if (!addressType.getString("addressType").equals("home")) {
-            future.fail("addressType is not 'home' in return addresstype");
+          if (!addressType.getString("addressType").equals("sweethome")) {
+            future.fail("addressType is not 'sweethome' in return addresstype");
           } else {
             JsonObject userObject = new JsonObject()
               .put("username", "bobcircle")
@@ -739,7 +747,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     HttpClient postClient = vertx.createHttpClient();
     JsonObject addressTypeObject = new JsonObject()
-      .put("addressType", "work")
+      .put("addressType", "hardwork")
       .put("desc", "The patron's work address");
     postClient.post(port, "localhost", "/addresstypes", postRes -> {
       postRes.bodyHandler(postBody -> {

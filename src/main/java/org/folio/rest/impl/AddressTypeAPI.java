@@ -64,15 +64,6 @@ public class AddressTypeAPI implements Addresstypes {
     return false;
   }
 
-  private boolean isInvalidUUID(String errorMessage){
-    if(errorMessage != null && errorMessage.contains("invalid input syntax for uuid")){
-      return true;
-    }
-    else{
-      return false;
-    }
-  }
-
   @Validate
   @Override
   public void getAddresstypes(String query, int offset, int limit, String lang,
@@ -180,30 +171,22 @@ public class AddressTypeAPI implements Addresstypes {
       try {
         Criterion criterion = new Criterion(
           new Criteria().addField(ID_FIELD_NAME).
-                  setJSONB(false).setOperation("=").setValue("'" + addresstypeId + "'"));
+            setJSONB(false).setOperation("=").setValue("'" + addresstypeId + "'"));
         PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(ADDRESS_TYPE_TABLE,
-                AddressType.class, criterion, true, reply -> {
-          try {
-            if(reply.failed()) {
-              String message = reply.cause().getLocalizedMessage();
-              logger.error(message, reply.cause());
-              if(isInvalidUUID(message)) {
-                //Not found
+          AddressType.class, criterion, true, reply -> {
+            try {
+              if (reply.failed()) {
+                String message = reply.cause().getLocalizedMessage();
+                logger.error(message, reply.cause());
                 asyncResultHandler.handle(Future.succeededFuture(
-                        GetAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(addresstypeId)));
+                  GetAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(addresstypeId)));
               } else {
-                //Server Error
-                asyncResultHandler.handle(Future.succeededFuture(
-                  GetAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                        getErrorResponse(message))));
-              }
-            } else {
-              List<AddressType> addressTypeList = reply.result().getResults();
-              if(addressTypeList.isEmpty()) {
-                asyncResultHandler.handle(Future.succeededFuture(
-                        GetAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(addresstypeId)));
-              } else {
-                asyncResultHandler.handle(Future.succeededFuture(
+                List<AddressType> addressTypeList = reply.result().getResults();
+                if (addressTypeList.isEmpty()) {
+                  asyncResultHandler.handle(Future.succeededFuture(
+                    GetAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(addresstypeId)));
+                } else {
+                  asyncResultHandler.handle(Future.succeededFuture(
                         GetAddresstypesByAddresstypeIdResponse.respond200WithApplicationJson(addressTypeList.get(0))));
               }
             }
@@ -305,39 +288,39 @@ public class AddressTypeAPI implements Addresstypes {
     vertxContext.runOnContext(v -> {
       try {
         PostgresClientUtil.getInstance(vertxContext, okapiHeaders).update(
-            ADDRESS_TYPE_TABLE, entity, addresstypeId, reply -> {
-          try {
-            if(reply.failed()) {
-              String message = reply.cause().getLocalizedMessage();
-              logger.error(message, reply.cause());
-              asyncResultHandler.handle(Future.succeededFuture(
-                   PutAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                           getErrorResponse(message))));
-            } else {
-              if(reply.result().getUpdated() == 0) {
-                String message = "No records updated";
-                logger.error(message);
+          ADDRESS_TYPE_TABLE, entity, addresstypeId, reply -> {
+            try {
+              if (reply.failed()) {
+                String message = reply.cause().getLocalizedMessage();
+                logger.error(message, reply.cause());
                 asyncResultHandler.handle(Future.succeededFuture(
-                   PutAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(message)));
+                  PutAddresstypesByAddresstypeIdResponse.respond400WithTextPlain(
+                    getErrorResponse(message))));
               } else {
-                asyncResultHandler.handle(Future.succeededFuture(
-                   PutAddresstypesByAddresstypeIdResponse.respond204()));
+                if (reply.result().getUpdated() == 0) {
+                  String message = "No records updated";
+                  logger.error(message);
+                  asyncResultHandler.handle(Future.succeededFuture(
+                    PutAddresstypesByAddresstypeIdResponse.respond404WithTextPlain(message)));
+                } else {
+                  asyncResultHandler.handle(Future.succeededFuture(
+                    PutAddresstypesByAddresstypeIdResponse.respond204()));
+                }
               }
+            } catch (Exception e) {
+              String message = e.getLocalizedMessage();
+              logger.error(message, e);
+              asyncResultHandler.handle(Future.succeededFuture(
+                PutAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
+                  getErrorResponse(message))));
             }
-          } catch(Exception e) {
-           String message = e.getLocalizedMessage();
-           logger.error(message, e);
-           asyncResultHandler.handle(Future.succeededFuture(
-                   PutAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                           getErrorResponse(message))));
-          }
-        });
-      } catch(Exception e) {
+          });
+      } catch (Exception e) {
         String message = e.getLocalizedMessage();
         logger.error(message, e);
         asyncResultHandler.handle(Future.succeededFuture(
-                PutAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                        getErrorResponse(message))));
+          PutAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
+            getErrorResponse(message))));
       }
     });
   }
