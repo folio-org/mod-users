@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>15.3.0-SNAPSHOT</version>
+  <version>15.3.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -190,22 +190,6 @@
             </goals>
             <configuration>
               <outputDirectory>${basedir}/target/classes/apidocs/raml-util</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${ramlfiles_path}</directory>
-                  <filtering>true</filtering>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-resources-3</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${basedir}/src/main/resources</outputDirectory>
               <resources>
                 <resource>
                   <directory>${ramlfiles_path}</directory>
