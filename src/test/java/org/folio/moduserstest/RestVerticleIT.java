@@ -123,6 +123,7 @@ public class RestVerticleIT {
         ta.setModuleTo("mod-users-1.0.0");
         List<Parameter> parameters = new LinkedList<>();
         parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+        parameters.add(new Parameter().withKey("loadSample").withValue("true"));
         ta.setParameters(parameters);
         tenantClient.postTenant(ta, res2 -> {
           context.assertEquals(201, res2.statusCode(), "postTenant: " + res2.statusMessage());
