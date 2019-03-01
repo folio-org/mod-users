@@ -17,7 +17,7 @@ public class TenantRefAPI extends TenantAPI {
   @Override
   public void postTenant(TenantAttributes ta, Map<String, String> headers,
     Handler<AsyncResult<Response>> hndlr, Context cntxt) {
-    log.info("postTenant");
+    log.info("postTenant" );
     Vertx vertx = cntxt.owner();
     super.postTenant(ta, headers, res -> {
       if (res.failed()) {
@@ -26,10 +26,13 @@ public class TenantRefAPI extends TenantAPI {
       }
       TenantLoading tl = new TenantLoading();
       tl.withKey("loadReference").withLead("ref-data")
-        .withContent("group")
+        .withIdContent()
         .add("group")
-         .withContent("addressType")
-         .add("addresstypes")
+        .withIdContent()
+        .add("addresstypes")
+        .withKey("loadSample").withLead("sample-data")
+        .withIdContent()
+        .add("users")
         .perform(ta, headers, vertx, res1 -> {
           if (res1.failed()) {
             hndlr.handle(io.vertx.core.Future.succeededFuture(PostTenantResponse
@@ -41,5 +44,5 @@ public class TenantRefAPI extends TenantAPI {
         });
     }, cntxt);
   }
- 
+
 }
