@@ -123,7 +123,7 @@ public class RestVerticleIT {
         ta.setModuleTo("mod-users-1.0.0");
         List<Parameter> parameters = new LinkedList<>();
         parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-        parameters.add(new Parameter().withKey("loadSample").withValue("true"));
+        parameters.add(new Parameter().withKey("loadSample").withValue("false"));
         ta.setParameters(parameters);
         tenantClient.postTenant(ta, res2 -> {
           context.assertEquals(201, res2.statusCode(), "postTenant: " + res2.statusMessage());
@@ -1509,7 +1509,7 @@ public class RestVerticleIT {
       System.out.println(getAllGroupResponse.body
         + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for "
         + getAllGroupURL);
-      context.assertTrue(isSizeMatch(getAllGroupResponse, 1));
+      context.assertTrue(isSizeMatch(getAllGroupResponse, 5)); // 4 in reference + 1 in test
 
       /**
        * try to get via cql
