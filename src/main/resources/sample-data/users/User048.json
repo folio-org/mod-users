@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "barcode" : "358963200950757",
+   "enrollmentDate" : "2016-05-08",
+   "expirationDate" : "2020-02-13",
+   "username" : "electa",
+   "active" : true,
+   "id" : "589ee8e5-4fe4-4ab3-8a58-441cebea454a",
+   "personal" : {
+      "lastName" : "Medhurst",
+      "preferredContactTypeId" : "003",
+      "mobilePhone" : "1-172-048-6774",
+      "phone" : "713-608-0783",
+      "dateOfBirth" : "1949-06-23",
+      "email" : "rae@brekke-nolan.wa.us",
+      "firstName" : "Marisa",
+      "addresses" : [
+         {
+            "region" : "MS",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "90469",
+            "primaryAddress" : true,
+            "addressLine1" : "29346 Elroy Stravenue Suite 579",
+            "countryId" : "US",
+            "city" : "Temecula"
+         }
+      ]
+   }
+}
+

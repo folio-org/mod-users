@@ -1,0 +1,30 @@
+{
+   "username" : "maudie",
+   "personal" : {
+      "dateOfBirth" : "1977-04-08",
+      "email" : "pasquale@murphy-conn.lt",
+      "mobilePhone" : "187.412.7582",
+      "phone" : "974-776-1929",
+      "addresses" : [
+         {
+            "addressLine1" : "59878 Marques Divide",
+            "countryId" : "US",
+            "city" : "Homer",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "23732-5100",
+            "region" : "NC"
+         }
+      ],
+      "firstName" : "Orval",
+      "lastName" : "Swift",
+      "preferredContactTypeId" : "003"
+   },
+   "active" : true,
+   "id" : "2c9e8cdd-d2fe-485b-b663-34225637fe93",
+   "type" : "patron",
+   "expirationDate" : "2019-04-18",
+   "enrollmentDate" : "2017-04-07",
+   "barcode" : "684350779415389"
+}
+

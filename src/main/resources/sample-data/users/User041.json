@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2016-01-05",
+   "expirationDate" : "2019-10-04",
+   "barcode" : "539526509780788",
+   "type" : "patron",
+   "active" : true,
+   "id" : "c51cf0e7-ea33-4638-a54c-afffc75a680b",
+   "personal" : {
+      "dateOfBirth" : "1955-02-23",
+      "email" : "treva@wisoky-steuber-and-heidenreich.gi",
+      "phone" : "109.591.5479 x92261",
+      "mobilePhone" : "545-526-9295 x950",
+      "addresses" : [
+         {
+            "region" : "CO",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "96737-5586",
+            "primaryAddress" : true,
+            "addressLine1" : "54893 Jadon Passage",
+            "countryId" : "US",
+            "city" : "Athens"
+         }
+      ],
+      "firstName" : "Evalyn",
+      "lastName" : "Cole",
+      "middleName" : "Randy",
+      "preferredContactTypeId" : "002"
+   },
+   "username" : "justen"
+}
+

@@ -1,0 +1,31 @@
+{
+   "username" : "nova",
+   "enrollmentDate" : "2017-06-30",
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "mobilePhone" : "1-654-336-4763 x993",
+      "firstName" : "Demond",
+      "middleName" : "Elias",
+      "email" : "sammie@willms-inc.bz",
+      "lastName" : "Fay",
+      "phone" : "380.490.6284 x3204",
+      "dateOfBirth" : "2009-05-23",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "TN",
+            "postalCode" : "04181",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Toledo",
+            "addressLine1" : "03092 Slip 663"
+         }
+      ]
+   },
+   "active" : true,
+   "expirationDate" : "2019-10-29",
+   "type" : "patron",
+   "id" : "15b9deaf-1a59-4396-a8e5-d6c7e5b79b28",
+   "barcode" : "190102646879172"
+}
+

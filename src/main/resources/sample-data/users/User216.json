@@ -1,0 +1,30 @@
+{
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "75050-0529",
+            "region" : "ME",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "75369 Beulah Via Apt. 975",
+            "city" : "Westlake Village"
+         }
+      ],
+      "dateOfBirth" : "1995-07-22",
+      "phone" : "1-562-888-1713 x03714",
+      "lastName" : "Jaskolski",
+      "email" : "jedediah@torp-wiegand-and-schuppe.ga.us",
+      "preferredContactTypeId" : "003",
+      "mobilePhone" : "1-447-181-6690 x90817",
+      "firstName" : "Theresa"
+   },
+   "username" : "dalton",
+   "enrollmentDate" : "2015-06-09",
+   "active" : false,
+   "expirationDate" : "2019-12-04",
+   "type" : "patron",
+   "barcode" : "384535810243711",
+   "id" : "f57c13f1-6114-41b2-aa6f-33045068d6be"
+}
+

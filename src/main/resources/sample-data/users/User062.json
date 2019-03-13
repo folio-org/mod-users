@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2019-10-17",
+   "enrollmentDate" : "2015-03-17",
+   "barcode" : "67306877178072",
+   "type" : "patron",
+   "id" : "78284bd0-cdf1-4fc9-a404-739388b41cc7",
+   "active" : false,
+   "personal" : {
+      "dateOfBirth" : "2005-11-26",
+      "email" : "rhoda@ratke-inc.tx.us",
+      "phone" : "(789)045-8884",
+      "mobilePhone" : "916-301-8093 x63648",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Placentia",
+            "addressLine1" : "97658 Abigayle Inlet Apt. 717",
+            "countryId" : "US",
+            "region" : "PR",
+            "postalCode" : "21669",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "firstName" : "Niko",
+      "lastName" : "Von",
+      "middleName" : "Ottilie",
+      "preferredContactTypeId" : "001"
+   },
+   "username" : "greyson"
+}
+

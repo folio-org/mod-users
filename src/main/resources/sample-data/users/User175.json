@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Mraz",
+      "phone" : "845.879.6319 x77980",
+      "mobilePhone" : "1-612-179-7983 x236",
+      "email" : "noemie@johnson-weimann.pg",
+      "dateOfBirth" : "1948-04-03",
+      "firstName" : "Sherman",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "West Memphis",
+            "countryId" : "US",
+            "addressLine1" : "65144 Muller Squares Suite 747",
+            "region" : "MA",
+            "postalCode" : "44613",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ]
+   },
+   "id" : "259d55dc-015d-420a-b13d-8706018305b1",
+   "username" : "chadrick",
+   "enrollmentDate" : "2018-07-01",
+   "expirationDate" : "2020-07-03",
+   "barcode" : "696296117207797",
+   "type" : "patron"
+}
+

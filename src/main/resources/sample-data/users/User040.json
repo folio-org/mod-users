@@ -1,0 +1,31 @@
+{
+   "username" : "kris",
+   "personal" : {
+      "lastName" : "Rodriguez",
+      "middleName" : "Cora",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "95698 Funk Underpass Apt. 931",
+            "countryId" : "US",
+            "city" : "Nogales",
+            "region" : "AP",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "54478-9282"
+         }
+      ],
+      "firstName" : "Velda",
+      "dateOfBirth" : "1985-04-10",
+      "email" : "frank@lowe-inc.cf",
+      "phone" : "384-546-7881",
+      "mobilePhone" : "217-047-4021 x5204"
+   },
+   "active" : true,
+   "id" : "6f4111a4-8b6f-4008-9b95-ecd31db69234",
+   "type" : "patron",
+   "expirationDate" : "2020-07-17",
+   "enrollmentDate" : "2015-12-28",
+   "barcode" : "272166777013790"
+}
+

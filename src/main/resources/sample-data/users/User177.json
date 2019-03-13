@@ -1,0 +1,30 @@
+{
+   "id" : "7597bd13-9f57-4cd1-a7cf-dc0ac7375280",
+   "active" : true,
+   "personal" : {
+      "firstName" : "Retha",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "45736-8922",
+            "region" : "KY",
+            "countryId" : "US",
+            "addressLine1" : "70819 Kamron Parkways Suite 334",
+            "city" : "Tucson",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "113.449.8885 x88304",
+      "mobilePhone" : "038.636.7271 x696",
+      "dateOfBirth" : "1958-12-09",
+      "email" : "aida@daugherty-stark.om",
+      "lastName" : "Lakin",
+      "preferredContactTypeId" : "003"
+   },
+   "username" : "neil",
+   "expirationDate" : "2019-08-27",
+   "enrollmentDate" : "2017-07-06",
+   "barcode" : "738734358526066",
+   "type" : "patron"
+}
+

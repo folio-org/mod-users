@@ -1,0 +1,30 @@
+{
+   "barcode" : "12660472421494",
+   "expirationDate" : "2020-09-11",
+   "enrollmentDate" : "2016-08-04",
+   "type" : "patron",
+   "active" : false,
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Sutter Creek",
+            "addressLine1" : "73863 Waters Rapid",
+            "countryId" : "US",
+            "region" : "WI",
+            "postalCode" : "33617",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "firstName" : "Lottie",
+      "email" : "nettie@cummings-and-sons.ps",
+      "dateOfBirth" : "1958-02-12",
+      "phone" : "1-386-358-5666 x8907",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Emard",
+      "middleName" : "Tressie"
+   },
+   "id" : "8f7a47c4-d66f-4dba-9255-f74507a2ecee",
+   "username" : "bridget"
+}
+

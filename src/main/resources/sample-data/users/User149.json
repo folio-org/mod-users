@@ -1,0 +1,30 @@
+{
+   "expirationDate" : "2020-09-16",
+   "enrollmentDate" : "2016-11-10",
+   "barcode" : "356270679006161",
+   "type" : "patron",
+   "id" : "5e3d70ff-a89a-44a0-a2e2-4cae67668805",
+   "personal" : {
+      "lastName" : "Kautzer",
+      "middleName" : "Maxine",
+      "preferredContactTypeId" : "005",
+      "phone" : "1-102-800-2197 x336",
+      "dateOfBirth" : "1993-09-23",
+      "email" : "mariela@wiza-schamberger.gq",
+      "firstName" : "Evalyn",
+      "addresses" : [
+         {
+            "postalCode" : "17842",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "VT",
+            "city" : "Santa Clara",
+            "addressLine1" : "75452 Ladarius Trace Apt. 604",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "active" : true,
+   "username" : "gardner"
+}
+

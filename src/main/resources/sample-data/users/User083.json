@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "barcode" : "400008433192770",
+   "enrollmentDate" : "2015-06-02",
+   "expirationDate" : "2019-04-24",
+   "username" : "earnestine",
+   "id" : "17b26a4a-e481-4b86-8949-5ef6570eb622",
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "middleName" : "Wilburn",
+      "lastName" : "Predovic",
+      "firstName" : "Earline",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Compton",
+            "addressLine1" : "72634 Valentin Forges",
+            "countryId" : "US",
+            "region" : "MH",
+            "postalCode" : "56306",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "phone" : "877-400-5507",
+      "email" : "mariam@nitzsche-pacocha.fk",
+      "dateOfBirth" : "1974-10-29"
+   },
+   "active" : true
+}
+

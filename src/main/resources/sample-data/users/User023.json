@@ -1,0 +1,30 @@
+{
+   "enrollmentDate" : "2016-02-14",
+   "expirationDate" : "2020-12-10",
+   "barcode" : "573009423883949",
+   "type" : "patron",
+   "id" : "ceecd8ee-9586-4024-b107-d368b58a1025",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Rodriguez",
+      "firstName" : "Aiden",
+      "addresses" : [
+         {
+            "addressLine1" : "51874 Lot I",
+            "countryId" : "US",
+            "city" : "Citrus Heights",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "79425",
+            "region" : "TN"
+         }
+      ],
+      "phone" : "(272)693-4697 x283",
+      "mobilePhone" : "1-828-390-1202",
+      "email" : "reynold@schiller-rosenbaum.mr",
+      "dateOfBirth" : "2006-01-06"
+   },
+   "username" : "wilson"
+}
+

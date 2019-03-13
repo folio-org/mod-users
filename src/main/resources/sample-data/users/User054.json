@@ -1,0 +1,30 @@
+{
+   "barcode" : "124718599753229",
+   "expirationDate" : "2020-07-06",
+   "enrollmentDate" : "2017-06-08",
+   "type" : "patron",
+   "personal" : {
+      "lastName" : "Hagenes",
+      "middleName" : "Lamar",
+      "preferredContactTypeId" : "005",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Rolling Hills",
+            "addressLine1" : "20601 Angelo Ridges",
+            "countryId" : "US",
+            "region" : "OR",
+            "postalCode" : "92431-5673",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "firstName" : "Alyce",
+      "dateOfBirth" : "1990-05-16",
+      "email" : "aurelie@ankunding-kiehn.us",
+      "phone" : "(555)883-2274 x6584"
+   },
+   "active" : false,
+   "id" : "a8a11126-40b9-45f0-aa6e-9408e57c4b47",
+   "username" : "erna"
+}
+

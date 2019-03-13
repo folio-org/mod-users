@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "barcode" : "669055896442806",
+   "enrollmentDate" : "2015-07-27",
+   "expirationDate" : "2019-07-07",
+   "username" : "norberto",
+   "personal" : {
+      "middleName" : "Paris",
+      "lastName" : "Schneider",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "region" : "MP",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "14348-9333",
+            "primaryAddress" : true,
+            "addressLine1" : "81682 Maggio Fields",
+            "countryId" : "US",
+            "city" : "Ventura"
+         }
+      ],
+      "firstName" : "Deion",
+      "dateOfBirth" : "1990-07-02",
+      "email" : "adrianna@keeling-and-sons.je",
+      "phone" : "550-927-1692",
+      "mobilePhone" : "663-550-2837"
+   },
+   "active" : true,
+   "id" : "0db6912a-40c0-41db-8d15-be05ff851f96"
+}
+

@@ -1,0 +1,30 @@
+{
+   "enrollmentDate" : "2016-08-17",
+   "expirationDate" : "2019-11-15",
+   "barcode" : "558211605444718",
+   "type" : "patron",
+   "active" : true,
+   "id" : "63ff6975-5d7f-46c1-983a-dba27d163c4a",
+   "personal" : {
+      "firstName" : "Erling",
+      "addresses" : [
+         {
+            "postalCode" : "39226-2856",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "NC",
+            "city" : "Apple Valley",
+            "addressLine1" : "45137 Jast Causeway",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "761.817.8409 x005",
+      "dateOfBirth" : "1954-10-07",
+      "email" : "faustino@mueller-inc.gu",
+      "middleName" : "Keeley",
+      "lastName" : "West",
+      "preferredContactTypeId" : "003"
+   },
+   "username" : "caitlyn"
+}
+

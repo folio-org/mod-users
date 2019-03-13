@@ -1,0 +1,31 @@
+{
+   "personal" : {
+      "middleName" : "Brionna",
+      "email" : "hester@sauer-kuphal.as",
+      "mobilePhone" : "1-211-174-2359",
+      "firstName" : "Ada",
+      "preferredContactTypeId" : "002",
+      "phone" : "413.255.5895",
+      "lastName" : "Medhurst",
+      "dateOfBirth" : "1973-04-18",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "42351 Andre Island Suite 619",
+            "city" : "Montebello",
+            "region" : "MS",
+            "postalCode" : "88812",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "enrollmentDate" : "2016-06-17",
+   "username" : "gladyce",
+   "active" : true,
+   "expirationDate" : "2020-08-06",
+   "type" : "patron",
+   "barcode" : "301995528428356",
+   "id" : "c2f1cefa-2ebb-4a7a-a420-84dcf2f89cf5"
+}
+

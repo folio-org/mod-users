@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "barcode" : "981420708307993",
+   "expirationDate" : "2019-06-19",
+   "enrollmentDate" : "2018-08-21",
+   "username" : "ricardo",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Kohler",
+      "middleName" : "Lowell",
+      "preferredContactTypeId" : "003",
+      "mobilePhone" : "(824)319-7898",
+      "phone" : "116-652-6703",
+      "dateOfBirth" : "1976-06-06",
+      "email" : "mack@gulgowski-conn.om",
+      "firstName" : "Maida",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "07192",
+            "region" : "GU",
+            "countryId" : "US",
+            "addressLine1" : "03888 Douglas Keys",
+            "city" : "Fountain Valley",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "id" : "b09038a4-0386-4782-8ee8-11aa87e09887"
+}
+

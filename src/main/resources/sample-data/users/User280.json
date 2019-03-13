@@ -1,0 +1,31 @@
+{
+   "active" : false,
+   "username" : "seth",
+   "enrollmentDate" : "2016-02-10",
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "92493",
+            "region" : "AP",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Inglewood",
+            "addressLine1" : "14106 Nils Extension Suite 279"
+         }
+      ],
+      "dateOfBirth" : "1995-09-18",
+      "phone" : "(679)277-6615 x14809",
+      "lastName" : "Hyatt",
+      "email" : "yesenia@schimmel-inc.id",
+      "middleName" : "Arthur",
+      "firstName" : "Casimir",
+      "mobilePhone" : "1-142-783-1473",
+      "preferredContactTypeId" : "004"
+   },
+   "id" : "6f644096-0cb6-4d9c-9da4-0831b3625c0d",
+   "barcode" : "456173865331194",
+   "type" : "patron",
+   "expirationDate" : "2019-04-13"
+}
+

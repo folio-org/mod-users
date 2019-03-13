@@ -1,0 +1,30 @@
+{
+   "barcode" : "198766567677200",
+   "enrollmentDate" : "2015-08-18",
+   "expirationDate" : "2020-01-20",
+   "type" : "patron",
+   "active" : true,
+   "id" : "b7f677aa-e2db-4bb5-81f8-beee547bce68",
+   "personal" : {
+      "firstName" : "Gayle",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Ventura",
+            "addressLine1" : "22734 Rogelio Park #619",
+            "countryId" : "US",
+            "region" : "UT",
+            "postalCode" : "58929-3148",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "phone" : "1-488-794-2446 x46383",
+      "email" : "ed@wyman-and-sons.lc",
+      "dateOfBirth" : "1948-08-28",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Spinka",
+      "middleName" : "Yadira"
+   },
+   "username" : "ellen"
+}
+

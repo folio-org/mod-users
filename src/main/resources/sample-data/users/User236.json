@@ -1,0 +1,31 @@
+{
+   "username" : "niko",
+   "enrollmentDate" : "2019-01-24",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "19156 Fatima Cliff",
+            "city" : "Mission Viejo",
+            "region" : "UT",
+            "postalCode" : "91999-5314",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "1989-09-23",
+      "phone" : "1-120-262-3616",
+      "lastName" : "Okuneva",
+      "middleName" : "Ronny",
+      "email" : "lucie@moore-bradtke.gh",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "656-639-3081",
+      "firstName" : "Hailey"
+   },
+   "active" : true,
+   "expirationDate" : "2019-09-30",
+   "type" : "patron",
+   "id" : "50e30476-ee93-4b16-a53c-27ce2c4b49d7",
+   "barcode" : "883315883746696"
+}
+

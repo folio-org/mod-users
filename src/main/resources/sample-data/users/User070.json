@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "enrollmentDate" : "2018-03-20",
+   "expirationDate" : "2020-08-07",
+   "barcode" : "479599371032787",
+   "username" : "karolann",
+   "personal" : {
+      "mobilePhone" : "(678)932-6845",
+      "phone" : "1-244-042-5537",
+      "dateOfBirth" : "2004-07-15",
+      "email" : "ansley@marvin-bayer.md",
+      "firstName" : "Marian",
+      "addresses" : [
+         {
+            "region" : "NM",
+            "postalCode" : "68232-5069",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Fremont",
+            "addressLine1" : "32054 Buford Club",
+            "countryId" : "US"
+         }
+      ],
+      "middleName" : "Newton",
+      "lastName" : "Maggio",
+      "preferredContactTypeId" : "001"
+   },
+   "id" : "2ee07dc7-835f-4a33-a783-db2ae3f1238c",
+   "active" : true
+}
+

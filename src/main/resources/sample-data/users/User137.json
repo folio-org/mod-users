@@ -1,0 +1,31 @@
+{
+   "barcode" : "446795796750656",
+   "enrollmentDate" : "2016-11-06",
+   "expirationDate" : "2020-07-04",
+   "type" : "patron",
+   "id" : "7aa8082c-d1ed-4e33-bf0e-02d3efe5624b",
+   "active" : true,
+   "personal" : {
+      "firstName" : "Freida",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "29068-1244",
+            "region" : "AE",
+            "addressLine1" : "89993 Freeman Mews Apt. 243",
+            "countryId" : "US",
+            "city" : "Costa Mesa",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "1-131-621-4510 x438",
+      "mobilePhone" : "705.747.1963",
+      "dateOfBirth" : "1984-04-26",
+      "email" : "sheridan@white-hoppe.ac",
+      "lastName" : "Thompson",
+      "middleName" : "Jaren",
+      "preferredContactTypeId" : "005"
+   },
+   "username" : "kayleigh"
+}
+

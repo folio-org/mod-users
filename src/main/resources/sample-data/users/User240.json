@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2020-02-17",
+   "type" : "patron",
+   "barcode" : "197245848205728",
+   "id" : "ef39251f-db4c-4253-9951-645735f84904",
+   "personal" : {
+      "middleName" : "Ricky",
+      "email" : "ceasar@schroeder-hauck-and-barrows.es",
+      "preferredContactTypeId" : "001",
+      "mobilePhone" : "(746)171-3004 x0116",
+      "firstName" : "Agustina",
+      "phone" : "947-332-7963 x647",
+      "lastName" : "Funk",
+      "dateOfBirth" : "2006-01-13",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "91744 Durward Fall Apt. 907",
+            "city" : "San Diego",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "94029",
+            "region" : "IN"
+         }
+      ]
+   },
+   "enrollmentDate" : "2017-01-22",
+   "username" : "boyd",
+   "active" : true
+}
+

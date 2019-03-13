@@ -1,0 +1,31 @@
+{
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "1971-01-07",
+      "addresses" : [
+         {
+            "city" : "Alameda",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "95830 Mayer Haven",
+            "postalCode" : "86992-2850",
+            "region" : "MS",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "middleName" : "Marisa",
+      "email" : "candido@white-bartell-and-glover.ir",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "514-538-6868",
+      "firstName" : "Lilly",
+      "phone" : "307-470-4467",
+      "lastName" : "Simonis"
+   },
+   "username" : "barbara",
+   "enrollmentDate" : "2015-05-06",
+   "barcode" : "528756905592459",
+   "id" : "223907c9-517b-4b10-a6bc-8f7fcb0a05c3",
+   "expirationDate" : "2020-11-06",
+   "type" : "patron"
+}
+

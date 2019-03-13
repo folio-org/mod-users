@@ -1,0 +1,31 @@
+{
+   "active" : false,
+   "id" : "7ff26639-c033-442a-8bf4-2e896b17fcf9",
+   "personal" : {
+      "middleName" : "Payton",
+      "lastName" : "Boyle",
+      "preferredContactTypeId" : "001",
+      "phone" : "833-693-7297",
+      "mobilePhone" : "(785)279-5645 x1029",
+      "dateOfBirth" : "1989-12-12",
+      "email" : "mayra@schmeler-llc.ge",
+      "firstName" : "Andre",
+      "addresses" : [
+         {
+            "postalCode" : "44897",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "MP",
+            "city" : "Bakersfield",
+            "addressLine1" : "02433 Mraz Roads Suite 089",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "username" : "jordy",
+   "expirationDate" : "2020-11-23",
+   "enrollmentDate" : "2015-06-12",
+   "barcode" : "871239214404756",
+   "type" : "patron"
+}
+

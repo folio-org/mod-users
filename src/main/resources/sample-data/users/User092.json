@@ -1,0 +1,30 @@
+{
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "Fontana",
+            "countryId" : "US",
+            "addressLine1" : "01103 Karianne Isle",
+            "primaryAddress" : true,
+            "postalCode" : "26940-9843",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "AZ"
+         }
+      ],
+      "firstName" : "Sammy",
+      "dateOfBirth" : "1954-03-19",
+      "email" : "dexter@schultz-group.ac.uk",
+      "phone" : "689-392-1784 x52973",
+      "lastName" : "Johns",
+      "middleName" : "Bartholome",
+      "preferredContactTypeId" : "001"
+   },
+   "active" : false,
+   "id" : "89066e1d-0691-4514-ae37-586cf746d3f4",
+   "username" : "kamryn",
+   "barcode" : "385280395079359",
+   "expirationDate" : "2020-10-27",
+   "enrollmentDate" : "2019-01-29",
+   "type" : "patron"
+}
+

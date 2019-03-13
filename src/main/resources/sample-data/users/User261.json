@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "username" : "giovani",
+   "enrollmentDate" : "2015-07-02",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "24658 Koepp Passage Suite 308",
+            "city" : "Lancaster",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "79769",
+            "region" : "MP"
+         }
+      ],
+      "dateOfBirth" : "1989-02-09",
+      "phone" : "519-829-2693",
+      "lastName" : "Toy",
+      "email" : "wanda@murphy-reichel-and-nitzsche.cn",
+      "middleName" : "Meda",
+      "preferredContactTypeId" : "001",
+      "firstName" : "Jennie"
+   },
+   "id" : "ac521a2a-d933-42f9-b3a4-2d7399880057",
+   "barcode" : "333522075817029",
+   "expirationDate" : "2020-04-22",
+   "type" : "patron"
+}
+

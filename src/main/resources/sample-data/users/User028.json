@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2018-04-16",
+   "expirationDate" : "2020-07-01",
+   "barcode" : "721881164534401",
+   "type" : "patron",
+   "id" : "97f100da-9218-4351-bc14-ef0558f01625",
+   "active" : false,
+   "personal" : {
+      "lastName" : "Krajcik",
+      "middleName" : "Tyra",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Coralie",
+      "addresses" : [
+         {
+            "region" : "IA",
+            "postalCode" : "15626-0889",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Gary",
+            "countryId" : "US",
+            "addressLine1" : "38080 Leopoldo Parkways Suite 363"
+         }
+      ],
+      "mobilePhone" : "(371)131-9205",
+      "phone" : "(506)396-7773",
+      "dateOfBirth" : "1993-08-12",
+      "email" : "emmet@bayer-marquardt-and-rolfson.fo"
+   },
+   "username" : "otto"
+}
+

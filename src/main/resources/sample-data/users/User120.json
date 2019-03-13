@@ -1,0 +1,31 @@
+{
+   "barcode" : "266239838351268",
+   "enrollmentDate" : "2015-07-31",
+   "expirationDate" : "2020-11-22",
+   "type" : "patron",
+   "active" : false,
+   "id" : "5cf0c0d9-17cc-42f1-87c1-10ec6476fc3a",
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "68145",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "AK",
+            "city" : "Avalon",
+            "addressLine1" : "70292 Collins Isle Suite 950",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Emerson",
+      "dateOfBirth" : "1981-01-09",
+      "email" : "marion@pollich-wyman.an",
+      "phone" : "505-141-3379 x346",
+      "mobilePhone" : "(504)649-6115 x156",
+      "middleName" : "Amira",
+      "lastName" : "Grant",
+      "preferredContactTypeId" : "005"
+   },
+   "username" : "zula"
+}
+

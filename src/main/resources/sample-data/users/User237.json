@@ -1,0 +1,31 @@
+{
+   "active" : false,
+   "enrollmentDate" : "2017-01-05",
+   "username" : "jailyn",
+   "personal" : {
+      "phone" : "(269)998-3431 x559",
+      "lastName" : "Zulauf",
+      "email" : "catherine@daugherty-and-sons.jo",
+      "middleName" : "Clifford",
+      "preferredContactTypeId" : "003",
+      "mobilePhone" : "(664)091-9434",
+      "firstName" : "Ezekiel",
+      "addresses" : [
+         {
+            "city" : "Owensboro",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "47414 Myrtle Vista",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "36952-8155",
+            "region" : "IN"
+         }
+      ],
+      "dateOfBirth" : "1970-11-28"
+   },
+   "id" : "3387893c-7bde-4d2f-9ad2-d4974b3e959e",
+   "barcode" : "236808330073397",
+   "expirationDate" : "2020-02-02",
+   "type" : "patron"
+}
+

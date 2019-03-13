@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2015-10-08",
+   "expirationDate" : "2020-12-18",
+   "barcode" : "96069289569047",
+   "type" : "patron",
+   "active" : true,
+   "id" : "f1c2d681-faba-4950-918f-bf58d914ba1f",
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "middleName" : "Keanu",
+      "lastName" : "Parisian",
+      "mobilePhone" : "685.462.7647 x23440",
+      "phone" : "664-759-1427",
+      "email" : "estell@larkin-lueilwitz.dz",
+      "dateOfBirth" : "1979-01-20",
+      "firstName" : "Mittie",
+      "addresses" : [
+         {
+            "region" : "WV",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "65816-8769",
+            "primaryAddress" : true,
+            "addressLine1" : "59102 Unit 84-B",
+            "countryId" : "US",
+            "city" : "Los Angeles"
+         }
+      ]
+   },
+   "username" : "maiya"
+}
+

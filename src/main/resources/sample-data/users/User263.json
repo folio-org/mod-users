@@ -1,0 +1,30 @@
+{
+   "expirationDate" : "2020-03-07",
+   "type" : "patron",
+   "barcode" : "81579696113021",
+   "id" : "1dbf36ab-bba6-4725-8456-bda646796dd1",
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "Elkhart",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "06865 Wisozk Overpass",
+            "postalCode" : "31438-6744",
+            "region" : "TX",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "2008-02-20",
+      "lastName" : "Hirthe",
+      "phone" : "1-339-245-0353 x4993",
+      "mobilePhone" : "1-267-394-1592 x833",
+      "firstName" : "Jaleel",
+      "preferredContactTypeId" : "005",
+      "email" : "minerva@lebsack-group.mw"
+   },
+   "enrollmentDate" : "2018-12-04",
+   "username" : "vivienne",
+   "active" : true
+}
+

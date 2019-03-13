@@ -1,0 +1,31 @@
+{
+   "active" : true,
+   "id" : "f1dc9a7e-492b-4f2b-848a-115b5919d589",
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "59508 Lindsey Mission",
+            "city" : "Hoover",
+            "region" : "UT",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "07349"
+         }
+      ],
+      "firstName" : "Raoul",
+      "dateOfBirth" : "1981-02-07",
+      "email" : "clemmie@hettinger-larson-and-abshire.pt",
+      "mobilePhone" : "218.514.8233 x080",
+      "phone" : "(420)513-3214",
+      "middleName" : "Loy",
+      "lastName" : "Heller",
+      "preferredContactTypeId" : "001"
+   },
+   "username" : "danial",
+   "barcode" : "131896890107931",
+   "expirationDate" : "2019-03-30",
+   "enrollmentDate" : "2019-02-08",
+   "type" : "patron"
+}
+

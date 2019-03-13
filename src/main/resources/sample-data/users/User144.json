@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "enrollmentDate" : "2019-01-07",
+   "expirationDate" : "2020-05-12",
+   "barcode" : "634378221416120",
+   "username" : "louie",
+   "id" : "4a5e1aa3-0733-45d9-b9cc-836b4e92d6ea",
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "middleName" : "Lane",
+      "lastName" : "Brakus",
+      "addresses" : [
+         {
+            "region" : "SC",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "85718-1813",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "14483 Walsh Viaduct",
+            "city" : "Phoenix"
+         }
+      ],
+      "firstName" : "Joyce",
+      "email" : "tia@braun-beatty.ke",
+      "dateOfBirth" : "2006-08-24",
+      "mobilePhone" : "204-258-1825 x225",
+      "phone" : "(480)552-9477"
+   },
+   "active" : false
+}
+

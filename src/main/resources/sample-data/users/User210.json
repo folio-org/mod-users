@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "enrollmentDate" : "2017-05-13",
+   "username" : "zackery",
+   "personal" : {
+      "mobilePhone" : "1-315-820-3371 x235",
+      "preferredContactTypeId" : "001",
+      "firstName" : "Amira",
+      "email" : "noel@rath-oconner-and-hackett.om",
+      "lastName" : "Johnson",
+      "phone" : "374-165-3103",
+      "dateOfBirth" : "1976-01-13",
+      "addresses" : [
+         {
+            "region" : "NC",
+            "postalCode" : "59268-9757",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "addressLine1" : "71859 Mariela Radial",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Santa Rosa"
+         }
+      ]
+   },
+   "id" : "f303e908-30dc-4139-9542-4a4e206c4b96",
+   "barcode" : "755491898290173",
+   "expirationDate" : "2020-02-03",
+   "type" : "patron"
+}
+

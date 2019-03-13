@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "enrollmentDate" : "2016-07-23",
+   "expirationDate" : "2021-03-06",
+   "barcode" : "225841499591069",
+   "username" : "nathanial",
+   "personal" : {
+      "preferredContactTypeId" : "003",
+      "lastName" : "Quitzon",
+      "middleName" : "Maria",
+      "firstName" : "Trystan",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Hammond",
+            "countryId" : "US",
+            "addressLine1" : "93630 Jaren Lodge Apt. 500",
+            "region" : "KS",
+            "postalCode" : "32299-8293",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "phone" : "1-470-776-6946 x086",
+      "email" : "dariana@schowalter-jacobi.md",
+      "dateOfBirth" : "1971-06-16"
+   },
+   "active" : false,
+   "id" : "c6a1f097-1292-441c-a760-682279a7f94c"
+}
+

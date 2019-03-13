@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "1963-10-08",
+      "addresses" : [
+         {
+            "addressLine1" : "96095 Nicolas Row",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Laguna Woods",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "FL",
+            "postalCode" : "50788-7838"
+         }
+      ],
+      "email" : "cullen@cassin-llc.bh",
+      "mobilePhone" : "959-422-9547 x581",
+      "firstName" : "Harry",
+      "preferredContactTypeId" : "002",
+      "phone" : "261.843.4484 x190",
+      "lastName" : "Barrows"
+   },
+   "enrollmentDate" : "2015-10-30",
+   "username" : "raphaelle",
+   "barcode" : "255735337127152",
+   "id" : "c573e5f8-a570-475d-a75e-88a4d2b757d2",
+   "expirationDate" : "2019-04-11",
+   "type" : "patron"
+}
+

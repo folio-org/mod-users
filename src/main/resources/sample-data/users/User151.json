@@ -1,0 +1,31 @@
+{
+   "barcode" : "889532071090496",
+   "enrollmentDate" : "2016-08-26",
+   "expirationDate" : "2019-05-02",
+   "type" : "patron",
+   "id" : "23807f0f-6053-417c-b335-f3b0f84ceb8e",
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "1965-05-23",
+      "email" : "andy@little-abernathy-and-weissnat.dj",
+      "mobilePhone" : "1-212-924-1617",
+      "phone" : "(815)321-8493 x5347",
+      "addresses" : [
+         {
+            "city" : "Sierra Vista",
+            "countryId" : "US",
+            "addressLine1" : "25186 Loma Drive",
+            "primaryAddress" : true,
+            "postalCode" : "25029",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "MT"
+         }
+      ],
+      "firstName" : "Shyann",
+      "middleName" : "Courtney",
+      "lastName" : "Hessel",
+      "preferredContactTypeId" : "001"
+   },
+   "username" : "destany"
+}
+

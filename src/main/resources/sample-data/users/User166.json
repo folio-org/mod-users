@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2020-10-08",
+   "enrollmentDate" : "2016-10-03",
+   "barcode" : "738389180339421",
+   "username" : "mina",
+   "id" : "c0d4a2da-7c38-46f4-869c-797bb083ee2d",
+   "personal" : {
+      "dateOfBirth" : "1967-09-16",
+      "email" : "jaqueline@prohaska-toy.az.us",
+      "phone" : "1-220-294-1820",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "84767",
+            "region" : "CO",
+            "addressLine1" : "03906 Waelchi Lodge",
+            "countryId" : "US",
+            "city" : "La Mirada",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Linda",
+      "middleName" : "Abbigail",
+      "lastName" : "Grady",
+      "preferredContactTypeId" : "005"
+   },
+   "active" : true
+}
+

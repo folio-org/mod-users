@@ -1,0 +1,31 @@
+{
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "mobilePhone" : "(571)322-6274",
+      "firstName" : "Ellis",
+      "email" : "zola@wisozk-oreilly-and-veum.ls",
+      "middleName" : "Darwin",
+      "lastName" : "Kuhic",
+      "phone" : "697.664.2459 x1220",
+      "dateOfBirth" : "1968-12-04",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "02030",
+            "region" : "AS",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Fountain Valley",
+            "addressLine1" : "06864 Huels Skyway"
+         }
+      ]
+   },
+   "enrollmentDate" : "2018-07-24",
+   "username" : "amir",
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2020-01-05",
+   "barcode" : "904469293249338",
+   "id" : "6ff36aa8-c68d-42c9-b68b-ece603ea59d7"
+}
+

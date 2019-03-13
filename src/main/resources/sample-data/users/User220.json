@@ -1,0 +1,29 @@
+{
+   "barcode" : "574640275318167",
+   "id" : "5f9bb63a-66f1-47eb-bc19-f182af2fc3e7",
+   "expirationDate" : "2020-08-19",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "1956-01-02",
+      "firstName" : "Vito",
+      "preferredContactTypeId" : "004",
+      "email" : "tiffany@klocko-wolf-and-marks.mc",
+      "addresses" : [
+         {
+            "city" : "Daly City",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "86782 Schmitt Square Apt. 508",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "GA",
+            "postalCode" : "49924-4645"
+         }
+      ],
+      "lastName" : "Koss",
+      "phone" : "(581)973-3149 x2722"
+   },
+   "username" : "jaeden",
+   "enrollmentDate" : "2015-04-04"
+}
+

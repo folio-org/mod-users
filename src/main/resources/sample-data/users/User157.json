@@ -1,0 +1,30 @@
+{
+   "username" : "dock",
+   "active" : false,
+   "id" : "dc6e1590-7021-433d-98a3-eda0f8d8fde1",
+   "personal" : {
+      "mobilePhone" : "999-776-5791 x8374",
+      "phone" : "118-350-2886 x77039",
+      "dateOfBirth" : "2005-08-04",
+      "email" : "geo@hodkiewicz-runolfsson-and-mueller.nm.us",
+      "firstName" : "Parker",
+      "addresses" : [
+         {
+            "city" : "Sitka",
+            "addressLine1" : "88604 Richard Dale",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "09951-8342",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "ID"
+         }
+      ],
+      "lastName" : "Ratke",
+      "preferredContactTypeId" : "001"
+   },
+   "type" : "patron",
+   "expirationDate" : "2020-12-11",
+   "enrollmentDate" : "2017-02-11",
+   "barcode" : "181666707103044"
+}
+

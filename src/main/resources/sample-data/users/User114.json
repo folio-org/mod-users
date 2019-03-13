@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "barcode" : "503414023823857",
+   "enrollmentDate" : "2018-06-11",
+   "expirationDate" : "2019-10-19",
+   "username" : "eleazar",
+   "id" : "57db810d-d59c-4443-ab43-3542cfdf7905",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Roob",
+      "middleName" : "Elwyn",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "(434)191-5582",
+      "phone" : "(480)987-5187 x678",
+      "dateOfBirth" : "2003-10-22",
+      "email" : "warren@lind-llc.nu",
+      "firstName" : "Lowell",
+      "addresses" : [
+         {
+            "postalCode" : "96395",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "IL",
+            "city" : "Eufaula",
+            "countryId" : "US",
+            "addressLine1" : "16243 Austin Harbors #832",
+            "primaryAddress" : true
+         }
+      ]
+   }
+}
+

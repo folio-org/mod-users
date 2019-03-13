@@ -1,0 +1,30 @@
+{
+   "personal" : {
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "CT",
+            "postalCode" : "24505-1733",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Juneau",
+            "addressLine1" : "75651 Nikko Run #792"
+         }
+      ],
+      "dateOfBirth" : "2000-08-09",
+      "lastName" : "Predovic",
+      "phone" : "226-832-0548",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "409.395.8705 x1313",
+      "firstName" : "Cornell",
+      "email" : "cody@schroeder-swaniawski.ks.us"
+   },
+   "enrollmentDate" : "2018-05-29",
+   "username" : "newell",
+   "active" : false,
+   "type" : "patron",
+   "expirationDate" : "2021-01-19",
+   "barcode" : "894793248408369",
+   "id" : "8af5eaca-d164-4a5f-9941-0467c6facffa"
+}
+

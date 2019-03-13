@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2021-02-26",
+   "enrollmentDate" : "2017-06-27",
+   "barcode" : "236964750970123",
+   "type" : "patron",
+   "id" : "2a424823-588a-45ee-9441-a6384b6614b2",
+   "personal" : {
+      "firstName" : "Pietro",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "49964 Brannon Ford Suite 362",
+            "countryId" : "US",
+            "city" : "Kettering",
+            "region" : "DE",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "69199-1877"
+         }
+      ],
+      "phone" : "1-626-870-9701 x37563",
+      "mobilePhone" : "(487)166-9371 x49884",
+      "email" : "pascale@lindgren-hammes-and-toy.nm.us",
+      "dateOfBirth" : "1979-01-23",
+      "preferredContactTypeId" : "004",
+      "middleName" : "Brigitte",
+      "lastName" : "Brown"
+   },
+   "active" : true,
+   "username" : "vida"
+}
+

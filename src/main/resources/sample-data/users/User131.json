@@ -1,0 +1,30 @@
+{
+   "username" : "herbert",
+   "id" : "62b25727-310f-4fa3-b308-666a6cf28c97",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Bergnaum",
+      "firstName" : "Evalyn",
+      "addresses" : [
+         {
+            "region" : "OK",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "44989-7843",
+            "primaryAddress" : true,
+            "addressLine1" : "68921 Brain Fort",
+            "countryId" : "US",
+            "city" : "Laguna Woods"
+         }
+      ],
+      "mobilePhone" : "(310)631-5558 x6886",
+      "phone" : "(883)824-0791 x93849",
+      "email" : "marlon@okuneva-ledner-and-botsford.ms.us",
+      "dateOfBirth" : "2002-04-01"
+   },
+   "type" : "patron",
+   "barcode" : "944257632357327",
+   "enrollmentDate" : "2016-01-24",
+   "expirationDate" : "2019-08-31"
+}
+

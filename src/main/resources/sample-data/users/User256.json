@@ -1,0 +1,30 @@
+{
+   "id" : "dc5dab8d-f80a-476a-b920-3cf21eeee902",
+   "barcode" : "518831601344295",
+   "type" : "patron",
+   "expirationDate" : "2020-07-15",
+   "active" : true,
+   "username" : "theresia",
+   "enrollmentDate" : "2015-03-15",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "La Habra",
+            "addressLine1" : "95600 Basement",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "NY",
+            "postalCode" : "26234-8501"
+         }
+      ],
+      "dateOfBirth" : "1964-06-16",
+      "phone" : "500.188.3735",
+      "lastName" : "Schuster",
+      "email" : "mitchel@leuschke-klocko.dz",
+      "mobilePhone" : "031.904.0434",
+      "firstName" : "Luz",
+      "preferredContactTypeId" : "002"
+   }
+}
+

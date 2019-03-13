@@ -1,0 +1,31 @@
+{
+   "active" : false,
+   "enrollmentDate" : "2017-05-21",
+   "username" : "moshe",
+   "personal" : {
+      "lastName" : "Emard",
+      "phone" : "(064)078-4507 x6779",
+      "firstName" : "Ciara",
+      "mobilePhone" : "1-609-887-2430",
+      "preferredContactTypeId" : "001",
+      "middleName" : "Hulda",
+      "email" : "ike@hintz-moen-and-buckridge.lc",
+      "addresses" : [
+         {
+            "postalCode" : "24691-1071",
+            "region" : "CA",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Buena Park",
+            "addressLine1" : "11964 Lowe Haven #369"
+         }
+      ],
+      "dateOfBirth" : "1984-03-09"
+   },
+   "id" : "2338689d-f27e-49fd-8bce-9f9bf7be6ea0",
+   "barcode" : "792669427464190",
+   "type" : "patron",
+   "expirationDate" : "2019-10-31"
+}
+

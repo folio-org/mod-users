@@ -1,0 +1,30 @@
+{
+   "enrollmentDate" : "2015-06-25",
+   "username" : "josefa",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Fort Smith",
+            "addressLine1" : "67186 Wendy Squares",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "MI",
+            "postalCode" : "02901"
+         }
+      ],
+      "dateOfBirth" : "1988-05-07",
+      "lastName" : "Block",
+      "phone" : "890-719-9790 x316",
+      "firstName" : "Araceli",
+      "preferredContactTypeId" : "002",
+      "email" : "fredy@lehner-and-sons.sr",
+      "middleName" : "Avery"
+   },
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2019-11-23",
+   "id" : "384272bb-efab-4e94-b3b8-f67f20796f20",
+   "barcode" : "217874037910807"
+}
+

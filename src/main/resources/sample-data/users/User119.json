@@ -1,0 +1,29 @@
+{
+   "username" : "freida",
+   "active" : false,
+   "id" : "2075c729-a9b8-43db-860c-60a3cc31a949",
+   "personal" : {
+      "addresses" : [
+         {
+            "region" : "DE",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "28899-6585",
+            "primaryAddress" : true,
+            "addressLine1" : "96238 Bernier Glens Apt. 531",
+            "countryId" : "US",
+            "city" : "Calabasas"
+         }
+      ],
+      "preferredContactTypeId" : "005",
+      "firstName" : "Jodie",
+      "lastName" : "Davis",
+      "email" : "otilia@morar-and-sons.ht",
+      "dateOfBirth" : "2000-02-20",
+      "phone" : "304-321-2064"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2015-07-05",
+   "expirationDate" : "2020-06-05",
+   "barcode" : "496915951064778"
+}
+

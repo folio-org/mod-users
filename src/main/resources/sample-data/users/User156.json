@@ -1,0 +1,30 @@
+{
+   "username" : "haven",
+   "id" : "1db3d6c7-6ac5-4b3c-b860-deb2df449736",
+   "active" : false,
+   "personal" : {
+      "mobilePhone" : "(553)742-9289 x3797",
+      "phone" : "726.878.7734 x07859",
+      "dateOfBirth" : "1965-03-30",
+      "email" : "hayley@carter-nikolaus-and-shanahan.sc",
+      "firstName" : "Destany",
+      "addresses" : [
+         {
+            "addressLine1" : "64633 Rohan Junctions Apt. 056",
+            "countryId" : "US",
+            "city" : "Vernon",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "66957-2784",
+            "region" : "AA"
+         }
+      ],
+      "lastName" : "Skiles",
+      "preferredContactTypeId" : "002"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2016-01-22",
+   "expirationDate" : "2020-12-06",
+   "barcode" : "38533358444816"
+}
+

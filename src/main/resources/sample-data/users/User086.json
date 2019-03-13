@@ -1,0 +1,31 @@
+{
+   "username" : "juston",
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Walker",
+      "middleName" : "Marilou",
+      "firstName" : "Adaline",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "South El Monte",
+            "addressLine1" : "47564 Floor 35",
+            "countryId" : "US",
+            "region" : "OH",
+            "postalCode" : "62000-7845",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "mobilePhone" : "1-290-020-8785",
+      "phone" : "634.000.0665",
+      "email" : "alexandre@baumbach-nicolas.lk",
+      "dateOfBirth" : "1961-10-03"
+   },
+   "id" : "3ada4a0c-e554-4749-8809-fee35fe2c7ad",
+   "active" : false,
+   "type" : "patron",
+   "expirationDate" : "2020-04-20",
+   "enrollmentDate" : "2018-10-25",
+   "barcode" : "438581524422918"
+}
+

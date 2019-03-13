@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2015-09-09",
+   "expirationDate" : "2019-12-09",
+   "barcode" : "362710768281452",
+   "type" : "patron",
+   "active" : false,
+   "personal" : {
+      "lastName" : "Hoeger",
+      "middleName" : "Libbie",
+      "preferredContactTypeId" : "002",
+      "dateOfBirth" : "1947-12-02",
+      "email" : "kathlyn@steuber-kutch-and-durgan.so",
+      "phone" : "057.915.0771",
+      "mobilePhone" : "(522)859-5038",
+      "addresses" : [
+         {
+            "city" : "Orange",
+            "countryId" : "US",
+            "addressLine1" : "59904 Sipes Heights #987",
+            "primaryAddress" : true,
+            "postalCode" : "66983-4991",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "AS"
+         }
+      ],
+      "firstName" : "Vern"
+   },
+   "id" : "42e9d211-4bfb-45fe-a088-f19d0a514f98",
+   "username" : "lorna"
+}
+

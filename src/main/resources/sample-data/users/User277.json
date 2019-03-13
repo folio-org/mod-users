@@ -1,0 +1,31 @@
+{
+   "personal" : {
+      "email" : "concepcion@jacobi-koepp.ri.us",
+      "middleName" : "Brian",
+      "mobilePhone" : "393.107.6320 x2955",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Zetta",
+      "phone" : "519.837.1673",
+      "lastName" : "Lueilwitz",
+      "dateOfBirth" : "1997-01-01",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "97733 Macey Plaza Suite 564",
+            "city" : "Demopolis",
+            "region" : "NC",
+            "postalCode" : "05692-9310",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ]
+   },
+   "username" : "colten",
+   "enrollmentDate" : "2017-08-11",
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2019-10-26",
+   "barcode" : "646523505901846",
+   "id" : "860b2291-c28a-4943-804a-169af01edef4"
+}
+

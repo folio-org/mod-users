@@ -1,0 +1,30 @@
+{
+   "active" : false,
+   "id" : "4acbd1f5-dbfe-4928-8325-2955e50faa4b",
+   "personal" : {
+      "firstName" : "Hector",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Santa Ana",
+            "addressLine1" : "53643 Lorenz Row",
+            "countryId" : "US",
+            "region" : "LA",
+            "postalCode" : "15698",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "phone" : "979.411.7549 x3208",
+      "mobilePhone" : "1-625-134-8454",
+      "email" : "edward@hermiston-runte.ca.us",
+      "dateOfBirth" : "1994-01-29",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Sauer"
+   },
+   "username" : "shaylee",
+   "expirationDate" : "2019-11-24",
+   "enrollmentDate" : "2015-07-28",
+   "barcode" : "961651134809955",
+   "type" : "patron"
+}
+

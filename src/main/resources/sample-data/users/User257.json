@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "enrollmentDate" : "2015-10-16",
+   "username" : "jimmie",
+   "personal" : {
+      "dateOfBirth" : "1963-08-16",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "46087 Evan Circle Suite 583",
+            "city" : "Laguna Woods",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "IN",
+            "postalCode" : "43554"
+         }
+      ],
+      "mobilePhone" : "227-143-9012 x232",
+      "firstName" : "Modesta",
+      "preferredContactTypeId" : "003",
+      "email" : "stone@buckridge-inc.ru",
+      "lastName" : "Runolfsson",
+      "phone" : "(284)419-7957 x666"
+   },
+   "id" : "6b5a896c-c6f4-4a28-a89a-2e2ca6ff0d0e",
+   "barcode" : "463985584611510",
+   "expirationDate" : "2020-04-27",
+   "type" : "patron"
+}
+

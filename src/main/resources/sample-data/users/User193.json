@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2020-01-20",
+   "enrollmentDate" : "2015-07-26",
+   "barcode" : "678545225007717",
+   "username" : "rodolfo",
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "lastName" : "Olson",
+      "firstName" : "Winfield",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Lynwood",
+            "addressLine1" : "67959 Marvin Canyon",
+            "countryId" : "US",
+            "region" : "NH",
+            "postalCode" : "21921",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "phone" : "1-673-699-9908 x3287",
+      "mobilePhone" : "538.009.3963",
+      "email" : "adelbert@little-and-sons.km",
+      "dateOfBirth" : "1988-02-15"
+   },
+   "id" : "1b648069-8563-41c8-afc0-d8359f11503c",
+   "active" : true
+}
+

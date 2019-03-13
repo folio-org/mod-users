@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2016-09-18",
+   "expirationDate" : "2019-08-21",
+   "barcode" : "925162037753924",
+   "type" : "patron",
+   "id" : "8d65692e-fa98-49f2-9896-f9f6b0893358",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "14490-1529",
+            "region" : "CA",
+            "countryId" : "US",
+            "addressLine1" : "46457 Joyce Bypass #865",
+            "city" : "Orange",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Prudence",
+      "email" : "abelardo@robel-lind.is",
+      "dateOfBirth" : "2011-10-14",
+      "phone" : "(927)909-8981",
+      "mobilePhone" : "547.314.7419 x92831",
+      "preferredContactTypeId" : "003",
+      "lastName" : "Hammes",
+      "middleName" : "Willie"
+   },
+   "active" : true,
+   "username" : "aliya"
+}
+

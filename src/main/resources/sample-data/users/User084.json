@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2020-04-16",
+   "enrollmentDate" : "2015-08-17",
+   "barcode" : "517661950521777",
+   "type" : "patron",
+   "id" : "342971e4-43af-44c3-a8c3-478a97cc94bc",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "middleName" : "Ilene",
+      "lastName" : "Cronin",
+      "email" : "jonatan@fisher-champlin.ad",
+      "dateOfBirth" : "2005-05-14",
+      "phone" : "779-451-7076 x0833",
+      "mobilePhone" : "1-279-039-5608 x75852",
+      "addresses" : [
+         {
+            "region" : "MN",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "45916",
+            "primaryAddress" : true,
+            "addressLine1" : "12520 Side",
+            "countryId" : "US",
+            "city" : "Decatur"
+         }
+      ],
+      "firstName" : "Claud"
+   },
+   "username" : "mathew"
+}
+

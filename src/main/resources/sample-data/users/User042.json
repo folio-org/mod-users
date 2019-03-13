@@ -1,0 +1,29 @@
+{
+   "type" : "patron",
+   "barcode" : "161752342500221",
+   "expirationDate" : "2020-06-26",
+   "enrollmentDate" : "2017-03-24",
+   "username" : "marielle",
+   "personal" : {
+      "phone" : "103-227-0227 x6093",
+      "email" : "kavon@effertz-inc.ai",
+      "dateOfBirth" : "1950-05-14",
+      "preferredContactTypeId" : "001",
+      "firstName" : "Rosemary",
+      "lastName" : "Schaden",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "47515 O'Hara Dam",
+            "countryId" : "US",
+            "city" : "Muncie",
+            "region" : "AE",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "64899"
+         }
+      ]
+   },
+   "id" : "969e6710-309e-41bd-ba35-2b97faec30b7",
+   "active" : true
+}
+

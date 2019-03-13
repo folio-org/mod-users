@@ -1,0 +1,30 @@
+{
+   "id" : "beaffbac-e56d-4e32-a653-b631945f060c",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "lastName" : "Denesik",
+      "email" : "destinee@luettgen-group.mg",
+      "dateOfBirth" : "1971-07-01",
+      "mobilePhone" : "1-429-481-8803",
+      "phone" : "(741)575-5116 x51130",
+      "addresses" : [
+         {
+            "region" : "OK",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "22672",
+            "primaryAddress" : true,
+            "addressLine1" : "43219 Zoila Trail Suite 009",
+            "countryId" : "US",
+            "city" : "City of Industry"
+         }
+      ],
+      "firstName" : "Lewis"
+   },
+   "username" : "torrey",
+   "expirationDate" : "2020-10-15",
+   "enrollmentDate" : "2015-04-05",
+   "barcode" : "412224905087885",
+   "type" : "patron"
+}
+

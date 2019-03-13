@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2020-10-13",
+   "enrollmentDate" : "2016-06-02",
+   "barcode" : "592188849255453",
+   "username" : "elsie",
+   "active" : true,
+   "id" : "b3dae815-3d30-49f9-ac26-363e661382a0",
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "middleName" : "Esteban",
+      "lastName" : "Kulas",
+      "addresses" : [
+         {
+            "region" : "MD",
+            "postalCode" : "14450-7442",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Youngstown",
+            "addressLine1" : "41662 Stop 3",
+            "countryId" : "US"
+         }
+      ],
+      "firstName" : "Loraine",
+      "email" : "krystina@wintheiser-schmitt-and-terry.fk",
+      "dateOfBirth" : "1951-05-02",
+      "phone" : "1-129-679-3379 x27246",
+      "mobilePhone" : "1-762-228-6098 x0493"
+   }
+}
+

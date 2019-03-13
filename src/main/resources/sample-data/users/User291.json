@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2019-11-26",
+   "id" : "30d7e2dd-db23-4832-b4be-30d3f5f83a60",
+   "barcode" : "720909484081527",
+   "enrollmentDate" : "2015-04-28",
+   "username" : "gilbert",
+   "personal" : {
+      "phone" : "012.912.3077",
+      "lastName" : "Bednar",
+      "middleName" : "Gail",
+      "email" : "jeremie@bartoletti-wintheiser-and-lindgren.uk",
+      "preferredContactTypeId" : "005",
+      "mobilePhone" : "282-198-8110",
+      "firstName" : "Albin",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "NE",
+            "postalCode" : "26407-6171",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "48079 Laney Spurs",
+            "city" : "Santa Rosa"
+         }
+      ],
+      "dateOfBirth" : "1956-06-06"
+   },
+   "active" : true
+}
+

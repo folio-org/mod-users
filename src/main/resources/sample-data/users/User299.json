@@ -1,0 +1,29 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2021-01-02",
+   "barcode" : "349385534992855",
+   "id" : "f45d047f-248d-424a-9571-8b1249279c02",
+   "personal" : {
+      "phone" : "445-071-4422 x37216",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "NC",
+            "postalCode" : "42914-2711",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "51190 Rempel Islands Apt. 599",
+            "city" : "Valparaiso"
+         }
+      ],
+      "lastName" : "Lockman",
+      "email" : "hiram@hettinger-kirlin.mil",
+      "dateOfBirth" : "2009-09-18",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Destiney"
+   },
+   "username" : "mollie",
+   "enrollmentDate" : "2015-11-11",
+   "active" : true
+}
+

@@ -1,0 +1,30 @@
+{
+   "personal" : {
+      "dateOfBirth" : "1960-09-18",
+      "addresses" : [
+         {
+            "postalCode" : "76024",
+            "region" : "AE",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "city" : "Tustin",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "68822 Sawayn Point Suite 289"
+         }
+      ],
+      "preferredContactTypeId" : "003",
+      "firstName" : "Antonina",
+      "middleName" : "Marques",
+      "email" : "ashley@kilback-kris-and-cronin.org",
+      "lastName" : "Emard",
+      "phone" : "(035)721-3119 x235"
+   },
+   "enrollmentDate" : "2017-09-06",
+   "username" : "dahlia",
+   "active" : false,
+   "type" : "patron",
+   "expirationDate" : "2019-03-16",
+   "barcode" : "234963930375499",
+   "id" : "292451b5-0026-4463-a762-d43fc6cc9122"
+}
+

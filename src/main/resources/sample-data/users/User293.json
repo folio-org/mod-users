@@ -1,0 +1,30 @@
+{
+   "expirationDate" : "2020-12-19",
+   "type" : "patron",
+   "id" : "abad6503-a51b-4fec-a1cd-b5f672b1ff7b",
+   "barcode" : "960595246465651",
+   "enrollmentDate" : "2016-03-01",
+   "username" : "maximo",
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "TN",
+            "postalCode" : "63640",
+            "city" : "Compton",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "41391 Geoffrey Pines #905"
+         }
+      ],
+      "dateOfBirth" : "2012-11-19",
+      "phone" : "166.903.9433",
+      "lastName" : "Mraz",
+      "middleName" : "Tobin",
+      "email" : "luis@bayer-breitenberg.zw",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Kyleigh"
+   },
+   "active" : true
+}
+

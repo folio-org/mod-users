@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2019-10-29",
+   "enrollmentDate" : "2016-10-29",
+   "barcode" : "746279801800330",
+   "username" : "nathaniel",
+   "personal" : {
+      "dateOfBirth" : "1962-11-21",
+      "email" : "christelle@weimann-and-sons.mt",
+      "mobilePhone" : "(459)612-0145",
+      "phone" : "124-896-4381",
+      "addresses" : [
+         {
+            "region" : "MS",
+            "postalCode" : "92945",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "Mesa",
+            "countryId" : "US",
+            "addressLine1" : "31257 Nitzsche Run"
+         }
+      ],
+      "firstName" : "Ines",
+      "lastName" : "Bergnaum",
+      "middleName" : "Terrill",
+      "preferredContactTypeId" : "002"
+   },
+   "id" : "c2a2f428-ab5f-46ce-b3ed-7d0ab39a0096",
+   "active" : false
+}
+

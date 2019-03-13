@@ -1,0 +1,30 @@
+{
+   "barcode" : "791638293271066",
+   "id" : "137d4cbd-00ff-4332-97cb-88373fa9b556",
+   "expirationDate" : "2019-10-04",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "1953-04-05",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Long Beach",
+            "addressLine1" : "04307 Wilburn Courts",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "DC",
+            "postalCode" : "65853-6624"
+         }
+      ],
+      "middleName" : "Annie",
+      "email" : "dejon@wilkinson-ritchie-and-heaney.ge",
+      "firstName" : "Aiyana",
+      "preferredContactTypeId" : "001",
+      "phone" : "(446)134-4449 x6505",
+      "lastName" : "Marks"
+   },
+   "enrollmentDate" : "2015-10-23",
+   "username" : "elta"
+}
+

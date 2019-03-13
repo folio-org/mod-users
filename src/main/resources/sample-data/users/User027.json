@@ -1,0 +1,30 @@
+{
+   "barcode" : "363198143212056",
+   "enrollmentDate" : "2015-07-02",
+   "expirationDate" : "2020-08-13",
+   "type" : "patron",
+   "active" : true,
+   "id" : "1ee0a888-ade1-4bc7-a9b6-15a2d46a6b18",
+   "personal" : {
+      "lastName" : "Wiza",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "553-544-3842",
+      "phone" : "864.379.8305 x7407",
+      "dateOfBirth" : "1982-01-05",
+      "email" : "audie@johns-llc.my",
+      "firstName" : "Liam",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "32477 Brigitte Burg",
+            "countryId" : "US",
+            "city" : "Hoover",
+            "region" : "TX",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "33038-7299"
+         }
+      ]
+   },
+   "username" : "noelia"
+}
+

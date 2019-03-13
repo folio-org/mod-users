@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "id" : "cc0685f2-6ac2-4840-bb67-1493c14968c5",
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Oakland",
+            "countryId" : "US",
+            "addressLine1" : "18098 Floor 27",
+            "region" : "WI",
+            "postalCode" : "09139",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "firstName" : "Geovanni",
+      "email" : "davin@braun-schiller.es",
+      "dateOfBirth" : "2012-03-21",
+      "phone" : "1-253-594-8460",
+      "preferredContactTypeId" : "004",
+      "lastName" : "Denesik",
+      "middleName" : "Columbus"
+   },
+   "username" : "elinor",
+   "expirationDate" : "2020-05-09",
+   "enrollmentDate" : "2018-03-28",
+   "barcode" : "555048703191946",
+   "type" : "patron"
+}
+

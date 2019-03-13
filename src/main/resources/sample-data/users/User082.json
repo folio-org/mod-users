@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "enrollmentDate" : "2018-09-22",
+   "expirationDate" : "2020-06-13",
+   "barcode" : "649452403745915",
+   "username" : "devan",
+   "active" : false,
+   "personal" : {
+      "mobilePhone" : "(124)569-8555 x042",
+      "phone" : "094-136-9018 x0864",
+      "email" : "muriel@jaskolski-hand-and-shields.so",
+      "dateOfBirth" : "1950-10-14",
+      "firstName" : "Lolita",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "51600",
+            "region" : "AS",
+            "countryId" : "US",
+            "addressLine1" : "80986 Colin Meadows",
+            "city" : "South Pasadena",
+            "primaryAddress" : true
+         }
+      ],
+      "preferredContactTypeId" : "005",
+      "middleName" : "Dayton",
+      "lastName" : "Miller"
+   },
+   "id" : "9e87bfea-2d31-4cc3-9cef-9e1e67553243"
+}
+

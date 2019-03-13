@@ -1,0 +1,29 @@
+{
+   "barcode" : "906257742605415",
+   "id" : "48861bba-0d73-4277-8f44-f3b65b038017",
+   "type" : "patron",
+   "expirationDate" : "2019-07-31",
+   "active" : false,
+   "personal" : {
+      "phone" : "408-348-2751",
+      "addresses" : [
+         {
+            "addressLine1" : "77331 Krajcik Field",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Bell",
+            "region" : "MN",
+            "postalCode" : "58547-5667",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "lastName" : "Satterfield",
+      "email" : "andres@hyatt-turner-and-white.nz",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Elvie",
+      "dateOfBirth" : "1981-01-13"
+   },
+   "enrollmentDate" : "2015-11-14",
+   "username" : "eugene"
+}
+

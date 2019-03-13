@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "barcode" : "915065121508469",
+   "expirationDate" : "2020-01-13",
+   "enrollmentDate" : "2016-08-30",
+   "username" : "declan",
+   "id" : "f4e0bd3e-1592-4a70-9f4a-41ccb6ca6b43",
+   "active" : false,
+   "personal" : {
+      "middleName" : "Jadyn",
+      "lastName" : "Fadel",
+      "preferredContactTypeId" : "004",
+      "dateOfBirth" : "1954-08-04",
+      "email" : "aimee@sanford-schneider-and-kessler.ar",
+      "phone" : "086.011.5005 x35496",
+      "addresses" : [
+         {
+            "city" : "Frankfort",
+            "countryId" : "US",
+            "addressLine1" : "17617 O'Reilly Drives #536",
+            "primaryAddress" : true,
+            "postalCode" : "89268",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "MO"
+         }
+      ],
+      "firstName" : "Gilbert"
+   }
+}
+

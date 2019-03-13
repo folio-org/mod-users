@@ -1,0 +1,30 @@
+{
+   "username" : "lessie",
+   "active" : true,
+   "id" : "2e5f9cc4-46ab-4dfe-b40a-8493296353fb",
+   "personal" : {
+      "lastName" : "Lehner",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "54868",
+            "region" : "IA",
+            "countryId" : "US",
+            "addressLine1" : "71430 Erica Ford",
+            "city" : "San Jose",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Name",
+      "dateOfBirth" : "1954-04-07",
+      "email" : "hailie@beatty-group.as",
+      "mobilePhone" : "1-189-695-6352 x952",
+      "phone" : "1-763-964-3113"
+   },
+   "type" : "patron",
+   "expirationDate" : "2019-03-16",
+   "enrollmentDate" : "2016-12-05",
+   "barcode" : "69474122738444"
+}
+

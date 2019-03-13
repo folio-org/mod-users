@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "barcode" : "846895020101659",
+   "enrollmentDate" : "2016-08-08",
+   "expirationDate" : "2020-09-23",
+   "username" : "travis",
+   "id" : "e923bd61-bf27-42a9-8293-ed7738c24bca",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Schroeder",
+      "middleName" : "Juston",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Natalia",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "14875-1870",
+            "region" : "VI",
+            "countryId" : "US",
+            "addressLine1" : "41390 Floor 5",
+            "city" : "San Diego",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "422-093-8502",
+      "dateOfBirth" : "1991-04-04",
+      "email" : "micah@cassin-cormier.ag"
+   }
+}
+

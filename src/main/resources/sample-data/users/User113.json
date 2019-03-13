@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "barcode" : "804117383735512",
+   "enrollmentDate" : "2015-09-05",
+   "expirationDate" : "2019-05-15",
+   "username" : "osvaldo",
+   "id" : "5dfffe75-267d-4133-b7bf-6d6daf26d5a4",
+   "personal" : {
+      "lastName" : "Schroeder",
+      "preferredContactTypeId" : "005",
+      "phone" : "1-942-839-9561 x44076",
+      "mobilePhone" : "1-962-343-8680",
+      "dateOfBirth" : "1969-03-07",
+      "email" : "woodrow@wehner-llc.io",
+      "firstName" : "Marguerite",
+      "addresses" : [
+         {
+            "postalCode" : "23212-2519",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "TX",
+            "city" : "Norwalk",
+            "countryId" : "US",
+            "addressLine1" : "69187 Berta Center #150",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "active" : true
+}
+

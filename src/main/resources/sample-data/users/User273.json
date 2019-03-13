@@ -1,0 +1,31 @@
+{
+   "personal" : {
+      "middleName" : "Lizeth",
+      "email" : "laura@torp-hilll-and-rippin.gs",
+      "firstName" : "Heath",
+      "mobilePhone" : "1-932-404-5189 x065",
+      "preferredContactTypeId" : "001",
+      "phone" : "170-706-1753 x73724",
+      "lastName" : "Glover",
+      "dateOfBirth" : "1998-04-26",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "20369-5662",
+            "region" : "AL",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "58778 Schumm Wells",
+            "city" : "La Habra"
+         }
+      ]
+   },
+   "username" : "janie",
+   "enrollmentDate" : "2017-08-08",
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2019-06-22",
+   "barcode" : "726027361780136",
+   "id" : "93136048-585b-466e-88f8-a10115e6d7e2"
+}
+

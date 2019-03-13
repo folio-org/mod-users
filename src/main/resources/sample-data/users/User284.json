@@ -1,0 +1,30 @@
+{
+   "personal" : {
+      "email" : "emil@dibbert-bode.iq",
+      "mobilePhone" : "1-663-027-5212",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Malika",
+      "phone" : "1-612-669-7014",
+      "lastName" : "Rutherford",
+      "dateOfBirth" : "1952-10-31",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "AL",
+            "postalCode" : "62598",
+            "city" : "Vincennes",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "30421 Hirthe Cove Suite 577"
+         }
+      ]
+   },
+   "username" : "sam",
+   "enrollmentDate" : "2018-02-22",
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2020-07-19",
+   "barcode" : "899885926908709",
+   "id" : "e25fecaf-dfbf-4e59-bd3d-0493c1b519f5"
+}
+

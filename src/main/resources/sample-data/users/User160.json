@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "personal" : {
+      "email" : "dereck@medhurst-gerlach-and-stracke.coop",
+      "dateOfBirth" : "1960-11-05",
+      "phone" : "1-186-650-6147",
+      "addresses" : [
+         {
+            "region" : "OR",
+            "postalCode" : "80391-5580",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Mobile",
+            "countryId" : "US",
+            "addressLine1" : "89486 Flavie Crest Apt. 636"
+         }
+      ],
+      "firstName" : "Gladyce",
+      "preferredContactTypeId" : "001",
+      "middleName" : "Erica",
+      "lastName" : "Marquardt"
+   },
+   "id" : "5cc5bd09-d90e-4484-8058-74c237165877",
+   "username" : "fritz",
+   "barcode" : "153469334675175",
+   "expirationDate" : "2020-03-13",
+   "enrollmentDate" : "2019-01-13",
+   "type" : "patron"
+}
+

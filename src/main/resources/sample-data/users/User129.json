@@ -1,0 +1,30 @@
+{
+   "id" : "488d4776-d0e2-4618-9ca9-78fa5dcc787c",
+   "active" : false,
+   "personal" : {
+      "firstName" : "Rosalia",
+      "addresses" : [
+         {
+            "postalCode" : "04798-5798",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "WA",
+            "city" : "Murray",
+            "countryId" : "US",
+            "addressLine1" : "19494 Ken Underpass Apt. 057",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "1-549-518-7196 x16096",
+      "dateOfBirth" : "1963-08-19",
+      "email" : "jovan@reichel-and-sons.pg",
+      "middleName" : "Mable",
+      "lastName" : "Hodkiewicz",
+      "preferredContactTypeId" : "004"
+   },
+   "username" : "yoshiko",
+   "barcode" : "701139394489075",
+   "expirationDate" : "2019-05-15",
+   "enrollmentDate" : "2017-05-03",
+   "type" : "patron"
+}
+

@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2019-07-21",
+   "enrollmentDate" : "2016-01-29",
+   "barcode" : "28080213476560",
+   "username" : "garnet",
+   "id" : "0a985a0a-b515-42a0-8ec2-1c2b7e8a1d8c",
+   "active" : false,
+   "personal" : {
+      "lastName" : "Kiehn",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Donny",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "54614-8352",
+            "region" : "NE",
+            "addressLine1" : "35813 Suite A",
+            "countryId" : "US",
+            "city" : "Juneau",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "1-372-106-2828",
+      "mobilePhone" : "236.785.4303",
+      "dateOfBirth" : "1997-04-20",
+      "email" : "dessie@zboncak-rohan.wv.us"
+   }
+}
+

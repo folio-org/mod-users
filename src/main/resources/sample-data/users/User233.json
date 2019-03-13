@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2015-06-16",
+   "username" : "jerald",
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "Chico",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "47577 Lehner Estates",
+            "postalCode" : "97634-7181",
+            "region" : "MI",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "dateOfBirth" : "1990-02-15",
+      "phone" : "1-119-512-0959 x183",
+      "lastName" : "Smitham",
+      "middleName" : "Emmy",
+      "email" : "ally@gleichner-williamson-and-kuhic.com",
+      "mobilePhone" : "367.204.6258",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Eduardo"
+   },
+   "active" : true,
+   "expirationDate" : "2020-01-10",
+   "type" : "patron",
+   "id" : "960ab857-c8c7-4445-8d24-1e4c33de3e86",
+   "barcode" : "2221611715057"
+}
+

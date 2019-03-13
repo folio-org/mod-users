@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "barcode" : "465292133786217",
+   "expirationDate" : "2019-03-16",
+   "enrollmentDate" : "2016-03-06",
+   "username" : "alivia",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Ruecker",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Nina",
+      "addresses" : [
+         {
+            "postalCode" : "43666",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "AP",
+            "city" : "La Verne",
+            "countryId" : "US",
+            "addressLine1" : "56789 Bashirian Burg #449",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "946-035-3204",
+      "mobilePhone" : "694.341.9907 x83291",
+      "dateOfBirth" : "1988-12-15",
+      "email" : "milan@schamberger-prohaska-and-botsford.kr"
+   },
+   "id" : "94fc2d88-359e-45e1-8360-ff6fb132cac4"
+}
+

@@ -1,0 +1,30 @@
+{
+   "username" : "kathryn",
+   "active" : true,
+   "id" : "5bec815c-72b9-452f-ac19-bc2793c94537",
+   "personal" : {
+      "phone" : "144.849.2114 x782",
+      "dateOfBirth" : "1958-04-01",
+      "email" : "colin@koepp-group.pw",
+      "firstName" : "Domenick",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "37804 Ole River",
+            "city" : "Orange",
+            "region" : "NE",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "54470-7692"
+         }
+      ],
+      "lastName" : "Denesik",
+      "middleName" : "Maybelle",
+      "preferredContactTypeId" : "002"
+   },
+   "type" : "patron",
+   "barcode" : "592809378069983",
+   "enrollmentDate" : "2018-09-03",
+   "expirationDate" : "2019-12-24"
+}
+

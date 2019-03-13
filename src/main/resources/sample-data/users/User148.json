@@ -1,0 +1,29 @@
+{
+   "username" : "johan",
+   "id" : "08522da4-668a-4450-a769-3abfae5678ad",
+   "active" : true,
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "52150-4432",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "CT",
+            "city" : "Bowling Green",
+            "addressLine1" : "32796 Kuhn Drive Suite 950",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "lastName" : "Braun",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Aleen",
+      "dateOfBirth" : "1996-07-05",
+      "email" : "werner@wolff-hauck.lk",
+      "phone" : "1-029-555-1699"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2016-07-12",
+   "expirationDate" : "2020-03-30",
+   "barcode" : "548755241194417"
+}
+

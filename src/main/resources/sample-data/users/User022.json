@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2021-02-27",
+   "enrollmentDate" : "2017-11-06",
+   "barcode" : "880575347359048",
+   "type" : "patron",
+   "id" : "457a3c37-cada-47ed-ae8d-c8eda723251f",
+   "personal" : {
+      "firstName" : "River",
+      "addresses" : [
+         {
+            "postalCode" : "75179-8405",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "CT",
+            "city" : "Redlands",
+            "addressLine1" : "77088 Batz Passage #269",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "538-975-1143",
+      "mobilePhone" : "497-708-9054 x308",
+      "email" : "dejah@kuphal-gerlach.bn",
+      "dateOfBirth" : "2008-04-27",
+      "preferredContactTypeId" : "001",
+      "lastName" : "Schiller",
+      "middleName" : "Dora"
+   },
+   "active" : false,
+   "username" : "maverick"
+}
+

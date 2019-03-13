@@ -1,0 +1,29 @@
+{
+   "type" : "patron",
+   "barcode" : "766444609393133",
+   "enrollmentDate" : "2016-12-30",
+   "expirationDate" : "2021-01-17",
+   "username" : "jalyn",
+   "id" : "8853c9a2-cae2-4b5e-84ce-2b39bb809e5b",
+   "personal" : {
+      "lastName" : "Weissnat",
+      "firstName" : "Maddison",
+      "preferredContactTypeId" : "005",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "45933",
+            "region" : "DC",
+            "countryId" : "US",
+            "addressLine1" : "09633 Meaghan Junctions Suite 977",
+            "city" : "Murray",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "1-464-785-9853 x31976",
+      "dateOfBirth" : "2014-04-06",
+      "email" : "viva@becker-okon-and-heaney.tn.us"
+   },
+   "active" : true
+}
+

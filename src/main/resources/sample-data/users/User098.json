@@ -1,0 +1,29 @@
+{
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "55026",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "OH",
+            "city" : "Hamilton",
+            "addressLine1" : "00940 Rear",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "lastName" : "Becker",
+      "firstName" : "Jazmin",
+      "preferredContactTypeId" : "005",
+      "dateOfBirth" : "1984-08-10",
+      "email" : "maximo@bergnaum-lueilwitz.vn",
+      "phone" : "383-132-9117"
+   },
+   "active" : true,
+   "id" : "a49cefad-7447-4f2f-9004-de32e7a6cc53",
+   "username" : "cedrick",
+   "enrollmentDate" : "2016-11-13",
+   "expirationDate" : "2020-03-26",
+   "barcode" : "194710970216014",
+   "type" : "patron"
+}
+

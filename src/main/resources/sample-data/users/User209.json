@@ -1,0 +1,30 @@
+{
+   "barcode" : "310215644261340",
+   "id" : "1dbc9318-9718-4e9d-b32a-6684cf258910",
+   "type" : "patron",
+   "expirationDate" : "2019-04-18",
+   "active" : false,
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "firstName" : "Yasmine",
+      "middleName" : "Karlee",
+      "email" : "dorthy@reichert-harris.sd.us",
+      "lastName" : "Prohaska",
+      "phone" : "458.172.4715",
+      "dateOfBirth" : "1947-08-27",
+      "addresses" : [
+         {
+            "region" : "CT",
+            "postalCode" : "90895-6823",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "46517 Frami Prairie Apt. 523",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Bakersfield"
+         }
+      ]
+   },
+   "username" : "jillian",
+   "enrollmentDate" : "2016-10-19"
+}
+

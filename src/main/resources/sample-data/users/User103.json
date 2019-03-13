@@ -1,0 +1,31 @@
+{
+   "barcode" : "78472785852447",
+   "enrollmentDate" : "2017-09-21",
+   "expirationDate" : "2020-08-03",
+   "type" : "patron",
+   "id" : "d3409c88-7e3f-497a-b94c-69e85e23b45c",
+   "active" : false,
+   "personal" : {
+      "addresses" : [
+         {
+            "region" : "WV",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "17408",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "55482 Bernier Springs",
+            "city" : "Homer"
+         }
+      ],
+      "firstName" : "Kacey",
+      "email" : "paris@schimmel-inc.vu",
+      "dateOfBirth" : "2012-10-23",
+      "phone" : "1-231-053-1512",
+      "mobilePhone" : "(783)669-7471",
+      "preferredContactTypeId" : "003",
+      "middleName" : "Aiyana",
+      "lastName" : "Ruecker"
+   },
+   "username" : "jaleel"
+}
+

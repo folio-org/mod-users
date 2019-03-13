@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2016-06-04",
+   "expirationDate" : "2021-01-09",
+   "barcode" : "693787594998493",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "middleName" : "Alf",
+      "lastName" : "Denesik",
+      "email" : "luella@swift-hegmann-and-gutmann.aw",
+      "dateOfBirth" : "2009-08-15",
+      "phone" : "(429)999-9252 x5844",
+      "mobilePhone" : "(830)648-7529 x95254",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "25431 Gilbert Cape",
+            "city" : "Owensboro",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "96912",
+            "region" : "CT"
+         }
+      ],
+      "firstName" : "Doug"
+   },
+   "id" : "6f36265e-722a-490a-b436-806e63af2ea7",
+   "username" : "kayla"
+}
+

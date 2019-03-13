@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "barcode" : "947268160813830",
+   "enrollmentDate" : "2016-12-25",
+   "expirationDate" : "2019-08-13",
+   "username" : "renee",
+   "id" : "65fcc41e-df15-459a-bf93-2f53cfa8ff7f",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Bednar",
+      "middleName" : "Elvera",
+      "preferredContactTypeId" : "002",
+      "phone" : "111-788-2683",
+      "mobilePhone" : "128.156.5851",
+      "dateOfBirth" : "1994-11-06",
+      "email" : "cedrick@carter-kihn.bj",
+      "firstName" : "Monroe",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "58686-2415",
+            "region" : "UT",
+            "countryId" : "US",
+            "addressLine1" : "88019 Floor 277",
+            "city" : "Dana Point",
+            "primaryAddress" : true
+         }
+      ]
+   }
+}
+

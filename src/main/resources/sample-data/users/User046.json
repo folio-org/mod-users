@@ -1,0 +1,30 @@
+{
+   "type" : "patron",
+   "enrollmentDate" : "2017-04-27",
+   "expirationDate" : "2019-05-09",
+   "barcode" : "908122635201927",
+   "username" : "rick",
+   "id" : "01b9d72b-9aab-4efd-97a4-d03c1667bf0d",
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "lastName" : "Denesik",
+      "firstName" : "Katherine",
+      "addresses" : [
+         {
+            "postalCode" : "80182",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "VA",
+            "city" : "Laguna Woods",
+            "countryId" : "US",
+            "addressLine1" : "04686 Heaney River Apt. 311",
+            "primaryAddress" : true
+         }
+      ],
+      "mobilePhone" : "118-374-7507",
+      "phone" : "725-093-3336",
+      "email" : "dahlia@koch-hayes.it",
+      "dateOfBirth" : "1952-11-19"
+   },
+   "active" : true
+}
+

@@ -1,0 +1,29 @@
+{
+   "username" : "minerva",
+   "active" : true,
+   "personal" : {
+      "phone" : "(663)844-6130 x99387",
+      "email" : "angelica@kiehn-sporer-and-hammes.tg",
+      "dateOfBirth" : "1975-01-27",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Breana",
+      "lastName" : "Heller",
+      "addresses" : [
+         {
+            "region" : "TN",
+            "postalCode" : "00113",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "San Diego",
+            "countryId" : "US",
+            "addressLine1" : "69312 Keyshawn Drive Suite 999"
+         }
+      ]
+   },
+   "id" : "5c4910af-508f-49f5-b2c2-f856ffd7f2aa",
+   "type" : "patron",
+   "enrollmentDate" : "2018-08-22",
+   "expirationDate" : "2020-10-17",
+   "barcode" : "687475934082478"
+}
+

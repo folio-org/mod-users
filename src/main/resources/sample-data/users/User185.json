@@ -1,0 +1,31 @@
+{
+   "active" : true,
+   "id" : "f643e743-3496-4ecd-94d7-1ca2fdf56c82",
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "lastName" : "Gutkowski",
+      "middleName" : "Jodie",
+      "email" : "monty@heidenreich-harris-and-veum.so",
+      "dateOfBirth" : "2013-07-28",
+      "mobilePhone" : "(838)036-3745",
+      "phone" : "(035)964-7281",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Oxnard",
+            "addressLine1" : "06300 Side",
+            "countryId" : "US",
+            "region" : "AP",
+            "postalCode" : "37789-4976",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "firstName" : "Morris"
+   },
+   "username" : "carleton",
+   "expirationDate" : "2020-05-20",
+   "enrollmentDate" : "2015-11-23",
+   "barcode" : "28440705076121",
+   "type" : "patron"
+}
+

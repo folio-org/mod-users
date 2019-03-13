@@ -1,0 +1,29 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2020-06-17",
+   "id" : "dc13dcc6-2bda-412c-b046-1398d1becb75",
+   "barcode" : "332606947540224",
+   "username" : "connie",
+   "enrollmentDate" : "2017-10-14",
+   "personal" : {
+      "dateOfBirth" : "1947-05-07",
+      "firstName" : "Neva",
+      "preferredContactTypeId" : "003",
+      "email" : "monroe@rau-beatty.wi.us",
+      "lastName" : "Hartmann",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "69348 Geoffrey Station #437",
+            "city" : "Rosemead",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "CA",
+            "postalCode" : "35670-5987"
+         }
+      ],
+      "phone" : "841-726-9429 x12566"
+   },
+   "active" : true
+}
+

@@ -1,0 +1,30 @@
+{
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "2003-11-05",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "01944 Kavon Coves",
+            "city" : "Hayward",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "46183-0875",
+            "region" : "MA"
+         }
+      ],
+      "firstName" : "Lionel",
+      "preferredContactTypeId" : "001",
+      "email" : "norris@wilderman-brown-and-bayer.aq",
+      "middleName" : "Bernhard",
+      "lastName" : "Schmidt",
+      "phone" : "1-866-895-2189 x448"
+   },
+   "username" : "jorge",
+   "enrollmentDate" : "2017-09-15",
+   "barcode" : "708746312982146",
+   "id" : "046353cf-3963-482c-9792-32ade0a33afa",
+   "type" : "patron",
+   "expirationDate" : "2020-10-13"
+}
+

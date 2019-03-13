@@ -1,0 +1,29 @@
+{
+   "active" : true,
+   "enrollmentDate" : "2018-05-26",
+   "username" : "kenneth",
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "NC",
+            "postalCode" : "28194-0379",
+            "addressLine1" : "74210 Front",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Atwater"
+         }
+      ],
+      "lastName" : "Koss",
+      "phone" : "049.877.6192",
+      "firstName" : "Hipolito",
+      "preferredContactTypeId" : "002",
+      "dateOfBirth" : "1972-12-13",
+      "email" : "rosalia@hirthe-raynor.az"
+   },
+   "id" : "c6d99127-e834-4f60-9a77-f74646cd1618",
+   "barcode" : "624284667711407",
+   "type" : "patron",
+   "expirationDate" : "2019-05-16"
+}
+

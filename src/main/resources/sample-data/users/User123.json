@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "barcode" : "117648823412451",
+   "expirationDate" : "2019-08-24",
+   "enrollmentDate" : "2018-01-10",
+   "username" : "laurine",
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Lang",
+      "middleName" : "Reina",
+      "mobilePhone" : "528-675-4904",
+      "phone" : "1-953-587-8208 x563",
+      "email" : "lesly@bradtke-and-sons.hu",
+      "dateOfBirth" : "1957-01-08",
+      "firstName" : "Name",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "92674 Nikko Street Apt. 791",
+            "city" : "Fremont",
+            "region" : "NV",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "18901"
+         }
+      ]
+   },
+   "id" : "734f2e97-2c41-4e70-9b98-44cead2607e4",
+   "active" : false
+}
+

@@ -1,0 +1,31 @@
+{
+   "username" : "kolby",
+   "personal" : {
+      "middleName" : "Waino",
+      "lastName" : "Sporer",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "region" : "GU",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "20605-2722",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "75437 Richard Ways",
+            "city" : "Chino"
+         }
+      ],
+      "firstName" : "Dewayne",
+      "dateOfBirth" : "2006-04-03",
+      "email" : "jabari@beier-collier-and-adams.wa.us",
+      "mobilePhone" : "154-575-8361 x118",
+      "phone" : "(773)007-7770 x6445"
+   },
+   "id" : "ec97250b-1ded-46a7-a8f6-a474f8fe622d",
+   "active" : false,
+   "type" : "patron",
+   "barcode" : "1211791319224",
+   "expirationDate" : "2019-09-27",
+   "enrollmentDate" : "2016-06-21"
+}
+

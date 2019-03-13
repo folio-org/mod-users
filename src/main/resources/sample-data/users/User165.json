@@ -1,0 +1,30 @@
+{
+   "username" : "hayden",
+   "active" : true,
+   "id" : "70e0c050-e842-4eee-9632-967a49e43bb2",
+   "personal" : {
+      "preferredContactTypeId" : "003",
+      "lastName" : "Torp",
+      "middleName" : "Sofia",
+      "firstName" : "Willard",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Oro Valley",
+            "addressLine1" : "87178 Darian Grove #311",
+            "countryId" : "US",
+            "region" : "IN",
+            "postalCode" : "85548",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "phone" : "(241)231-0895",
+      "email" : "israel@schmidt-stamm.gd",
+      "dateOfBirth" : "1979-09-15"
+   },
+   "type" : "patron",
+   "barcode" : "291411120468286",
+   "enrollmentDate" : "2015-05-22",
+   "expirationDate" : "2020-06-10"
+}
+

@@ -1,0 +1,30 @@
+{
+   "barcode" : "794176129884338",
+   "id" : "2120fe62-ba0a-4dce-8701-f360368d5c30",
+   "type" : "patron",
+   "expirationDate" : "2020-02-05",
+   "active" : false,
+   "personal" : {
+      "dateOfBirth" : "2012-06-29",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "MT",
+            "postalCode" : "33381",
+            "city" : "Mentor",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "24628 Floor 834"
+         }
+      ],
+      "email" : "anissa@sanford-and-sons.bv",
+      "firstName" : "Branson",
+      "mobilePhone" : "1-156-445-4163",
+      "preferredContactTypeId" : "001",
+      "phone" : "390-670-1991",
+      "lastName" : "Beer"
+   },
+   "enrollmentDate" : "2018-05-13",
+   "username" : "grace"
+}
+

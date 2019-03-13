@@ -1,0 +1,31 @@
+{
+   "id" : "c7d6c761-905e-4e7b-a616-a624175efe11",
+   "barcode" : "28749549181060",
+   "type" : "patron",
+   "expirationDate" : "2019-04-03",
+   "active" : true,
+   "username" : "reva",
+   "enrollmentDate" : "2018-03-03",
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "68890",
+            "region" : "WI",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Springfield",
+            "addressLine1" : "80404 Domenico Crescent"
+         }
+      ],
+      "dateOfBirth" : "1960-08-24",
+      "lastName" : "Koss",
+      "phone" : "1-107-113-0140",
+      "preferredContactTypeId" : "001",
+      "mobilePhone" : "807-715-7006 x3633",
+      "firstName" : "Hassie",
+      "email" : "bradford@ebert-nikolaus-and-hauck.sb",
+      "middleName" : "Esmeralda"
+   }
+}
+

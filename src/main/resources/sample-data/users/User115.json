@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2018-12-22",
+   "expirationDate" : "2019-06-06",
+   "barcode" : "88302230830809",
+   "type" : "patron",
+   "personal" : {
+      "firstName" : "Madilyn",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "66872-1125",
+            "region" : "CT",
+            "countryId" : "US",
+            "addressLine1" : "04016 Office",
+            "city" : "Hidden Hills",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "(689)820-4964 x026",
+      "mobilePhone" : "(317)720-4029",
+      "dateOfBirth" : "1964-01-18",
+      "email" : "bernardo@mccullough-king-and-dicki.my",
+      "middleName" : "Robb",
+      "lastName" : "Wiza",
+      "preferredContactTypeId" : "004"
+   },
+   "id" : "5e84b6a4-fde4-4099-ab54-c82c9041f685",
+   "active" : false,
+   "username" : "kenna"
+}
+

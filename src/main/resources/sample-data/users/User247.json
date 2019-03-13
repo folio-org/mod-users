@@ -1,0 +1,29 @@
+{
+   "expirationDate" : "2020-09-09",
+   "type" : "patron",
+   "id" : "c78aa9ec-b7d3-4d53-9e43-20296f39b496",
+   "barcode" : "874335864399373",
+   "enrollmentDate" : "2019-02-16",
+   "username" : "clara",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "88500 Kozey Terrace Apt. 252",
+            "city" : "Cypress",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "PR",
+            "postalCode" : "49387-9443"
+         }
+      ],
+      "lastName" : "Stoltenberg",
+      "phone" : "(874)390-9335 x53499",
+      "firstName" : "Jeanne",
+      "preferredContactTypeId" : "003",
+      "dateOfBirth" : "1965-06-04",
+      "email" : "eula@walter-wyman-and-wintheiser.ly"
+   },
+   "active" : false
+}
+

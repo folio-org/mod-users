@@ -1,0 +1,31 @@
+{
+   "active" : true,
+   "personal" : {
+      "firstName" : "Karson",
+      "addresses" : [
+         {
+            "region" : "VT",
+            "postalCode" : "58753",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Cerritos",
+            "countryId" : "US",
+            "addressLine1" : "33196 Bogan Courts"
+         }
+      ],
+      "mobilePhone" : "(854)860-1000 x2414",
+      "phone" : "(963)962-0601 x70839",
+      "email" : "tomasa@wintheiser-llc.id",
+      "dateOfBirth" : "2011-08-28",
+      "preferredContactTypeId" : "004",
+      "middleName" : "Marlen",
+      "lastName" : "Brekke"
+   },
+   "id" : "261e1062-a473-47f4-a00f-a197c4a87530",
+   "username" : "alene",
+   "barcode" : "898724875163885",
+   "expirationDate" : "2019-07-31",
+   "enrollmentDate" : "2018-11-24",
+   "type" : "patron"
+}
+

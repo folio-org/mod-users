@@ -1,0 +1,31 @@
+{
+   "active" : false,
+   "personal" : {
+      "dateOfBirth" : "1972-10-10",
+      "email" : "adrian@moen-purdy.mk",
+      "mobilePhone" : "543-497-0914",
+      "phone" : "079-330-2177",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "21036 Building D",
+            "city" : "Rohnert Park",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "43393-3721",
+            "region" : "FM"
+         }
+      ],
+      "firstName" : "Charlotte",
+      "middleName" : "Lina",
+      "lastName" : "Kulas",
+      "preferredContactTypeId" : "004"
+   },
+   "id" : "0f1f1a5d-49b6-42f4-8b18-faa2ce0e7be4",
+   "username" : "aileen",
+   "barcode" : "401285957986662",
+   "enrollmentDate" : "2015-09-13",
+   "expirationDate" : "2019-05-05",
+   "type" : "patron"
+}
+

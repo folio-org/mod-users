@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "expirationDate" : "2020-07-28",
+   "id" : "6f511507-dab9-42fb-b966-bb8a1330ee7a",
+   "barcode" : "893791354018937",
+   "enrollmentDate" : "2017-06-20",
+   "username" : "odell",
+   "personal" : {
+      "mobilePhone" : "1-456-899-6815 x518",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Mara",
+      "email" : "demetris@vandervort-nikolaus-and-skiles.ba",
+      "middleName" : "Mikayla",
+      "lastName" : "Goodwin",
+      "phone" : "888.500.6770 x22570",
+      "dateOfBirth" : "1946-11-11",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "67263-7943",
+            "region" : "NM",
+            "addressLine1" : "98020 Kunze Lights",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Hamilton"
+         }
+      ]
+   },
+   "active" : false
+}
+

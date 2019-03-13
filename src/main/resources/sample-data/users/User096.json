@@ -1,0 +1,30 @@
+{
+   "username" : "zena",
+   "active" : true,
+   "id" : "16757efe-86ac-40bb-bdd6-fafee02463c7",
+   "personal" : {
+      "email" : "myah@boyle-will.um",
+      "dateOfBirth" : "1996-03-07",
+      "mobilePhone" : "111.047.0312",
+      "phone" : "682.593.8052",
+      "addresses" : [
+         {
+            "region" : "AL",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "69583-4512",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "65435 Retta Spur",
+            "city" : "Valdez"
+         }
+      ],
+      "firstName" : "Dagmar",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Borer"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2018-04-13",
+   "expirationDate" : "2020-01-11",
+   "barcode" : "509575459201574"
+}
+

@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "enrollmentDate" : "2016-09-13",
+   "expirationDate" : "2019-10-03",
+   "barcode" : "994512400886741",
+   "username" : "oral",
+   "active" : true,
+   "id" : "2c2e383d-7369-4aff-afb7-eb3db4cb71a0",
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Green",
+      "middleName" : "Alysha",
+      "firstName" : "Brandon",
+      "addresses" : [
+         {
+            "postalCode" : "50898-2829",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "OH",
+            "city" : "El Monte",
+            "countryId" : "US",
+            "addressLine1" : "58547 McKenzie Course #387",
+            "primaryAddress" : true
+         }
+      ],
+      "mobilePhone" : "(516)576-5921 x386",
+      "phone" : "164.749.2268",
+      "email" : "alf@barrows-group.cs",
+      "dateOfBirth" : "1981-01-30"
+   }
+}
+

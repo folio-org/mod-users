@@ -1,0 +1,31 @@
+{
+   "barcode" : "156558322290802",
+   "expirationDate" : "2019-08-03",
+   "enrollmentDate" : "2015-04-28",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "Richmond",
+            "countryId" : "US",
+            "addressLine1" : "57337 Jeffry Hollow #516",
+            "primaryAddress" : true,
+            "postalCode" : "44195-6726",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "NM"
+         }
+      ],
+      "firstName" : "Berneice",
+      "dateOfBirth" : "1953-02-13",
+      "email" : "sophia@braun-cronin.lu",
+      "phone" : "(863)008-2309 x5116",
+      "mobilePhone" : "871-680-0312",
+      "lastName" : "Sawayn",
+      "middleName" : "Damion",
+      "preferredContactTypeId" : "003"
+   },
+   "id" : "44e640f4-3e0e-4bb4-92af-6263108893b2",
+   "username" : "keanu"
+}
+

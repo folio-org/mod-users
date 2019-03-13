@@ -1,0 +1,31 @@
+{
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "Lomita",
+            "addressLine1" : "44302 Mertz Pike",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "13291-5479",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "AL"
+         }
+      ],
+      "firstName" : "Rudolph",
+      "dateOfBirth" : "1971-11-18",
+      "email" : "kian@schamberger-nicolas.kr",
+      "mobilePhone" : "(527)252-5076 x005",
+      "phone" : "1-390-960-0355 x091",
+      "lastName" : "Miller",
+      "middleName" : "Dahlia",
+      "preferredContactTypeId" : "005"
+   },
+   "active" : true,
+   "id" : "56708cfe-750e-49ad-b72a-003ce7ad78a4",
+   "username" : "baylee",
+   "barcode" : "210781386299107",
+   "expirationDate" : "2021-02-18",
+   "enrollmentDate" : "2019-02-06",
+   "type" : "patron"
+}
+

@@ -1,0 +1,30 @@
+{
+   "personal" : {
+      "dateOfBirth" : "1989-03-07",
+      "addresses" : [
+         {
+            "region" : "MI",
+            "postalCode" : "34540",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "addressLine1" : "66693 Collier Rapids #486",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Toledo"
+         }
+      ],
+      "preferredContactTypeId" : "005",
+      "firstName" : "Deondre",
+      "email" : "constance@wunsch-group.ki",
+      "middleName" : "Mafalda",
+      "lastName" : "Sipes",
+      "phone" : "1-995-399-4325"
+   },
+   "enrollmentDate" : "2018-01-06",
+   "username" : "bella",
+   "active" : false,
+   "type" : "patron",
+   "expirationDate" : "2020-03-07",
+   "barcode" : "348406231338938",
+   "id" : "8e9d1a69-9745-4ad4-a8e8-6841a9441b40"
+}
+

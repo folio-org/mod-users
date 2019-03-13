@@ -1,0 +1,30 @@
+{
+   "id" : "54f65a75-f35b-4f56-86a6-fa4a3d957e57",
+   "barcode" : "864467817890954",
+   "expirationDate" : "2021-03-10",
+   "type" : "patron",
+   "active" : true,
+   "enrollmentDate" : "2017-05-12",
+   "username" : "adah",
+   "personal" : {
+      "phone" : "751-145-4052 x783",
+      "lastName" : "Mueller",
+      "email" : "jermey@hessel-hettinger.ok.us",
+      "mobilePhone" : "1-585-529-3409",
+      "firstName" : "Jackeline",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "postalCode" : "11104",
+            "region" : "KY",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Akron",
+            "addressLine1" : "03749 Dorothea Prairie Suite 396"
+         }
+      ],
+      "dateOfBirth" : "1947-10-15"
+   }
+}
+

@@ -1,0 +1,31 @@
+{
+   "enrollmentDate" : "2018-12-12",
+   "username" : "matilda",
+   "personal" : {
+      "firstName" : "Aylin",
+      "mobilePhone" : "1-394-292-7906",
+      "preferredContactTypeId" : "004",
+      "email" : "alisa@murray-stoltenberg.ls",
+      "middleName" : "Velda",
+      "lastName" : "Koss",
+      "phone" : "314.644.6648",
+      "dateOfBirth" : "1965-12-07",
+      "addresses" : [
+         {
+            "region" : "WI",
+            "postalCode" : "64224-5588",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Westminster",
+            "addressLine1" : "08425 Schimmel Streets #234"
+         }
+      ]
+   },
+   "active" : true,
+   "expirationDate" : "2020-06-28",
+   "type" : "patron",
+   "id" : "b4fa5d79-4af6-4623-9331-fabdfee79e0c",
+   "barcode" : "453819069972642"
+}
+

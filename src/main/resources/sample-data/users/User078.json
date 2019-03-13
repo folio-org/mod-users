@@ -1,0 +1,29 @@
+{
+   "type" : "patron",
+   "barcode" : "541826290691304",
+   "expirationDate" : "2020-08-31",
+   "enrollmentDate" : "2017-04-03",
+   "username" : "marilie",
+   "active" : false,
+   "personal" : {
+      "phone" : "607-908-8821 x9401",
+      "dateOfBirth" : "1976-12-07",
+      "email" : "eulah@veum-streich-and-mueller.ks.us",
+      "lastName" : "Okuneva",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Stefan",
+      "addresses" : [
+         {
+            "postalCode" : "51100-7820",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "AA",
+            "city" : "Phoenix",
+            "addressLine1" : "13878 Hayes Overpass Apt. 535",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "id" : "95a99d37-66b5-4b8d-a598-ab36618f9aac"
+}
+

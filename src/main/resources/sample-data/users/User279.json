@@ -1,0 +1,30 @@
+{
+   "expirationDate" : "2021-01-06",
+   "type" : "patron",
+   "barcode" : "196625924015005",
+   "id" : "4205e8ff-804d-45bb-9d6d-f75f845ce608",
+   "personal" : {
+      "dateOfBirth" : "1976-07-01",
+      "addresses" : [
+         {
+            "city" : "Compton",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "73436 Phoebe Burgs Suite 980",
+            "postalCode" : "95966-2819",
+            "region" : "FL",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "email" : "estell@friesen-llc.au",
+      "preferredContactTypeId" : "002",
+      "mobilePhone" : "1-791-331-4472",
+      "firstName" : "Bridget",
+      "phone" : "350-369-4844 x907",
+      "lastName" : "Mohr"
+   },
+   "enrollmentDate" : "2016-09-05",
+   "username" : "carolina",
+   "active" : true
+}
+

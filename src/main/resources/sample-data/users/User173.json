@@ -1,0 +1,30 @@
+{
+   "personal" : {
+      "phone" : "1-071-537-9550 x0217",
+      "mobilePhone" : "907.862.1518",
+      "dateOfBirth" : "1996-04-26",
+      "email" : "samara@kohler-buckridge-and-champlin.me.us",
+      "firstName" : "Ceasar",
+      "addresses" : [
+         {
+            "city" : "Santa Rosa",
+            "countryId" : "US",
+            "addressLine1" : "12335 Alysson Grove",
+            "primaryAddress" : true,
+            "postalCode" : "61535-1115",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "TN"
+         }
+      ],
+      "lastName" : "Conn",
+      "preferredContactTypeId" : "002"
+   },
+   "id" : "86c9f455-a685-45d0-9d01-5943a1ba7e5b",
+   "active" : true,
+   "username" : "federico",
+   "barcode" : "775671613439016",
+   "enrollmentDate" : "2019-02-28",
+   "expirationDate" : "2020-10-29",
+   "type" : "patron"
+}
+

@@ -1,0 +1,29 @@
+{
+   "personal" : {
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "44710 William Summit",
+            "city" : "La Verne",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "89003-6843",
+            "region" : "DE"
+         }
+      ],
+      "firstName" : "Ronny",
+      "preferredContactTypeId" : "004",
+      "lastName" : "Rogahn",
+      "email" : "rowena@steuber-lynch.ga",
+      "dateOfBirth" : "1966-04-11",
+      "phone" : "(246)059-3463 x7751"
+   },
+   "active" : true,
+   "id" : "6c6ab6f6-394a-44a5-8d5c-66f88f9ec01d",
+   "username" : "susana",
+   "barcode" : "844336017335276",
+   "expirationDate" : "2020-05-28",
+   "enrollmentDate" : "2016-02-11",
+   "type" : "patron"
+}
+

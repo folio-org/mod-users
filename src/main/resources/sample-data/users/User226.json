@@ -1,0 +1,31 @@
+{
+   "personal" : {
+      "dateOfBirth" : "1996-11-25",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "NM",
+            "postalCode" : "42517-3120",
+            "city" : "Monterey Park",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "45782 Stop S"
+         }
+      ],
+      "mobilePhone" : "023.988.9608",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Edmond",
+      "email" : "virginie@haag-rippin.nu",
+      "middleName" : "Sheldon",
+      "lastName" : "Sanford",
+      "phone" : "921-095-6643"
+   },
+   "username" : "adele",
+   "enrollmentDate" : "2015-04-19",
+   "active" : false,
+   "type" : "patron",
+   "expirationDate" : "2020-08-05",
+   "barcode" : "26132887126792",
+   "id" : "e14b1bc1-8784-4b55-bfbe-e5ec8ce0b07a"
+}
+

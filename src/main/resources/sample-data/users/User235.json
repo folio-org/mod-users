@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2020-01-16",
+   "type" : "patron",
+   "barcode" : "220289407319601",
+   "id" : "22b0e29a-cc5d-456b-b272-b521ad5d2a39",
+   "personal" : {
+      "middleName" : "Romaine",
+      "email" : "alia@maggio-lubowitz.mn.us",
+      "mobilePhone" : "1-833-306-7200 x47071",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Wendell",
+      "phone" : "806.796.2673 x251",
+      "lastName" : "Howell",
+      "dateOfBirth" : "1962-02-08",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "44192 Hoeger Springs",
+            "city" : "Lexington",
+            "region" : "FL",
+            "postalCode" : "24713",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "username" : "cierra",
+   "enrollmentDate" : "2017-03-18",
+   "active" : true
+}
+

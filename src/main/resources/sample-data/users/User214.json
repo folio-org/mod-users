@@ -1,0 +1,30 @@
+{
+   "barcode" : "214290413046203",
+   "id" : "4adf499e-c954-4bf9-9261-26720608e120",
+   "expirationDate" : "2021-01-21",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "addresses" : [
+         {
+            "addressLine1" : "61000 Lower",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Pine Bluff",
+            "region" : "SC",
+            "postalCode" : "81092-1784",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "dateOfBirth" : "1972-01-16",
+      "lastName" : "Wintheiser",
+      "phone" : "225.278.0004",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Melody",
+      "middleName" : "Marcellus",
+      "email" : "mabelle@stanton-schaefer.sb"
+   },
+   "enrollmentDate" : "2018-01-08",
+   "username" : "edwina"
+}
+

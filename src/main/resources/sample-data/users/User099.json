@@ -1,0 +1,31 @@
+{
+   "id" : "eb7696da-a2c3-4166-8aba-757c42556d1e",
+   "active" : false,
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "San Clemente",
+            "addressLine1" : "37769 Penthouse",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "19365",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "SD"
+         }
+      ],
+      "firstName" : "Josie",
+      "dateOfBirth" : "2007-12-01",
+      "email" : "vella@hilll-gibson.il",
+      "phone" : "968.266.5840 x35577",
+      "mobilePhone" : "408-562-5448 x1964",
+      "middleName" : "Keagan",
+      "lastName" : "Dicki",
+      "preferredContactTypeId" : "003"
+   },
+   "username" : "piper",
+   "barcode" : "526093411956626",
+   "enrollmentDate" : "2015-10-15",
+   "expirationDate" : "2020-01-12",
+   "type" : "patron"
+}
+

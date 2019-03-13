@@ -1,0 +1,31 @@
+{
+   "active" : true,
+   "id" : "ae2f6ce7-386a-4c5a-9fcf-e5f517a88ced",
+   "personal" : {
+      "email" : "mariela@sanford-quigley-and-purdy.mn",
+      "dateOfBirth" : "1979-06-24",
+      "phone" : "1-167-194-5323 x2190",
+      "mobilePhone" : "1-261-847-2746",
+      "addresses" : [
+         {
+            "region" : "TX",
+            "postalCode" : "40295",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Monterey",
+            "countryId" : "US",
+            "addressLine1" : "64304 Peter Mountains"
+         }
+      ],
+      "firstName" : "Colt",
+      "preferredContactTypeId" : "004",
+      "lastName" : "Dach",
+      "middleName" : "Alford"
+   },
+   "username" : "maymie",
+   "barcode" : "322526636349373",
+   "expirationDate" : "2020-07-16",
+   "enrollmentDate" : "2018-04-22",
+   "type" : "patron"
+}
+

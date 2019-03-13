@@ -1,0 +1,30 @@
+{
+   "enrollmentDate" : "2018-08-12",
+   "expirationDate" : "2019-06-12",
+   "barcode" : "345265690950199",
+   "type" : "patron",
+   "id" : "71f28723-784e-4292-b794-af4ffca9178e",
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Gary",
+            "countryId" : "US",
+            "addressLine1" : "98801 Brando Divide Apt. 054",
+            "region" : "PA",
+            "postalCode" : "44468",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "firstName" : "Bertha",
+      "dateOfBirth" : "1975-08-08",
+      "email" : "johan@kirlin-inc.gs",
+      "phone" : "(348)233-4100",
+      "lastName" : "Schimmel",
+      "middleName" : "Darrin",
+      "preferredContactTypeId" : "003"
+   },
+   "active" : true,
+   "username" : "genesis"
+}
+

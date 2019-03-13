@@ -1,0 +1,31 @@
+{
+   "id" : "550a06c3-8d0c-4ae3-a267-b32527272772",
+   "barcode" : "791893588531159",
+   "expirationDate" : "2019-07-31",
+   "type" : "patron",
+   "active" : true,
+   "enrollmentDate" : "2017-12-28",
+   "username" : "anais",
+   "personal" : {
+      "phone" : "1-993-714-8622",
+      "lastName" : "Krajcik",
+      "middleName" : "Arne",
+      "email" : "hester@grant-sporer-and-hodkiewicz.pa.us",
+      "mobilePhone" : "(335)765-6908 x82927",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Edgardo",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Elkhart",
+            "addressLine1" : "93774 Lura Tunnel",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "MO",
+            "postalCode" : "19092"
+         }
+      ],
+      "dateOfBirth" : "1999-07-16"
+   }
+}
+

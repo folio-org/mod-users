@@ -1,0 +1,31 @@
+{
+   "username" : "cortney",
+   "active" : false,
+   "id" : "e0b7cb11-7d1f-48d8-b8a5-bc138550313d",
+   "personal" : {
+      "phone" : "468-350-2158 x590",
+      "mobilePhone" : "004-863-5965",
+      "email" : "claudie@bruen-zboncak.al",
+      "dateOfBirth" : "1971-06-24",
+      "firstName" : "Esteban",
+      "addresses" : [
+         {
+            "region" : "OK",
+            "postalCode" : "62741-4894",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "Newport Beach",
+            "countryId" : "US",
+            "addressLine1" : "28183 Zion Grove #028"
+         }
+      ],
+      "preferredContactTypeId" : "005",
+      "lastName" : "Yundt",
+      "middleName" : "Loma"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2016-01-18",
+   "expirationDate" : "2019-10-10",
+   "barcode" : "131104607484122"
+}
+

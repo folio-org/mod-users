@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2019-04-22",
+   "type" : "patron",
+   "barcode" : "317737116591409",
+   "id" : "04e1cda1-a049-463b-97af-98c59a8fd806",
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "71689",
+            "region" : "MA",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "addressLine1" : "10026 Williamson Ridge",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Sacramento"
+         }
+      ],
+      "dateOfBirth" : "1948-09-27",
+      "phone" : "(731)414-4227",
+      "lastName" : "Yost",
+      "middleName" : "Gregory",
+      "email" : "syble@deckow-and-sons.mz",
+      "firstName" : "Cristian",
+      "mobilePhone" : "679-310-5840 x445",
+      "preferredContactTypeId" : "001"
+   },
+   "username" : "nicola",
+   "enrollmentDate" : "2016-05-01",
+   "active" : true
+}
+

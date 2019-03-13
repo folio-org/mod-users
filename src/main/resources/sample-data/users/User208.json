@@ -1,0 +1,30 @@
+{
+   "expirationDate" : "2020-04-11",
+   "type" : "patron",
+   "barcode" : "458743723690059",
+   "id" : "430f49de-6848-4cba-886a-4902cb9b887d",
+   "personal" : {
+      "addresses" : [
+         {
+            "region" : "OK",
+            "postalCode" : "42658",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "city" : "Newport Beach",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "43269 Taylor Fork #535"
+         }
+      ],
+      "dateOfBirth" : "1981-05-19",
+      "lastName" : "Rogahn",
+      "phone" : "1-277-648-2924 x441",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Brandon",
+      "middleName" : "Sharon",
+      "email" : "kraig@willms-gerlach.mx"
+   },
+   "enrollmentDate" : "2017-09-17",
+   "username" : "johanna",
+   "active" : false
+}
+

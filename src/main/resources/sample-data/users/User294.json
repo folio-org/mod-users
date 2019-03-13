@@ -1,0 +1,30 @@
+{
+   "barcode" : "14017302496370",
+   "id" : "fa18e51c-50d9-4fe3-ab58-c592ea30328a",
+   "type" : "patron",
+   "expirationDate" : "2019-09-09",
+   "active" : false,
+   "personal" : {
+      "firstName" : "Stevie",
+      "mobilePhone" : "(271)541-3712",
+      "preferredContactTypeId" : "002",
+      "email" : "reinhold@swaniawski-hane.km",
+      "lastName" : "Erdman",
+      "phone" : "(278)436-8225",
+      "dateOfBirth" : "2010-05-03",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "AR",
+            "postalCode" : "48997",
+            "addressLine1" : "92110 Wolf Gateway",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "South Gate"
+         }
+      ]
+   },
+   "enrollmentDate" : "2016-09-17",
+   "username" : "deanna"
+}
+

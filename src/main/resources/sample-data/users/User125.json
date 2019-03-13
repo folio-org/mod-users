@@ -1,0 +1,31 @@
+{
+   "expirationDate" : "2020-07-01",
+   "enrollmentDate" : "2018-01-05",
+   "barcode" : "123121221025275",
+   "type" : "patron",
+   "personal" : {
+      "lastName" : "Bayer",
+      "middleName" : "Dayana",
+      "preferredContactTypeId" : "001",
+      "dateOfBirth" : "1957-04-12",
+      "email" : "boris@schimmel-oberbrunner.eh",
+      "phone" : "675-694-9085",
+      "mobilePhone" : "441.909.9397 x8076",
+      "addresses" : [
+         {
+            "city" : "Bakersfield",
+            "addressLine1" : "00830 Greta Ramp Apt. 852",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "99846-5104",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "NC"
+         }
+      ],
+      "firstName" : "Reina"
+   },
+   "id" : "1200edd1-4b53-43e7-a9b7-fc590ab1c8d9",
+   "active" : false,
+   "username" : "edna"
+}
+

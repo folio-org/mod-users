@@ -1,0 +1,30 @@
+{
+   "username" : "quentin",
+   "personal" : {
+      "lastName" : "Block",
+      "preferredContactTypeId" : "002",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "37638 Bradtke Freeway",
+            "city" : "Dayton",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "14715",
+            "region" : "FM"
+         }
+      ],
+      "firstName" : "Madyson",
+      "dateOfBirth" : "1996-02-12",
+      "email" : "haleigh@heathcote-hills-and-cremin.hr",
+      "mobilePhone" : "730.787.8907 x58057",
+      "phone" : "(994)514-4149 x44836"
+   },
+   "active" : true,
+   "id" : "f308aadb-9403-44de-9b5a-06792b78bb3a",
+   "type" : "patron",
+   "barcode" : "33336807737811",
+   "expirationDate" : "2020-04-20",
+   "enrollmentDate" : "2019-03-01"
+}
+

@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "barcode" : "697453301644884",
+   "enrollmentDate" : "2016-12-01",
+   "expirationDate" : "2019-04-29",
+   "username" : "enid",
+   "id" : "e1bcf784-484c-42ca-b502-cf2f2e57eca3",
+   "active" : true,
+   "personal" : {
+      "firstName" : "Golda",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Kent",
+            "countryId" : "US",
+            "addressLine1" : "18812 McGlynn Mews",
+            "region" : "DE",
+            "postalCode" : "00503",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "mobilePhone" : "(018)215-2615 x4522",
+      "phone" : "511.344.0651",
+      "dateOfBirth" : "1975-08-16",
+      "email" : "sheldon@carroll-white-and-cole.gs",
+      "lastName" : "Waters",
+      "middleName" : "Jonathon",
+      "preferredContactTypeId" : "002"
+   }
+}
+

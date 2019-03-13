@@ -1,0 +1,31 @@
+{
+   "type" : "patron",
+   "barcode" : "211832121841851",
+   "expirationDate" : "2019-10-27",
+   "enrollmentDate" : "2016-02-04",
+   "username" : "reed",
+   "id" : "a601f1f2-88a4-465a-850e-8f50c28ce7d9",
+   "active" : true,
+   "personal" : {
+      "middleName" : "Myrna",
+      "lastName" : "Wisoky",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Augustus",
+      "addresses" : [
+         {
+            "region" : "UT",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "12864-5134",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "63785 Hailee Ports #591",
+            "city" : "Los Angeles"
+         }
+      ],
+      "mobilePhone" : "197.782.5049 x93190",
+      "phone" : "(157)362-6113",
+      "dateOfBirth" : "2009-04-13",
+      "email" : "sonya@rowe-inc.lb"
+   }
+}
+

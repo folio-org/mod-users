@@ -1,0 +1,31 @@
+{
+   "personal" : {
+      "email" : "brenna@feil-orn-and-barton.gs",
+      "middleName" : "Camylle",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "(918)523-4719 x006",
+      "firstName" : "Khalil",
+      "phone" : "206.349.8590 x22816",
+      "lastName" : "Kemmer",
+      "dateOfBirth" : "2005-07-22",
+      "addresses" : [
+         {
+            "postalCode" : "02012-8845",
+            "region" : "GU",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Pico Rivera",
+            "addressLine1" : "84557 Trailer 8"
+         }
+      ]
+   },
+   "enrollmentDate" : "2015-05-23",
+   "username" : "jennyfer",
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2020-09-24",
+   "barcode" : "394156228501504",
+   "id" : "f6cd72ab-3e89-44c0-99aa-54ab4844f167"
+}
+
