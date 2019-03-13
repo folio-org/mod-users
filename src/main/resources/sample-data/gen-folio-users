@@ -46,7 +46,7 @@ my @contacts = qw(001 002 003 004 005);
 # 005 = Returns
 # 006 = Work
 unless (@address_types) {
-  @address_types = qw(002 006);
+  @address_types = qw(93d3d88d-499b-45d0-9bc7-ac73c3a19880 1c4b225f-f669-4e9b-afcd-ebc0e273a34e);
 }
 
 for (my $i = $start; $i < $users + $start; $i++) {
