@@ -521,28 +521,27 @@ public class UsersAPI implements Users {
                               } else {
                                 createdDate = now;
                               }
-                              Criteria idCrit = new Criteria();
-                              idCrit.addField(USER_ID_FIELD);
-                              idCrit.setOperation("=");
-                              idCrit.setValue(userId);
                               entity.setUpdatedDate(now);
                               entity.setCreatedDate(createdDate);
                               try {
-                                postgresClient.update(tableName, entity, new Criterion(idCrit), true, putReply -> {
+                                postgresClient.update(tableName, entity, userId, putReply -> {
                                   try {
-                                    if(putReply.failed()) {
+                                    if (putReply.failed()) {
                                       asyncResultHandler.handle(Future.succeededFuture(
-                                              PutUsersByUserIdResponse.respond500WithTextPlain(
-                                                putReply.cause().getMessage())));
+                                        PutUsersByUserIdResponse.respond500WithTextPlain(
+                                          putReply.cause().getMessage())));
+                                    } else if (putReply.result().getUpdated() == 0) {
+                                      asyncResultHandler.handle(Future.succeededFuture(
+                                        PutUsersByUserIdResponse.respond404WithTextPlain(userId)));
+
                                     } else {
                                       asyncResultHandler.handle(Future.succeededFuture(
-                                              PutUsersByUserIdResponse.respond204()));
+                                        PutUsersByUserIdResponse.respond204()));
                                     }
-                                  } catch(Exception e) {
+                                  } catch (Exception e) {
                                     asyncResultHandler.handle(Future.succeededFuture(
-                                                    PutUsersByUserIdResponse.respond500WithTextPlain(
-                                                            messages.getMessage(lang,
-                                                                    MessageConsts.InternalServerError))));
+                                      PutUsersByUserIdResponse.respond500WithTextPlain(
+                                        messages.getMessage(lang, MessageConsts.InternalServerError))));
                                   }
                                 });
                               } catch(Exception e) {
