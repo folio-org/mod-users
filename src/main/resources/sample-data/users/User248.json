@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "fanny",
+   "enrollmentDate" : "2016-12-20",
+   "personal" : {
+      "phone" : "1-591-386-1824 x61080",
+      "lastName" : "Schowalter",
+      "email" : "christiana@hahn-collins-and-bruen.pf",
+      "mobilePhone" : "248-408-7381",
+      "firstName" : "Caterina",
+      "preferredContactTypeId" : "002",
+      "addresses" : [
+         {
+            "addressLine1" : "65046 Floor 50",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "San Fernando",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "82798-0326",
+            "region" : "DE"
+         }
+      ],
+      "dateOfBirth" : "1954-08-07"
+   },
+   "active" : false,
+   "expirationDate" : "2020-02-15",
+   "type" : "patron",
+   "id" : "a2468e40-fb7c-453c-a217-8388801e2407",
+   "barcode" : "599322056324332"
+}
+

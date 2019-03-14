@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "active" : true,
+   "enrollmentDate" : "2018-10-28",
+   "username" : "alexandria",
+   "personal" : {
+      "lastName" : "Walker",
+      "phone" : "152-043-1465 x5892",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Chelsie",
+      "email" : "efrain@tromp-feest-and-runolfsdottir.gf",
+      "middleName" : "Carmela",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Two Rivers",
+            "addressLine1" : "77253 Julien Roads",
+            "postalCode" : "88605-1788",
+            "region" : "MN",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "2005-01-14"
+   },
+   "id" : "be3113c3-0965-4bf4-97c2-40ff54501c2b",
+   "barcode" : "80649207380965",
+   "type" : "patron",
+   "expirationDate" : "2020-09-13"
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "30162199862882",
+   "enrollmentDate" : "2017-04-29",
+   "expirationDate" : "2019-08-23",
+   "type" : "patron",
+   "active" : true,
+   "id" : "55e09c25-0a7b-4df8-8bde-a8964b57ef40",
+   "personal" : {
+      "lastName" : "Renner",
+      "middleName" : "Audreanne",
+      "preferredContactTypeId" : "004",
+      "phone" : "342.564.6025 x871",
+      "mobilePhone" : "1-370-615-8878",
+      "dateOfBirth" : "1991-08-11",
+      "email" : "godfrey@koepp-lueilwitz.sa",
+      "firstName" : "Verda",
+      "addresses" : [
+         {
+            "region" : "FM",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "51331-4265",
+            "primaryAddress" : true,
+            "addressLine1" : "75833 Arvid Path",
+            "countryId" : "US",
+            "city" : "Claremont"
+         }
+      ]
+   },
+   "username" : "rory"
+}
+

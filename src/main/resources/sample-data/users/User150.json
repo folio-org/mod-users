@@ -1,0 +1,30 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "2014-04-05",
+      "email" : "kamryn@conroy-champlin-and-langosh.ga",
+      "phone" : "1-035-157-3080 x960",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "64753 Ritchie Ridge Apt. 813",
+            "city" : "Hawthorne",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "71977-2524",
+            "region" : "PR"
+         }
+      ],
+      "lastName" : "Reynolds",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Chester"
+   },
+   "id" : "5ed8a4be-f0d8-459d-9e9a-27f2e8c155af",
+   "username" : "mertie",
+   "enrollmentDate" : "2017-01-22",
+   "expirationDate" : "2021-02-12",
+   "barcode" : "763581543039464",
+   "type" : "patron"
+}
+

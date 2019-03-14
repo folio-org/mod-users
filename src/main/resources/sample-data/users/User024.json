@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "type" : "patron",
+   "enrollmentDate" : "2019-03-01",
+   "expirationDate" : "2019-07-19",
+   "barcode" : "318184383030693",
+   "username" : "vena",
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "lastName" : "Stroman",
+      "middleName" : "Tiana",
+      "email" : "ethelyn@emmerich-cruickshank-and-robel.pa.us",
+      "dateOfBirth" : "1966-11-10",
+      "phone" : "1-585-959-2707 x8182",
+      "mobilePhone" : "1-761-992-0604 x36575",
+      "addresses" : [
+         {
+            "addressLine1" : "53417 Heller Glens",
+            "countryId" : "US",
+            "city" : "San Rafael",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "12702",
+            "region" : "AS"
+         }
+      ],
+      "firstName" : "Destinee"
+   },
+   "active" : false,
+   "id" : "a0dadce9-06ed-4b23-9fc0-6b5238aa92d8"
+}
+

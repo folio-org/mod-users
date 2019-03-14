@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "enrollmentDate" : "2015-08-28",
+   "expirationDate" : "2019-08-16",
+   "barcode" : "745758690367580",
+   "type" : "patron",
+   "id" : "a208cf17-a7f0-452d-ae0e-64011232c86d",
+   "personal" : {
+      "firstName" : "Candace",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Seal Beach",
+            "countryId" : "US",
+            "addressLine1" : "43069 Lobby",
+            "region" : "NC",
+            "postalCode" : "35848-5877",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "mobilePhone" : "(436)763-7413",
+      "phone" : "(136)082-4680 x8231",
+      "email" : "guy@lemke-llc.ok.us",
+      "dateOfBirth" : "1986-06-26",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Abbott",
+      "middleName" : "Fanny"
+   },
+   "active" : false,
+   "username" : "devonte"
+}
+

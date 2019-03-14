@@ -1,0 +1,30 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "personal" : {
+      "phone" : "058-815-1186 x99192",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Nenana",
+            "addressLine1" : "16469 Champlin Walks Apt. 641",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "GU",
+            "postalCode" : "65778"
+         }
+      ],
+      "lastName" : "Klocko",
+      "email" : "leilani@rutherford-ortiz-and-halvorson.cm",
+      "dateOfBirth" : "1981-02-07",
+      "firstName" : "Julianne",
+      "preferredContactTypeId" : "005"
+   },
+   "username" : "novella",
+   "enrollmentDate" : "2016-09-06",
+   "active" : false,
+   "expirationDate" : "2019-10-09",
+   "type" : "patron",
+   "barcode" : "617842747960086",
+   "id" : "c97f19d3-7a82-4891-aaa1-de087a9a903f"
+}
+

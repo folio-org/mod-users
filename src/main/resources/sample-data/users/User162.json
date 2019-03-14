@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "type" : "patron",
+   "barcode" : "865397063334345",
+   "enrollmentDate" : "2019-01-29",
+   "expirationDate" : "2020-08-28",
+   "username" : "julio",
+   "id" : "e5e950e0-3f56-4ff1-8e86-671cdbc37688",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "lastName" : "Denesik",
+      "email" : "destinee@abernathy-jacobs.ps",
+      "dateOfBirth" : "1986-02-07",
+      "phone" : "533-887-8695",
+      "mobilePhone" : "945-131-2689 x4666",
+      "addresses" : [
+         {
+            "region" : "TN",
+            "postalCode" : "93562-3911",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "Lexington",
+            "addressLine1" : "53739 Haley Village",
+            "countryId" : "US"
+         }
+      ],
+      "firstName" : "Laurianne"
+   }
+}
+

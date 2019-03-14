@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "active" : false,
+   "personal" : {
+      "middleName" : "Guadalupe",
+      "email" : "arlie@schultz-franecki-and-kohler.org",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "969.479.2172",
+      "firstName" : "Franco",
+      "phone" : "201-462-5010 x7332",
+      "lastName" : "Koss",
+      "dateOfBirth" : "2011-01-17",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "26347-1664",
+            "region" : "VT",
+            "addressLine1" : "45639 Graham Club",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Tok"
+         }
+      ]
+   },
+   "enrollmentDate" : "2017-06-09",
+   "username" : "natalia",
+   "barcode" : "681175740267637",
+   "id" : "0aa0c321-9974-4a67-92dc-bca029d093e2",
+   "expirationDate" : "2019-11-17",
+   "type" : "patron"
+}
+

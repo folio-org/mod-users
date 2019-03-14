@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "expirationDate" : "2020-03-15",
+   "enrollmentDate" : "2016-11-01",
+   "barcode" : "957779894505503",
+   "type" : "patron",
+   "active" : false,
+   "id" : "4cb9a24c-76e1-4755-9f54-f51115e00b53",
+   "personal" : {
+      "firstName" : "Parker",
+      "addresses" : [
+         {
+            "city" : "Santa Barbara",
+            "countryId" : "US",
+            "addressLine1" : "17685 Bogan Forge #378",
+            "primaryAddress" : true,
+            "postalCode" : "56251-1269",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "MP"
+         }
+      ],
+      "mobilePhone" : "1-096-690-6796 x70684",
+      "phone" : "735-486-0872 x1157",
+      "dateOfBirth" : "1947-08-16",
+      "email" : "keon@hane-llc.ir",
+      "lastName" : "Hayes",
+      "preferredContactTypeId" : "001"
+   },
+   "username" : "santiago"
+}
+

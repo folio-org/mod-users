@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "type" : "patron",
+   "expirationDate" : "2020-11-09",
+   "id" : "d20d2f4e-6356-4dc3-b7b1-8b9fb5564e02",
+   "barcode" : "925090589996688",
+   "enrollmentDate" : "2018-01-18",
+   "username" : "irving",
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "45078-8730",
+            "region" : "KS",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "84256 Unit I",
+            "city" : "Tuskegee"
+         }
+      ],
+      "dateOfBirth" : "1980-02-07",
+      "lastName" : "Hyatt",
+      "phone" : "1-352-388-0288",
+      "firstName" : "Juston",
+      "preferredContactTypeId" : "005",
+      "middleName" : "Green",
+      "email" : "scarlett@roberts-weber-and-rice.fi"
+   },
+   "active" : true
+}
+

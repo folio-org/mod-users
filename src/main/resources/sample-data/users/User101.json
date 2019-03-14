@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Grant",
+      "middleName" : "Danielle",
+      "phone" : "333-400-5145 x657",
+      "mobilePhone" : "931.111.2135",
+      "email" : "lorenza@renner-witting-and-purdy.lu",
+      "dateOfBirth" : "1962-12-24",
+      "firstName" : "Erik",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "93542 Gusikowski Knolls",
+            "city" : "Parma",
+            "region" : "NY",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "88257-0564"
+         }
+      ]
+   },
+   "id" : "b617c5f2-78d4-4c7e-bf0c-d21392a8c39f",
+   "username" : "megane",
+   "enrollmentDate" : "2015-04-23",
+   "expirationDate" : "2019-06-19",
+   "barcode" : "240905641162392",
+   "type" : "patron"
+}
+

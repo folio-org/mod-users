@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "enrollmentDate" : "2018-03-02",
+   "expirationDate" : "2020-10-30",
+   "barcode" : "685625879486391",
+   "type" : "patron",
+   "active" : true,
+   "id" : "260f1870-7dee-452d-a379-301f063febda",
+   "personal" : {
+      "middleName" : "Rolando",
+      "lastName" : "Bosco",
+      "preferredContactTypeId" : "001",
+      "dateOfBirth" : "1959-12-06",
+      "email" : "citlalli@mclaughlin-kemmer.yu",
+      "mobilePhone" : "(448)273-0210 x1902",
+      "phone" : "247.317.0270 x271",
+      "addresses" : [
+         {
+            "city" : "Yuma",
+            "countryId" : "US",
+            "addressLine1" : "48438 Dach Forge",
+            "primaryAddress" : true,
+            "postalCode" : "08024",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "AR"
+         }
+      ],
+      "firstName" : "Ronny"
+   },
+   "username" : "alberto"
+}
+

@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "type" : "patron",
+   "barcode" : "824722790985458",
+   "expirationDate" : "2020-08-13",
+   "enrollmentDate" : "2015-10-07",
+   "username" : "maribel",
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "lastName" : "Becker",
+      "addresses" : [
+         {
+            "city" : "West Memphis",
+            "addressLine1" : "62959 Gutmann Skyway Apt. 667",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "50594",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "IA"
+         }
+      ],
+      "firstName" : "Ariane",
+      "email" : "evans@kohler-west.aero",
+      "dateOfBirth" : "1963-03-29",
+      "phone" : "1-064-285-2113",
+      "mobilePhone" : "(743)529-9680"
+   },
+   "id" : "10cb9367-c095-4872-9add-8aecdf339dd4",
+   "active" : false
+}
+

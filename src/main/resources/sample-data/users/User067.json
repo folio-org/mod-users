@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "type" : "patron",
+   "expirationDate" : "2019-07-10",
+   "enrollmentDate" : "2018-12-19",
+   "barcode" : "60913707627598",
+   "username" : "america",
+   "personal" : {
+      "dateOfBirth" : "1974-03-20",
+      "email" : "amely@deckow-bradtke-and-dibbert.ng",
+      "mobilePhone" : "411.858.2748 x273",
+      "phone" : "(989)847-2344 x04637",
+      "addresses" : [
+         {
+            "region" : "CA",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "08266",
+            "primaryAddress" : true,
+            "addressLine1" : "12461 Nader Cape",
+            "countryId" : "US",
+            "city" : "San Clemente"
+         }
+      ],
+      "firstName" : "Deja",
+      "middleName" : "Arianna",
+      "lastName" : "Harvey",
+      "preferredContactTypeId" : "001"
+   },
+   "id" : "5a57f974-ea09-4c87-b7f5-e4144dde6128",
+   "active" : true
+}
+

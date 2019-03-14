@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "enrollmentDate" : "2016-02-01",
+   "username" : "vidal",
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "Eufaula",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "20300 Hackett Forks",
+            "region" : "IL",
+            "postalCode" : "39763",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "1991-09-27",
+      "lastName" : "Wiza",
+      "phone" : "1-980-920-3425 x26720",
+      "mobilePhone" : "283-529-4332 x09754",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Augustine",
+      "email" : "dovie@fisher-llc.tf",
+      "middleName" : "Jacynthe"
+   },
+   "active" : false,
+   "type" : "patron",
+   "expirationDate" : "2019-04-21",
+   "id" : "eaed771f-1472-4f5a-a31f-bbb5922ba5fe",
+   "barcode" : "771789476011363"
+}
+

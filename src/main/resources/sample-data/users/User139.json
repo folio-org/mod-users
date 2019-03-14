@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "type" : "patron",
+   "enrollmentDate" : "2015-10-21",
+   "expirationDate" : "2019-12-30",
+   "barcode" : "556024123510408",
+   "username" : "loren",
+   "id" : "2eb8fef6-95c8-491d-a6a3-00176997dca4",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Kovacek",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Carey",
+      "addresses" : [
+         {
+            "addressLine1" : "39249 Amina Plaza",
+            "countryId" : "US",
+            "city" : "Tuskegee",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "51037-6339",
+            "region" : "SC"
+         }
+      ],
+      "phone" : "(071)940-1388",
+      "mobilePhone" : "(609)148-9779 x79899",
+      "dateOfBirth" : "1984-08-04",
+      "email" : "erich@sporer-group.lv"
+   }
+}
+

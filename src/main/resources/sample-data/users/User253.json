@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "585052723770974",
+   "id" : "aace299f-7a74-4118-9cf3-599110dce278",
+   "type" : "patron",
+   "expirationDate" : "2020-06-17",
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "1947-09-24",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "62103 Austin Flat Suite 400",
+            "city" : "Bessemer",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "NV",
+            "postalCode" : "16323-4796"
+         }
+      ],
+      "email" : "laura@jewess-hayes-and-schuppe.ba",
+      "firstName" : "Cora",
+      "mobilePhone" : "084.739.9139 x7112",
+      "preferredContactTypeId" : "002",
+      "phone" : "(832)988-4869 x807",
+      "lastName" : "Willms"
+   },
+   "username" : "cecelia",
+   "enrollmentDate" : "2018-02-21"
+}
+

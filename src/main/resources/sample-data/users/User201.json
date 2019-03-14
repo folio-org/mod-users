@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "hubert",
+   "enrollmentDate" : "2015-08-19",
+   "personal" : {
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "MN",
+            "postalCode" : "48023-1180",
+            "city" : "Temecula",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "16685 Jacobson Junctions Suite 266"
+         }
+      ],
+      "dateOfBirth" : "1993-07-15",
+      "phone" : "(424)089-0260 x078",
+      "lastName" : "Fay",
+      "middleName" : "Velma",
+      "email" : "michaela@gerlach-inc.mv",
+      "firstName" : "Reta",
+      "mobilePhone" : "464.863.9490 x63388",
+      "preferredContactTypeId" : "004"
+   },
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2020-04-21",
+   "id" : "2cb8a9f5-5a04-4b26-89de-c5a522638de2",
+   "barcode" : "664902183251587"
+}
+

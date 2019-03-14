@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "type" : "patron",
+   "expirationDate" : "2020-03-18",
+   "id" : "e59bc21a-884e-42a2-8792-163efc3662e7",
+   "barcode" : "144826156017341",
+   "enrollmentDate" : "2016-08-13",
+   "username" : "theodora",
+   "personal" : {
+      "mobilePhone" : "373-226-0411",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Francisca",
+      "middleName" : "Dock",
+      "email" : "rollin@jacobson-emmerich-and-schaefer.kg",
+      "lastName" : "Dickinson",
+      "phone" : "(071)378-8133 x66872",
+      "dateOfBirth" : "1945-12-20",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Toledo",
+            "addressLine1" : "76540 Jaden Meadows #999",
+            "region" : "MN",
+            "postalCode" : "49708",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ]
+   },
+   "active" : true
+}
+

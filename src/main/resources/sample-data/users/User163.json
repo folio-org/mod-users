@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "727649491002914",
+   "enrollmentDate" : "2015-08-19",
+   "expirationDate" : "2019-09-24",
+   "type" : "patron",
+   "active" : false,
+   "id" : "2220260d-12c7-49ab-9ac4-f923323f0cb3",
+   "personal" : {
+      "mobilePhone" : "1-839-176-8900 x8928",
+      "phone" : "803-183-6360 x010",
+      "email" : "laila@trantow-parisian.sb",
+      "dateOfBirth" : "1946-06-06",
+      "firstName" : "Ashlynn",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "13765 Elvie Centers Suite 994",
+            "city" : "Yorba Linda",
+            "region" : "NM",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "42979-4043"
+         }
+      ],
+      "preferredContactTypeId" : "001",
+      "middleName" : "Alize",
+      "lastName" : "Littel"
+   },
+   "username" : "percival"
+}
+

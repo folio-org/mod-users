@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "expirationDate" : "2019-11-09",
+   "enrollmentDate" : "2017-10-27",
+   "barcode" : "981698804715861",
+   "type" : "patron",
+   "active" : false,
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "86611",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "PW",
+            "city" : "Lake Forest",
+            "addressLine1" : "28929 Lobby",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Emery",
+      "dateOfBirth" : "1989-01-24",
+      "email" : "frank@barton-torphy-and-osinski.bj",
+      "mobilePhone" : "691.044.8088 x89516",
+      "phone" : "(023)078-6981",
+      "lastName" : "Walter",
+      "middleName" : "Emma",
+      "preferredContactTypeId" : "003"
+   },
+   "id" : "a983c74e-b4f5-4ca9-94f0-b79efa947b27",
+   "username" : "shyanne"
+}
+

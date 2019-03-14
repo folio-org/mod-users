@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "type" : "patron",
+   "barcode" : "745592013622964",
+   "expirationDate" : "2019-04-14",
+   "enrollmentDate" : "2016-01-22",
+   "username" : "ludie",
+   "personal" : {
+      "middleName" : "Orland",
+      "lastName" : "Denesik",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Brook",
+      "addresses" : [
+         {
+            "postalCode" : "33047-5265",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "DC",
+            "city" : "Palo Alto",
+            "addressLine1" : "17807 Grayce Ridge #192",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "mobilePhone" : "(920)607-6501",
+      "phone" : "988.861.6928 x221",
+      "dateOfBirth" : "1968-12-11",
+      "email" : "keegan@mitchell-and-sons.bn"
+   },
+   "active" : true,
+   "id" : "a56edfbe-087e-4f79-bd7e-d855fbe746e4"
+}
+

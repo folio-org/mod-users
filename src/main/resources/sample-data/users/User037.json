@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "username" : "alessandro",
+   "active" : false,
+   "personal" : {
+      "firstName" : "Ardella",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Santa Ana",
+            "countryId" : "US",
+            "addressLine1" : "74391 Sawayn Wall Apt. 191",
+            "region" : "IA",
+            "postalCode" : "06351-7599",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "phone" : "1-771-591-0526 x95088",
+      "dateOfBirth" : "2012-01-14",
+      "email" : "herman@herzog-kutch.co",
+      "middleName" : "Lonzo",
+      "lastName" : "Prosacco",
+      "preferredContactTypeId" : "002"
+   },
+   "id" : "ade18246-c529-497f-bd4c-2c3f85e995ad",
+   "type" : "patron",
+   "barcode" : "483240769538888",
+   "expirationDate" : "2019-11-29",
+   "enrollmentDate" : "2016-05-25"
+}
+

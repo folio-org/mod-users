@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "diana",
+   "id" : "0414af69-f89c-40f2-bea9-a9b5d0a179d4",
+   "active" : false,
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "34690-3080",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "NH",
+            "city" : "Springdale",
+            "addressLine1" : "85035 Madonna Plaza",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Kristy",
+      "email" : "enola@stroman-bergstrom.mt",
+      "dateOfBirth" : "1987-02-06",
+      "phone" : "1-990-063-2196 x96861",
+      "preferredContactTypeId" : "003",
+      "middleName" : "Andreanne",
+      "lastName" : "Batz"
+   },
+   "type" : "patron",
+   "barcode" : "625911315350411",
+   "expirationDate" : "2020-10-28",
+   "enrollmentDate" : "2018-09-14"
+}
+

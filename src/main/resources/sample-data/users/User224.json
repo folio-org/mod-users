@@ -1,0 +1,30 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "active" : true,
+   "personal" : {
+      "phone" : "922-735-6119 x64894",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "PA",
+            "postalCode" : "28063-5444",
+            "addressLine1" : "08150 Prince Motorway Suite 676",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Santa Barbara"
+         }
+      ],
+      "lastName" : "Schuster",
+      "email" : "daisy@schulist-fisher.il.us",
+      "dateOfBirth" : "2012-03-10",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Felton"
+   },
+   "enrollmentDate" : "2015-06-15",
+   "username" : "myrtice",
+   "barcode" : "231436162840271",
+   "id" : "0b6d1482-de21-4643-ae5b-90b4c7164c4a",
+   "type" : "patron",
+   "expirationDate" : "2020-04-30"
+}
+

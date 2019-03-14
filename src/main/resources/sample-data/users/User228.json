@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "kirk",
+   "enrollmentDate" : "2015-12-16",
+   "personal" : {
+      "addresses" : [
+         {
+            "region" : "MN",
+            "postalCode" : "56741-6759",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "city" : "Mentor",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "80277 Wilkinson Rapids #211"
+         }
+      ],
+      "dateOfBirth" : "1990-06-16",
+      "lastName" : "Koss",
+      "phone" : "(215)223-7640 x150",
+      "mobilePhone" : "(589)923-3094 x7774",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Jordane",
+      "email" : "melody@zieme-green.lr",
+      "middleName" : "Dolores"
+   },
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2020-10-26",
+   "id" : "197f8e91-5110-4487-ad36-b3d21a66059d",
+   "barcode" : "110408495506241"
+}
+

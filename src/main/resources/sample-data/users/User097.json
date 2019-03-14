@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "barcode" : "855788620413307",
+   "enrollmentDate" : "2015-04-08",
+   "expirationDate" : "2019-08-20",
+   "type" : "patron",
+   "active" : true,
+   "id" : "0a246f61-d85f-42b6-8dcc-48d25a46690b",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "93045",
+            "region" : "NH",
+            "countryId" : "US",
+            "addressLine1" : "86731 Conroy Walk #607",
+            "city" : "La Palma",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Roxane",
+      "dateOfBirth" : "1976-01-10",
+      "email" : "sasha@langworth-group.nm.us",
+      "phone" : "759.749.2624 x5524",
+      "mobilePhone" : "(826)811-6221 x8553",
+      "middleName" : "Suzanne",
+      "lastName" : "Schamberger",
+      "preferredContactTypeId" : "004"
+   },
+   "username" : "maxine"
+}
+

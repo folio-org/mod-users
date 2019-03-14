@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "vergie",
+   "enrollmentDate" : "2018-03-12",
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "Monrovia",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "96132 Gutkowski Extensions",
+            "postalCode" : "20851",
+            "region" : "HI",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "1998-08-02",
+      "lastName" : "McClure",
+      "phone" : "(369)441-1512 x334",
+      "preferredContactTypeId" : "002",
+      "mobilePhone" : "(807)609-7008 x01814",
+      "firstName" : "Madisyn",
+      "middleName" : "Elise",
+      "email" : "roger@gottlieb-smith.am"
+   },
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2019-09-01",
+   "id" : "07066a1f-1fb7-4793-bbca-7cd8d1ea90ab",
+   "barcode" : "950908851771803"
+}
+

@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "type" : "patron",
+   "barcode" : "478720922465697",
+   "expirationDate" : "2019-12-28",
+   "enrollmentDate" : "2019-01-28",
+   "username" : "nathanael",
+   "active" : false,
+   "id" : "2fabd929-3ed9-40ae-aaf2-6c39c4bebf13",
+   "personal" : {
+      "lastName" : "Denesik",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Aliya",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "63028",
+            "region" : "AE",
+            "countryId" : "US",
+            "addressLine1" : "66993 Lubowitz Fork",
+            "city" : "North Little Rock",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "504.537.5023",
+      "mobilePhone" : "1-217-304-1117",
+      "dateOfBirth" : "1966-08-07",
+      "email" : "everette@hermann-armstrong.wi.us"
+   }
+}
+

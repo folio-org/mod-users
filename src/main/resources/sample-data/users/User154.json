@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "id" : "51e1e298-db10-465b-8c20-7f3d1e929834",
+   "personal" : {
+      "addresses" : [
+         {
+            "city" : "San Bernardino",
+            "countryId" : "US",
+            "addressLine1" : "62455 Side",
+            "primaryAddress" : true,
+            "postalCode" : "81491",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "NH"
+         }
+      ],
+      "firstName" : "Emmie",
+      "dateOfBirth" : "1961-07-19",
+      "email" : "joyce@ullrich-wiegand.ba",
+      "mobilePhone" : "703.646.6286",
+      "phone" : "1-794-142-6128",
+      "middleName" : "Layne",
+      "lastName" : "Zulauf",
+      "preferredContactTypeId" : "002"
+   },
+   "active" : false,
+   "username" : "hanna",
+   "barcode" : "53906695937790",
+   "expirationDate" : "2019-11-22",
+   "enrollmentDate" : "2016-12-24",
+   "type" : "patron"
+}
+

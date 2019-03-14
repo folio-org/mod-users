@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "expirationDate" : "2019-12-10",
+   "type" : "patron",
+   "id" : "3793853e-6297-424d-abea-24525079f658",
+   "barcode" : "752157134026468",
+   "username" : "bernhard",
+   "enrollmentDate" : "2015-05-07",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Kokomo",
+            "addressLine1" : "37345 Brakus Junctions",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "AS",
+            "postalCode" : "60624-1416"
+         }
+      ],
+      "dateOfBirth" : "1960-05-03",
+      "phone" : "1-525-040-6557",
+      "lastName" : "Kulas",
+      "middleName" : "Angel",
+      "email" : "yvonne@cormier-mertz.tz",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Earline"
+   },
+   "active" : true
+}
+

@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "daisha",
+   "active" : true,
+   "id" : "b4e91548-c387-4b01-aaa1-489afc3f6936",
+   "personal" : {
+      "email" : "earnestine@baumbach-and-sons.biz",
+      "dateOfBirth" : "1956-02-23",
+      "phone" : "664.744.4131 x4274",
+      "addresses" : [
+         {
+            "addressLine1" : "75141 Morissette Club",
+            "countryId" : "US",
+            "city" : "Lawndale",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "96367-3820",
+            "region" : "VI"
+         }
+      ],
+      "firstName" : "Timothy",
+      "preferredContactTypeId" : "001",
+      "middleName" : "Vernice",
+      "lastName" : "Murazik"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2016-08-10",
+   "expirationDate" : "2019-11-04",
+   "barcode" : "570514672235127"
+}
+

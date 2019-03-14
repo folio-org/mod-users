@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "personal" : {
+      "firstName" : "Maximo",
+      "addresses" : [
+         {
+            "postalCode" : "95218",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "PR",
+            "city" : "Lomita",
+            "countryId" : "US",
+            "addressLine1" : "15604 Front",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "(602)146-5656 x7536",
+      "mobilePhone" : "652.054.8955",
+      "dateOfBirth" : "1948-06-08",
+      "email" : "christa@thiel-hahn.bn",
+      "middleName" : "Jacquelyn",
+      "lastName" : "Koelpin",
+      "preferredContactTypeId" : "002"
+   },
+   "active" : true,
+   "id" : "acf8aab2-91ee-4210-bb7c-b688d66a9de4",
+   "username" : "aaliyah",
+   "enrollmentDate" : "2018-06-01",
+   "expirationDate" : "2020-10-16",
+   "barcode" : "184798638159936",
+   "type" : "patron"
+}
+

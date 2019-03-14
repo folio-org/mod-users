@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "type" : "patron",
+   "enrollmentDate" : "2018-09-13",
+   "expirationDate" : "2019-07-07",
+   "barcode" : "565249317944644",
+   "username" : "edd",
+   "personal" : {
+      "email" : "margaret@donnelly-lindgren.at",
+      "dateOfBirth" : "1979-06-15",
+      "phone" : "1-013-044-4658 x2248",
+      "mobilePhone" : "(375)585-3955 x22596",
+      "addresses" : [
+         {
+            "region" : "FM",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "04713",
+            "primaryAddress" : true,
+            "addressLine1" : "34109 Bella Groves",
+            "countryId" : "US",
+            "city" : "Lima"
+         }
+      ],
+      "firstName" : "Ewell",
+      "preferredContactTypeId" : "004",
+      "lastName" : "Swift"
+   },
+   "id" : "fb5de3c8-5293-440e-8448-a688c3a7367c",
+   "active" : false
+}
+

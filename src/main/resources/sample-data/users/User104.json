@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "type" : "patron",
+   "barcode" : "13681445020477",
+   "expirationDate" : "2019-04-18",
+   "enrollmentDate" : "2016-08-25",
+   "username" : "jacynthe",
+   "id" : "b3e39715-0659-4776-9d40-abe655408d84",
+   "active" : false,
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "lastName" : "Hilll",
+      "addresses" : [
+         {
+            "region" : "MP",
+            "postalCode" : "96090-7276",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Rolling Hills Estates",
+            "addressLine1" : "70387 Waldo Springs #134",
+            "countryId" : "US"
+         }
+      ],
+      "firstName" : "Brian",
+      "email" : "parker@roberts-pfannerstill.rw",
+      "dateOfBirth" : "1980-02-05",
+      "phone" : "234.278.5991 x3013",
+      "mobilePhone" : "1-632-761-5435"
+   }
+}
+

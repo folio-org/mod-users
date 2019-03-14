@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "737503980446128",
+   "id" : "a23eac4b-955e-451c-b4ff-6ec2f5e63e23",
+   "expirationDate" : "2019-10-02",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "dateOfBirth" : "1966-06-22",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "01091-7652",
+            "region" : "WI",
+            "addressLine1" : "30718 Ankunding Row",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Mesa"
+         }
+      ],
+      "email" : "esther@cummerata-mclaughlin-and-grant.cd",
+      "middleName" : "Shea",
+      "preferredContactTypeId" : "005",
+      "mobilePhone" : "265-043-4033 x73485",
+      "firstName" : "Zora",
+      "phone" : "242.169.1046 x52431",
+      "lastName" : "Bayer"
+   },
+   "username" : "austin",
+   "enrollmentDate" : "2017-10-12"
+}
+

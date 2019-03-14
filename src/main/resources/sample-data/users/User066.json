@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "expirationDate" : "2020-06-03",
+   "enrollmentDate" : "2015-03-23",
+   "barcode" : "144807605573799",
+   "type" : "patron",
+   "active" : false,
+   "id" : "eaeffd06-57d3-488c-bd1b-c39d5c62e97d",
+   "personal" : {
+      "dateOfBirth" : "1974-05-14",
+      "email" : "michele@deckow-king.ms",
+      "phone" : "703-029-4731",
+      "mobilePhone" : "(715)134-0584 x399",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Texarkana",
+            "addressLine1" : "35418 Wyman Bypass Suite 869",
+            "countryId" : "US",
+            "region" : "RI",
+            "postalCode" : "47584-7824",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "firstName" : "Jabari",
+      "middleName" : "Tressie",
+      "lastName" : "Marvin",
+      "preferredContactTypeId" : "001"
+   },
+   "username" : "brant"
+}
+

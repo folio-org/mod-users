@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "fred",
+   "active" : true,
+   "id" : "956f39c5-92e3-4c26-bcdc-1827674710cf",
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Hilll",
+      "middleName" : "Travon",
+      "firstName" : "Santino",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "12402 Leon Passage",
+            "countryId" : "US",
+            "city" : "Rolling Hills Estates",
+            "region" : "MI",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "98879-8861"
+         }
+      ],
+      "phone" : "(234)617-6257 x0630",
+      "mobilePhone" : "1-363-752-3867 x6224",
+      "email" : "kariane@douglas-hoeger-and-stokes.py",
+      "dateOfBirth" : "1995-04-02"
+   },
+   "type" : "patron",
+   "barcode" : "890127749735764",
+   "enrollmentDate" : "2017-06-05",
+   "expirationDate" : "2020-09-28"
+}
+

@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "darren",
+   "id" : "ea2ef01f-d732-4119-90ab-ee6df447548f",
+   "active" : false,
+   "personal" : {
+      "middleName" : "Agustina",
+      "lastName" : "Renner",
+      "preferredContactTypeId" : "002",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "60982-0464",
+            "region" : "TX",
+            "addressLine1" : "81925 Ortiz Isle Apt. 171",
+            "countryId" : "US",
+            "city" : "San Gabriel",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Raquel",
+      "dateOfBirth" : "1951-02-02",
+      "email" : "mafalda@bins-group.ua",
+      "phone" : "337-905-1068"
+   },
+   "type" : "patron",
+   "barcode" : "402540302712985",
+   "expirationDate" : "2019-12-11",
+   "enrollmentDate" : "2016-09-08"
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "schuyler",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Glover",
+      "middleName" : "Ervin",
+      "mobilePhone" : "1-422-331-2245",
+      "phone" : "(024)340-3008 x71420",
+      "email" : "deborah@braun-and-sons.tp",
+      "dateOfBirth" : "1976-04-18",
+      "firstName" : "Lucas",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "17142 Prohaska Turnpike",
+            "city" : "Ashland",
+            "region" : "MI",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "96940-0918"
+         }
+      ]
+   },
+   "id" : "86344e52-979a-45da-ad44-9edcc05c5312",
+   "type" : "patron",
+   "barcode" : "951631321647731",
+   "expirationDate" : "2020-01-18",
+   "enrollmentDate" : "2016-03-06"
+}
+

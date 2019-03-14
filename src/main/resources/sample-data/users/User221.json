@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressLine1" : "20919 Adolf Vista Suite 060",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "San Marino",
+            "postalCode" : "92298",
+            "region" : "MI",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "2006-09-25",
+      "lastName" : "Herman",
+      "phone" : "1-181-329-3026 x244",
+      "mobilePhone" : "(577)033-8256 x896",
+      "firstName" : "Mylene",
+      "preferredContactTypeId" : "004",
+      "email" : "abraham@little-spinka-and-koepp.pr"
+   },
+   "enrollmentDate" : "2017-02-17",
+   "username" : "marlee",
+   "active" : true,
+   "expirationDate" : "2019-11-21",
+   "type" : "patron",
+   "barcode" : "966003183343282",
+   "id" : "67e40b72-66ca-4113-bed9-17a40bc448e0"
+}
+

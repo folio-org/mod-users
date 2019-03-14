@@ -1,0 +1,30 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "active" : true,
+   "enrollmentDate" : "2017-03-04",
+   "username" : "adolphus",
+   "personal" : {
+      "phone" : "272.300.8720 x0852",
+      "lastName" : "Stanton",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Barrow",
+            "addressLine1" : "73865 Building W",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "ND",
+            "postalCode" : "58178-3918"
+         }
+      ],
+      "email" : "trinity@tremblay-dare-and-conroy.va.us",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Ashley",
+      "dateOfBirth" : "1977-01-12"
+   },
+   "id" : "ea3a1605-a930-4183-b04e-0b2fca3ae094",
+   "barcode" : "683657854071142",
+   "expirationDate" : "2020-02-22",
+   "type" : "patron"
+}
+

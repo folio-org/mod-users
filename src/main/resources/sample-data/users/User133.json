@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "eladio",
+   "id" : "8931291a-8f92-4044-a17f-49a546b489ce",
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "lastName" : "Robel",
+      "middleName" : "Clarabelle",
+      "firstName" : "Adelbert",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Aliso Viejo",
+            "addressLine1" : "99508 Carissa Junction Apt. 288",
+            "countryId" : "US",
+            "region" : "ND",
+            "postalCode" : "45508-7697",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "phone" : "1-708-748-0323",
+      "email" : "moises@west-gerhold.pt",
+      "dateOfBirth" : "2001-06-07"
+   },
+   "active" : true,
+   "type" : "patron",
+   "barcode" : "573695099759142",
+   "enrollmentDate" : "2018-11-16",
+   "expirationDate" : "2020-04-29"
+}
+

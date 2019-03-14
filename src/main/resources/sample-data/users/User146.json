@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "type" : "patron",
+   "barcode" : "375669381232857",
+   "enrollmentDate" : "2017-10-25",
+   "expirationDate" : "2019-11-15",
+   "username" : "reyna",
+   "active" : true,
+   "id" : "975256dc-abdc-45d1-b51a-f9f9ca15a491",
+   "personal" : {
+      "lastName" : "Kulas",
+      "middleName" : "Mayra",
+      "preferredContactTypeId" : "001",
+      "dateOfBirth" : "1997-04-23",
+      "email" : "garfield@bins-heidenreich-and-tremblay.ao",
+      "phone" : "363.952.2395 x24397",
+      "addresses" : [
+         {
+            "city" : "Marana",
+            "countryId" : "US",
+            "addressLine1" : "17902 Gislason Divide",
+            "primaryAddress" : true,
+            "postalCode" : "19691-4725",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "CT"
+         }
+      ],
+      "firstName" : "Ryann"
+   }
+}
+

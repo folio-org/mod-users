@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "expirationDate" : "2020-05-13",
+   "type" : "patron",
+   "id" : "43f60acf-2557-48e9-b457-12783925444f",
+   "barcode" : "19683671814242",
+   "username" : "victoria",
+   "enrollmentDate" : "2017-01-29",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "93703 Floor 0268",
+            "city" : "Glendale",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "75580",
+            "region" : "IA"
+         }
+      ],
+      "dateOfBirth" : "1996-02-05",
+      "phone" : "(285)962-0956 x0888",
+      "lastName" : "Sporer",
+      "email" : "jaylin@moen-goyette-and-greenholt.ar",
+      "middleName" : "Keaton",
+      "preferredContactTypeId" : "003",
+      "mobilePhone" : "917-076-5849 x730",
+      "firstName" : "Maud"
+   },
+   "active" : true
+}
+

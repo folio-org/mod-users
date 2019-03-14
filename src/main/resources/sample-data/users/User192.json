@@ -1,0 +1,30 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "active" : true,
+   "id" : "4f0e711c-d583-41e0-9555-b62f1725023f",
+   "personal" : {
+      "phone" : "(916)599-0326",
+      "dateOfBirth" : "1968-08-12",
+      "email" : "earnestine@sipes-stokes-and-durgan.so",
+      "lastName" : "Auer",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Darius",
+      "addresses" : [
+         {
+            "addressLine1" : "00430 Denis Parks",
+            "countryId" : "US",
+            "city" : "Indianapolis",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "14654-6001",
+            "region" : "FL"
+         }
+      ]
+   },
+   "username" : "leslie",
+   "enrollmentDate" : "2015-04-30",
+   "expirationDate" : "2020-06-19",
+   "barcode" : "997383903573496",
+   "type" : "patron"
+}
+

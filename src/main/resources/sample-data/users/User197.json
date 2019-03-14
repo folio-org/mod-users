@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "personal" : {
+      "firstName" : "Coy",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "30380-4558",
+            "region" : "GU",
+            "addressLine1" : "85611 Friesen Locks",
+            "countryId" : "US",
+            "city" : "El Segundo",
+            "primaryAddress" : true
+         }
+      ],
+      "mobilePhone" : "314.735.2132 x715",
+      "phone" : "(148)070-7330",
+      "dateOfBirth" : "1999-02-03",
+      "email" : "trinity@lehner-nikolaus.sc",
+      "middleName" : "Delta",
+      "lastName" : "Jerde",
+      "preferredContactTypeId" : "003"
+   },
+   "active" : true,
+   "id" : "65ec5d8b-c3f6-41d4-8026-fba1f7cae715",
+   "username" : "victor",
+   "barcode" : "507697350841588",
+   "expirationDate" : "2020-01-18",
+   "enrollmentDate" : "2017-08-27",
+   "type" : "patron"
+}
+

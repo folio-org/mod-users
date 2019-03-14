@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "barcode" : "963182390538364",
+   "enrollmentDate" : "2015-04-26",
+   "expirationDate" : "2019-05-31",
+   "type" : "patron",
+   "active" : true,
+   "id" : "f046c9bd-45aa-4ab1-ad3f-461ead3dfdc1",
+   "personal" : {
+      "addresses" : [
+         {
+            "region" : "MN",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "22659-9172",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "32461 Dena Courts",
+            "city" : "Artesia"
+         }
+      ],
+      "firstName" : "Nikki",
+      "email" : "jarred@lowe-and-sons.my",
+      "dateOfBirth" : "1958-08-22",
+      "mobilePhone" : "1-833-574-5277 x613",
+      "phone" : "740.834.7513 x1522",
+      "preferredContactTypeId" : "001",
+      "lastName" : "Lind",
+      "middleName" : "Carter"
+   },
+   "username" : "lupe"
+}
+

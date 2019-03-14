@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "628023765111244",
+   "expirationDate" : "2021-03-07",
+   "enrollmentDate" : "2015-09-16",
+   "type" : "patron",
+   "active" : true,
+   "id" : "a7fb2289-b4dc-4deb-8fd3-86cf8e2b7db6",
+   "personal" : {
+      "middleName" : "Una",
+      "lastName" : "Shields",
+      "preferredContactTypeId" : "003",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Union City",
+            "countryId" : "US",
+            "addressLine1" : "85223 Mylene Pines",
+            "region" : "AZ",
+            "postalCode" : "08287",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "firstName" : "Berta",
+      "dateOfBirth" : "1992-08-27",
+      "email" : "lavon@fisher-haley-and-pfeffer.bh",
+      "phone" : "(449)471-3800"
+   },
+   "username" : "dallas"
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "id" : "dd176277-5c2d-4310-bf2f-e45e312b5026",
+   "barcode" : "405555412626725",
+   "expirationDate" : "2020-06-23",
+   "type" : "patron",
+   "active" : false,
+   "username" : "herminia",
+   "enrollmentDate" : "2017-08-03",
+   "personal" : {
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "KY",
+            "postalCode" : "49342",
+            "city" : "Lakewood",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "28117 Hand Valleys"
+         }
+      ],
+      "dateOfBirth" : "2003-07-27",
+      "phone" : "460-372-5620",
+      "lastName" : "Reinger",
+      "email" : "friedrich@klocko-howe.af",
+      "middleName" : "Maximillia",
+      "mobilePhone" : "1-471-781-0194",
+      "firstName" : "Caleigh",
+      "preferredContactTypeId" : "001"
+   }
+}
+

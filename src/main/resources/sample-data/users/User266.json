@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "personal" : {
+      "middleName" : "Mafalda",
+      "email" : "nash@hansen-koepp-and-prohaska.gt",
+      "preferredContactTypeId" : "002",
+      "mobilePhone" : "1-658-739-5448 x619",
+      "firstName" : "Cordell",
+      "phone" : "(675)279-7737 x58358",
+      "lastName" : "Bernhard",
+      "dateOfBirth" : "2008-02-20",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "AR",
+            "postalCode" : "27791",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "64292 Salvatore Trafficway #413",
+            "city" : "Demopolis"
+         }
+      ]
+   },
+   "enrollmentDate" : "2017-12-01",
+   "username" : "sunny",
+   "active" : true,
+   "expirationDate" : "2020-12-20",
+   "type" : "patron",
+   "barcode" : "631888472578232",
+   "id" : "2a81b279-d459-4022-82f6-69a569d196b9"
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "id" : "a5fb6646-3e42-46ed-b686-e009e1490d2c",
+   "active" : true,
+   "personal" : {
+      "firstName" : "Hoyt",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "23947 Mattie Greens",
+            "city" : "Rosemead",
+            "region" : "WV",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "05956-3525"
+         }
+      ],
+      "mobilePhone" : "1-418-738-9136 x6746",
+      "phone" : "1-915-328-3353 x763",
+      "dateOfBirth" : "1993-11-03",
+      "email" : "dayana@carter-goodwin-and-rogahn.nv.us",
+      "lastName" : "Torphy",
+      "middleName" : "Rubye",
+      "preferredContactTypeId" : "005"
+   },
+   "username" : "rosemarie",
+   "barcode" : "124365178425740",
+   "expirationDate" : "2020-03-25",
+   "enrollmentDate" : "2016-09-11",
+   "type" : "patron"
+}
+

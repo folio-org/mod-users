@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "type" : "patron",
+   "barcode" : "299308637069604",
+   "enrollmentDate" : "2018-03-31",
+   "expirationDate" : "2019-10-06",
+   "username" : "khalid",
+   "personal" : {
+      "lastName" : "Dickinson",
+      "preferredContactTypeId" : "001",
+      "mobilePhone" : "818.624.6615 x295",
+      "phone" : "633-148-6027",
+      "dateOfBirth" : "1949-03-26",
+      "email" : "elda@koelpin-brakus.pa",
+      "firstName" : "Esta",
+      "addresses" : [
+         {
+            "region" : "AP",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "64993-0455",
+            "primaryAddress" : true,
+            "addressLine1" : "77935 Lucy Lakes",
+            "countryId" : "US",
+            "city" : "Valencia"
+         }
+      ]
+   },
+   "active" : true,
+   "id" : "71f4828b-8ad5-4ae6-bfa6-45ecfe3f6c3c"
+}
+

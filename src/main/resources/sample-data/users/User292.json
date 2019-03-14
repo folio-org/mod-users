@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "barcode" : "40187925817754",
+   "id" : "e546d50a-926a-421f-8400-a041a2e9db79",
+   "expirationDate" : "2020-11-12",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Will",
+      "phone" : "1-255-789-1285 x30034",
+      "mobilePhone" : "1-090-543-7327 x2335",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Name",
+      "email" : "faye@hansen-wintheiser.md",
+      "middleName" : "Jettie",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "86537 Penthouse",
+            "city" : "Indio",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "DC",
+            "postalCode" : "83373-0011"
+         }
+      ],
+      "dateOfBirth" : "1989-08-21"
+   },
+   "enrollmentDate" : "2018-09-22",
+   "username" : "ben"
+}
+

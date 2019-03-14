@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "gia",
+   "id" : "b9a05706-9d87-499d-8e5e-47dc512a21c3",
+   "active" : true,
+   "personal" : {
+      "middleName" : "America",
+      "lastName" : "Funk",
+      "preferredContactTypeId" : "003",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "85402 Grady Station",
+            "city" : "Jonesboro",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "02204-9296",
+            "region" : "IA"
+         }
+      ],
+      "firstName" : "Blanca",
+      "dateOfBirth" : "1954-08-24",
+      "email" : "albina@beahan-schowalter-and-hirthe.nj.us",
+      "phone" : "783.141.0202 x61122"
+   },
+   "type" : "patron",
+   "barcode" : "163270145839920",
+   "expirationDate" : "2020-01-31",
+   "enrollmentDate" : "2015-09-23"
+}
+

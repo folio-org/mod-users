@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "elyssa",
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "middleName" : "Garret",
+      "lastName" : "Grady",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "40453-4083",
+            "region" : "CA",
+            "countryId" : "US",
+            "addressLine1" : "46663 Jayden Lock Suite 531",
+            "city" : "Danville",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Sister",
+      "email" : "seth@wisozk-schoen-and-goyette.fm",
+      "dateOfBirth" : "1961-07-31",
+      "mobilePhone" : "478-608-4031",
+      "phone" : "097-669-3362"
+   },
+   "id" : "78c51a90-e64f-49ce-8d28-e246a49c7f63",
+   "active" : true,
+   "type" : "patron",
+   "barcode" : "859134060767498",
+   "expirationDate" : "2020-03-22",
+   "enrollmentDate" : "2018-11-25"
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "type" : "patron",
+   "barcode" : "808493955182189",
+   "enrollmentDate" : "2017-08-15",
+   "expirationDate" : "2020-11-03",
+   "username" : "clare",
+   "personal" : {
+      "lastName" : "Jewess",
+      "middleName" : "Jamey",
+      "preferredContactTypeId" : "005",
+      "mobilePhone" : "467-243-3953 x653",
+      "phone" : "229-117-3695",
+      "dateOfBirth" : "1967-08-23",
+      "email" : "antonio@terry-hegmann.ma",
+      "firstName" : "Tyrel",
+      "addresses" : [
+         {
+            "postalCode" : "73494-8235",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "NC",
+            "city" : "Springdale",
+            "addressLine1" : "43238 Kuhn Meadows",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "active" : false,
+   "id" : "4ca6da61-a9fa-4226-850d-43aa2d89f9a6"
+}
+

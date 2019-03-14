@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "active" : true,
+   "enrollmentDate" : "2015-10-28",
+   "username" : "buck",
+   "personal" : {
+      "phone" : "559.446.5166 x7425",
+      "lastName" : "Little",
+      "middleName" : "Demetrius",
+      "email" : "leora@donnelly-adams-and-bode.sn",
+      "mobilePhone" : "(969)443-0354",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Ralph",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "51528 Green Lakes Suite 741",
+            "city" : "Artesia",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "ME",
+            "postalCode" : "13942"
+         }
+      ],
+      "dateOfBirth" : "1985-12-24"
+   },
+   "id" : "368b8b4a-c3c2-436c-9cba-95dcac52ebf9",
+   "barcode" : "943721780387221",
+   "expirationDate" : "2020-09-16",
+   "type" : "patron"
+}
+

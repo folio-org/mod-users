@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "barcode" : "539221276746598",
+   "expirationDate" : "2019-10-12",
+   "enrollmentDate" : "2018-07-12",
+   "type" : "patron",
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "48294-3956",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "CO",
+            "city" : "Hollister",
+            "countryId" : "US",
+            "addressLine1" : "17104 Pacocha View Suite 898",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Ignatius",
+      "dateOfBirth" : "2002-10-06",
+      "email" : "kali@howell-bashirian-and-hackett.ls",
+      "phone" : "659.537.4986 x36724",
+      "mobilePhone" : "(095)836-6474 x038",
+      "middleName" : "Tyrel",
+      "lastName" : "Luettgen",
+      "preferredContactTypeId" : "002"
+   },
+   "id" : "169aeb77-32f6-4f60-a2c0-db791b96e411",
+   "active" : true,
+   "username" : "gay"
+}
+

@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "active" : true,
+   "personal" : {
+      "middleName" : "Idell",
+      "email" : "jayne@crona-and-sons.vn",
+      "firstName" : "Cathrine",
+      "preferredContactTypeId" : "005",
+      "phone" : "861.179.1850 x832",
+      "lastName" : "Hudson",
+      "dateOfBirth" : "2010-10-13",
+      "addresses" : [
+         {
+            "region" : "WV",
+            "postalCode" : "65210-1372",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "62880 Lauren Route",
+            "city" : "West Lafayette"
+         }
+      ]
+   },
+   "username" : "pearl",
+   "enrollmentDate" : "2015-05-23",
+   "barcode" : "857703348667989",
+   "id" : "420d485a-033f-4999-ab2c-12c00cd5ec07",
+   "expirationDate" : "2019-08-03",
+   "type" : "patron"
+}
+

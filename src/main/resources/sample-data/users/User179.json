@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "imelda",
+   "active" : true,
+   "personal" : {
+      "phone" : "801.732.3140",
+      "dateOfBirth" : "1980-06-17",
+      "email" : "della@mayer-renner.eg",
+      "firstName" : "Leonor",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "59920-4781",
+            "region" : "NC",
+            "addressLine1" : "23315 Agustina Estate #966",
+            "countryId" : "US",
+            "city" : "La Jolla",
+            "primaryAddress" : true
+         }
+      ],
+      "lastName" : "Denesik",
+      "middleName" : "Lyric",
+      "preferredContactTypeId" : "002"
+   },
+   "id" : "7b06cbcf-5d6d-431b-8922-20509d40f1ae",
+   "type" : "patron",
+   "enrollmentDate" : "2017-12-12",
+   "expirationDate" : "2020-07-08",
+   "barcode" : "937814009886828"
+}
+

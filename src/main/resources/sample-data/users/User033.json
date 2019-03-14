@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "username" : "bill",
+   "active" : true,
+   "id" : "e76cf4c9-e15a-414e-81b9-672a90fb2745",
+   "personal" : {
+      "dateOfBirth" : "2001-10-15",
+      "email" : "brandt@friesen-llc.ct.us",
+      "phone" : "093.611.7311 x8588",
+      "mobilePhone" : "(214)950-5138",
+      "addresses" : [
+         {
+            "region" : "NM",
+            "postalCode" : "26421",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "Calabasas",
+            "countryId" : "US",
+            "addressLine1" : "29651 Josie Hollow"
+         }
+      ],
+      "firstName" : "Margret",
+      "middleName" : "Adelia",
+      "lastName" : "Koss",
+      "preferredContactTypeId" : "002"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2019-02-07",
+   "expirationDate" : "2019-11-22",
+   "barcode" : "979109654603071"
+}
+

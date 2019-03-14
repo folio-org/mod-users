@@ -1,0 +1,30 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "active" : true,
+   "enrollmentDate" : "2017-05-25",
+   "username" : "marilyne",
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "03426-7916",
+            "region" : "TX",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "city" : "Bell",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "40975 Nolan Streets"
+         }
+      ],
+      "lastName" : "Kuhlman",
+      "phone" : "1-571-266-1145 x226",
+      "firstName" : "Ruby",
+      "preferredContactTypeId" : "004",
+      "dateOfBirth" : "1962-03-27",
+      "email" : "stan@greenfelder-and-sons.us"
+   },
+   "id" : "1be7f410-6ec3-4e88-ac25-0f8d8c63274d",
+   "barcode" : "406086566903262",
+   "type" : "patron",
+   "expirationDate" : "2020-01-12"
+}
+

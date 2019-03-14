@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "type" : "patron",
+   "barcode" : "390509548381370",
+   "expirationDate" : "2019-12-22",
+   "enrollmentDate" : "2018-10-08",
+   "username" : "agnes",
+   "active" : false,
+   "id" : "daa9cf25-f333-447b-b577-158d6ce944a5",
+   "personal" : {
+      "lastName" : "Monahan",
+      "preferredContactTypeId" : "001",
+      "mobilePhone" : "574.315.1782",
+      "phone" : "(255)481-4812 x339",
+      "dateOfBirth" : "1994-05-04",
+      "email" : "doyle@kshlerin-and-sons.bd",
+      "firstName" : "Rafaela",
+      "addresses" : [
+         {
+            "region" : "KY",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "75567-7031",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "65622 Larson Island",
+            "city" : "San Juan Capistrano"
+         }
+      ]
+   }
+}
+

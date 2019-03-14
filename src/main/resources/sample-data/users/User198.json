@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "enrollmentDate" : "2017-06-15",
+   "expirationDate" : "2020-07-03",
+   "barcode" : "700978046103898",
+   "type" : "patron",
+   "active" : true,
+   "id" : "8cde4a35-f58b-492e-bd07-d668f7322253",
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "lastName" : "Streich",
+      "email" : "tre@greenholt-bergnaum.la",
+      "dateOfBirth" : "2011-04-06",
+      "mobilePhone" : "1-393-950-3556 x8963",
+      "phone" : "800-128-5651 x040",
+      "addresses" : [
+         {
+            "region" : "MN",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "98253",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "54056 Windler Creek",
+            "city" : "Merced"
+         }
+      ],
+      "firstName" : "Erik"
+   },
+   "username" : "viola"
+}
+

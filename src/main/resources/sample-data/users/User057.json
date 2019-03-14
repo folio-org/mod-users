@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "active" : false,
+   "id" : "46ed7160-426b-460e-91b3-ab22a7d6fc26",
+   "personal" : {
+      "dateOfBirth" : "1947-08-15",
+      "email" : "jammie@reinger-llc.ro",
+      "phone" : "889-770-7010 x23396",
+      "mobilePhone" : "(229)092-7872 x3677",
+      "addresses" : [
+         {
+            "region" : "MN",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "05317",
+            "primaryAddress" : true,
+            "addressLine1" : "31994 Stehr Trace",
+            "countryId" : "US",
+            "city" : "Anaheim"
+         }
+      ],
+      "firstName" : "Elbert",
+      "lastName" : "Lowe",
+      "middleName" : "Barrett",
+      "preferredContactTypeId" : "005"
+   },
+   "username" : "reece",
+   "expirationDate" : "2020-04-04",
+   "enrollmentDate" : "2015-05-25",
+   "barcode" : "105883620407176",
+   "type" : "patron"
+}
+

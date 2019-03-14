@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "jaylon",
+   "id" : "e63273e7-48f5-4c43-ab4e-1751ecacaa21",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "middleName" : "Drake",
+      "lastName" : "Jast",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "58267-5504",
+            "region" : "OR",
+            "countryId" : "US",
+            "addressLine1" : "00120 Suite G",
+            "city" : "Eureka",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Perry",
+      "email" : "lilla@wiza-llc.ie",
+      "dateOfBirth" : "2004-03-19",
+      "mobilePhone" : "545.437.3834",
+      "phone" : "1-893-787-1494 x537"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2018-08-11",
+   "expirationDate" : "2020-06-29",
+   "barcode" : "721408137069396"
+}
+

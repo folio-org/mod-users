@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "id" : "32134c21-fae8-497e-b2d2-daa1ba421070",
+   "personal" : {
+      "email" : "carissa@dickinson-schaefer.co.us",
+      "dateOfBirth" : "1984-08-08",
+      "phone" : "776.759.0553 x1841",
+      "mobilePhone" : "1-770-234-0787",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Bessemer",
+            "addressLine1" : "82745 Floor 20",
+            "countryId" : "US",
+            "region" : "WV",
+            "postalCode" : "31677-6381",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "firstName" : "Alena",
+      "preferredContactTypeId" : "005",
+      "lastName" : "Luettgen",
+      "middleName" : "Amanda"
+   },
+   "active" : true,
+   "username" : "logan",
+   "barcode" : "521835582761500",
+   "enrollmentDate" : "2015-12-27",
+   "expirationDate" : "2020-03-06",
+   "type" : "patron"
+}
+

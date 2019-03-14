@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "id" : "c0af9380-d277-4820-a607-15a2d9c50ba6",
+   "personal" : {
+      "email" : "rodger@ledner-jaskolski.vn",
+      "dateOfBirth" : "1997-08-20",
+      "mobilePhone" : "529-349-8873",
+      "phone" : "(273)655-1780 x0849",
+      "addresses" : [
+         {
+            "city" : "City of Industry",
+            "countryId" : "US",
+            "addressLine1" : "35081 Konopelski Port",
+            "primaryAddress" : true,
+            "postalCode" : "62796",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "AK"
+         }
+      ],
+      "firstName" : "Paris",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Schaden",
+      "middleName" : "Rosetta"
+   },
+   "active" : true,
+   "username" : "clair",
+   "barcode" : "631966751550162",
+   "expirationDate" : "2020-07-05",
+   "enrollmentDate" : "2018-11-23",
+   "type" : "patron"
+}
+

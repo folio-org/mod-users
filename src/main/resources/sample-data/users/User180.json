@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "type" : "patron",
+   "barcode" : "85287353151223",
+   "expirationDate" : "2019-06-25",
+   "enrollmentDate" : "2019-01-09",
+   "username" : "brannon",
+   "active" : false,
+   "personal" : {
+      "lastName" : "Spinka",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Catherine",
+      "addresses" : [
+         {
+            "postalCode" : "42417-8321",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "AA",
+            "city" : "Youngstown",
+            "countryId" : "US",
+            "addressLine1" : "76755 Carole Island #241",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "(557)463-6458",
+      "mobilePhone" : "334.929.0079 x6543",
+      "dateOfBirth" : "1951-08-14",
+      "email" : "carlee@stoltenberg-conroy-and-haley.ke"
+   },
+   "id" : "b7da16ef-f3d2-4c12-a564-858bc3eee366"
+}
+

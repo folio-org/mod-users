@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "lenora",
+   "active" : true,
+   "id" : "423d5beb-3196-449e-aacb-9595d6321950",
+   "personal" : {
+      "lastName" : "Kuhlman",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "city" : "Villa Park",
+            "countryId" : "US",
+            "addressLine1" : "65964 Lebsack Parkway Apt. 989",
+            "primaryAddress" : true,
+            "postalCode" : "34334-6218",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "UT"
+         }
+      ],
+      "firstName" : "Clemens",
+      "dateOfBirth" : "1980-07-27",
+      "email" : "al@ohara-sawayn-and-dicki.gr",
+      "mobilePhone" : "129.695.7732",
+      "phone" : "452.902.4336"
+   },
+   "type" : "patron",
+   "enrollmentDate" : "2018-01-21",
+   "expirationDate" : "2019-10-16",
+   "barcode" : "941346984284265"
+}
+

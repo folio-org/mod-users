@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "active" : true,
+   "enrollmentDate" : "2017-12-25",
+   "username" : "marquis",
+   "personal" : {
+      "phone" : "298-168-0709",
+      "lastName" : "Stanton",
+      "email" : "jammie@beatty-kris.ba",
+      "middleName" : "Macey",
+      "firstName" : "Darren",
+      "preferredContactTypeId" : "003",
+      "addresses" : [
+         {
+            "region" : "OK",
+            "postalCode" : "47813",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Scottsdale",
+            "addressLine1" : "96393 Herzog Tunnel"
+         }
+      ],
+      "dateOfBirth" : "1983-09-20"
+   },
+   "id" : "45e77e83-60a3-4031-89d5-81222043dec6",
+   "barcode" : "921184965279358",
+   "type" : "patron",
+   "expirationDate" : "2020-09-19"
+}
+

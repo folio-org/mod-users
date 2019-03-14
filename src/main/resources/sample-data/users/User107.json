@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "napoleon",
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "lastName" : "Nikolaus",
+      "firstName" : "Bailey",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Simi Valley",
+            "countryId" : "US",
+            "addressLine1" : "09823 Blanche Cove Suite 257",
+            "region" : "NJ",
+            "postalCode" : "93650",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "mobilePhone" : "(574)121-5378",
+      "phone" : "1-700-688-9136",
+      "email" : "gwendolyn@kub-johns.io",
+      "dateOfBirth" : "1998-01-15"
+   },
+   "id" : "7dd96d33-6abf-4394-8768-647c76d79412",
+   "active" : false,
+   "type" : "patron",
+   "enrollmentDate" : "2018-08-10",
+   "expirationDate" : "2020-08-27",
+   "barcode" : "390734993858352"
+}
+

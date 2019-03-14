@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "717722273660250",
+   "expirationDate" : "2020-09-14",
+   "enrollmentDate" : "2017-06-18",
+   "type" : "patron",
+   "id" : "d6c40971-39a6-4977-9d27-e83e731f51de",
+   "personal" : {
+      "phone" : "(105)531-3599 x5896",
+      "mobilePhone" : "942-958-7463 x1835",
+      "email" : "trystan@trantow-fay.gn",
+      "dateOfBirth" : "1951-10-15",
+      "firstName" : "Freeman",
+      "addresses" : [
+         {
+            "city" : "South Bend",
+            "addressLine1" : "65765 King Plains Suite 292",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "39061",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "WI"
+         }
+      ],
+      "preferredContactTypeId" : "002",
+      "middleName" : "Luigi",
+      "lastName" : "Sporer"
+   },
+   "active" : false,
+   "username" : "rollin"
+}
+

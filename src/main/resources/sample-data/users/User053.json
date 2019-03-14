@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "graham",
+   "active" : true,
+   "id" : "48a3115d-d476-4582-b6a8-55c09eed7ec7",
+   "personal" : {
+      "lastName" : "Auer",
+      "preferredContactTypeId" : "005",
+      "dateOfBirth" : "2008-04-17",
+      "email" : "brown@hagenes-and-sons.dc.us",
+      "phone" : "(823)734-9749 x557",
+      "mobilePhone" : "(109)368-8088",
+      "addresses" : [
+         {
+            "region" : "IN",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "84510-9997",
+            "primaryAddress" : true,
+            "addressLine1" : "76841 Nicklaus Meadow Suite 588",
+            "countryId" : "US",
+            "city" : "Phoenix"
+         }
+      ],
+      "firstName" : "Luther"
+   },
+   "type" : "patron",
+   "expirationDate" : "2021-01-01",
+   "enrollmentDate" : "2016-08-31",
+   "barcode" : "680311830975018"
+}
+

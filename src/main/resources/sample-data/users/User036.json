@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "enrollmentDate" : "2016-04-22",
+   "expirationDate" : "2021-01-29",
+   "barcode" : "999144799982250",
+   "type" : "patron",
+   "active" : true,
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "69609 Jaskolski Road #095",
+            "city" : "Laguna Niguel",
+            "region" : "VT",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "56190"
+         }
+      ],
+      "firstName" : "Trevor",
+      "dateOfBirth" : "1970-04-10",
+      "email" : "minnie@pouros-inc.no",
+      "phone" : "556-405-5640 x75121",
+      "middleName" : "Marc",
+      "lastName" : "Johnston",
+      "preferredContactTypeId" : "005"
+   },
+   "id" : "21ce4a36-4d3a-4a9d-98be-d40852799d9b",
+   "username" : "gayle"
+}
+

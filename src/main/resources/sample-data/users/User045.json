@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "type" : "patron",
+   "barcode" : "298923774959572",
+   "expirationDate" : "2020-02-25",
+   "enrollmentDate" : "2018-09-30",
+   "username" : "cecil",
+   "personal" : {
+      "firstName" : "Phyllis",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "25818 Hansen Drives",
+            "countryId" : "US",
+            "city" : "Burbank",
+            "region" : "MN",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "04214"
+         }
+      ],
+      "mobilePhone" : "1-034-282-8488",
+      "phone" : "606.758.4172 x7292",
+      "dateOfBirth" : "1960-10-20",
+      "email" : "colby@kessler-inc.py",
+      "lastName" : "Koepp",
+      "preferredContactTypeId" : "002"
+   },
+   "active" : true,
+   "id" : "0e64adb1-36ba-4cdd-9909-047612b7629e"
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "active" : false,
+   "id" : "4f012e5c-840b-4f7a-b7e0-c2e3b1d41309",
+   "personal" : {
+      "firstName" : "Toney",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "24959-2664",
+            "region" : "IA",
+            "countryId" : "US",
+            "addressLine1" : "65343 Ewald Mission",
+            "city" : "Rosemead",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "1-308-768-9868",
+      "mobilePhone" : "1-925-901-9660",
+      "dateOfBirth" : "2011-07-10",
+      "email" : "tod@crooks-llc.io",
+      "lastName" : "Denesik",
+      "middleName" : "Alexzander",
+      "preferredContactTypeId" : "004"
+   },
+   "username" : "carlo",
+   "enrollmentDate" : "2017-11-17",
+   "expirationDate" : "2019-10-08",
+   "barcode" : "605566117903595",
+   "type" : "patron"
+}
+

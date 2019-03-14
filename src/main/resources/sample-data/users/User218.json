@@ -1,0 +1,30 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "id" : "1c65f9c5-5970-48bb-aa72-82ef96fc145e",
+   "barcode" : "698898127008508",
+   "type" : "patron",
+   "expirationDate" : "2019-05-20",
+   "active" : true,
+   "enrollmentDate" : "2018-01-13",
+   "username" : "josianne",
+   "personal" : {
+      "email" : "fleta@okuneva-group.tr",
+      "dateOfBirth" : "2007-04-23",
+      "preferredContactTypeId" : "004",
+      "firstName" : "Chet",
+      "phone" : "1-968-830-7181",
+      "lastName" : "Koss",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "43631-4130",
+            "region" : "NC",
+            "addressLine1" : "74541 Wuckert Corner #072",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Kettering"
+         }
+      ]
+   }
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "username" : "jaclyn",
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "middleName" : "Amelia",
+      "lastName" : "Oberbrunner",
+      "mobilePhone" : "1-622-373-5253",
+      "phone" : "1-920-170-2124 x8035",
+      "email" : "albin@nikolaus-stark.wi.us",
+      "dateOfBirth" : "2013-03-26",
+      "firstName" : "Frederik",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Bessemer",
+            "addressLine1" : "80037 Krajcik Dale",
+            "countryId" : "US",
+            "region" : "NC",
+            "postalCode" : "08879",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ]
+   },
+   "id" : "67002fdf-b2f6-4e1f-bab8-d750efb0558f",
+   "active" : true,
+   "type" : "patron",
+   "barcode" : "483089374189503",
+   "enrollmentDate" : "2017-02-24",
+   "expirationDate" : "2019-06-13"
+}
+

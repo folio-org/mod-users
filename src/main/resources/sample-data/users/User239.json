@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "personal" : {
+      "mobilePhone" : "(233)630-1861 x9186",
+      "firstName" : "Hal",
+      "preferredContactTypeId" : "005",
+      "email" : "kian@reilly-beer.lr",
+      "middleName" : "Otha",
+      "lastName" : "Spencer",
+      "phone" : "812-357-5454",
+      "dateOfBirth" : "1993-03-21",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "18301 Daniel Field #705",
+            "city" : "La Palma",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "postalCode" : "84320",
+            "region" : "ME"
+         }
+      ]
+   },
+   "enrollmentDate" : "2015-06-04",
+   "username" : "leon",
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2020-04-30",
+   "barcode" : "650368947981103",
+   "id" : "fbc2b501-a8cc-43a7-8d8c-b68067b63a33"
+}
+

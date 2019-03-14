@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "barcode" : "323519789821983",
+   "enrollmentDate" : "2016-10-05",
+   "expirationDate" : "2021-01-12",
+   "type" : "patron",
+   "id" : "e13b3d8d-71ff-49bd-9ea1-4ad7da8b1b8e",
+   "active" : false,
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "middleName" : "Marlin",
+      "lastName" : "Denesik",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "14872-4524",
+            "region" : "SC",
+            "addressLine1" : "49631 Towne Burg",
+            "countryId" : "US",
+            "city" : "Canton",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Tom",
+      "email" : "paolo@kuphal-mayer.sa",
+      "dateOfBirth" : "1981-07-19",
+      "phone" : "796.290.1933 x001",
+      "mobilePhone" : "1-241-003-0625"
+   },
+   "username" : "maximillian"
+}
+

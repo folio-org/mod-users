@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "id" : "0cce8c30-0a0d-4ebb-a107-cf47ad35eafb",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "003",
+      "middleName" : "Laney",
+      "lastName" : "McKenzie",
+      "phone" : "666-338-9978 x09222",
+      "mobilePhone" : "1-564-133-0013",
+      "email" : "valentin@murphy-llc.az.us",
+      "dateOfBirth" : "1947-07-25",
+      "firstName" : "Finn",
+      "addresses" : [
+         {
+            "city" : "Paramount",
+            "countryId" : "US",
+            "addressLine1" : "02440 Department N",
+            "primaryAddress" : true,
+            "postalCode" : "19593-9691",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "MA"
+         }
+      ]
+   },
+   "username" : "meredith",
+   "barcode" : "610028044962529",
+   "enrollmentDate" : "2017-07-29",
+   "expirationDate" : "2020-09-04",
+   "type" : "patron"
+}
+

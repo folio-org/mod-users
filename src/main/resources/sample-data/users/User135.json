@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "zella",
+   "personal" : {
+      "preferredContactTypeId" : "003",
+      "lastName" : "Rolfson",
+      "middleName" : "Katrine",
+      "addresses" : [
+         {
+            "region" : "MN",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "67868-9596",
+            "primaryAddress" : true,
+            "addressLine1" : "28088 Roselyn Port Suite 081",
+            "countryId" : "US",
+            "city" : "Montebello"
+         }
+      ],
+      "firstName" : "Hildegard",
+      "email" : "genoveva@reynolds-buckridge.sn",
+      "dateOfBirth" : "2009-11-12",
+      "mobilePhone" : "217-470-4457",
+      "phone" : "017.558.7388 x62049"
+   },
+   "id" : "0ab0736b-57ba-404c-9b17-d94de2cf4d9a",
+   "active" : true,
+   "type" : "patron",
+   "barcode" : "426841866444480",
+   "expirationDate" : "2019-05-26",
+   "enrollmentDate" : "2018-08-06"
+}
+

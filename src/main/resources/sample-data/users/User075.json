@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "isac",
+   "personal" : {
+      "lastName" : "Denesik",
+      "middleName" : "Ronny",
+      "preferredContactTypeId" : "001",
+      "firstName" : "Vickie",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "30190 McKenzie Mission Apt. 317",
+            "countryId" : "US",
+            "city" : "Tucson",
+            "region" : "AE",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "51117"
+         }
+      ],
+      "mobilePhone" : "(189)086-8007",
+      "phone" : "1-935-908-1543 x576",
+      "dateOfBirth" : "2002-01-31",
+      "email" : "amelia@schultz-nitzsche.cc"
+   },
+   "active" : true,
+   "id" : "11dd4634-e4a9-45f0-9683-fa4d7a8f9728",
+   "type" : "patron",
+   "expirationDate" : "2020-06-29",
+   "enrollmentDate" : "2015-12-06",
+   "barcode" : "668365498167"
+}
+

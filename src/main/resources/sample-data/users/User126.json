@@ -1,0 +1,30 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "personal" : {
+      "firstName" : "Anne",
+      "preferredContactTypeId" : "001",
+      "lastName" : "Grimes",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "38099 Alexane Rapids #949",
+            "city" : "Hamilton",
+            "region" : "NM",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "40284"
+         }
+      ],
+      "phone" : "212-246-4921 x835",
+      "email" : "caden@corkery-christiansen-and-frami.ph",
+      "dateOfBirth" : "1982-12-30"
+   },
+   "active" : true,
+   "id" : "1b5795ad-5ad0-4ba5-9c62-a7b26eb2f6b8",
+   "username" : "lon",
+   "enrollmentDate" : "2016-01-02",
+   "expirationDate" : "2019-12-18",
+   "barcode" : "379497554513687",
+   "type" : "patron"
+}
+

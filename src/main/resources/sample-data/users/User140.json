@@ -1,0 +1,30 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "username" : "candelario",
+   "id" : "c1277b9b-b165-48ee-ac35-e737ed325f34",
+   "active" : false,
+   "personal" : {
+      "email" : "zack@langosh-oconner-and-runolfsdottir.id.us",
+      "dateOfBirth" : "1984-04-30",
+      "phone" : "1-640-587-7257 x35499",
+      "addresses" : [
+         {
+            "region" : "PR",
+            "postalCode" : "38116-1902",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "Demopolis",
+            "addressLine1" : "46087 Haley Shore",
+            "countryId" : "US"
+         }
+      ],
+      "firstName" : "Leda",
+      "preferredContactTypeId" : "003",
+      "lastName" : "Pollich"
+   },
+   "type" : "patron",
+   "expirationDate" : "2020-06-17",
+   "enrollmentDate" : "2018-08-08",
+   "barcode" : "580560277022502"
+}
+

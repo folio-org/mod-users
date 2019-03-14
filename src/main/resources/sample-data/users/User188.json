@@ -1,0 +1,30 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "barcode" : "784844955152063",
+   "expirationDate" : "2019-06-26",
+   "enrollmentDate" : "2015-08-05",
+   "type" : "patron",
+   "active" : false,
+   "personal" : {
+      "addresses" : [
+         {
+            "region" : "AL",
+            "postalCode" : "04836",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "La Jolla",
+            "addressLine1" : "68728 Floor 8162",
+            "countryId" : "US"
+         }
+      ],
+      "preferredContactTypeId" : "003",
+      "firstName" : "Donna",
+      "lastName" : "Hickle",
+      "email" : "lonnie@runte-reichel.es",
+      "dateOfBirth" : "1994-03-10",
+      "phone" : "1-096-919-7527 x84197"
+   },
+   "id" : "f3055954-ebc3-4da8-8a60-0b8f52480125",
+   "username" : "rita"
+}
+

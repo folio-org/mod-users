@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "active" : false,
+   "personal" : {
+      "lastName" : "Koss",
+      "phone" : "1-035-717-5715 x1958",
+      "firstName" : "Eddie",
+      "preferredContactTypeId" : "002",
+      "middleName" : "Rusty",
+      "email" : "holden@mitchell-group.om",
+      "addresses" : [
+         {
+            "city" : "Nenana",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "24421 Schumm Tunnel",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "45376",
+            "region" : "PA"
+         }
+      ],
+      "dateOfBirth" : "1952-12-05"
+   },
+   "enrollmentDate" : "2016-12-14",
+   "username" : "dessie",
+   "barcode" : "889982096201116",
+   "id" : "e505acd3-925e-4e2c-a255-8d11e25ba046",
+   "expirationDate" : "2020-10-23",
+   "type" : "patron"
+}
+

@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "active" : true,
+   "personal" : {
+      "mobilePhone" : "(503)015-6306",
+      "firstName" : "Mohammad",
+      "preferredContactTypeId" : "005",
+      "email" : "myrtie@treutel-beier.kz",
+      "middleName" : "Fatima",
+      "lastName" : "Koss",
+      "phone" : "475-499-9830 x20253",
+      "dateOfBirth" : "1958-09-18",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "NY",
+            "postalCode" : "89907",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "63228 Alan Terrace",
+            "city" : "Nome"
+         }
+      ]
+   },
+   "username" : "amelie",
+   "enrollmentDate" : "2016-12-02",
+   "barcode" : "589667746643488",
+   "id" : "d4849a05-4066-4129-ae56-3dfc39498e36",
+   "type" : "patron",
+   "expirationDate" : "2020-03-05"
+}
+

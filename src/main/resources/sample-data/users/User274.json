@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "personal" : {
+      "dateOfBirth" : "1964-08-30",
+      "addresses" : [
+         {
+            "addressLine1" : "23228 Cremin Plains Suite 917",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Culver City",
+            "region" : "MP",
+            "postalCode" : "67798",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "email" : "eula@nicolas-and-sons.hu",
+      "middleName" : "Jackie",
+      "mobilePhone" : "(414)238-0544 x546",
+      "firstName" : "Iliana",
+      "preferredContactTypeId" : "001",
+      "phone" : "(320)304-2693",
+      "lastName" : "Emard"
+   },
+   "enrollmentDate" : "2016-04-27",
+   "username" : "eli",
+   "active" : false,
+   "expirationDate" : "2019-05-22",
+   "type" : "patron",
+   "barcode" : "870729091333835",
+   "id" : "7d7f46e8-5f99-4ac8-aa86-83a23f4bd8de"
+}
+

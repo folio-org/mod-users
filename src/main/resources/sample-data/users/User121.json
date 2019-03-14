@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "sigrid",
+   "personal" : {
+      "preferredContactTypeId" : "005",
+      "middleName" : "Macey",
+      "lastName" : "McCullough",
+      "mobilePhone" : "893.859.2876 x60367",
+      "phone" : "1-545-455-4488 x6810",
+      "email" : "cheyenne@wehner-schinner-and-altenwerth.ne",
+      "dateOfBirth" : "1974-11-07",
+      "firstName" : "Donny",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Dayton",
+            "countryId" : "US",
+            "addressLine1" : "11572 Cummerata Cliffs",
+            "region" : "PA",
+            "postalCode" : "09960-1381",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ]
+   },
+   "active" : false,
+   "id" : "b549fc60-9779-4bac-a4de-df8304ff69c4",
+   "type" : "patron",
+   "barcode" : "862944982096053",
+   "enrollmentDate" : "2018-05-12",
+   "expirationDate" : "2020-02-05"
+}
+

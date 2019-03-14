@@ -1,0 +1,32 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "middleName" : "Ronny",
+      "lastName" : "McLaughlin",
+      "addresses" : [
+         {
+            "postalCode" : "16810-6866",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "AA",
+            "city" : "Ketchikan",
+            "addressLine1" : "47544 Nikolaus Lodge Apt. 505",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Britney",
+      "email" : "cleora@welch-group.fj",
+      "dateOfBirth" : "1980-04-10",
+      "phone" : "791.175.1120 x3467",
+      "mobilePhone" : "229-537-5748 x8269"
+   },
+   "id" : "ff5ec271-7138-46d0-8ca1-f5f57790e5bd",
+   "username" : "cruz",
+   "barcode" : "283946101101999",
+   "expirationDate" : "2020-01-26",
+   "enrollmentDate" : "2015-08-17",
+   "type" : "patron"
+}
+

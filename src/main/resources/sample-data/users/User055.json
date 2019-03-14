@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "cecile",
+   "id" : "d1f69036-a316-41e4-89c1-77f77a3c7f1d",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "middleName" : "Fanny",
+      "lastName" : "Rohan",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "26800",
+            "region" : "PR",
+            "countryId" : "US",
+            "addressLine1" : "22729 Juanita Islands",
+            "city" : "Westlake Village",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Clarabelle",
+      "email" : "florence@konopelski-ortiz-and-gerhold.ck",
+      "dateOfBirth" : "1998-12-08",
+      "mobilePhone" : "1-792-096-9819 x42761",
+      "phone" : "1-726-697-5332"
+   },
+   "type" : "patron",
+   "barcode" : "765942690370788",
+   "enrollmentDate" : "2016-09-08",
+   "expirationDate" : "2020-04-05"
+}
+

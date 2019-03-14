@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "597630410875716",
+   "expirationDate" : "2020-12-18",
+   "enrollmentDate" : "2018-10-06",
+   "type" : "patron",
+   "active" : false,
+   "id" : "f0dc6802-450f-459a-9dc6-209086375b7f",
+   "personal" : {
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "29848 Doyle Views Apt. 133",
+            "city" : "Santa Fe Springs",
+            "primaryAddress" : true,
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "55403-6597",
+            "region" : "MH"
+         }
+      ],
+      "firstName" : "Marques",
+      "dateOfBirth" : "1955-03-04",
+      "email" : "ferne@gerlach-leannon-and-kshlerin.pa",
+      "phone" : "612-002-5040",
+      "lastName" : "Kub",
+      "middleName" : "Sofia",
+      "preferredContactTypeId" : "003"
+   },
+   "username" : "alejandra"
+}
+

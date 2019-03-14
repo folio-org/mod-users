@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "barcode" : "703844689213557",
+   "enrollmentDate" : "2019-02-26",
+   "expirationDate" : "2021-01-12",
+   "type" : "patron",
+   "id" : "3b464026-79e7-450a-a441-0e1d4f8ebf99",
+   "personal" : {
+      "lastName" : "Denesik",
+      "preferredContactTypeId" : "002",
+      "addresses" : [
+         {
+            "region" : "KY",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "98413",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "68530 Batz Plains Apt. 693",
+            "city" : "Valencia"
+         }
+      ],
+      "firstName" : "Rachelle",
+      "dateOfBirth" : "1984-10-13",
+      "email" : "maureen@schulist-hills.lr",
+      "mobilePhone" : "276.402.9040",
+      "phone" : "347-425-5060"
+   },
+   "active" : false,
+   "username" : "reid"
+}
+

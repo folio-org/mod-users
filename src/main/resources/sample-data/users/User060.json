@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "username" : "leonie",
+   "id" : "be2e9bdb-9884-4fe9-87d0-ba91e8425412",
+   "active" : false,
+   "personal" : {
+      "firstName" : "Annabel",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "92540-2841",
+            "region" : "KS",
+            "countryId" : "US",
+            "addressLine1" : "37578 Apartment W",
+            "city" : "Cleveland",
+            "primaryAddress" : true
+         }
+      ],
+      "mobilePhone" : "298-868-8224 x5729",
+      "phone" : "852.559.2262 x8243",
+      "email" : "drake@kohler-okeefe-and-dooley.au",
+      "dateOfBirth" : "2016-05-09",
+      "preferredContactTypeId" : "002",
+      "middleName" : "Bobby",
+      "lastName" : "Crona"
+   },
+   "type" : "patron",
+   "expirationDate" : "2019-11-07",
+   "enrollmentDate" : "2018-10-20",
+   "barcode" : "730185433611190"
+}
+

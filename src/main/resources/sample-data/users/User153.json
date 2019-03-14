@@ -1,0 +1,30 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "type" : "patron",
+   "barcode" : "794586144277893",
+   "expirationDate" : "2020-08-05",
+   "enrollmentDate" : "2016-03-18",
+   "username" : "elmira",
+   "personal" : {
+      "firstName" : "Triston",
+      "preferredContactTypeId" : "001",
+      "lastName" : "Nicolas",
+      "addresses" : [
+         {
+            "region" : "PR",
+            "postalCode" : "55469-8400",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "Orange",
+            "countryId" : "US",
+            "addressLine1" : "30313 Herzog Centers Apt. 568"
+         }
+      ],
+      "phone" : "(202)784-5280 x0354",
+      "email" : "syble@cormier-group.id",
+      "dateOfBirth" : "2002-11-14"
+   },
+   "id" : "df84acd4-4425-47e9-9a25-db8eb2973950",
+   "active" : true
+}
+

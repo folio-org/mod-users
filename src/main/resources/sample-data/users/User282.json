@@ -1,0 +1,30 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "id" : "cd5994cf-6ee5-49b4-b58e-7bc70d724626",
+   "barcode" : "386142078590559",
+   "type" : "patron",
+   "expirationDate" : "2020-04-11",
+   "active" : false,
+   "username" : "pierre",
+   "enrollmentDate" : "2015-04-25",
+   "personal" : {
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "30597-9040",
+            "region" : "WA",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Cleveland",
+            "addressLine1" : "78353 Brandt Spring Suite 500"
+         }
+      ],
+      "lastName" : "Tillman",
+      "phone" : "024.243.8205",
+      "dateOfBirth" : "1961-07-09",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Cordie",
+      "email" : "america@jast-hamill.ao"
+   }
+}
+

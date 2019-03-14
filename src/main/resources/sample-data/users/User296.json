@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "active" : true,
+   "username" : "lincoln",
+   "enrollmentDate" : "2017-04-19",
+   "personal" : {
+      "phone" : "803-699-5998 x797",
+      "lastName" : "Stokes",
+      "email" : "dianna@collier-marvin-and-nicolas.hr",
+      "middleName" : "Patsy",
+      "firstName" : "Sonny",
+      "mobilePhone" : "1-071-148-9177 x9621",
+      "preferredContactTypeId" : "002",
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Claremont",
+            "addressLine1" : "02319 Department 2-G",
+            "region" : "UT",
+            "postalCode" : "71396",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "1987-09-24"
+   },
+   "id" : "78a21fb3-0e80-4172-8ccf-8a1d8d5e1553",
+   "barcode" : "27389356499174",
+   "expirationDate" : "2020-03-01",
+   "type" : "patron"
+}
+

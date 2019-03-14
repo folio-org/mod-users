@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "barcode" : "851974014604984",
+   "expirationDate" : "2019-10-04",
+   "enrollmentDate" : "2019-01-06",
+   "type" : "patron",
+   "personal" : {
+      "firstName" : "Leslie",
+      "addresses" : [
+         {
+            "postalCode" : "37380-7984",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "PA",
+            "city" : "Vallejo",
+            "addressLine1" : "68407 Vickie Causeway",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "284-427-9792 x6351",
+      "mobilePhone" : "1-930-357-4670 x9072",
+      "email" : "thalia@anderson-group.ia.us",
+      "dateOfBirth" : "1955-09-30",
+      "preferredContactTypeId" : "005",
+      "lastName" : "Kulas",
+      "middleName" : "Rowan"
+   },
+   "id" : "52e47672-d456-40b6-9f2d-6597d3e9f942",
+   "active" : true,
+   "username" : "angelita"
+}
+

@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "active" : true,
+   "personal" : {
+      "email" : "justine@cole-group.zw",
+      "preferredContactTypeId" : "001",
+      "mobilePhone" : "038.348.1149 x50914",
+      "firstName" : "Meredith",
+      "phone" : "1-979-995-5610 x758",
+      "lastName" : "Kovacek",
+      "dateOfBirth" : "1975-11-25",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Oakland",
+            "addressLine1" : "88286 Dicki Crescent Suite 579",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "GU",
+            "postalCode" : "15731-4068"
+         }
+      ]
+   },
+   "enrollmentDate" : "2016-06-28",
+   "username" : "lula",
+   "barcode" : "267941186130073",
+   "id" : "a98abce3-be00-4d9a-a66a-0593d27b41e0",
+   "expirationDate" : "2019-12-03",
+   "type" : "patron"
+}
+

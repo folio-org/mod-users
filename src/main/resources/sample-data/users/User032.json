@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "eden",
+   "active" : true,
+   "id" : "2884afb0-5bec-45c4-b9f4-0bc525bc0322",
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "lastName" : "Waters",
+      "middleName" : "Brock",
+      "addresses" : [
+         {
+            "city" : "Bellflower",
+            "addressLine1" : "43382 Suite 4-D",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "45499",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "MH"
+         }
+      ],
+      "firstName" : "Kevin",
+      "email" : "dayna@rempel-botsford-and-huels.gu",
+      "dateOfBirth" : "1955-01-12",
+      "phone" : "287.264.3679",
+      "mobilePhone" : "706.601.2468 x3937"
+   },
+   "type" : "patron",
+   "barcode" : "514514863206791",
+   "expirationDate" : "2019-07-01",
+   "enrollmentDate" : "2016-09-08"
+}
+

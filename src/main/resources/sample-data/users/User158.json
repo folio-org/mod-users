@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "type" : "patron",
+   "expirationDate" : "2020-02-01",
+   "enrollmentDate" : "2016-06-04",
+   "barcode" : "562954566768080",
+   "username" : "ruth",
+   "id" : "28724f2b-89b3-4a05-839c-2e77138e01a3",
+   "active" : true,
+   "personal" : {
+      "phone" : "(782)744-2716",
+      "mobilePhone" : "1-081-061-8041 x89919",
+      "dateOfBirth" : "2001-06-17",
+      "email" : "rodger@ferry-daniel-and-terry.gy",
+      "firstName" : "Mekhi",
+      "addresses" : [
+         {
+            "postalCode" : "69559",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "MS",
+            "city" : "Hidden Hills",
+            "countryId" : "US",
+            "addressLine1" : "69389 Floor 4238",
+            "primaryAddress" : true
+         }
+      ],
+      "lastName" : "Gislason",
+      "middleName" : "Jeff",
+      "preferredContactTypeId" : "005"
+   }
+}
+

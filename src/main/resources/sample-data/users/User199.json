@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "type" : "patron",
+   "barcode" : "85617808960080",
+   "expirationDate" : "2020-08-14",
+   "enrollmentDate" : "2017-02-23",
+   "username" : "jeramy",
+   "personal" : {
+      "middleName" : "Allen",
+      "lastName" : "Hessel",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "city" : "Indio",
+            "countryId" : "US",
+            "addressLine1" : "17832 Germaine Squares",
+            "primaryAddress" : true,
+            "postalCode" : "33424",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "IA"
+         }
+      ],
+      "firstName" : "Russell",
+      "dateOfBirth" : "1974-10-31",
+      "email" : "blaze@greenholt-llc.sz",
+      "phone" : "165.685.1392 x727",
+      "mobilePhone" : "956-087-4381 x70664"
+   },
+   "active" : false,
+   "id" : "888a321d-676e-42fc-b588-a677d16a76ec"
+}
+

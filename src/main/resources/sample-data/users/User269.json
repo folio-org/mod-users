@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "type" : "patron",
+   "expirationDate" : "2019-08-14",
+   "barcode" : "439088239777998",
+   "id" : "872695bb-4157-4c6f-84c7-eb5b50b9ce17",
+   "personal" : {
+      "middleName" : "Abigale",
+      "email" : "amara@emmerich-stroman-and-cummings.et",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Freda",
+      "phone" : "648-421-1448 x339",
+      "lastName" : "Hirthe",
+      "dateOfBirth" : "1971-01-09",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Escondido",
+            "addressLine1" : "18123 Room A",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "23610-3538",
+            "region" : "NM"
+         }
+      ]
+   },
+   "username" : "okey",
+   "enrollmentDate" : "2018-11-07",
+   "active" : true
+}
+

@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "active" : true,
+   "id" : "c2610e2c-a6f8-4336-95b6-54d716348b03",
+   "personal" : {
+      "phone" : "038.642.4876",
+      "mobilePhone" : "(536)595-2779",
+      "dateOfBirth" : "1977-11-06",
+      "email" : "sydney@medhurst-inc.int",
+      "firstName" : "Jarrod",
+      "addresses" : [
+         {
+            "postalCode" : "49011",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "region" : "GU",
+            "city" : "Artesia",
+            "addressLine1" : "49850 Elmira Glens",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "lastName" : "Prohaska",
+      "preferredContactTypeId" : "001"
+   },
+   "username" : "rowland",
+   "barcode" : "293649666736325",
+   "expirationDate" : "2020-01-23",
+   "enrollmentDate" : "2019-02-19",
+   "type" : "patron"
+}
+

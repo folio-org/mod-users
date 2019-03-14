@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "weldon",
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "88318 Adolf Manors",
+            "city" : "Cincinnati",
+            "region" : "VI",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "89005-2089"
+         }
+      ],
+      "firstName" : "Carter",
+      "dateOfBirth" : "1965-09-26",
+      "email" : "jane@schroeder-parisian.mo.us",
+      "phone" : "1-046-299-1320 x85524",
+      "mobilePhone" : "1-557-802-5587",
+      "lastName" : "Hickle",
+      "preferredContactTypeId" : "005"
+   },
+   "id" : "21c08ac3-c287-4a21-b966-e263504aa773",
+   "active" : false,
+   "type" : "patron",
+   "barcode" : "742593606461600",
+   "expirationDate" : "2019-05-03",
+   "enrollmentDate" : "2017-12-19"
+}
+

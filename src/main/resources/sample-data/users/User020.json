@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "sallie",
+   "id" : "00bc2807-4d5b-4a27-a2b5-b7b1ba431cc4",
+   "active" : true,
+   "personal" : {
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Birmingham",
+            "countryId" : "US",
+            "addressLine1" : "17691 Rodriguez Divide",
+            "region" : "CO",
+            "postalCode" : "85748",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ],
+      "firstName" : "Maiya",
+      "email" : "ahmad@kertzmann-bailey-and-brekke.io",
+      "dateOfBirth" : "2009-07-21",
+      "mobilePhone" : "(557)093-7575",
+      "phone" : "759.693.8557",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Denesik",
+      "middleName" : "Noel"
+   },
+   "type" : "patron",
+   "barcode" : "133143370961512",
+   "expirationDate" : "2019-06-20",
+   "enrollmentDate" : "2015-04-13"
+}
+

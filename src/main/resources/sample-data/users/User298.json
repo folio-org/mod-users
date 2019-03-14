@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "active" : false,
+   "enrollmentDate" : "2017-03-05",
+   "username" : "mikel",
+   "personal" : {
+      "phone" : "128-753-2651 x6176",
+      "lastName" : "Schaefer",
+      "middleName" : "Renee",
+      "email" : "michelle@schuster-mcdermott.dk",
+      "preferredContactTypeId" : "004",
+      "mobilePhone" : "444.448.7359 x459",
+      "firstName" : "Colten",
+      "addresses" : [
+         {
+            "city" : "Gary",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "38258 Wiza Village Suite 811",
+            "postalCode" : "40684",
+            "region" : "IA",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "dateOfBirth" : "1951-11-08"
+   },
+   "id" : "fad510e6-5b8d-4b10-b846-ce6ff7457629",
+   "barcode" : "496391043594936",
+   "expirationDate" : "2019-08-19",
+   "type" : "patron"
+}
+

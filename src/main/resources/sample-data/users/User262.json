@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "barcode" : "535145956127635",
+   "id" : "69a7d4f8-a32a-46d8-a006-0e5ea69f34bc",
+   "expirationDate" : "2020-08-04",
+   "type" : "patron",
+   "active" : false,
+   "personal" : {
+      "lastName" : "Russel",
+      "phone" : "1-871-876-7675",
+      "mobilePhone" : "1-311-014-7555 x947",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Madeline",
+      "email" : "ludie@will-bode-and-yundt.wf",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "VI",
+            "postalCode" : "56270-4594",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Artesia",
+            "addressLine1" : "06616 Verda Brook #606"
+         }
+      ],
+      "dateOfBirth" : "2000-12-21"
+   },
+   "username" : "alyson",
+   "enrollmentDate" : "2017-11-18"
+}
+

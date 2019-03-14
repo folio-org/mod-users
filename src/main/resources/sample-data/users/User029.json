@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "active" : true,
+   "personal" : {
+      "lastName" : "Lakin",
+      "middleName" : "Carlo",
+      "preferredContactTypeId" : "002",
+      "phone" : "375-322-8828 x762",
+      "dateOfBirth" : "1986-02-09",
+      "email" : "jaylen@herman-jones-and-daniel.gi",
+      "firstName" : "Cortney",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "36432 Albina Points",
+            "countryId" : "US",
+            "city" : "Buena Park",
+            "region" : "FM",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "11852-6961"
+         }
+      ]
+   },
+   "id" : "066795ce-4938-48f2-9411-f3f922b51e1c",
+   "username" : "arlo",
+   "expirationDate" : "2019-05-13",
+   "enrollmentDate" : "2017-02-05",
+   "barcode" : "562915263776012",
+   "type" : "patron"
+}
+

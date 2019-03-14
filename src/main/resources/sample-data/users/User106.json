@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "barcode" : "304779563863832",
+   "expirationDate" : "2019-08-09",
+   "enrollmentDate" : "2016-06-07",
+   "type" : "patron",
+   "id" : "a5a80ce1-c00d-4ede-ba44-912c1e093948",
+   "active" : true,
+   "personal" : {
+      "firstName" : "Devante",
+      "addresses" : [
+         {
+            "postalCode" : "46974-1078",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "AE",
+            "city" : "Cerritos",
+            "addressLine1" : "33863 Building 99",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "phone" : "(939)563-4118 x80575",
+      "dateOfBirth" : "1962-11-13",
+      "email" : "jess@hermiston-jaskolski.sb",
+      "lastName" : "Wiegand",
+      "middleName" : "Clementina",
+      "preferredContactTypeId" : "003"
+   },
+   "username" : "marcelina"
+}
+

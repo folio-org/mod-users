@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "expirationDate" : "2020-10-28",
+   "type" : "patron",
+   "barcode" : "962507858300576",
+   "id" : "bc048122-1914-4971-ab0f-62303fef71aa",
+   "personal" : {
+      "email" : "lillian@kreiger-halvorson-and-reynolds.eg",
+      "mobilePhone" : "322-338-8530 x1379",
+      "preferredContactTypeId" : "002",
+      "firstName" : "Jolie",
+      "phone" : "(234)085-0331 x789",
+      "lastName" : "Koss",
+      "dateOfBirth" : "1947-03-21",
+      "addresses" : [
+         {
+            "addressLine1" : "84059 Anthony Pine",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Kokomo",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "86233-6003",
+            "region" : "NE"
+         }
+      ]
+   },
+   "enrollmentDate" : "2017-07-28",
+   "username" : "clifton",
+   "active" : true
+}
+

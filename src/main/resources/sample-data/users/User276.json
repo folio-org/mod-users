@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "active" : true,
+   "personal" : {
+      "preferredContactTypeId" : "001",
+      "firstName" : "Lincoln",
+      "middleName" : "Izabella",
+      "email" : "eldred@morissette-and-sons.sn",
+      "lastName" : "Koss",
+      "phone" : "(723)646-2360",
+      "dateOfBirth" : "1982-12-23",
+      "addresses" : [
+         {
+            "addressLine1" : "83631 Wilma Unions #135",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Huntsville",
+            "postalCode" : "06723",
+            "region" : "NH",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "enrollmentDate" : "2017-03-23",
+   "username" : "jessie",
+   "barcode" : "35138758585411",
+   "id" : "6c76eeec-183d-4635-9019-11ce8623d50c",
+   "type" : "patron",
+   "expirationDate" : "2020-08-14"
+}
+

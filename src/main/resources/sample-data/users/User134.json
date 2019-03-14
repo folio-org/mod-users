@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "broderick",
+   "id" : "1bcfd501-232e-47da-a511-fdd29ae3d692",
+   "personal" : {
+      "lastName" : "Ruecker",
+      "middleName" : "Adelbert",
+      "preferredContactTypeId" : "003",
+      "dateOfBirth" : "1998-06-17",
+      "email" : "berneice@rau-and-sons.do",
+      "mobilePhone" : "396-791-1800",
+      "phone" : "1-120-568-3150 x6347",
+      "addresses" : [
+         {
+            "postalCode" : "62905-4613",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "SD",
+            "city" : "Florence",
+            "addressLine1" : "81094 Upper",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ],
+      "firstName" : "Gay"
+   },
+   "active" : true,
+   "type" : "patron",
+   "barcode" : "613459431184452",
+   "expirationDate" : "2020-10-07",
+   "enrollmentDate" : "2018-01-09"
+}
+

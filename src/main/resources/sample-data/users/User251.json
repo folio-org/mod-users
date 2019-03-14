@@ -1,0 +1,32 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "type" : "patron",
+   "expirationDate" : "2021-01-20",
+   "barcode" : "44219243602281",
+   "id" : "e1e435da-97e2-4083-8657-832aeb549929",
+   "personal" : {
+      "dateOfBirth" : "1981-12-13",
+      "addresses" : [
+         {
+            "region" : "IN",
+            "postalCode" : "47530",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "city" : "San Fernando",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "52485 Thiel Circle"
+         }
+      ],
+      "firstName" : "Aglae",
+      "mobilePhone" : "(785)272-0417 x5465",
+      "preferredContactTypeId" : "004",
+      "middleName" : "Abbey",
+      "email" : "lafayette@koss-cremin-and-romaguera.st",
+      "lastName" : "Koss",
+      "phone" : "913.966.6319 x332"
+   },
+   "enrollmentDate" : "2016-05-05",
+   "username" : "ophelia",
+   "active" : true
+}
+

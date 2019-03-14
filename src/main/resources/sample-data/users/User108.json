@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "barcode" : "792502201400545",
+   "expirationDate" : "2020-03-27",
+   "enrollmentDate" : "2017-11-23",
+   "type" : "patron",
+   "id" : "2a823816-c059-4703-becf-0cc68a734189",
+   "active" : false,
+   "personal" : {
+      "phone" : "1-061-750-8306 x5786",
+      "dateOfBirth" : "1958-03-12",
+      "email" : "greta@fahey-emmerich-and-douglas.om",
+      "firstName" : "Leila",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "addressLine1" : "91432 Daugherty Extensions",
+            "city" : "Chino",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "29470-5004",
+            "region" : "PW"
+         }
+      ],
+      "middleName" : "Ronaldo",
+      "lastName" : "Kuhlman",
+      "preferredContactTypeId" : "004"
+   },
+   "username" : "barney"
+}
+

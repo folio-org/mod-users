@@ -1,0 +1,30 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "active" : true,
+   "id" : "f7a0a518-6ff3-4531-b54b-e630d61aede0",
+   "personal" : {
+      "firstName" : "Ryder",
+      "preferredContactTypeId" : "001",
+      "lastName" : "Crooks",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "18653 Swift Turnpike Suite 323",
+            "countryId" : "US",
+            "city" : "Monterey",
+            "region" : "OR",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "postalCode" : "37536-7927"
+         }
+      ],
+      "phone" : "(320)754-0186",
+      "email" : "guy@luettgen-and-sons.museum",
+      "dateOfBirth" : "1982-05-24"
+   },
+   "username" : "amy",
+   "barcode" : "251565120881853",
+   "enrollmentDate" : "2015-08-01",
+   "expirationDate" : "2020-04-21",
+   "type" : "patron"
+}
+

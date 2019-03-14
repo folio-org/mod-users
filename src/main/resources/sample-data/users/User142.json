@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "username" : "jed",
+   "id" : "e6dfcfef-e724-4485-870d-d2c4d1dcfdd9",
+   "active" : true,
+   "personal" : {
+      "mobilePhone" : "686.430.5419",
+      "phone" : "(558)273-3002",
+      "dateOfBirth" : "1979-10-04",
+      "email" : "lacey@hansen-klocko.ni",
+      "firstName" : "Adrienne",
+      "addresses" : [
+         {
+            "city" : "Delta Junction",
+            "countryId" : "US",
+            "addressLine1" : "21531 Floor 3548",
+            "primaryAddress" : true,
+            "postalCode" : "46912",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "region" : "KY"
+         }
+      ],
+      "middleName" : "Madisen",
+      "lastName" : "Kub",
+      "preferredContactTypeId" : "001"
+   },
+   "type" : "patron",
+   "expirationDate" : "2019-11-13",
+   "enrollmentDate" : "2018-06-22",
+   "barcode" : "379402199971554"
+}
+

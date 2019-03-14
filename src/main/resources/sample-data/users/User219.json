@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "id" : "66fe5bd9-1129-4b40-b54d-05b4c358463c",
+   "barcode" : "623317241177726",
+   "type" : "patron",
+   "expirationDate" : "2020-05-14",
+   "active" : true,
+   "username" : "guiseppe",
+   "enrollmentDate" : "2018-10-10",
+   "personal" : {
+      "dateOfBirth" : "2006-10-25",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "06036",
+            "region" : "MO",
+            "city" : "Montgomery",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "14567 Smitham Path"
+         }
+      ],
+      "preferredContactTypeId" : "002",
+      "mobilePhone" : "362.131.9602 x6297",
+      "firstName" : "Jazlyn",
+      "email" : "petra@herzog-group.mu",
+      "middleName" : "Kaya",
+      "lastName" : "Koss",
+      "phone" : "705.954.0099 x5114"
+   }
+}
+

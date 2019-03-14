@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "leopold",
+   "id" : "87c329f1-2220-4a8a-b750-ded39bbe9769",
+   "personal" : {
+      "middleName" : "Kieran",
+      "lastName" : "Prohaska",
+      "preferredContactTypeId" : "002",
+      "dateOfBirth" : "1961-01-30",
+      "email" : "leanne@conroy-llc.cs",
+      "mobilePhone" : "1-154-117-4466",
+      "phone" : "1-028-589-2513",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Sahuarita",
+            "countryId" : "US",
+            "addressLine1" : "31168 Esther Roads",
+            "region" : "ID",
+            "postalCode" : "95607-8768",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e"
+         }
+      ],
+      "firstName" : "Tamia"
+   },
+   "active" : false,
+   "type" : "patron",
+   "expirationDate" : "2020-09-15",
+   "enrollmentDate" : "2018-09-30",
+   "barcode" : "787181529957397"
+}
+

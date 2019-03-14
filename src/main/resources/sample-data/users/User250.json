@@ -1,0 +1,32 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "active" : true,
+   "enrollmentDate" : "2017-07-06",
+   "username" : "hans",
+   "personal" : {
+      "addresses" : [
+         {
+            "region" : "CT",
+            "postalCode" : "39331-8766",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "84028 Floor 77",
+            "city" : "Moreno Valley"
+         }
+      ],
+      "dateOfBirth" : "1989-05-26",
+      "lastName" : "Hettinger",
+      "phone" : "(039)225-2948",
+      "preferredContactTypeId" : "003",
+      "mobilePhone" : "(601)986-2680",
+      "firstName" : "Janet",
+      "email" : "keaton@beahan-mclaughlin.jp",
+      "middleName" : "Samantha"
+   },
+   "id" : "0d6d38bf-aaf6-4976-a2ce-7ff787195982",
+   "barcode" : "121881123661538",
+   "type" : "patron",
+   "expirationDate" : "2019-05-13"
+}
+

@@ -1,0 +1,30 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "barcode" : "503862344388601",
+   "expirationDate" : "2020-04-27",
+   "enrollmentDate" : "2018-08-02",
+   "type" : "patron",
+   "id" : "c9255397-a8cb-4208-9558-1aae0e6f2c68",
+   "active" : true,
+   "personal" : {
+      "phone" : "045.478.1813",
+      "email" : "ibrahim@strosin-mills.ir",
+      "dateOfBirth" : "1982-09-02",
+      "firstName" : "Darrell",
+      "preferredContactTypeId" : "002",
+      "lastName" : "Champlin",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "city" : "Artesia",
+            "countryId" : "US",
+            "addressLine1" : "70443 Braulio Burg",
+            "region" : "KY",
+            "postalCode" : "54673",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880"
+         }
+      ]
+   },
+   "username" : "leone"
+}
+

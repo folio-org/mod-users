@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "username" : "ambrose",
+   "enrollmentDate" : "2017-06-14",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Alameda",
+            "addressLine1" : "48545 Kessler Harbors",
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "region" : "IA",
+            "postalCode" : "70909-1665"
+         }
+      ],
+      "dateOfBirth" : "1997-06-19",
+      "phone" : "016.042.5121",
+      "lastName" : "West",
+      "email" : "shaylee@hayes-and-sons.aero",
+      "mobilePhone" : "752-136-3560 x448",
+      "firstName" : "Buck",
+      "preferredContactTypeId" : "001"
+   },
+   "active" : true,
+   "expirationDate" : "2019-03-30",
+   "type" : "patron",
+   "id" : "bf93cf45-4c02-4a34-aad0-9ed949109630",
+   "barcode" : "916928316187196"
+}
+

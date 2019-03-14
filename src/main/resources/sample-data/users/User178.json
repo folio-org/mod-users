@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "barcode" : "775849269788032",
+   "expirationDate" : "2021-01-28",
+   "enrollmentDate" : "2016-01-30",
+   "type" : "patron",
+   "id" : "201be44f-2f29-47af-85da-2cbfc72ac29e",
+   "active" : true,
+   "personal" : {
+      "phone" : "277-585-0295 x07776",
+      "email" : "magdalen@powlowski-davis.cv",
+      "dateOfBirth" : "2000-04-02",
+      "firstName" : "Katlynn",
+      "addresses" : [
+         {
+            "region" : "NH",
+            "postalCode" : "93784-5355",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "primaryAddress" : true,
+            "city" : "Roseville",
+            "countryId" : "US",
+            "addressLine1" : "31306 Katelynn Crescent"
+         }
+      ],
+      "preferredContactTypeId" : "005",
+      "lastName" : "Christiansen",
+      "middleName" : "May"
+   },
+   "username" : "winnifred"
+}
+

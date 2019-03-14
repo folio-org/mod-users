@@ -1,0 +1,31 @@
+{
+   "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
+   "personal" : {
+      "dateOfBirth" : "1968-03-13",
+      "addresses" : [
+         {
+            "countryId" : "US",
+            "primaryAddress" : true,
+            "postalCode" : "58608",
+            "region" : "CA",
+            "addressLine1" : "84403 Blake Port",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "city" : "Lake Forest"
+         }
+      ],
+      "email" : "ralph@olson-group.aq",
+      "preferredContactTypeId" : "002",
+      "mobilePhone" : "700-321-8490 x68676",
+      "firstName" : "Arthur",
+      "phone" : "978-586-0651",
+      "lastName" : "Treutel"
+   },
+   "username" : "corrine",
+   "enrollmentDate" : "2017-04-05",
+   "active" : true,
+   "expirationDate" : "2019-09-20",
+   "type" : "patron",
+   "barcode" : "855537998260640",
+   "id" : "6302b991-3223-4bc7-ae66-795d161f64ab"
+}
+

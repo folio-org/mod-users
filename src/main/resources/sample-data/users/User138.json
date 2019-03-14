@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "juana",
+   "id" : "dc3cd5a5-4235-48c3-b9d3-a958863f7498",
+   "personal" : {
+      "preferredContactTypeId" : "002",
+      "middleName" : "Christian",
+      "lastName" : "VonRueden",
+      "phone" : "213.651.5587 x2056",
+      "email" : "titus@wunsch-quigley.ba",
+      "dateOfBirth" : "2013-09-01",
+      "firstName" : "Vince",
+      "addresses" : [
+         {
+            "primaryAddress" : true,
+            "addressLine1" : "00782 Anderson Roads Apt. 644",
+            "countryId" : "US",
+            "city" : "Mesa",
+            "region" : "SD",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "38447"
+         }
+      ]
+   },
+   "active" : true,
+   "type" : "patron",
+   "barcode" : "488892976621858",
+   "expirationDate" : "2020-10-11",
+   "enrollmentDate" : "2018-05-02"
+}
+

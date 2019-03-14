@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "enrollmentDate" : "2019-02-16",
+   "username" : "clifford",
+   "personal" : {
+      "phone" : "815-667-5143",
+      "lastName" : "Homenick",
+      "middleName" : "Wanda",
+      "email" : "litzy@sawayn-turcotte.dz",
+      "firstName" : "Coby",
+      "mobilePhone" : "(056)300-3670 x808",
+      "preferredContactTypeId" : "001",
+      "addresses" : [
+         {
+            "city" : "Merced",
+            "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
+            "addressLine1" : "26178 Oberbrunner Drive",
+            "region" : "MD",
+            "postalCode" : "00187-3930",
+            "primaryAddress" : true,
+            "countryId" : "US"
+         }
+      ],
+      "dateOfBirth" : "1948-03-26"
+   },
+   "active" : true,
+   "type" : "patron",
+   "expirationDate" : "2019-04-15",
+   "id" : "f5d7aed2-1647-4e83-b85e-74760f770799",
+   "barcode" : "78306618161899"
+}
+

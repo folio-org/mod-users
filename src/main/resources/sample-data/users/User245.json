@@ -1,0 +1,30 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "type" : "patron",
+   "expirationDate" : "2019-05-17",
+   "id" : "34a22ca8-9aff-4b1c-96c2-f908ddb068ae",
+   "barcode" : "789081575594853",
+   "username" : "glenda",
+   "enrollmentDate" : "2018-01-01",
+   "personal" : {
+      "email" : "coty@white-gutmann.pe",
+      "preferredContactTypeId" : "005",
+      "firstName" : "Glenda",
+      "dateOfBirth" : "1999-10-14",
+      "phone" : "(067)045-1942 x839",
+      "lastName" : "Wisozk",
+      "addresses" : [
+         {
+            "addressLine1" : "32195 Pfeffer Lodge",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Artesia",
+            "postalCode" : "13289-0988",
+            "region" : "DC",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "active" : true
+}
+

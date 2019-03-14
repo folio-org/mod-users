@@ -1,0 +1,30 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "barcode" : "897083256223023",
+   "id" : "011dc219-6b7f-4d93-ae7f-f512ed651493",
+   "type" : "patron",
+   "expirationDate" : "2019-09-02",
+   "active" : true,
+   "personal" : {
+      "addresses" : [
+         {
+            "postalCode" : "02013-0332",
+            "region" : "NH",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "addressLine1" : "69175 Haley Skyway",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "city" : "Marana"
+         }
+      ],
+      "lastName" : "Huels",
+      "phone" : "(619)645-7533 x5934",
+      "dateOfBirth" : "1947-06-23",
+      "firstName" : "Lois",
+      "preferredContactTypeId" : "004",
+      "email" : "monserrat@donnelly-skiles.ge"
+   },
+   "username" : "elmer",
+   "enrollmentDate" : "2018-05-06"
+}
+

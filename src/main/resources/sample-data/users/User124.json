@@ -1,0 +1,32 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "personal" : {
+      "middleName" : "Rubie",
+      "lastName" : "Hamill",
+      "preferredContactTypeId" : "002",
+      "dateOfBirth" : "1958-10-27",
+      "email" : "wellington@reinger-inc.nc",
+      "phone" : "(301)179-9972 x3077",
+      "mobilePhone" : "675.933.9336",
+      "addresses" : [
+         {
+            "addressLine1" : "77066 Corkery Rapids Suite 251",
+            "countryId" : "US",
+            "city" : "Huntsville",
+            "primaryAddress" : true,
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "postalCode" : "61712",
+            "region" : "WV"
+         }
+      ],
+      "firstName" : "Maryjane"
+   },
+   "active" : true,
+   "id" : "4fd8d3dd-ebc0-4d10-ae81-199e831be32e",
+   "username" : "willa",
+   "expirationDate" : "2021-03-05",
+   "enrollmentDate" : "2016-03-16",
+   "barcode" : "501745941225589",
+   "type" : "patron"
+}
+

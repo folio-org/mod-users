@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "enrollmentDate" : "2015-09-12",
+   "expirationDate" : "2020-12-10",
+   "barcode" : "113383880513143",
+   "type" : "patron",
+   "active" : true,
+   "id" : "f62dc160-eacc-4922-a0cb-e1ed68a44601",
+   "personal" : {
+      "preferredContactTypeId" : "004",
+      "lastName" : "Mertz",
+      "email" : "craig@ruecker-dach.se",
+      "dateOfBirth" : "1976-03-20",
+      "phone" : "091.863.0584 x7173",
+      "mobilePhone" : "1-292-331-2729 x473",
+      "addresses" : [
+         {
+            "region" : "WI",
+            "postalCode" : "70057-1624",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "primaryAddress" : true,
+            "city" : "Aliso Viejo",
+            "countryId" : "US",
+            "addressLine1" : "64834 Beier Villages"
+         }
+      ],
+      "firstName" : "Jovan"
+   },
+   "username" : "abby"
+}
+

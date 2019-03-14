@@ -1,0 +1,31 @@
+{
+   "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
+   "expirationDate" : "2020-06-03",
+   "type" : "patron",
+   "barcode" : "170699227458857",
+   "id" : "b56b28b9-7f22-426e-a099-4f753be686fa",
+   "personal" : {
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "24827 Kilback Burg",
+            "city" : "Torrance",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "region" : "MI",
+            "postalCode" : "57239"
+         }
+      ],
+      "dateOfBirth" : "2006-01-04",
+      "lastName" : "Hahn",
+      "phone" : "511.615.4976 x7146",
+      "firstName" : "Augustus",
+      "mobilePhone" : "631.312.6842 x4971",
+      "preferredContactTypeId" : "005",
+      "email" : "sebastian@keeling-inc.yt"
+   },
+   "username" : "emmett",
+   "enrollmentDate" : "2018-11-15",
+   "active" : true
+}
+

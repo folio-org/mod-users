@@ -1,0 +1,31 @@
+{
+   "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+   "username" : "kaley",
+   "enrollmentDate" : "2017-04-14",
+   "personal" : {
+      "mobilePhone" : "591.690.6025 x9830",
+      "firstName" : "Bettye",
+      "preferredContactTypeId" : "002",
+      "email" : "baby@abernathy-and-sons.cm",
+      "lastName" : "Murphy",
+      "phone" : "783.614.3439",
+      "dateOfBirth" : "1968-01-08",
+      "addresses" : [
+         {
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "85846 Block Corner",
+            "city" : "Bell",
+            "postalCode" : "14504-7792",
+            "region" : "DC",
+            "countryId" : "US",
+            "primaryAddress" : true
+         }
+      ]
+   },
+   "active" : true,
+   "expirationDate" : "2020-05-10",
+   "type" : "patron",
+   "id" : "6e74dfe1-2eca-48bd-89ce-9fe1633920a3",
+   "barcode" : "70567676297152"
+}
+

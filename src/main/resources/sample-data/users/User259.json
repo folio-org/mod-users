@@ -1,0 +1,31 @@
+{
+   "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
+   "active" : false,
+   "personal" : {
+      "lastName" : "Zieme",
+      "phone" : "(717)282-0004 x5449",
+      "preferredContactTypeId" : "003",
+      "firstName" : "Donna",
+      "middleName" : "Santa",
+      "email" : "sid@mohr-schowalter.ec",
+      "addresses" : [
+         {
+            "region" : "IA",
+            "postalCode" : "35163-7456",
+            "primaryAddress" : true,
+            "countryId" : "US",
+            "city" : "Forrest City",
+            "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+            "addressLine1" : "00628 Lueilwitz Plains Apt. 185"
+         }
+      ],
+      "dateOfBirth" : "1959-03-28"
+   },
+   "username" : "jessy",
+   "enrollmentDate" : "2017-05-17",
+   "barcode" : "744632821019678",
+   "id" : "bb4d8818-35cc-4cb6-b181-b5ccfb734744",
+   "expirationDate" : "2019-08-25",
+   "type" : "patron"
+}
+
