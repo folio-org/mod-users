@@ -583,6 +583,7 @@ public class RestVerticleIT {
   }
 
   // https://issues.folio.org/browse/MODUSERS-90
+  // https://issues.folio.org/browse/MODUSERS-108
   private Future<Void> putUserWithNumericName(TestContext context) {
     System.out.println("Changing a user with numeric name\n");
     Future future = Future.future();
@@ -592,10 +593,10 @@ public class RestVerticleIT {
       .put("active", false);
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + user777777Id, res -> {
-      if (res.statusCode() == 204) {
+      if (res.statusCode() == 404) {
         future.complete();
       } else {
-        future.fail("Expected 204 for putUserWithNumericName, got status code: "
+        future.fail("Expected 404 for putUserWithNumericName, got status code: "
           + res.statusCode() + " " + res.statusMessage());
       }
     })
