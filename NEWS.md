@@ -1,3 +1,9 @@
+## 15.4.0 2019-03-15
+ * MODUSERS-103 use loadSample/loadReference to load sample and reference data
+ * MODUSERS-108	PUT new User returns 204
+ * MODUSERS-102 pom.xml: Replace tab by spaces, fixing indentation
+ * MODUSERS-105	Update to Vert.X 3.5.4 / RMB 23.8.0
+
 ## 15.3.0 2018-12-05
  * Clean up RAML directory (MODUSERS-84)
  * Add missing documentation for fieldnames in schemas (MODUSERS-87)
