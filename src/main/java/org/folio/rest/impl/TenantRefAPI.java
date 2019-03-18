@@ -32,8 +32,6 @@ public class TenantRefAPI extends TenantAPI {
         .add("addresstypes")
         .withKey("loadSample").withLead("sample-data")
         .withIdContent()
-        .withPostOnly() // PUT broken with "new" content
-        .withAcceptStatus(422) // and 422 for POST on existing item (ignored)
         .add("users")
         .perform(ta, headers, vertx, res1 -> {
           if (res1.failed()) {
