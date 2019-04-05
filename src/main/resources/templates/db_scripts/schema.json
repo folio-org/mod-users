@@ -26,6 +26,48 @@
         {
           "fieldName" : "username",
           "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "barcode",
+          "tOps" : "ADD"
+        }
+      ],
+      "ginIndex": [
+        {
+          "fieldName": "username",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "personal.firstName",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "personal.lastName",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "personal.email",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "barcode",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "externalSystemId",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
         }
       ]
     },
