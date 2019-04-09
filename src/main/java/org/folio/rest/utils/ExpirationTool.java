@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
-import static org.folio.rest.impl.UsersAPI.RAML_PATH;
 import static org.folio.rest.impl.UsersAPI.USER_ID_FIELD;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
@@ -125,7 +124,7 @@ public class ExpirationTool {
       try {
         PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
         pgClient.setIdField("id");
-        Criteria idCrit = new Criteria(RAML_PATH + "/userdata.json");
+        Criteria idCrit = new Criteria();
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
         idCrit.setValue(user.getId());

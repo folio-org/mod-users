@@ -20,7 +20,6 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -48,9 +47,6 @@ public class UserGroupAPI implements Groups {
   private static final String       LOCATION_PREFIX       = "/groups/";
   private static final Logger       log                   = LoggerFactory.getLogger(UserGroupAPI.class);
   private final Messages            messages              = Messages.getInstance();
-
-  private static final String GROUP_SCHEMA_PATH = UsersAPI.RAML_PATH + "/usergroup.json";
-  static final String GROUP_SCHEMA = ResourceUtils.resource2String(GROUP_SCHEMA_PATH);
 
   @Validate
   @Override
@@ -352,7 +348,7 @@ public class UserGroupAPI implements Groups {
   }
 
   private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(GROUP_TABLE + ".jsonb", GROUP_SCHEMA);
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(GROUP_TABLE + ".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
 

@@ -29,7 +29,6 @@ import org.folio.rest.persist.facets.FacetField;
 import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.CQLParseException;
@@ -44,6 +43,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import java.util.LinkedList;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 
 
@@ -61,17 +61,6 @@ public class UsersAPI implements Users {
   public static final String USER_ID_FIELD = "'id'";
   public static final String USER_NAME_FIELD = "'username'";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
-  public static final String RAML_PATH = "ramls";
-  private static final String USER_SCHEMA_PATH = RAML_PATH + "/userdata.json";
-  private static final String USER_SCHEMA = ResourceUtils.resource2String(USER_SCHEMA_PATH);
-  private static final LinkedHashMap<String,String> fieldsAndSchemas = getFieldsAndSchemas();
-
-  private static LinkedHashMap<String,String> getFieldsAndSchemas() {
-    LinkedHashMap<String,String> map = new LinkedHashMap<>();
-    map.put(VIEW_NAME_USER_GROUPS_JOIN+".jsonb", USER_SCHEMA);
-    map.put(VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb", UserGroupAPI.GROUP_SCHEMA);
-    return map;
-  }
 
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -105,10 +94,13 @@ public class UsersAPI implements Users {
   static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
     if(query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(fieldsAndSchemas);
+      List<String> fields = new LinkedList<>();
+      fields.add(VIEW_NAME_USER_GROUPS_JOIN+".jsonb");
+      fields.add(VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb");
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(fields);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     } else {
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS+".jsonb", USER_SCHEMA);
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS+".jsonb");
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     }
   }
@@ -199,11 +191,11 @@ public class UsersAPI implements Users {
           return;
         }
         try {
-          Criteria idCrit = new Criteria(USER_SCHEMA_PATH);
+          Criteria idCrit = new Criteria();
           idCrit.addField(USER_ID_FIELD);
           idCrit.setOperation("=");
           idCrit.setValue(entity.getId());
-          Criteria nameCrit = new Criteria(USER_SCHEMA_PATH);
+          Criteria nameCrit = new Criteria();
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
           nameCrit.setValue(entity.getUsername());
@@ -350,7 +342,7 @@ public class UsersAPI implements Users {
       vertxContext.runOnContext(v -> {
         String tableName = getTableName(null);
             try {
-              Criteria idCrit = new Criteria(USER_SCHEMA_PATH);
+              Criteria idCrit = new Criteria();
               idCrit.addField(USER_ID_FIELD);
               idCrit.setOperation("=");
               idCrit.setValue(userId);
@@ -463,7 +455,7 @@ public class UsersAPI implements Users {
           String tableName = getTableName(null);
 
           try {
-            Criteria nameCrit = new Criteria(USER_SCHEMA_PATH);
+            Criteria nameCrit = new Criteria();
             nameCrit.addField(USER_NAME_FIELD);
             nameCrit.setOperation("=");
             nameCrit.setValue(entity.getUsername());
