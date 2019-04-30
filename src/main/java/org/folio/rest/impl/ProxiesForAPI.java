@@ -23,7 +23,6 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -40,8 +39,6 @@ public class ProxiesForAPI implements Proxiesfor {
   public static final String URL_PREFIX = "/proxiesfor";
   private static final Logger logger = LoggerFactory.getLogger(ProxiesForAPI.class);
   private boolean suppressErrorResponse = false;
-  private static final String PROXY_FOR_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/proxyfor.json";
-  private static final String PROXY_FOR_TABLE_SCHEMA = ResourceUtils.resource2String(PROXY_FOR_TABLE_SCHEMA_PATH);
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
@@ -77,7 +74,7 @@ public class ProxiesForAPI implements Proxiesfor {
   }
 
   private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(PROXY_FOR_TABLE + ".jsonb", PROXY_FOR_TABLE_SCHEMA);
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(PROXY_FOR_TABLE + ".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
 

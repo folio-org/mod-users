@@ -19,7 +19,6 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.ResourceUtils;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -43,8 +42,6 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String URL_PREFIX = "/addresstypes";
   private static final Logger logger = LoggerFactory.getLogger(AddressTypeAPI.class);
   private boolean suppressErrorResponse = false;
-  private static final String ADDRESS_TYPE_TABLE_SCHEMA_PATH = UsersAPI.RAML_PATH + "/addresstype.json";
-  private static final String ADDRESS_TYPE_TABLE_SCHEMA = ResourceUtils.resource2String(ADDRESS_TYPE_TABLE_SCHEMA_PATH);
 
   public void setSuppressErrorResponse(boolean suppressErrorResponse) {
     this.suppressErrorResponse = suppressErrorResponse;
@@ -326,7 +323,7 @@ public class AddressTypeAPI implements Addresstypes {
   }
 
   private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(ADDRESS_TYPE_TABLE + ".jsonb", ADDRESS_TYPE_TABLE_SCHEMA);
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(ADDRESS_TYPE_TABLE + ".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }
 
