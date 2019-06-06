@@ -40,6 +40,12 @@
       ],
       "ginIndex": [
         {
+          "fieldName": "id",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
           "fieldName": "username",
           "tOps": "ADD",
           "caseSensitive": false,
