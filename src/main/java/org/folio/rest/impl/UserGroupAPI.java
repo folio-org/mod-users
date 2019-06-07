@@ -22,9 +22,6 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
-import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -33,6 +30,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.UUID;
+import org.folio.cql2pgjson.CQL2PgJSON;
+import org.folio.cql2pgjson.exception.CQL2PgJSONException;
+import org.folio.cql2pgjson.exception.FieldException;
 
 /**
  * @author shale
@@ -60,7 +60,7 @@ public class UserGroupAPI implements Groups {
     vertxContext.runOnContext(v -> {
       try {
         System.out.println("sending... getGroups");
-        CQLWrapper cql = getCQL(query,limit, offset);
+        CQLWrapper cql = getCQL(query, limit, offset);
 
         PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class,
           new String[]{"*"}, cql, true, true,
@@ -92,11 +92,6 @@ public class UserGroupAPI implements Groups {
         log.error(fe.getLocalizedMessage(), fe);
         asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
                 "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
-      }
-      catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
       }
     });
 
@@ -169,7 +164,7 @@ public class UserGroupAPI implements Groups {
         System.out.println("sending... getGroupsByGroupId");
 
         Criterion c = new Criterion(
-          new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setValue("'"+groupId+"'"));
+          new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setVal(groupId));
 
         PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, false,
             reply -> {
@@ -224,7 +219,7 @@ public class UserGroupAPI implements Groups {
             .addField(ID_FIELD_NAME)
             .setJSONB(false)
             .setOperation("=")
-            .setValue("'"+ groupId +"'"));
+            .setVal(groupId));
         PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
         postgresClient.get(GROUP_TABLE, Usergroup.class, criterion, true, getReply -> {
           try {
@@ -347,7 +342,7 @@ public class UserGroupAPI implements Groups {
     });
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
+  private CQLWrapper getCQL(String query, int limit, int offset) throws FieldException {
     CQL2PgJSON cql2pgJson = new CQL2PgJSON(GROUP_TABLE + ".jsonb");
     return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
   }

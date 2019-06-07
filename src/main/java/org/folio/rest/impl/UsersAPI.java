@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -32,9 +31,6 @@ import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.z3950.zing.cql.CQLParseException;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
-import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
@@ -44,6 +40,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.LinkedList;
+import org.folio.cql2pgjson.CQL2PgJSON;
+import org.folio.cql2pgjson.exception.CQL2PgJSONException;
+import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 
 
@@ -194,11 +193,11 @@ public class UsersAPI implements Users {
           Criteria idCrit = new Criteria();
           idCrit.addField(USER_ID_FIELD);
           idCrit.setOperation("=");
-          idCrit.setValue(entity.getId());
+          idCrit.setVal(entity.getId());
           Criteria nameCrit = new Criteria();
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
-          nameCrit.setValue(entity.getUsername());
+          nameCrit.setVal(entity.getUsername());
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
           PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
@@ -345,7 +344,7 @@ public class UsersAPI implements Users {
               Criteria idCrit = new Criteria();
               idCrit.addField(USER_ID_FIELD);
               idCrit.setOperation("=");
-              idCrit.setValue(userId);
+              idCrit.setVal(userId);
               Criterion criterion = new Criterion(idCrit);
               logger.debug("Using criterion: " + criterion.toString());
               PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(tableName, User.class, criterion,
@@ -399,7 +398,7 @@ public class UsersAPI implements Users {
         Criteria idCrit = new Criteria();
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
-        idCrit.setValue(userId);
+        idCrit.setVal(userId);
         String tableName = getTableName(null);
 
             try {
@@ -458,7 +457,7 @@ public class UsersAPI implements Users {
             Criteria nameCrit = new Criteria();
             nameCrit.addField(USER_NAME_FIELD);
             nameCrit.setOperation("=");
-            nameCrit.setValue(entity.getUsername());
+            nameCrit.setVal(entity.getUsername());
             PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
             checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
@@ -593,7 +592,7 @@ public class UsersAPI implements Users {
    }else{
      Criterion c = new Criterion(
        new Criteria().addField(UserGroupAPI.ID_FIELD_NAME).setJSONB(false).
-       setOperation("=").setValue("'"+pgId+"'"));
+       setOperation("=").setVal(pgId));
      /** check if the patron group exists, if not, can not add the user **/
      postgresClient.get(
        UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
@@ -656,7 +655,7 @@ public class UsersAPI implements Users {
     Future<Boolean> future = Future.future();
     Criterion criterion = new Criterion(
           new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
-                  setJSONB(false).setOperation("=").setValue("'" + addressTypeId + "'"));
+                  setJSONB(false).setOperation("=").setVal(addressTypeId));
     vertxContext.runOnContext(v -> {
       try {
         postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true, reply -> {

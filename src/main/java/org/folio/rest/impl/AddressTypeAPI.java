@@ -21,8 +21,6 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -31,6 +29,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.UUID;
+import org.folio.cql2pgjson.CQL2PgJSON;
+import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 /**
  *
  * @author kurt
@@ -168,7 +168,7 @@ public class AddressTypeAPI implements Addresstypes {
       try {
         Criterion criterion = new Criterion(
           new Criteria().addField(ID_FIELD_NAME).
-            setJSONB(false).setOperation("=").setValue("'" + addresstypeId + "'"));
+            setJSONB(false).setOperation("=").setVal(addresstypeId));
         PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(ADDRESS_TYPE_TABLE,
           AddressType.class, criterion, true, reply -> {
             try {

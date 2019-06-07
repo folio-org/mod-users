@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
+import org.folio.cql2pgjson.CQL2PgJSON;
+import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.ProxiesFor;
 import org.folio.rest.jaxrs.model.ProxyforCollection;
@@ -25,8 +27,6 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 /**
  *
  * @author kurt
@@ -197,7 +197,7 @@ public class ProxiesForAPI implements Proxiesfor {
     vertxContext.runOnContext(v -> {
       try {
         Criterion criterion = new Criterion(new Criteria().addField(ID_FIELD_NAME)
-          .setJSONB(false).setOperation("=").setValue("'" + id + "'"));
+          .setJSONB(false).setOperation("=").setVal(id));
         PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(
                 PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply-> {
           try {
@@ -328,9 +328,9 @@ public class ProxiesForAPI implements Proxiesfor {
     vertxContext.runOnContext(v -> {
       try {
         Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).
-                setOperation("=").setValue("'" + userId + "'").setJSONB(true);
+                setOperation("=").setVal(userId).setJSONB(true);
         Criteria proxyUserCrit = new Criteria().addField(PROXY_USERID_FIELD_NAME).
-                setOperation("=").setValue("'" + proxyUserId + "'").setJSONB(true);
+                setOperation("=").setVal(proxyUserId).setJSONB(true);
         Criterion criterion = new Criterion();
         criterion.addCriterion(userCrit, "AND", proxyUserCrit);
         postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {
