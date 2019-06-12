@@ -27,6 +27,12 @@
         {
           "fieldName" : "barcode",
           "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "expirationDate",
+          "tOps" : "ADD",
+          "caseSensitive": true,
+          "removeAccents": false
         }
       ],
       "ginIndex": [
