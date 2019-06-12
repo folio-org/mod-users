@@ -59,11 +59,6 @@ public class ProxiesForAPI implements Proxiesfor {
     return message;
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(PROXY_FOR_TABLE + ".jsonb");
-    return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
-  }
-
   @Override
   public void getProxiesfor(String query,
     int offset, int limit,
@@ -86,7 +81,7 @@ public class ProxiesForAPI implements Proxiesfor {
     try {
       PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
       userAndProxyUserComboExists(entity.getUserId(), entity.getProxyUserId(),
-        postgresClient, vertxContext).setHandler(existsRes -> {
+        postgresClient).setHandler(existsRes -> {
           if (existsRes.failed()) {
             String message = logAndSaveError(existsRes.cause());
             asyncResultHandler.handle(Future.succeededFuture(
@@ -155,8 +150,7 @@ public class ProxiesForAPI implements Proxiesfor {
   private Future<Boolean> userAndProxyUserComboExists(
     String userId,
     String proxyUserId,
-    PostgresClient postgresClient,
-    Context vertxContext) {
+    PostgresClient postgresClient) {
     Future<Boolean> future = Future.future();
     try {
       Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).

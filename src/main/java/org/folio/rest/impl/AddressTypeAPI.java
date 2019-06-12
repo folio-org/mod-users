@@ -129,9 +129,4 @@ public class AddressTypeAPI implements Addresstypes {
       vertxContext, PutAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(ADDRESS_TYPE_TABLE + ".jsonb");
-    return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
-  }
-
 }
