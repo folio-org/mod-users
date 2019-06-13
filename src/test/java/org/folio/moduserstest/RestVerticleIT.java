@@ -784,6 +784,56 @@ public class RestVerticleIT {
 
   }
 
+  private Future<Void> deleteAddressTypeSQLError(TestContext context) {
+    System.out.println("Deleting address type SQL error\n");
+    Future future = Future.future();
+    HttpClient postClient = vertx.createHttpClient();
+    HttpClient deleteClient = vertx.createHttpClient();
+    deleteClient.delete(port, "localhost", "/addresstypes/x%2F", deleteRes -> {
+      if (deleteRes.statusCode() == 500) {
+        future.complete();
+      } else {
+        deleteRes.bodyHandler(deleteBody -> {
+          future.fail("Expected 204, got " + deleteRes.statusCode()
+            + " : " + deleteBody.toString());
+        });
+      }
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "text/plain")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end();
+    return future;
+  }
+
+  private Future<Void> deleteAddressTypeCQLError(TestContext context) {
+    System.out.println("Deleting address type CQL error\n");
+    Future future = Future.future();
+    HttpClient postClient = vertx.createHttpClient();
+    HttpClient deleteClient = vertx.createHttpClient();
+    deleteClient.delete(port, "localhost", "/addresstypes/x=", deleteRes -> {
+      if (deleteRes.statusCode() == 500) {
+        future.complete();
+      } else {
+        deleteRes.bodyHandler(deleteBody -> {
+          future.fail("Expected 204, got " + deleteRes.statusCode()
+            + " : " + deleteBody.toString());
+        });
+      }
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "text/plain")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end();
+    return future;
+  }
+
   private Future<Void> createAndDeleteAddressType(TestContext context) {
     System.out.println("Creating and deleting an address type\n");
     Future future = Future.future();
@@ -1374,6 +1424,8 @@ public class RestVerticleIT {
       .compose(v -> createBadAddressType(context))
       .compose(v -> getAddressTypeUpdateUser(context))
       .compose(v -> createAndDeleteAddressType(context))
+      .compose(v -> deleteAddressTypeSQLError(context))
+      .compose(v -> deleteAddressTypeCQLError(context))
       .compose(v -> postUserWithDuplicateAddressType(context))
       .compose(v -> postUserBadAddress(context))
       .compose(v -> postUserWithNumericName(context))
