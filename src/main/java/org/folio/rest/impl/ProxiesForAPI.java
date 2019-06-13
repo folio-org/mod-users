@@ -76,21 +76,19 @@ public class ProxiesForAPI implements Proxiesfor {
           asyncResultHandler.handle(Future.succeededFuture(
             PostProxiesforResponse.respond500WithTextPlain(
               getErrorResponse(message))));
-        } else if (existsRes.result() == true) {
+          return;
+        }
+        if (existsRes.result() == true) {
           Errors existsError = ValidationHelper.createValidationErrorMessage(
             "proxyFor", entity.getId(), "Proxy relationship already exists");
           asyncResultHandler.handle(Future.succeededFuture(
             PostProxiesforResponse.respond422WithApplicationJson(existsError)));
-        } else {
-          String id = entity.getId();
-          if (id == null) {
-            id = UUID.randomUUID().toString();
-            entity.setId(id);
-          }
-          PgUtil.post(PROXY_FOR_TABLE, entity, okapiHeaders, vertxContext,
-            PostProxiesforResponse.class, asyncResultHandler);
+          return;
         }
+        PgUtil.post(PROXY_FOR_TABLE, entity, okapiHeaders, vertxContext,
+          PostProxiesforResponse.class, asyncResultHandler);
       });
+
   }
 
   @Override

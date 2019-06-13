@@ -148,23 +148,21 @@ public class UserGroupAPI implements Groups {
         User u = new User();
         u.setPatronGroup(groupId);
         postgresClient.get(UsersAPI.TABLE_NAME_USERS, u, true, false, replyHandler -> {
-          if (replyHandler.succeeded()) {
-            List<User> userList = replyHandler.result().getResults();
-            if (userList.size() > 0) {
-              log.error("Can not delete group, " + groupId + ". " + userList.size() + " users associated with it");
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                .respond400WithTextPlain("Can not delete group, " + userList.size() + " users associated with it")));
-              return;
-            } else {
-              log.info("Deleting empty group, " + groupId);
-            }
-            PgUtil.deleteById(GROUP_TABLE, groupId, okapiHeaders, vertxContext,
-              DeleteGroupsByGroupIdResponse.class, asyncResultHandler);
-          } else {
+          if (replyHandler.failed()) {
             log.error(replyHandler.cause().getMessage(), replyHandler.cause());
             asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
               .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
+            return;
           }
+          List<User> userList = replyHandler.result().getResults();
+          if (userList.size() > 0) {
+            log.error("Can not delete group, " + groupId + ". " + userList.size() + " users associated with it");
+            asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
+              .respond400WithTextPlain("Can not delete group, " + userList.size() + " users associated with it")));
+            return;
+          }
+          PgUtil.deleteById(GROUP_TABLE, groupId, okapiHeaders, vertxContext,
+            DeleteGroupsByGroupIdResponse.class, asyncResultHandler);
         });
       }
     });
