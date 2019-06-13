@@ -20,9 +20,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -44,6 +42,7 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.parser.JsonPathParser;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
+import org.folio.util.StringUtil;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -328,7 +327,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
-      client.get(port, "localhost", "/users?query=" + URLEncoder.encode("username==joeblock", "UTF-8"), res -> {
+      client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode("username==joeblock"), res -> {
         if (res.statusCode() == 200) {
           res.bodyHandler(buf -> {
             try {
@@ -371,7 +370,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
-      client.get(port, "localhost", "/users?query=" + urlencode("(id==" + joeBlockId + ")"), res -> {
+      client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode("(id==" + joeBlockId + ")"), res -> {
         if (res.statusCode() != 200) {
           future.fail("Bad response, expected 200: " + res.statusCode());
           return;
@@ -461,7 +460,7 @@ public class RestVerticleIT {
     Future future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
-      client.get(port, "localhost", "/users?query=" + URLEncoder.encode(cql, "UTF-8"), res -> {
+      client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode(cql), res -> {
         if (res.statusCode() != 200) {
           future.fail("Expected status code 200, but got response: " + res.statusCode());
           return;
@@ -1766,21 +1765,21 @@ public class RestVerticleIT {
 
     //query on users and sort by groups
     String url0 = userUrl;
-    String url1 = url + URLEncoder.encode("cql.allRecords=1 sortBy patronGroup.group/sort.descending", "UTF-8");
+    String url1 = url + StringUtil.urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
     //String url1 = userUrl;
-    String url2 = url + URLEncoder.encode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending", "UTF-8");
+    String url2 = url + StringUtil.urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
     //query and sort on groups via users endpoint
-    String url3 = url + URLEncoder.encode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending", "UTF-8");
+    String url3 = url + StringUtil.urlEncode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending");
     //query on users sort on users and groups
-    String url4 = url + URLEncoder.encode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName", "UTF-8");
+    String url4 = url + StringUtil.urlEncode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName");
     //query on users and groups sort by groups
-    String url5 = url + URLEncoder.encode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group", "UTF-8");
+    String url5 = url + StringUtil.urlEncode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group");
     //query on users and sort by users
-    String url6 = url + URLEncoder.encode("active=true sortBy username", "UTF-8");
+    String url6 = url + StringUtil.urlEncode("active=true sortBy username", "UTF-8");
     //non existant group - should be 0 results
-    String url7 = url + URLEncoder.encode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group", "UTF-8");
+    String url7 = url + StringUtil.urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
     //query by tag, should get one record
-    String url8 = url + URLEncoder.encode("tags=foo", "UTF-8");
+    String url8 = url + StringUtil.urlEncode("tags=foo");
 
     CompletableFuture<Response> cqlCF0 = new CompletableFuture();
     CompletableFuture<Response> cqlCF1 = new CompletableFuture();
@@ -1952,14 +1951,5 @@ public class RestVerticleIT {
         .getBytes(StandardCharsets.UTF_8)),
       Base64.getEncoder().encodeToString((header.encode() + payload.encode())
         .getBytes(StandardCharsets.UTF_8)));
-
-  }
-
-  private static String urlencode(String s) {
-    try {
-      return URLEncoder.encode(s, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
   }
 }
