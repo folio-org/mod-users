@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -27,10 +26,12 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.persist.facets.FacetField;
 import org.folio.rest.persist.facets.FacetManager;
+import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
+import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.z3950.zing.cql.CQLParseException;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
@@ -44,7 +45,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.LinkedList;
-import org.folio.rest.jaxrs.model.UsersGetOrder;
 
 
 /**
@@ -178,9 +178,9 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void postUsers(String lang, User entity,
-          Map<String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) {
+    Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
     try {
       vertxContext.runOnContext( v -> {
         String tableName = getTableName(null);
@@ -338,54 +338,8 @@ public class UsersAPI implements Users {
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) {
-     try {
-      vertxContext.runOnContext(v -> {
-        String tableName = getTableName(null);
-            try {
-              Criteria idCrit = new Criteria();
-              idCrit.addField(USER_ID_FIELD);
-              idCrit.setOperation("=");
-              idCrit.setValue(userId);
-              Criterion criterion = new Criterion(idCrit);
-              logger.debug("Using criterion: " + criterion.toString());
-              PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(tableName, User.class, criterion,
-                       true, false, getReply -> {
-                 if(getReply.failed()) {
-                   asyncResultHandler.handle(Future.succeededFuture(
-                           GetUsersByUserIdResponse.respond500WithTextPlain(
-                                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-                 } else {
-                   List<User> userList = getReply.result().getResults();
-                   if(userList.size() < 1) {
-                     asyncResultHandler.handle(Future.succeededFuture(
-                            GetUsersByUserIdResponse.respond404WithTextPlain("User" +
-                                    messages.getMessage(lang,
-                                            MessageConsts.ObjectDoesNotExist))));
-                   } else if(userList.size() > 1) {
-                     logger.debug("Multiple users found with the same id");
-                     asyncResultHandler.handle(Future.succeededFuture(
-                          GetUsersByUserIdResponse.respond500WithTextPlain(
-                                  messages.getMessage(lang,
-                                          MessageConsts.InternalServerError))));
-                   } else {
-                     asyncResultHandler.handle(Future.succeededFuture(
-                            GetUsersByUserIdResponse.respond200WithApplicationJson(userList.get(0))));
-                   }
-                 }
-               });
-             } catch(Exception e) {
-               logger.debug("Error occurred: " + e.getMessage());
-               asyncResultHandler.handle(Future.succeededFuture(
-                      GetUsersResponse.respond500WithTextPlain(messages.getMessage(
-                              lang, MessageConsts.InternalServerError))));
-             }
-
-       });
-    } catch(Exception e) {
-      asyncResultHandler.handle(Future.succeededFuture(
-              GetUsersResponse.respond500WithTextPlain(messages.getMessage(
-                      lang, MessageConsts.InternalServerError))));
-    }
+    PgUtil.getById(getTableName(null), User.class, userId, okapiHeaders, vertxContext,
+      GetUsersByUserIdResponse.class, asyncResultHandler);
   }
 
   @Validate
@@ -394,43 +348,8 @@ public class UsersAPI implements Users {
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) {
-    try {
-      vertxContext.runOnContext(v-> {
-        Criteria idCrit = new Criteria();
-        idCrit.addField(USER_ID_FIELD);
-        idCrit.setOperation("=");
-        idCrit.setValue(userId);
-        String tableName = getTableName(null);
-
-            try {
-              PostgresClientUtil.getInstance(vertxContext, okapiHeaders).delete(
-                      tableName, new Criterion(idCrit), deleteReply -> {
-                if(deleteReply.failed()) {
-                  logger.debug("Delete failed: " + deleteReply.cause().getMessage());
-                  asyncResultHandler.handle(Future.succeededFuture(
-                            DeleteUsersByUserIdResponse.respond404WithTextPlain("Not found")));
-                } else {
-                   asyncResultHandler.handle(Future.succeededFuture(
-                            DeleteUsersByUserIdResponse.respond204()));
-                }
-              });
-            } catch(Exception e) {
-              logger.debug("Delete failed: " + e.getMessage());
-              asyncResultHandler.handle(
-                Future.succeededFuture(
-                        DeleteUsersByUserIdResponse.respond500WithTextPlain(
-                                messages.getMessage(lang,
-                                        MessageConsts.InternalServerError))));
-            }
-
-      });
-    } catch(Exception e) {
-      asyncResultHandler.handle(
-            Future.succeededFuture(
-                    DeleteUsersByUserIdResponse.respond500WithTextPlain(
-                            messages.getMessage(lang,
-                                    MessageConsts.InternalServerError))));
-    }
+    PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext,
+      DeleteUsersByUserIdResponse.class, asyncResultHandler);
   }
 
   @Validate
