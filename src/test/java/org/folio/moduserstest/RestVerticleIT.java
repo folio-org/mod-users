@@ -211,6 +211,46 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> deleteNonExistingUser(TestContext context) {
+    System.out.println("Deleting non-existing user\n");
+    Future<Void> future = Future.future();
+    HttpClient client = vertx.createHttpClient();
+    client.delete(port, "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
+      if (res.statusCode() == 404) {
+        future.complete();
+      } else {
+        future.fail("deleteNonExistingUser: Got status code: " + res.statusCode());
+      }
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("accept", "*/*")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end();
+    return future;
+  }
+
+  private Future<Void> deleteUser(TestContext context) {
+    System.out.println("Deleting existing user\n");
+    Future<Void> future = Future.future();
+    HttpClient client = vertx.createHttpClient();
+    client.delete(port, "localhost", "/users/" + joeBlockId, res -> {
+      if (res.statusCode() == 204) {
+        future.complete();
+      } else {
+        future.fail("deleteUser: Got status code: " + res.statusCode());
+      }
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("accept", "*/*")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end();
+    return future;
+  }
+
   private Future<Void> postUserWithNumericName(TestContext context) {
     System.out.println("Creating a user with a numeric name\n");
     Future future = Future.future();
@@ -1314,10 +1354,13 @@ public class RestVerticleIT {
     getEmptyUsers(context).setHandler(f1.completer());
     startFuture = f1
       .compose(v -> postUser(context))
+      .compose(v -> deleteUser(context))
+      .compose(v -> postUser(context))
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
       .compose(v -> getUserByInvalidCQL(context))
+      .compose(v -> deleteNonExistingUser(context))
       .compose(v -> postAnotherUser(context))
       .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
       .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))

@@ -12,12 +12,8 @@ import org.folio.rest.jaxrs.model.AddresstypeCollection;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.resource.Addresstypes;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.persist.Criteria.Limit;
-import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.utils.PostgresClientUtil;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -39,10 +35,6 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String URL_PREFIX = "/addresstypes";
   private static final Logger logger = LoggerFactory.getLogger(AddressTypeAPI.class);
   private boolean suppressErrorResponse = false;
-
-  public void setSuppressErrorResponse(boolean suppressErrorResponse) {
-    this.suppressErrorResponse = suppressErrorResponse;
-  }
 
   private String getErrorResponse(String response) {
     if (suppressErrorResponse) {

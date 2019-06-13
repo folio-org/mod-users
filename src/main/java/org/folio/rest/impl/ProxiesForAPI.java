@@ -7,7 +7,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,15 +17,10 @@ import org.folio.rest.jaxrs.model.ProxyforCollection;
 import org.folio.rest.jaxrs.resource.Proxiesfor;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
-import org.folio.rest.persist.Criteria.Limit;
-import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
 
 /**
  *
@@ -41,10 +35,6 @@ public class ProxiesForAPI implements Proxiesfor {
   public static final String URL_PREFIX = "/proxiesfor";
   private static final Logger logger = LoggerFactory.getLogger(ProxiesForAPI.class);
   private boolean suppressErrorResponse = false;
-
-  public void setSuppressErrorResponse(boolean suppressErrorResponse) {
-    this.suppressErrorResponse = suppressErrorResponse;
-  }
 
   private String getErrorResponse(String response) {
     if (suppressErrorResponse) {
@@ -78,43 +68,29 @@ public class ProxiesForAPI implements Proxiesfor {
     Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
-    try {
-      PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
-      userAndProxyUserComboExists(entity.getUserId(), entity.getProxyUserId(),
-        postgresClient).setHandler(existsRes -> {
-          if (existsRes.failed()) {
-            String message = logAndSaveError(existsRes.cause());
-            asyncResultHandler.handle(Future.succeededFuture(
-              PostProxiesforResponse.respond500WithTextPlain(
-                getErrorResponse(message))));
-          } else if (existsRes.result() == true) {
-            Errors existsError = ValidationHelper.createValidationErrorMessage(
-              "proxyFor", entity.getId(), "Proxy relationship already exists");
-            asyncResultHandler.handle(Future.succeededFuture(
-              PostProxiesforResponse.respond422WithApplicationJson(existsError)));
-          } else {
-            try {
-              String id = entity.getId();
-              if (id == null) {
-                id = UUID.randomUUID().toString();
-                entity.setId(id);
-              }
-              PgUtil.post(PROXY_FOR_TABLE, entity, okapiHeaders, vertxContext,
-                PostProxiesforResponse.class, asyncResultHandler);
-            } catch (Exception e) {
-              String message = logAndSaveError(e);
-              asyncResultHandler.handle(Future.succeededFuture(
-                PostProxiesforResponse.respond500WithTextPlain(
-                  getErrorResponse(message))));
-            }
+    PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+    userAndProxyUserComboExists(entity.getUserId(), entity.getProxyUserId(),
+      postgresClient).setHandler(existsRes -> {
+        if (existsRes.failed()) {
+          String message = logAndSaveError(existsRes.cause());
+          asyncResultHandler.handle(Future.succeededFuture(
+            PostProxiesforResponse.respond500WithTextPlain(
+              getErrorResponse(message))));
+        } else if (existsRes.result() == true) {
+          Errors existsError = ValidationHelper.createValidationErrorMessage(
+            "proxyFor", entity.getId(), "Proxy relationship already exists");
+          asyncResultHandler.handle(Future.succeededFuture(
+            PostProxiesforResponse.respond422WithApplicationJson(existsError)));
+        } else {
+          String id = entity.getId();
+          if (id == null) {
+            id = UUID.randomUUID().toString();
+            entity.setId(id);
           }
-        });
-    } catch (Exception e) {
-      String message = logAndSaveError(e);
-      asyncResultHandler.handle(Future.succeededFuture(
-        PostProxiesforResponse.respond500WithTextPlain(
-          getErrorResponse(message))));
-    }
+          PgUtil.post(PROXY_FOR_TABLE, entity, okapiHeaders, vertxContext,
+            PostProxiesforResponse.class, asyncResultHandler);
+        }
+      });
   }
 
   @Override
@@ -152,33 +128,24 @@ public class ProxiesForAPI implements Proxiesfor {
     String proxyUserId,
     PostgresClient postgresClient) {
     Future<Boolean> future = Future.future();
-    try {
-      Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).
-        setOperation("=").setValue("'" + userId + "'").setJSONB(true);
-      Criteria proxyUserCrit = new Criteria().addField(PROXY_USERID_FIELD_NAME).
-        setOperation("=").setValue("'" + proxyUserId + "'").setJSONB(true);
-      Criterion criterion = new Criterion();
-      criterion.addCriterion(userCrit, "AND", proxyUserCrit);
-      postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {
-        try {
-          if (getReply.failed()) {
-            future.fail(getReply.cause());
-          } else {
-            List<ProxiesFor> proxyForList = getReply.result().getResults();
-            if (proxyForList.isEmpty()) {
-              future.complete(false);
-            } else {
-              future.complete(true);
-            }
-          }
-        } catch (Exception e) {
-          future.fail(e);
+    Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).
+      setOperation("=").setValue("'" + userId + "'").setJSONB(true);
+    Criteria proxyUserCrit = new Criteria().addField(PROXY_USERID_FIELD_NAME).
+      setOperation("=").setValue("'" + proxyUserId + "'").setJSONB(true);
+    Criterion criterion = new Criterion();
+    criterion.addCriterion(userCrit, "AND", proxyUserCrit);
+    postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {
+      if (getReply.failed()) {
+        future.fail(getReply.cause());
+      } else {
+        List<ProxiesFor> proxyForList = getReply.result().getResults();
+        if (proxyForList.isEmpty()) {
+          future.complete(false);
+        } else {
+          future.complete(true);
         }
-      });
-    } catch (Exception e) {
-      future.fail(e);
-    }
+      }
+    });
     return future;
   }
-
 }
