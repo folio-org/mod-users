@@ -92,7 +92,7 @@ public class UserGroupAPI implements Groups {
   public void getGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    // cannot use PgUtil.getById .. returns 500 where the below returns 404
+    // PgUtil.getById .. returns 500 where the below returns 404
     Criterion c = new Criterion(
       new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setValue("'" + groupId + "'"));
 
