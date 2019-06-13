@@ -13,6 +13,7 @@ import org.folio.rest.jaxrs.resource.Groups;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
+import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.utils.PostgresClientUtil;
@@ -24,7 +25,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.UUID;
-import org.folio.rest.persist.PgUtil;
 
 /**
  * @author shale

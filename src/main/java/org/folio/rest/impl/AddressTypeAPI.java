@@ -1,6 +1,5 @@
 package org.folio.rest.impl;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +12,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.resource.Addresstypes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
+import org.folio.rest.persist.PgUtil;
 import org.folio.rest.utils.PostgresClientUtil;
 
 import io.vertx.core.AsyncResult;
@@ -21,7 +21,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.folio.rest.persist.PgUtil;
 
 /**
  *
