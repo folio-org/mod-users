@@ -9,7 +9,6 @@ import io.vertx.core.logging.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import javax.ws.rs.core.Response;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.ProxiesFor;
@@ -78,7 +77,7 @@ public class ProxiesForAPI implements Proxiesfor {
               getErrorResponse(message))));
           return;
         }
-        if (existsRes.result() == true) {
+        if (existsRes.result()) {
           Errors existsError = ValidationHelper.createValidationErrorMessage(
             "proxyFor", entity.getId(), "Proxy relationship already exists");
           asyncResultHandler.handle(Future.succeededFuture(
