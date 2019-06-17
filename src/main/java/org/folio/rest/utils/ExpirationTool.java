@@ -122,13 +122,7 @@ public class ExpirationTool {
     context.runOnContext(v -> {
       try {
         PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
-        Criteria idCrit = new Criteria();
-        idCrit.addField(USER_ID_FIELD);
-        idCrit.setOperation("=");
-        idCrit.setVal(user.getId());
-        Criterion criterion = new Criterion(idCrit);
-
-        pgClient.update(TABLE_NAME_USERS, user, criterion, true, updateReply -> {
+        pgClient.update(TABLE_NAME_USERS, user, user.getId(), updateReply -> {
           if(updateReply.failed()) {
             logger.info(String.format("Error updating user %s: %s", user.getId(),
               updateReply.cause().getLocalizedMessage()));
