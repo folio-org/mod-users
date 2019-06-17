@@ -14,13 +14,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
-import static org.folio.rest.impl.UsersAPI.USER_ID_FIELD;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.persist.Criteria.Criteria;
-import org.folio.rest.persist.Criteria.Criterion;
 
 /**
  *

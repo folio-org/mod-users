@@ -19,7 +19,6 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
-import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
