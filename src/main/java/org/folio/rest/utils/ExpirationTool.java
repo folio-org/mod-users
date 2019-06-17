@@ -15,10 +15,10 @@ import java.util.Date;
 import java.util.List;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
 import static org.folio.rest.impl.UsersAPI.USER_ID_FIELD;
+import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 
@@ -73,7 +73,6 @@ public class ExpirationTool {
     String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
     context.runOnContext(v -> {
       PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
-      pgClient.setIdField("id");
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
       CQL2PgJSON cql2pgJson = null;
       CQLWrapper cqlWrapper = null;
@@ -123,11 +122,10 @@ public class ExpirationTool {
     context.runOnContext(v -> {
       try {
         PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
-        pgClient.setIdField("id");
         Criteria idCrit = new Criteria();
         idCrit.addField(USER_ID_FIELD);
         idCrit.setOperation("=");
-        idCrit.setValue(user.getId());
+        idCrit.setVal(user.getId());
         Criterion criterion = new Criterion(idCrit);
 
         pgClient.update(TABLE_NAME_USERS, user, criterion, true, updateReply -> {

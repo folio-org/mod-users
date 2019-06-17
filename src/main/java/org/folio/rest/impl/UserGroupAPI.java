@@ -94,7 +94,7 @@ public class UserGroupAPI implements Groups {
 
     // PgUtil.getById .. returns 500 where the below returns 404
     Criterion c = new Criterion(
-      new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setValue("'" + groupId + "'"));
+      new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setVal(groupId));
 
     PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, false,
       reply -> {
@@ -131,7 +131,7 @@ public class UserGroupAPI implements Groups {
         .addField(ID_FIELD_NAME)
         .setJSONB(false)
         .setOperation("=")
-        .setValue("'" + groupId + "'"));
+        .setVal(groupId));
     PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
     postgresClient.get(GROUP_TABLE, Usergroup.class, criterion, true, getReply -> {
       if (getReply.failed()) {

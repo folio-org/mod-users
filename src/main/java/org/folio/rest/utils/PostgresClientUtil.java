@@ -24,7 +24,6 @@ public final class PostgresClientUtil {
   public static PostgresClient getInstance(Context vertxContext, Map<String, String> okapiHeaders) {
     PostgresClient postgresClient = PostgresClient.getInstance(
         vertxContext.owner(), TenantTool.tenantId(okapiHeaders));
-    postgresClient.setIdField("id");
     return postgresClient;
   }
 }
