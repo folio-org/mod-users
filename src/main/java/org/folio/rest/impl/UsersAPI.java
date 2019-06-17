@@ -506,34 +506,26 @@ public class UsersAPI implements Users {
   */
  private void getPG(PostgresClient postgresClient, User user, Handler<AsyncResult<Integer>> handler) {
    String pgId = user.getPatronGroup();
-   if(pgId == null){
+   if (pgId == null){
      //allow null patron groups so that they can be added after a record is created
      handler.handle(io.vertx.core.Future.succeededFuture(1));
-   }else{
-     Criterion c = new Criterion(
-       new Criteria().addField(UserGroupAPI.ID_FIELD_NAME).setJSONB(false).
-       setOperation("=").setVal(pgId));
-     /** check if the patron group exists, if not, can not add the user **/
-     postgresClient.get(
-       UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
-         if(check.succeeded()){
-           List<Usergroup> ug = check.result().getResults();
-           if(ug.size() == 0){
-             handler.handle(io.vertx.core.Future.succeededFuture(0));
-           }
-           else{
-             handler.handle(io.vertx.core.Future.succeededFuture(1));
-           }
+   } else {
+     postgresClient.getById(UserGroupAPI.GROUP_TABLE, pgId, check -> {
+       if (check.succeeded()) {
+         if (check.result() == null) {
+           handler.handle(io.vertx.core.Future.succeededFuture(0));
+         } else {
+           handler.handle(io.vertx.core.Future.succeededFuture(1));
          }
-         else{
-           Throwable t = check.cause();
-           logger.error(t.getLocalizedMessage(), t);
-           int retCode = -1;
-           if(t.getLocalizedMessage().contains("invalid input syntax for uuid")){
-             retCode = 0;
-           }
-           handler.handle(io.vertx.core.Future.succeededFuture(retCode));
+       } else {
+         Throwable t = check.cause();
+         logger.error(t.getLocalizedMessage(), t);
+         int retCode = -1;
+         if (t.getLocalizedMessage().contains("invalid input syntax for uuid")) {
+           retCode = 0;
          }
+         handler.handle(io.vertx.core.Future.succeededFuture(retCode));
+       }
      });
    }
  }
