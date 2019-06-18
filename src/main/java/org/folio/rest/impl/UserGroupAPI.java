@@ -16,7 +16,6 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 
 import io.vertx.core.AsyncResult;
@@ -62,7 +61,7 @@ public class UserGroupAPI implements Groups {
       id = UUID.randomUUID().toString();
       entity.setId(id);
     }
-    PostgresClientUtil.getInstance(vertxContext, okapiHeaders).save(
+    PgUtil.postgresClient(vertxContext, okapiHeaders).save(
       GROUP_TABLE, id, entity, reply -> {
         if (reply.succeeded()) {
           String ret = reply.result();
@@ -96,7 +95,7 @@ public class UserGroupAPI implements Groups {
     Criterion c = new Criterion(
       new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setVal(groupId));
 
-    PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, false,
+    PgUtil.postgresClient(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, false,
       reply -> {
         if (reply.succeeded()) {
           @SuppressWarnings("unchecked")
@@ -132,7 +131,7 @@ public class UserGroupAPI implements Groups {
         .setJSONB(false)
         .setOperation("=")
         .setVal(groupId));
-    PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+    PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     postgresClient.get(GROUP_TABLE, Usergroup.class, criterion, true, getReply -> {
       if (getReply.failed()) {
         log.error(getReply.cause().getMessage(), getReply.cause());
@@ -176,7 +175,7 @@ public class UserGroupAPI implements Groups {
 
     // PgUtil.put returns differnet status code , so can't be used here.
     // probably 500 where it should have been 400/404
-    PostgresClientUtil.getInstance(vertxContext, okapiHeaders).update(
+    PgUtil.postgresClient(vertxContext, okapiHeaders).update(
       GROUP_TABLE, entity, groupId,
       reply -> {
         if (reply.succeeded()) {

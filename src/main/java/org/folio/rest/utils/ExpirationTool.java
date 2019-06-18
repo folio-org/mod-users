@@ -67,7 +67,7 @@ public class ExpirationTool {
   public static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     Future<Integer> future = Future.future();
-    String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
+    String nowDateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
     context.runOnContext(v -> {
       PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
@@ -75,23 +75,23 @@ public class ExpirationTool {
       CQLWrapper cqlWrapper = null;
       String[] fieldList = {"*"};
       try {
-        cql2pgJson = new CQL2PgJSON(Arrays.asList(TABLE_NAME_USERS+".jsonb"));
+        cql2pgJson = new CQL2PgJSON(Arrays.asList(TABLE_NAME_USERS + ".jsonb"));
         cqlWrapper = new CQLWrapper(cql2pgJson, query);
-      } catch(Exception e) {
+      } catch (Exception e) {
         future.fail(e.getLocalizedMessage());
         return;
       }
       pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
-        if(reply.failed()) {
+        if (reply.failed()) {
           logger.info(String.format("Error executing postgres query: '%s', %s",
             query, reply.cause().getLocalizedMessage()));
           future.fail(reply.cause());
-        } else if(reply.result().getResults().isEmpty()) {
+        } else if (reply.result().getResults().isEmpty()) {
           logger.info(String.format("No results found for query %s", query));
         } else {
           List<User> userList = reply.result().getResults();
           List<Future> futureList = new ArrayList<>();
-          for(User user : userList) {
+          for (User user : userList) {
             user.setActive(Boolean.FALSE);
             Future<Void> saveFuture = saveUser(vertx, context, tenant, user);
             futureList.add(saveFuture);
@@ -99,8 +99,8 @@ public class ExpirationTool {
           CompositeFuture compositeFuture = CompositeFuture.join(futureList);
           compositeFuture.setHandler(compRes -> {
             int succeededCount = 0;
-            for(Future fut : futureList) {
-              if(fut.succeeded()) {
+            for (Future fut : futureList) {
+              if (fut.succeeded()) {
                 succeededCount++;
               }
             }
@@ -120,7 +120,7 @@ public class ExpirationTool {
       try {
         PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
         pgClient.update(TABLE_NAME_USERS, user, user.getId(), updateReply -> {
-          if(updateReply.failed()) {
+          if (updateReply.failed()) {
             logger.info(String.format("Error updating user %s: %s", user.getId(),
               updateReply.cause().getLocalizedMessage()));
             future.fail(updateReply.cause());
@@ -128,7 +128,7 @@ public class ExpirationTool {
             future.complete();
           }
         });
-      } catch(Exception e) {
+      } catch (Exception e) {
         future.tryFail(e);
       }
     });

@@ -12,7 +12,6 @@ import org.folio.rest.utils.ExpirationTool;
  */
 public class UserExpiryImpl implements PeriodicAPI {
 
-
   @Override
   public long runEvery() {
     String intervalString = MODULE_SPECIFIC_ARGS.getOrDefault("expire.interval",
@@ -22,9 +21,7 @@ public class UserExpiryImpl implements PeriodicAPI {
 
   @Override
   public void run(Vertx vertx, Context context) {
-    context.runOnContext(v -> {
-      ExpirationTool.doExpiration(vertx, context);
-    });
+    context.runOnContext(v -> ExpirationTool.doExpiration(vertx, context));
   }
 
 }

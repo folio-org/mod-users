@@ -1,12 +1,13 @@
 package org.folio.rest.impl;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.function.Function;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Map.Entry;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -31,7 +32,6 @@ import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.z3950.zing.cql.CQLParseException;
@@ -43,7 +43,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import java.util.LinkedList;
 
 
 /**
@@ -71,7 +70,6 @@ public class UsersAPI implements Users {
   private String getTableName(String cql) {
     if(cql != null && cql.contains("patronGroup.")){
       return VIEW_NAME_USER_GROUPS_JOIN;
-      //}
     }
     return TABLE_NAME_USERS;
   }
@@ -90,7 +88,7 @@ public class UsersAPI implements Users {
     return cql;
   }
 
-  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
+  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
     if (query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
       List<String> fields = new LinkedList<>();
@@ -145,7 +143,7 @@ public class UsersAPI implements Users {
       String[] fieldList = {"*"};
       logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
 
-      PostgresClientUtil.getInstance(vertxContext, okapiHeaders)
+      PgUtil.postgresClient(vertxContext, okapiHeaders)
           .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
         try {
           if (reply.succeeded()) {
@@ -200,7 +198,7 @@ public class UsersAPI implements Users {
           nameCrit.setVal(entity.getUsername());
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
-          PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+          PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
           checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(
                   checkRes -> {
@@ -209,7 +207,7 @@ public class UsersAPI implements Users {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-            } else if (checkRes.result() == false) {
+            } else if (!checkRes.result()) {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond400WithTextPlain(
                         "You cannot add addresses with non-existant address types")));
@@ -226,7 +224,7 @@ public class UsersAPI implements Users {
                                             getReply.cause().getMessage())));
                     } else {
                       List<User> userList = getReply.result().getResults();
-                      if (userList.size() > 0) {
+                      if (!userList.isEmpty()) {
                         logger.debug("User with this id already exists");
                         asyncResultHandler.handle(Future.succeededFuture(
                                 PostUsersResponse.respond422WithApplicationJson(
@@ -267,12 +265,12 @@ public class UsersAPI implements Users {
                                         logger.debug("Save successful");
                                         final User user = entity;
                                         user.setId(entity.getId());
-                                        postgresClient.endTx(connection, done -> {
+                                        postgresClient.endTx(connection, done ->
                                           asyncResultHandler.handle(
                                                   Future.succeededFuture(
                                                     PostUsersResponse.respond201WithApplicationJson(user,
-                                                     PostUsersResponse.headersFor201().withLocation(reply.result()))));
-                                        });
+                                                     PostUsersResponse.headersFor201().withLocation(reply.result()))))
+                                        );
                                       } else {
                                         postgresClient.rollbackTx(connection, rollback -> {
                                           asyncResultHandler.handle(Future.succeededFuture(
@@ -375,7 +373,7 @@ public class UsersAPI implements Users {
             nameCrit.addField(USER_NAME_FIELD);
             nameCrit.setOperation("=");
             nameCrit.setVal(entity.getUsername());
-            PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+            PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
             checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
               if (checkRes.failed()) {
@@ -398,7 +396,7 @@ public class UsersAPI implements Users {
                                                               MessageConsts.InternalServerError))));
                     } else {
                       List<User> userList = getReply.result().getResults();
-                      if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
+                      if (!userList.isEmpty() && (!userList.get(0).getId().equals(entity.getId()))) {
                         //Error 400, that username is in use by somebody else
                         asyncResultHandler.handle(Future.succeededFuture(
                                 PutUsersByUserIdResponse.respond400WithTextPlain(
@@ -422,7 +420,7 @@ public class UsersAPI implements Users {
                             } else {
                               Date createdDate = null;
                               Date now = new Date();
-                              if (userList.size() > 0) {
+                              if (!userList.isEmpty()) {
                                 createdDate = userList.get(0).getCreatedDate();
                               } else {
                                 createdDate = now;
@@ -499,45 +497,43 @@ public class UsersAPI implements Users {
   * @param handler
   * @throws Exception
   */
- private void getPG(PostgresClient postgresClient, User user, Handler<AsyncResult<Integer>> handler) {
-   String pgId = user.getPatronGroup();
-   if (pgId == null) {
-     //allow null patron groups so that they can be added after a record is created
-     handler.handle(io.vertx.core.Future.succeededFuture(1));
-   } else {
-     postgresClient.getById(UserGroupAPI.GROUP_TABLE, pgId, check -> {
-       if (check.succeeded()) {
-         if (check.result() == null) {
-           handler.handle(io.vertx.core.Future.succeededFuture(0));
-         } else {
-           handler.handle(io.vertx.core.Future.succeededFuture(1));
-         }
-       } else {
-         Throwable t = check.cause();
-         logger.error(t.getLocalizedMessage(), t);
-         int retCode = -1;
-         if (t.getLocalizedMessage().contains("uuid")) {
-           retCode = 0;
-         }
-         handler.handle(io.vertx.core.Future.succeededFuture(retCode));
-       }
-     });
-   }
- }
+  private void getPG(PostgresClient postgresClient, User user, Handler<AsyncResult<Integer>> handler) {
+    String pgId = user.getPatronGroup();
+    if (pgId == null) {
+      //allow null patron groups so that they can be added after a record is created
+      handler.handle(io.vertx.core.Future.succeededFuture(1));
+    } else {
+      postgresClient.getById(UserGroupAPI.GROUP_TABLE, pgId, check -> {
+        if (check.succeeded()) {
+          if (check.result() == null) {
+            handler.handle(io.vertx.core.Future.succeededFuture(0));
+          } else {
+            handler.handle(io.vertx.core.Future.succeededFuture(1));
+          }
+        } else {
+          Throwable t = check.cause();
+          logger.error(t.getLocalizedMessage(), t);
+          int retCode = -1;
+          if (t.getLocalizedMessage().contains("uuid")) {
+            retCode = 0;
+          }
+          handler.handle(io.vertx.core.Future.succeededFuture(retCode));
+        }
+      });
+    }
+  }
 
   private boolean checkForDuplicateAddressTypes(User user) {
     Map<String, Integer> countMap = new HashMap<>();
-    if (user.getPersonal() != null &&
-      user.getPersonal().getAddresses() != null) {
-      for(Address address : user.getPersonal().getAddresses()) {
+    if (user.getPersonal() != null
+      && user.getPersonal().getAddresses() != null) {
+      for (Address address : user.getPersonal().getAddresses()) {
         String addressTypeId = address.getAddressTypeId();
         if (addressTypeId != null) {
           boolean found = false;
-          for(String key : countMap.keySet()) {
-            if (key.equals(addressTypeId)) {
-              Integer count = countMap.get(key);
-              count = count + 1;
-              countMap.put(key, count);
+          for (Entry<String,Integer> ent : countMap.entrySet()) {
+            if (ent.getKey().equals(addressTypeId)) {
+              countMap.put(ent.getKey(), ent.getValue() + 1);
               found = true;
               break;
             }
@@ -548,7 +544,7 @@ public class UsersAPI implements Users {
         }
       }
     }
-    for(Integer i : countMap.values()) {
+    for (Integer i : countMap.values()) {
       if (i > 1) {
         return true;
       }
@@ -573,11 +569,7 @@ public class UsersAPI implements Users {
               future.fail(reply.cause());
             } else {
               List<AddressType> addressTypeList = reply.result().getResults();
-              if (addressTypeList.isEmpty()) {
-                future.complete(false);
-              } else {
-                future.complete(true);
-              }
+              future.complete(!addressTypeList.isEmpty());
             }
           } catch(Exception e) {
             String message = e.getLocalizedMessage();
@@ -601,7 +593,7 @@ public class UsersAPI implements Users {
       future.complete(true);
       return future;
     }
-    for(Address address : user.getPersonal().getAddresses()) {
+    for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
       Future addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
       futureList.add(addressTypeExistsFuture);
@@ -612,7 +604,7 @@ public class UsersAPI implements Users {
         future.fail(res.cause());
       } else {
         boolean bad = false;
-        for(Future f : futureList) {
+        for (Future f : futureList) {
           Boolean result = ((Future<Boolean>)f).result();
           if (!result) {
             future.complete(false);
