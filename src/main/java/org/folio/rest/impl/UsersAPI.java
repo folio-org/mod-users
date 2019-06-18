@@ -567,7 +567,7 @@ public class UsersAPI implements Users {
       try {
         postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true, reply -> {
           try {
-            i f(reply.failed()) {
+            if (reply.failed()) {
               String message = reply.cause().getLocalizedMessage();
               logger.error(message, reply.cause());
               future.fail(reply.cause());
