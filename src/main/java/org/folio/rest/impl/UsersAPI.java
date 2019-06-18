@@ -14,7 +14,6 @@ import javax.ws.rs.core.Response;
 
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
-import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
@@ -34,7 +33,6 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.utils.ValidationHelper;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
-import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
@@ -43,6 +41,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.rest.persist.cql.CQLQueryValidationException;
 
 
 /**
@@ -88,17 +88,22 @@ public class UsersAPI implements Users {
     return cql;
   }
 
-  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
-    if (query != null && query.contains("patronGroup.")) {
-      query = convertQuery(query);
-      List<String> fields = new LinkedList<>();
-      fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".jsonb");
-      fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".group_jsonb");
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(fields);
-      return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
-    } else {
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS+".jsonb");
-      return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+  static CQLWrapper getCQL(String query, int limit, int offset) {
+    try {
+      if (query != null && query.contains("patronGroup.")) {
+        query = convertQuery(query);
+        List<String> fields = new LinkedList<>();
+        fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".jsonb");
+        fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".group_jsonb");
+        CQL2PgJSON cql2pgJson = new CQL2PgJSON(fields);
+        return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+      } else {
+        CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS + ".jsonb");
+        return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+      }
+    } catch (FieldException ex) {
+      // turn into RuntimeException which is what it should have been always
+      throw new IllegalArgumentException(ex.getLocalizedMessage());
     }
   }
 
@@ -108,19 +113,13 @@ public class UsersAPI implements Users {
 
     Throwable cause = e;
     do {
-      if (cause instanceof CQLParseException || cause instanceof FieldException) {
+      if (cause instanceof CQLQueryValidationException) {
         asyncResultHandler.handle(Future.succeededFuture(report400.apply(
             "CQL Parsing Error for '" + message + "': " + cause.getMessage())));
         return;
       }
-      if (cause instanceof IllegalStateException) {
-        asyncResultHandler.handle(Future.succeededFuture(report400.apply(
-            "CQL Illegal State Error for '" + message + "': " + cause.getMessage())));
-        return;
-      }
       cause = cause.getCause();
     } while (cause != null);
-
     asyncResultHandler.handle(Future.succeededFuture(report500.apply(
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
   }
@@ -128,48 +127,36 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-      UsersGetOrder order, int offset, int limit, List<String> facets,
-      String lang, Map <String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+    UsersGetOrder order, int offset, int limit, List<String> facets,
+    String lang, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
 
     logger.debug("Getting users");
-    try {
-      CQLWrapper cql = getCQL(query,limit,offset);
+    CQLWrapper cql = getCQL(query, limit, offset);
 
-      List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
+    List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
-      String tableName = getTableName(query);
-      String[] fieldList = {"*"};
-      logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
+    String tableName = getTableName(query);
+    String[] fieldList = {"*"};
+    logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
 
-      PgUtil.postgresClient(vertxContext, okapiHeaders)
-          .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
-        try {
-          if (reply.succeeded()) {
-            UserdataCollection userCollection = new UserdataCollection();
-            List<User> users = reply.result().getResults();
-            userCollection.setUsers(users);
-            userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
-            userCollection.setResultInfo(reply.result().getResultInfo());
-            asyncResultHandler.handle(Future.succeededFuture(
-                GetUsersResponse.respond200WithApplicationJson(userCollection)));
-          } else {
-            handle(query, reply.cause(), asyncResultHandler, lang,
-                GetUsersResponse::respond400WithTextPlain,
-                GetUsersResponse::respond500WithTextPlain);
-          }
-        } catch (Exception e) {
-          handle(query, e, asyncResultHandler, lang,
-              GetUsersResponse::respond400WithTextPlain,
-              GetUsersResponse::respond500WithTextPlain);
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
+        if (reply.succeeded()) {
+          UserdataCollection userCollection = new UserdataCollection();
+          List<User> users = reply.result().getResults();
+          userCollection.setUsers(users);
+          userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
+          userCollection.setResultInfo(reply.result().getResultInfo());
+          asyncResultHandler.handle(Future.succeededFuture(
+            GetUsersResponse.respond200WithApplicationJson(userCollection)));
+        } else {
+          handle(query, reply.cause(), asyncResultHandler, lang,
+            GetUsersResponse::respond400WithTextPlain,
+            GetUsersResponse::respond500WithTextPlain);
         }
       });
-    } catch(Exception e) {
-      handle(query, e, asyncResultHandler, lang,
-          GetUsersResponse::respond400WithTextPlain,
-          GetUsersResponse::respond500WithTextPlain);
-    }
   }
 
   @Validate
@@ -553,7 +540,7 @@ public class UsersAPI implements Users {
   }
 
   private Future<Boolean> checkAddressTypeValid(
-      String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
+    String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
 
     Future<Boolean> future = Future.future();
     Criterion criterion = new Criterion(
@@ -586,10 +573,12 @@ public class UsersAPI implements Users {
     return future;
   }
 
-  private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
+  private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext,
+    PostgresClient postgresClient) {
+
     Future<Boolean> future = Future.future();
     List<Future> futureList = new ArrayList<>();
-    if(user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
+    if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
       future.complete(true);
       return future;
     }
@@ -605,7 +594,7 @@ public class UsersAPI implements Users {
       } else {
         boolean bad = false;
         for (Future f : futureList) {
-          Boolean result = ((Future<Boolean>)f).result();
+          Boolean result = ((Future<Boolean>) f).result();
           if (!result) {
             future.complete(false);
             bad = true;

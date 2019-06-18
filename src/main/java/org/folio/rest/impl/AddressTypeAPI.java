@@ -71,43 +71,35 @@ public class AddressTypeAPI implements Addresstypes {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    try {
-      //Check to make certain no users' addresses are currently using this type
-      /* CQL statement to check for users with addresses that use a particular address type */
-      String query = "personal.addresses=" + addresstypeId;
-      CQLWrapper cql = UsersAPI.getCQL(query, 1, 0);
-      PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-      postgresClient.get(
-        UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
-        cql, true, false, reply -> {
-          if (reply.failed()) {
-            String message = reply.cause().getLocalizedMessage();
-            logger.error(message, reply.cause());
-            asyncResultHandler.handle(Future.succeededFuture(
-              DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                getErrorResponse(message))));
+    //Check to make certain no users' addresses are currently using this type
+    /* CQL statement to check for users with addresses that use a particular address type */
+    String query = "personal.addresses=" + addresstypeId;
+    CQLWrapper cql = UsersAPI.getCQL(query, 1, 0);
+    PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+    postgresClient.get(
+      UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
+      cql, true, false, reply -> {
+        if (reply.failed()) {
+          String message = reply.cause().getLocalizedMessage();
+          logger.error(message, reply.cause());
+          asyncResultHandler.handle(Future.succeededFuture(
+            DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
+              getErrorResponse(message))));
+        } else {
+          List<User> userList = reply.result().getResults();
+          if (!userList.isEmpty()) {
+            String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
+            logger.error(message);
+            asyncResultHandler.handle(Future.succeededFuture(DeleteAddresstypesByAddresstypeIdResponse
+              .respond400WithTextPlain(message)));
           } else {
-            List<User> userList = reply.result().getResults();
-            if (!userList.isEmpty()) {
-              String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
-              logger.error(message);
-              asyncResultHandler.handle(Future.succeededFuture(DeleteAddresstypesByAddresstypeIdResponse
-                .respond400WithTextPlain(message)));
-            } else {
-              logger.info("Removing non-associated address type '" + addresstypeId + "'");
+            logger.info("Removing non-associated address type '" + addresstypeId + "'");
 
-              PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
-                vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
-            }
+            PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
+              vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
           }
-        });
-    } catch (Exception e) {
-      String message = e.getLocalizedMessage();
-      logger.error(message, e);
-      asyncResultHandler.handle(Future.succeededFuture(
-        DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-          getErrorResponse(message))));
-    }
+        }
+      });
   }
 
   @Override
