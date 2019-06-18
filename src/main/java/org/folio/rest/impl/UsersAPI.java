@@ -13,7 +13,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 import org.folio.cql2pgjson.CQL2PgJSON;
-import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
