@@ -126,9 +126,9 @@ public class ProxiesForAPI implements Proxiesfor {
     PostgresClient postgresClient) {
     Future<Boolean> future = Future.future();
     Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).
-      setOperation("=").setValue("'" + userId + "'").setJSONB(true);
+      setOperation("=").setVal(userId).setJSONB(true);
     Criteria proxyUserCrit = new Criteria().addField(PROXY_USERID_FIELD_NAME).
-      setOperation("=").setValue("'" + proxyUserId + "'").setJSONB(true);
+      setOperation("=").setVal(proxyUserId).setJSONB(true);
     Criterion criterion = new Criterion();
     criterion.addCriterion(userCrit, "AND", proxyUserCrit);
     postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {

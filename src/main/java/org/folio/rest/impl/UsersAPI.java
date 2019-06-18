@@ -11,12 +11,14 @@ import java.util.function.Function;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import org.folio.cql2pgjson.CQL2PgJSON;
+import org.folio.cql2pgjson.exception.CQL2PgJSONException;
+import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
-import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -33,9 +35,6 @@ import org.folio.rest.utils.PostgresClientUtil;
 import org.folio.rest.utils.ValidationHelper;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.z3950.zing.cql.CQLParseException;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
-import org.z3950.zing.cql.cql2pgjson.FieldException;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
@@ -85,18 +84,18 @@ public class UsersAPI implements Users {
    * @return
    */
   private static String convertQuery(String cql){
-    if(cql != null){
+    if (cql != null) {
       return cql.replaceAll("(?i)patronGroup\\.", VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb.");
     }
     return cql;
   }
 
   static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
-    if(query != null && query.contains("patronGroup.")) {
+    if (query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
       List<String> fields = new LinkedList<>();
-      fields.add(VIEW_NAME_USER_GROUPS_JOIN+".jsonb");
-      fields.add(VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb");
+      fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".jsonb");
+      fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".group_jsonb");
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(fields);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     } else {
@@ -194,23 +193,23 @@ public class UsersAPI implements Users {
           Criteria idCrit = new Criteria();
           idCrit.addField(USER_ID_FIELD);
           idCrit.setOperation("=");
-          idCrit.setValue(entity.getId());
+          idCrit.setVal(entity.getId());
           Criteria nameCrit = new Criteria();
           nameCrit.addField(USER_NAME_FIELD);
           nameCrit.setOperation("=");
-          nameCrit.setValue(entity.getUsername());
+          nameCrit.setVal(entity.getUsername());
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
           PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
           checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(
                   checkRes -> {
-            if(checkRes.failed()) {
+            if (checkRes.failed()) {
               logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-            } else if(checkRes.result() == false) {
+            } else if (checkRes.result() == false) {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond400WithTextPlain(
                         "You cannot add addresses with non-existant address types")));
@@ -219,7 +218,7 @@ public class UsersAPI implements Users {
                 postgresClient.get(tableName,
                         User.class, crit, true, getReply -> {
                     logger.debug("Attempting to get existing users of same id and/or username");
-                    if(getReply.failed()) {
+                    if (getReply.failed()) {
                       logger.debug("Attempt to get users failed: " +
                               getReply.cause().getMessage());
                       asyncResultHandler.handle(Future.succeededFuture(
@@ -227,7 +226,7 @@ public class UsersAPI implements Users {
                                             getReply.cause().getMessage())));
                     } else {
                       List<User> userList = getReply.result().getResults();
-                      if(userList.size() > 0) {
+                      if (userList.size() > 0) {
                         logger.debug("User with this id already exists");
                         asyncResultHandler.handle(Future.succeededFuture(
                                 PostUsersResponse.respond422WithApplicationJson(
@@ -240,7 +239,7 @@ public class UsersAPI implements Users {
                           getPG(postgresClient, entity, handler -> {
 
                             int res = handler.result();
-                            if(res == 0){
+                            if (res == 0) {
                               String message = "Cannot add " +
                                       entity.getPatronGroup() +
                                       ". Patron group not found";
@@ -249,14 +248,12 @@ public class UsersAPI implements Users {
                                       PostUsersResponse.respond400WithTextPlain(
                                       message)));
                               return;
-                            }
-                            else if(res == -1){
+                            } else if (res == -1) {
                               asyncResultHandler.handle(Future.succeededFuture(
                                 PostUsersResponse
                                   .respond500WithTextPlain("")));
                               return;
-                            }
-                            else{
+                            } else {
                               postgresClient.startTx(connection -> {
                                 logger.debug("Attempting to save new record");
                                 try {
@@ -266,7 +263,7 @@ public class UsersAPI implements Users {
                                   postgresClient.save(connection, tableName, entity.getId(), entity,
                                           reply -> {
                                     try {
-                                      if(reply.succeeded()) {
+                                      if (reply.succeeded()) {
                                         logger.debug("Save successful");
                                         final User user = entity;
                                         user.setId(entity.getId());
@@ -367,7 +364,7 @@ public class UsersAPI implements Users {
           return;
         }
 
-        if(!userId.equals(entity.getId())) {
+        if (!userId.equals(entity.getId())) {
           asyncResultHandler.handle(Future.succeededFuture(
                           PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
         } else {
@@ -377,22 +374,22 @@ public class UsersAPI implements Users {
             Criteria nameCrit = new Criteria();
             nameCrit.addField(USER_NAME_FIELD);
             nameCrit.setOperation("=");
-            nameCrit.setValue(entity.getUsername());
+            nameCrit.setVal(entity.getUsername());
             PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
             checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
-              if(checkRes.failed()) {
+              if (checkRes.failed()) {
                 logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
                   asyncResultHandler.handle(Future.succeededFuture(
                     PutUsersByUserIdResponse.respond500WithTextPlain(
                             messages.getMessage(lang, MessageConsts.InternalServerError))));
-              } else if(!checkRes.result()) {
+              } else if (!checkRes.result()) {
                 asyncResultHandler.handle(Future.succeededFuture(
                   PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
               } else {
                 try {
                   postgresClient.get(tableName, User.class, new Criterion(nameCrit), true, false, getReply -> {
-                    if(getReply.failed()) {
+                    if (getReply.failed()) {
                       //error 500
                       logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
                       asyncResultHandler.handle(Future.succeededFuture(
@@ -417,17 +414,15 @@ public class UsersAPI implements Users {
                               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
                                 .respond400WithTextPlain(message)));
                               return;
-                            }
-                            else if(res == -1){
+                            } else if (res == -1) {
                               asyncResultHandler.handle(Future.succeededFuture(
                                 PostUsersResponse
                                   .respond500WithTextPlain("")));
                               return;
-                            }
-                            else{
+                            } else {
                               Date createdDate = null;
                               Date now = new Date();
-                              if(userList.size() > 0) {
+                              if (userList.size() > 0) {
                                 createdDate = userList.get(0).getCreatedDate();
                               } else {
                                 createdDate = now;
@@ -506,48 +501,40 @@ public class UsersAPI implements Users {
   */
  private void getPG(PostgresClient postgresClient, User user, Handler<AsyncResult<Integer>> handler) {
    String pgId = user.getPatronGroup();
-   if(pgId == null){
+   if (pgId == null) {
      //allow null patron groups so that they can be added after a record is created
      handler.handle(io.vertx.core.Future.succeededFuture(1));
-   }else{
-     Criterion c = new Criterion(
-       new Criteria().addField(UserGroupAPI.ID_FIELD_NAME).setJSONB(false).
-       setOperation("=").setValue("'"+pgId+"'"));
-     /** check if the patron group exists, if not, can not add the user **/
-     postgresClient.get(
-       UserGroupAPI.GROUP_TABLE, Usergroup.class, c, true, false, check -> {
-         if(check.succeeded()){
-           List<Usergroup> ug = check.result().getResults();
-           if(ug.size() == 0){
-             handler.handle(io.vertx.core.Future.succeededFuture(0));
-           }
-           else{
-             handler.handle(io.vertx.core.Future.succeededFuture(1));
-           }
+   } else {
+     postgresClient.getById(UserGroupAPI.GROUP_TABLE, pgId, check -> {
+       if (check.succeeded()) {
+         if (check.result() == null) {
+           handler.handle(io.vertx.core.Future.succeededFuture(0));
+         } else {
+           handler.handle(io.vertx.core.Future.succeededFuture(1));
          }
-         else{
-           Throwable t = check.cause();
-           logger.error(t.getLocalizedMessage(), t);
-           int retCode = -1;
-           if(t.getLocalizedMessage().contains("invalid input syntax for uuid")){
-             retCode = 0;
-           }
-           handler.handle(io.vertx.core.Future.succeededFuture(retCode));
+       } else {
+         Throwable t = check.cause();
+         logger.error(t.getLocalizedMessage(), t);
+         int retCode = -1;
+         if (t.getLocalizedMessage().contains("uuid")) {
+           retCode = 0;
          }
+         handler.handle(io.vertx.core.Future.succeededFuture(retCode));
+       }
      });
    }
  }
 
   private boolean checkForDuplicateAddressTypes(User user) {
     Map<String, Integer> countMap = new HashMap<>();
-    if(user.getPersonal() != null &&
+    if (user.getPersonal() != null &&
       user.getPersonal().getAddresses() != null) {
       for(Address address : user.getPersonal().getAddresses()) {
         String addressTypeId = address.getAddressTypeId();
-        if(addressTypeId != null) {
+        if (addressTypeId != null) {
           boolean found = false;
           for(String key : countMap.keySet()) {
-            if(key.equals(addressTypeId)) {
+            if (key.equals(addressTypeId)) {
               Integer count = countMap.get(key);
               count = count + 1;
               countMap.put(key, count);
@@ -555,14 +542,14 @@ public class UsersAPI implements Users {
               break;
             }
           }
-          if(!found) {
+          if (!found) {
             countMap.put(addressTypeId, 1);
           }
         }
       }
     }
     for(Integer i : countMap.values()) {
-      if(i > 1) {
+      if (i > 1) {
         return true;
       }
     }
@@ -575,18 +562,18 @@ public class UsersAPI implements Users {
     Future<Boolean> future = Future.future();
     Criterion criterion = new Criterion(
           new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
-                  setJSONB(false).setOperation("=").setValue("'" + addressTypeId + "'"));
+                  setJSONB(false).setOperation("=").setVal(addressTypeId));
     vertxContext.runOnContext(v -> {
       try {
         postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true, reply -> {
           try {
-            if(reply.failed()) {
+            if (reply.failed()) {
               String message = reply.cause().getLocalizedMessage();
               logger.error(message, reply.cause());
               future.fail(reply.cause());
             } else {
               List<AddressType> addressTypeList = reply.result().getResults();
-              if(addressTypeList.isEmpty()) {
+              if (addressTypeList.isEmpty()) {
                 future.complete(false);
               } else {
                 future.complete(true);
@@ -621,19 +608,19 @@ public class UsersAPI implements Users {
     }
     CompositeFuture compositeFuture = CompositeFuture.all(futureList);
     compositeFuture.setHandler(res -> {
-      if(res.failed()) {
+      if (res.failed()) {
         future.fail(res.cause());
       } else {
         boolean bad = false;
         for(Future f : futureList) {
           Boolean result = ((Future<Boolean>)f).result();
-          if(!result) {
+          if (!result) {
             future.complete(false);
             bad = true;
             break;
           }
         }
-        if(!bad) {
+        if (!bad) {
           future.complete(true);
         }
       }

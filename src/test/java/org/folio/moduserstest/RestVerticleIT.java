@@ -1556,6 +1556,17 @@ public class RestVerticleIT {
       + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
     /**
+     * add a user again with invalid uuid
+     */
+    CompletableFuture<Response> addUserCF4a = new CompletableFuture();
+    send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
+      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(addUserCF4a));
+    Response addUserResponse4a = addUserCF4a.get(5, TimeUnit.SECONDS);
+    context.assertEquals(addUserResponse4a.code, 400);
+    System.out.println(addUserResponse4a.body
+      + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+
+    /**
      * update a user again with non existent patron group
      */
     CompletableFuture<Response> updateUserCF = new CompletableFuture();
