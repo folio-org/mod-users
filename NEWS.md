@@ -1,3 +1,12 @@
+## 15.6.0 2019-06-12
+ * MODUSERS-125 User (sort by group) search slow in 2.1 Bugfest env
+ * MODUSERS-127 Improve user expiration query performance
+
+## 15.5.0 2019-05-10
+ * MODUSERS-115 Update to RMB 24 / CQLPG 4.0.0
+ * MODUSERS-106 Add index for searching by "username"
+ * MODUSERS-109 Avoid users load sample hack
+
 ## 15.4.0 2019-03-15
  * MODUSERS-103 use loadSample/loadReference to load sample and reference data
  * MODUSERS-108	PUT new User returns 204

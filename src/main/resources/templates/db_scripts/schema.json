@@ -3,10 +3,7 @@
   "tables" : [
     {
       "tableName" : "users",
-      "pkColumnName": "id",
-      "generateId" : true,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
       "withMetadata" : true,
       "uniqueIndex" : [
         {
@@ -30,9 +27,21 @@
         {
           "fieldName" : "barcode",
           "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "expirationDate",
+          "tOps" : "ADD",
+          "caseSensitive": true,
+          "removeAccents": false
         }
       ],
       "ginIndex": [
+        {
+          "fieldName": "id",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
         {
           "fieldName": "username",
           "tOps": "ADD",
@@ -73,10 +82,7 @@
     },
     {
       "tableName" : "groups",
-      "pkColumnName": "id",
-      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
       "withMetadata" : true,
       "uniqueIndex" : [
         {
@@ -87,10 +93,7 @@
     },
     {
       "tableName" : "addresstype",
-      "pkColumnName": "id",
-      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
       "withMetadata" : true,
       "uniqueIndex" : [
         {
@@ -101,17 +104,13 @@
     },
     {
       "tableName" : "proxyfor",
-      "pkColumnName": "id",
-      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
       "withMetadata" : true
     }
   ],
   "views" : [
     {
       "viewName": "users_groups_view",
-      "pkColumnName": "id",
       "join": [
         {
           "table": {
