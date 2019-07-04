@@ -1,4 +1,5 @@
 {
+  "$id": "/Users/mike/git/folio/other/mod-users/ramls/userdata.json",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "User Schema",
   "description": "A user",
@@ -30,7 +31,29 @@
     },
     "patronGroup": {
       "description": "A UUID corresponding to the group the user belongs to",
+      "comment": "Should really be called patronGroupId",
       "type": "string"
+    },
+    "patronGroupName": {
+      "type": "string",
+      "description": "Dereferenced patron group name",
+      "comment": "Should really be called patronGroup",
+      "readonly": true,
+      "folio:isVirtual": true,
+      "folio:linkBase": "groups",
+      "folio:linkFromField": "patronGroup",
+      "folio:linkToField": "id",
+      "folio:includedElement": "usergroups.0.group"
+    },
+    "patronGroupDescription": {
+      "type": "string",
+      "description": "Dereferenced patron group description",
+      "readonly": true,
+      "folio:isVirtual": true,
+      "folio:linkBase": "groups",
+      "folio:linkFromField": "patronGroup",
+      "folio:linkToField": "id",
+      "folio:includedElement": "usergroups.0.desc"
     },
     "meta": {
       "description": "Deprecated",
