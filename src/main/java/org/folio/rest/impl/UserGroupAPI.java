@@ -9,15 +9,12 @@ import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.model.Usergroups;
 import org.folio.rest.jaxrs.resource.Groups;
 import org.folio.rest.persist.PgUtil;
-import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.ValidationHelper;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 /**
  * @author shale
@@ -28,10 +25,6 @@ public class UserGroupAPI implements Groups {
   public static final String GROUP_TABLE = "groups";
   public static final String GROUP_USER_JOIN_TABLE = "groups_users";
   public static final String ID_FIELD_NAME = "id";
-
-  private static final String LOCATION_PREFIX = "/groups/";
-  private static final Logger log = LoggerFactory.getLogger(UserGroupAPI.class);
-  private final Messages messages = Messages.getInstance();
 
   @Validate
   @Override
@@ -94,7 +87,7 @@ public class UserGroupAPI implements Groups {
         PutGroupsByGroupIdResponse.class, asyncResultHandler);
   }
 
-  private boolean isDuplicate(String errorMessage) {
+  protected boolean isDuplicate(String errorMessage) {
     return errorMessage != null && errorMessage.contains("duplicate key value violates unique constraint");
   }
 }
