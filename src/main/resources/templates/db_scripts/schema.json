@@ -2,9 +2,26 @@
   "scripts" : [],
   "tables" : [
     {
+      "tableName" : "groups",
+      "fromModuleVersion" : "14.3",
+      "withMetadata" : true,
+      "uniqueIndex" : [
+        {
+          "fieldName" : "group",
+          "tOps" : "ADD"
+        }
+      ]
+    },
+    {
       "tableName" : "users",
       "fromModuleVersion" : "14.3",
       "withMetadata" : true,
+      "foreignKeys": [
+        {
+          "fieldName": "patronGroup",
+          "targetTable": "groups"
+        }
+      ],
       "uniqueIndex" : [
         {
           "fieldName" : "username",
@@ -77,17 +94,6 @@
           "tOps": "ADD",
           "caseSensitive": false,
           "removeAccents": true
-        }
-      ]
-    },
-    {
-      "tableName" : "groups",
-      "fromModuleVersion" : "14.3",
-      "withMetadata" : true,
-      "uniqueIndex" : [
-        {
-          "fieldName" : "group",
-          "tOps" : "ADD"
         }
       ]
     },
