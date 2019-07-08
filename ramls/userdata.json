@@ -45,26 +45,6 @@
       "folio:linkToField": "id",
       "folio:includedElement": "usergroups.0"
     },
-    "patronGroupName": {
-      "type": "string",
-      "description": "Dereferenced patron group name",
-      "readonly": true,
-      "folio:isVirtual": true,
-      "folio:linkBase": "groups",
-      "folio:linkFromField": "patronGroup",
-      "folio:linkToField": "id",
-      "folio:includedElement": "usergroups.0.group"
-    },
-    "patronGroupDescription": {
-      "type": "string",
-      "description": "Dereferenced patron group description",
-      "readonly": true,
-      "folio:isVirtual": true,
-      "folio:linkBase": "groups",
-      "folio:linkFromField": "patronGroup",
-      "folio:linkToField": "id",
-      "folio:includedElement": "usergroups.0.desc"
-    },
     "meta": {
       "description": "Deprecated",
       "type": "object"
