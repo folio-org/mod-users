@@ -33,10 +33,21 @@
       "comment": "Should really be called patronGroupId",
       "type": "string"
     },
+    "patronGroupRecord": {
+      "type": "object",
+      "folio:$ref": "usergroup.json",
+      "description": "Dereferenced patron group record",
+      "comment": "Should really be called patronGroup",
+      "readonly": true,
+      "folio:isVirtual": true,
+      "folio:linkBase": "groups",
+      "folio:linkFromField": "patronGroup",
+      "folio:linkToField": "id",
+      "folio:includedElement": "usergroups.0"
+    },
     "patronGroupName": {
       "type": "string",
       "description": "Dereferenced patron group name",
-      "comment": "Should really be called patronGroup",
       "readonly": true,
       "folio:isVirtual": true,
       "folio:linkBase": "groups",
