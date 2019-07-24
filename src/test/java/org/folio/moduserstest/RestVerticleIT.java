@@ -990,7 +990,7 @@ public class RestVerticleIT {
 
     // fail attempting to update user changing barcode to a duplicate
     userObject2.put("barcode", "304276530498752");
-    client.put(port, "localhost", "/users/" + testUserTwoId, res -> {
+    client.put(port, "localhost", "/users/" + testUserFourId, res -> {
       assertStatus(context, res, 400);
       res.bodyHandler(err -> {
         String errorMessage = err.toString();
