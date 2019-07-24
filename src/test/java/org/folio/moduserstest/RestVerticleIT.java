@@ -910,7 +910,30 @@ public class RestVerticleIT {
     // create test user one
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+
+      // fail attempting to create user with duplicate barcode
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 422);
+        res2.bodyHandler(err -> {
+          JsonObject validationErrorRes = err.toJsonObject();
+          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+          if (validationErrors.isEmpty()) {
+            future.fail("Did not return expected validation errors");
+          } else {
+            String errorMessage = validationErrors.getJsonObject(0).getString("message");
+            assertThat(1, is(validationErrors.size()));
+            assertThat(errorMessage, is("This barcode has already been taken"));
+            future.complete();
+          }
+        });
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", "application/json")
@@ -919,25 +942,6 @@ public class RestVerticleIT {
         future.fail(e);
       })
       .end(userObject1.encode());
-    // fail attempting to create user with duplicate barcode
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 422);
-      res.bodyHandler(err -> {
-        JsonObject validationErrorRes = err.toJsonObject();
-        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-        assertThat(1, is(validationErrors.size()));
-        String errorMessage = validationErrors.getJsonObject(0).getString("message");
-        assertThat(errorMessage, is("This barcode has already been taken"));
-        future.complete();
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject2.encode());
     return future;
   }
 
@@ -966,7 +970,34 @@ public class RestVerticleIT {
     // create test user one
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+      // create test user two
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 201);
+        // fail attempting to update user changing barcode to a duplicate
+        userObject2.put("barcode", "304276530498752");
+        client.put(port, "localhost", "/users/" + testUserFourId, res3 -> {
+          assertStatus(context, res3, 400);
+          res3.bodyHandler(err -> {
+            String errorMessage = err.toString();
+            assertThat(errorMessage, is("This barcode has already been taken"));
+            future.complete();
+          });
+        })
+          .putHeader("X-Okapi-Tenant", "diku")
+          .putHeader("content-type", "application/json")
+          .putHeader("accept", "application/json")
+          .exceptionHandler(e -> {
+            future.fail(e);
+          })
+          .end(userObject2.encode());
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", "application/json")
@@ -975,36 +1006,6 @@ public class RestVerticleIT {
         future.fail(e);
       })
       .end(userObject1.encode());
-    // create test user two
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject2.encode());
-
-    // fail attempting to update user changing barcode to a duplicate
-    userObject2.put("barcode", "304276530498752");
-    client.put(port, "localhost", "/users/" + testUserFourId, res -> {
-      assertStatus(context, res, 400);
-      res.bodyHandler(err -> {
-        String errorMessage = err.toString();
-        assertThat(errorMessage, is("This barcode has already been taken"));
-        future.complete();
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject2.encode());
     return future;
   }
 
