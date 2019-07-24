@@ -685,8 +685,8 @@ public class UsersAPI implements Users {
                 // no users with barcode exist, good
                 future.complete(true);
               } else {
-                if(user.getId() != null && user.getId().equals(usersWithBarcode.get(0).getId())) {
-                  // user is updating and is only user with barcode, still good
+                if (user.getId() != null && user.getId().equals(usersWithBarcode.get(0).getId())) {
+                  // user is updating and is only user with barcode, good
                   future.complete(true);
                 } else {
                   // another user is using barcode
