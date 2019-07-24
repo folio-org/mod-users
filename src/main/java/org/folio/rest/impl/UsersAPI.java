@@ -61,7 +61,7 @@ public class UsersAPI implements Users {
   public static final String USER_ID_FIELD = "'id'";
   public static final String USER_NAME_FIELD = "'username'";
   
-  private static final String BARCODE_FIELD_NAME = "barcode";
+  private static final String BARCODE_FIELD_NAME = "'barcode'";
 
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
@@ -665,9 +665,12 @@ public class UsersAPI implements Users {
       future.complete(true);
       return future;
     }
-    Criterion criterion = new Criterion(
-        new Criteria().addField(BARCODE_FIELD_NAME).
-                setJSONB(false).setOperation("=").setVal(user.getBarcode()));
+    Criteria barcodeCriteria = new Criteria();
+    barcodeCriteria.addField(BARCODE_FIELD_NAME);
+    barcodeCriteria.setOperation("=");
+    barcodeCriteria.setVal(user.getBarcode());
+    Criterion criterion = new Criterion();
+    criterion.addCriterion(barcodeCriteria);
     vertxContext.runOnContext(v -> {
       try {
         postgresClient.get(TABLE_NAME_USERS, User.class, criterion, true, reply -> {
