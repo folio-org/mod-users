@@ -17,6 +17,7 @@ import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
+import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.resource.Users;
@@ -59,6 +60,9 @@ public class UsersAPI implements Users {
   private final Messages messages = Messages.getInstance();
   public static final String USER_ID_FIELD = "'id'";
   public static final String USER_NAME_FIELD = "'username'";
+  
+  private static final String BARCODE_FIELD_NAME = "barcode";
+
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
   /**
@@ -202,115 +206,129 @@ public class UsersAPI implements Users {
           crit.addCriterion(idCrit, "OR", nameCrit);
           PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
-          checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(
-                  checkRes -> {
-            if (checkRes.failed()) {
-              logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
+          checkForValidBarcode(entity, vertxContext, postgresClient).setHandler(barcodeCheckRes -> {
+            if (barcodeCheckRes.failed()) {
+              logger.error(barcodeCheckRes.cause().getLocalizedMessage(), barcodeCheckRes.cause());
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-            } else if (checkRes.result() == false) {
+            } else if (barcodeCheckRes.result() == false) {
+              Errors existsError = ValidationHelper.createValidationErrorMessage(
+                "barcode", entity.getId(), "This barcode has already been taken");
               asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.respond400WithTextPlain(
-                        "You cannot add addresses with non-existant address types")));
+                PostUsersResponse.respond422WithApplicationJson(existsError)));
             } else {
-              try {
-                postgresClient.get(tableName,
-                        User.class, crit, true, getReply -> {
-                    logger.debug("Attempting to get existing users of same id and/or username");
-                    if (getReply.failed()) {
-                      logger.debug("Attempt to get users failed: " +
-                              getReply.cause().getMessage());
-                      asyncResultHandler.handle(Future.succeededFuture(
-                                    PostUsersResponse.respond500WithTextPlain(
-                                            getReply.cause().getMessage())));
-                    } else {
-                      List<User> userList = getReply.result().getResults();
-                      if (userList.size() > 0) {
-                        logger.debug("User with this id already exists");
-                        asyncResultHandler.handle(Future.succeededFuture(
-                                PostUsersResponse.respond422WithApplicationJson(
-                                  ValidationHelper.createValidationErrorMessage(
-                                    USER_NAME_FIELD, entity.getUsername(),
-                                    "User with this id already exists"))));
-                        //uh oh
-                      } else {
-                        try {
-                          getPG(postgresClient, entity, handler -> {
 
-                            int res = handler.result();
-                            if (res == 0) {
-                              String message = "Cannot add " +
-                                      entity.getPatronGroup() +
-                                      ". Patron group not found";
-                              logger.error(message);
-                              asyncResultHandler.handle(Future.succeededFuture(
-                                      PostUsersResponse.respond400WithTextPlain(
-                                      message)));
-                              return;
-                            } else if (res == -1) {
-                              asyncResultHandler.handle(Future.succeededFuture(
-                                PostUsersResponse
-                                  .respond500WithTextPlain("")));
-                              return;
-                            } else {
-                              postgresClient.startTx(connection -> {
-                                logger.debug("Attempting to save new record");
-                                try {
-                                  Date now = new Date();
-                                  entity.setCreatedDate(now);
-                                  entity.setUpdatedDate(now);
-                                  postgresClient.save(connection, tableName, entity.getId(), entity,
-                                          reply -> {
+              checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
+                if (checkRes.failed()) {
+                  logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
+                  asyncResultHandler.handle(Future.succeededFuture(
+                    PostUsersResponse.respond500WithTextPlain(
+                      messages.getMessage(lang, MessageConsts.InternalServerError))));
+                } else if (checkRes.result() == false) {
+                  asyncResultHandler.handle(Future.succeededFuture(
+                    PostUsersResponse.respond400WithTextPlain(
+                            "You cannot add addresses with non-existant address types")));
+                } else {
+                  try {
+                    postgresClient.get(tableName,
+                            User.class, crit, true, getReply -> {
+                        logger.debug("Attempting to get existing users of same id and/or username");
+                        if (getReply.failed()) {
+                          logger.debug("Attempt to get users failed: " +
+                                  getReply.cause().getMessage());
+                          asyncResultHandler.handle(Future.succeededFuture(
+                                        PostUsersResponse.respond500WithTextPlain(
+                                                getReply.cause().getMessage())));
+                        } else {
+                          List<User> userList = getReply.result().getResults();
+                          if (userList.size() > 0) {
+                            logger.debug("User with this id already exists");
+                            asyncResultHandler.handle(Future.succeededFuture(
+                                    PostUsersResponse.respond422WithApplicationJson(
+                                      ValidationHelper.createValidationErrorMessage(
+                                        USER_NAME_FIELD, entity.getUsername(),
+                                        "User with this id already exists"))));
+                            //uh oh
+                          } else {
+                            try {
+                              getPG(postgresClient, entity, handler -> {
+
+                                int res = handler.result();
+                                if (res == 0) {
+                                  String message = "Cannot add " +
+                                          entity.getPatronGroup() +
+                                          ". Patron group not found";
+                                  logger.error(message);
+                                  asyncResultHandler.handle(Future.succeededFuture(
+                                          PostUsersResponse.respond400WithTextPlain(
+                                          message)));
+                                  return;
+                                } else if (res == -1) {
+                                  asyncResultHandler.handle(Future.succeededFuture(
+                                    PostUsersResponse
+                                      .respond500WithTextPlain("")));
+                                  return;
+                                } else {
+                                  postgresClient.startTx(connection -> {
+                                    logger.debug("Attempting to save new record");
                                     try {
-                                      if (reply.succeeded()) {
-                                        logger.debug("Save successful");
-                                        final User user = entity;
-                                        user.setId(entity.getId());
-                                        postgresClient.endTx(connection, done -> {
-                                          asyncResultHandler.handle(
-                                                  Future.succeededFuture(
-                                                    PostUsersResponse.respond201WithApplicationJson(user,
-                                                     PostUsersResponse.headersFor201().withLocation(reply.result()))));
-                                        });
-                                      } else {
-                                        postgresClient.rollbackTx(connection, rollback -> {
+                                      Date now = new Date();
+                                      entity.setCreatedDate(now);
+                                      entity.setUpdatedDate(now);
+                                      postgresClient.save(connection, tableName, entity.getId(), entity,
+                                              reply -> {
+                                        try {
+                                          if (reply.succeeded()) {
+                                            logger.debug("Save successful");
+                                            final User user = entity;
+                                            user.setId(entity.getId());
+                                            postgresClient.endTx(connection, done -> {
+                                              asyncResultHandler.handle(
+                                                      Future.succeededFuture(
+                                                        PostUsersResponse.respond201WithApplicationJson(user,
+                                                        PostUsersResponse.headersFor201().withLocation(reply.result()))));
+                                            });
+                                          } else {
+                                            postgresClient.rollbackTx(connection, rollback -> {
+                                              asyncResultHandler.handle(Future.succeededFuture(
+                                                      PostUsersResponse.respond400WithTextPlain(
+                                                      messages.getMessage(lang,
+                                                      MessageConsts.UnableToProcessRequest))));
+                                            });
+                                          }
+                                        } catch(Exception e) {
                                           asyncResultHandler.handle(Future.succeededFuture(
-                                                  PostUsersResponse.respond400WithTextPlain(
-                                                  messages.getMessage(lang,
-                                                  MessageConsts.UnableToProcessRequest))));
-                                        });
-                                      }
+                                              PostUsersResponse.respond500WithTextPlain(
+                                                      e.getMessage())));
+                                        }
+                                      });
                                     } catch(Exception e) {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                          PostUsersResponse.respond500WithTextPlain(
-                                                  e.getMessage())));
+                                      postgresClient.rollbackTx(connection, rollback -> {
+                                        asyncResultHandler.handle(Future.succeededFuture(
+                                                PostUsersResponse.respond500WithTextPlain(
+                                                getReply.cause().getMessage())));
+                                      });
                                     }
-                                  });
-                                } catch(Exception e) {
-                                  postgresClient.rollbackTx(connection, rollback -> {
-                                    asyncResultHandler.handle(Future.succeededFuture(
-                                            PostUsersResponse.respond500WithTextPlain(
-                                            getReply.cause().getMessage())));
                                   });
                                 }
                               });
+                            } catch (Exception e) {
+                              logger.error(e.getLocalizedMessage(), e);
+                              asyncResultHandler.handle(Future.succeededFuture(
+                                      PostUsersResponse.respond500WithTextPlain(
+                                      messages.getMessage(lang, MessageConsts.InternalServerError))));
                             }
-                          });
-                        } catch (Exception e) {
-                          logger.error(e.getLocalizedMessage(), e);
-                          asyncResultHandler.handle(Future.succeededFuture(
-                                  PostUsersResponse.respond500WithTextPlain(
-                                  messages.getMessage(lang, MessageConsts.InternalServerError))));
-                        }
+                          }
                       }
-                   }
-                  });
-              } catch(Exception e) {
-                asyncResultHandler.handle(Future.succeededFuture(
-                        PostUsersResponse.respond500WithTextPlain(
-                        messages.getMessage(lang, MessageConsts.InternalServerError))));
-              }
+                      });
+                  } catch(Exception e) {
+                    asyncResultHandler.handle(Future.succeededFuture(
+                            PostUsersResponse.respond500WithTextPlain(
+                            messages.getMessage(lang, MessageConsts.InternalServerError))));
+                  }
+                }
+              });
             }
           });
         } catch(Exception e) {
@@ -318,9 +336,7 @@ public class UsersAPI implements Users {
           asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-
         }
-
       });
     } catch(Exception e) {
       asyncResultHandler.handle(Future.succeededFuture(
@@ -377,102 +393,115 @@ public class UsersAPI implements Users {
             nameCrit.setVal(entity.getUsername());
             PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
-            checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
-              if (checkRes.failed()) {
-                logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
-                  asyncResultHandler.handle(Future.succeededFuture(
-                    PutUsersByUserIdResponse.respond500WithTextPlain(
-                            messages.getMessage(lang, MessageConsts.InternalServerError))));
-              } else if (!checkRes.result()) {
+            checkForValidBarcode(entity, vertxContext, postgresClient).setHandler(barcodeCheckRes -> {
+              if (barcodeCheckRes.failed()) {
+                logger.error(barcodeCheckRes.cause().getLocalizedMessage(), barcodeCheckRes.cause());
                 asyncResultHandler.handle(Future.succeededFuture(
-                  PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
+                  PostUsersResponse.respond500WithTextPlain(
+                    messages.getMessage(lang, MessageConsts.InternalServerError))));
+              } else if (barcodeCheckRes.result() == false) {
+                asyncResultHandler.handle(Future.succeededFuture(
+                  PostUsersResponse.respond400WithTextPlain(
+                          "This barcode has already been taken")));
               } else {
-                try {
-                  postgresClient.get(tableName, User.class, new Criterion(nameCrit), true, false, getReply -> {
-                    if (getReply.failed()) {
-                      //error 500
-                      logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
+                checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
+                  if (checkRes.failed()) {
+                    logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
                       asyncResultHandler.handle(Future.succeededFuture(
-                                              PutUsersByUserIdResponse.respond500WithTextPlain(
-                                                      messages.getMessage(lang,
-                                                              MessageConsts.InternalServerError))));
-                    } else {
-                      List<User> userList = getReply.result().getResults();
-                      if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
-                        //Error 400, that username is in use by somebody else
-                        asyncResultHandler.handle(Future.succeededFuture(
-                                PutUsersByUserIdResponse.respond400WithTextPlain(
-                                        "Username " + entity.getUsername() + " is already in use")));
-                      } else {
-                        try {
-                          getPG(postgresClient, entity, handler -> {
-
-                            int res = handler.result();
-                            if(res == 0){
-                              String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
-                              logger.error(message);
-                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
-                                .respond400WithTextPlain(message)));
-                              return;
-                            } else if (res == -1) {
-                              asyncResultHandler.handle(Future.succeededFuture(
-                                PostUsersResponse
-                                  .respond500WithTextPlain("")));
-                              return;
-                            } else {
-                              Date createdDate = null;
-                              Date now = new Date();
-                              if (userList.size() > 0) {
-                                createdDate = userList.get(0).getCreatedDate();
-                              } else {
-                                createdDate = now;
-                              }
-                              entity.setUpdatedDate(now);
-                              entity.setCreatedDate(createdDate);
-                              try {
-                                postgresClient.update(tableName, entity, userId, putReply -> {
-                                  try {
-                                    if (putReply.failed()) {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.respond500WithTextPlain(
-                                          putReply.cause().getMessage())));
-                                    } else if (putReply.result().getUpdated() == 0) {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.respond404WithTextPlain(userId)));
-
-                                    } else {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.respond204()));
-                                    }
-                                  } catch (Exception e) {
-                                    asyncResultHandler.handle(Future.succeededFuture(
-                                      PutUsersByUserIdResponse.respond500WithTextPlain(
-                                        messages.getMessage(lang, MessageConsts.InternalServerError))));
-                                  }
-                                });
-                              } catch(Exception e) {
-                                asyncResultHandler.handle(Future.succeededFuture(
-                                                    PutUsersByUserIdResponse.respond500WithTextPlain(
-                                                            messages.getMessage(lang,
-                                                                    MessageConsts.InternalServerError))));
-                              }
-                            }
-                          });
-                        } catch (Exception e) {
-                          logger.error(e.getLocalizedMessage(), e);
+                        PutUsersByUserIdResponse.respond500WithTextPlain(
+                                messages.getMessage(lang, MessageConsts.InternalServerError))));
+                  } else if (!checkRes.result()) {
+                    asyncResultHandler.handle(Future.succeededFuture(
+                      PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
+                  } else {
+                    try {
+                      postgresClient.get(tableName, User.class, new Criterion(nameCrit), true, false, getReply -> {
+                        if (getReply.failed()) {
+                          //error 500
+                          logger.debug("Error querying existing username: " + getReply.cause().getLocalizedMessage());
                           asyncResultHandler.handle(Future.succeededFuture(
-                            PutUsersByUserIdResponse.respond500WithTextPlain(
-                                    messages.getMessage(lang, MessageConsts.InternalServerError))));
+                                                  PutUsersByUserIdResponse.respond500WithTextPlain(
+                                                          messages.getMessage(lang,
+                                                                  MessageConsts.InternalServerError))));
+                        } else {
+                          List<User> userList = getReply.result().getResults();
+                          if(userList.size() > 0 && (!userList.get(0).getId().equals(entity.getId()))) {
+                            //Error 400, that username is in use by somebody else
+                            asyncResultHandler.handle(Future.succeededFuture(
+                                    PutUsersByUserIdResponse.respond400WithTextPlain(
+                                            "Username " + entity.getUsername() + " is already in use")));
+                          } else {
+                            try {
+                              getPG(postgresClient, entity, handler -> {
+    
+                                int res = handler.result();
+                                if(res == 0){
+                                  String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
+                                  logger.error(message);
+                                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PostUsersResponse
+                                    .respond400WithTextPlain(message)));
+                                  return;
+                                } else if (res == -1) {
+                                  asyncResultHandler.handle(Future.succeededFuture(
+                                    PostUsersResponse
+                                      .respond500WithTextPlain("")));
+                                  return;
+                                } else {
+                                  Date createdDate = null;
+                                  Date now = new Date();
+                                  if (userList.size() > 0) {
+                                    createdDate = userList.get(0).getCreatedDate();
+                                  } else {
+                                    createdDate = now;
+                                  }
+                                  entity.setUpdatedDate(now);
+                                  entity.setCreatedDate(createdDate);
+                                  try {
+                                    postgresClient.update(tableName, entity, userId, putReply -> {
+                                      try {
+                                        if (putReply.failed()) {
+                                          asyncResultHandler.handle(Future.succeededFuture(
+                                            PutUsersByUserIdResponse.respond500WithTextPlain(
+                                              putReply.cause().getMessage())));
+                                        } else if (putReply.result().getUpdated() == 0) {
+                                          asyncResultHandler.handle(Future.succeededFuture(
+                                            PutUsersByUserIdResponse.respond404WithTextPlain(userId)));
+    
+                                        } else {
+                                          asyncResultHandler.handle(Future.succeededFuture(
+                                            PutUsersByUserIdResponse.respond204()));
+                                        }
+                                      } catch (Exception e) {
+                                        asyncResultHandler.handle(Future.succeededFuture(
+                                          PutUsersByUserIdResponse.respond500WithTextPlain(
+                                            messages.getMessage(lang, MessageConsts.InternalServerError))));
+                                      }
+                                    });
+                                  } catch(Exception e) {
+                                    asyncResultHandler.handle(Future.succeededFuture(
+                                                        PutUsersByUserIdResponse.respond500WithTextPlain(
+                                                                messages.getMessage(lang,
+                                                                        MessageConsts.InternalServerError))));
+                                  }
+                                }
+                              });
+                            } catch (Exception e) {
+                              logger.error(e.getLocalizedMessage(), e);
+                              asyncResultHandler.handle(Future.succeededFuture(
+                                PutUsersByUserIdResponse.respond500WithTextPlain(
+                                        messages.getMessage(lang, MessageConsts.InternalServerError))));
+                            }
+                          }
                         }
-                      }
+                      });
+                    } catch(Exception e) {
+                      logger.debug(e.getLocalizedMessage());
+                      asyncResultHandler.handle(Future.succeededFuture(
+                        PutUsersByUserIdResponse.respond500WithTextPlain(
+                                messages.getMessage(lang, MessageConsts.InternalServerError))));
                     }
-                  });
-                } catch(Exception e) {
-                  logger.debug(e.getLocalizedMessage());
-                  asyncResultHandler.handle(Future.succeededFuture(
-                    PutUsersByUserIdResponse.respond500WithTextPlain(
-                            messages.getMessage(lang, MessageConsts.InternalServerError))));
-                }
+                  }
+                });
               }
             });
           } catch(Exception e) {
@@ -623,6 +652,51 @@ public class UsersAPI implements Users {
         if (!bad) {
           future.complete(true);
         }
+      }
+    });
+    return future;
+  }
+
+  private Future<Boolean> checkForValidBarcode(
+      User user, Context vertxContext, PostgresClient postgresClient) {
+
+    Future<Boolean> future = Future.future();
+    Criterion criterion = new Criterion(
+          new Criteria().addField(BARCODE_FIELD_NAME).
+                  setJSONB(false).setOperation("=").setVal(user.getBarcode()));
+    vertxContext.runOnContext(v -> {
+      try {
+        postgresClient.get(TABLE_NAME_USERS, User.class, criterion, true, reply -> {
+          try {
+            if (reply.failed()) {
+              String message = reply.cause().getLocalizedMessage();
+              logger.error(message, reply.cause());
+              future.fail(reply.cause());
+            } else {
+              List<User> usersWithBarcode = reply.result().getResults();
+              if (usersWithBarcode.isEmpty()) {
+                // no users with barcode exist, good
+                future.complete(true);
+              } else {
+                if(user.getId() != null && user.getId().equals(usersWithBarcode.get(0).getId())) {
+                  // user is updating and is only user with barcode, still good
+                  future.complete(true);
+                } else {
+                  // another user is using barcode
+                  future.complete(false);
+                }
+              }
+            }
+          } catch(Exception e) {
+            String message = e.getLocalizedMessage();
+            logger.error(message, e);
+            future.fail(e);
+          }
+        });
+      } catch(Exception e) {
+        String message = e.getLocalizedMessage();
+        logger.error(message, e);
+        future.fail(e);
       }
     });
     return future;
