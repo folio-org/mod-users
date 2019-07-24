@@ -659,11 +659,15 @@ public class UsersAPI implements Users {
 
   private Future<Boolean> checkForValidBarcode(
       User user, Context vertxContext, PostgresClient postgresClient) {
-
     Future<Boolean> future = Future.future();
+    // NOTE: allowing null barcode
+    if(user.getBarcode() == null) {
+      future.complete(true);
+      return future;
+    }
     Criterion criterion = new Criterion(
-          new Criteria().addField(BARCODE_FIELD_NAME).
-                  setJSONB(false).setOperation("=").setVal(user.getBarcode()));
+        new Criteria().addField(BARCODE_FIELD_NAME).
+                setJSONB(false).setOperation("=").setVal(user.getBarcode()));
     vertxContext.runOnContext(v -> {
       try {
         postgresClient.get(TABLE_NAME_USERS, User.class, criterion, true, reply -> {
