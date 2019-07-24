@@ -910,7 +910,6 @@ public class RestVerticleIT {
     // create test user one
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res, 201);
-
       // fail attempting to create user with duplicate barcode
       client.post(port, "localhost", "/users", res2 -> {
         assertStatus(context, res2, 422);
@@ -985,7 +984,7 @@ public class RestVerticleIT {
         })
           .putHeader("X-Okapi-Tenant", "diku")
           .putHeader("content-type", "application/json")
-          .putHeader("accept", "application/json")
+          .putHeader("accept", "text/plain")
           .exceptionHandler(e -> {
             future.fail(e);
           })
