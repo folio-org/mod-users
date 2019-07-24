@@ -944,22 +944,22 @@ public class RestVerticleIT {
   private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
     Future<Void> future = Future.future();
     JsonObject userObject1 = new JsonObject()
-      .put("username", "test_one")
+      .put("username", "test_three")
       .put("id", UUID.randomUUID().toString())
       .put("active", true)
       .put("barcode", "304276530498752")
       .put("personal", new JsonObject()
-        .put("lastName", "One")
+        .put("lastName", "Three")
         .put("firstName", "Test")
       );
-    String testUserTwoId = UUID.randomUUID().toString();
+    String testUserFourId = UUID.randomUUID().toString();
     JsonObject userObject2 = new JsonObject()
-      .put("username", "test_two")
-      .put("id", testUserTwoId)
+      .put("username", "test_four")
+      .put("id", testUserFourId)
       .put("active", true)
       .put("barcode", "098743509873450")
       .put("personal", new JsonObject()
-        .put("lastName", "Two")
+        .put("lastName", "Four")
         .put("firstName", "Test")
       );
     HttpClient client = vertx.createHttpClient();
