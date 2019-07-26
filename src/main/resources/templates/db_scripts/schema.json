@@ -94,6 +94,46 @@
           "tOps": "ADD",
           "caseSensitive": false,
           "removeAccents": true
+        },
+        {
+          "fieldName": "active",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        }
+      ],
+      "fullTextIndex" : [
+        {
+          "fieldName" : "username",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "barcode",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "username",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "personal.firstName",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "personal.lastName",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "personal.email",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "externalSystemId",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "active",
+          "tOps" : "ADD"
         }
       ]
     },
@@ -111,7 +151,19 @@
     {
       "tableName" : "proxyfor",
       "fromModuleVersion" : "14.3",
-      "withMetadata" : true
+      "withMetadata" : true,
+      "ginIndex" : [
+        {
+          "fieldName" : "userId",
+          "tOps" : "ADD"
+        }
+      ],
+      "fullTextIndex" : [
+        {
+          "fieldName" : "proxyUserId",
+          "tOps" : "ADD"
+        }
+      ]
     }
   ],
   "views" : [
