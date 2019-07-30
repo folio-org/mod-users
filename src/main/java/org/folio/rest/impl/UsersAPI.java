@@ -196,8 +196,12 @@ public class UsersAPI implements Users {
           idCrit.setVal(entity.getId());
           Criteria nameCrit = new Criteria();
           nameCrit.addField(USER_NAME_FIELD);
-          nameCrit.setOperation("=");
-          nameCrit.setVal(entity.getUsername());
+          if (entity.getUsername() == null) {
+            nameCrit.setOperation("IS NULL");
+          } else {
+            nameCrit.setOperation("=");
+            nameCrit.setVal(entity.getUsername());
+          }
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
           PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
@@ -373,8 +377,12 @@ public class UsersAPI implements Users {
           try {
             Criteria nameCrit = new Criteria();
             nameCrit.addField(USER_NAME_FIELD);
-            nameCrit.setOperation("=");
-            nameCrit.setVal(entity.getUsername());
+            if (entity.getUsername() == null) {
+              nameCrit.setOperation("IS NULL");
+            } else {
+              nameCrit.setOperation("=");
+              nameCrit.setVal(entity.getUsername());
+            }
             PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
 
             checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
