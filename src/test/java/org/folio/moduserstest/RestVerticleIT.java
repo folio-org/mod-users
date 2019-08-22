@@ -212,13 +212,15 @@ public class RestVerticleIT {
     u.put("tags", tagobj);
   }
 
-  private Future<Void> postUser(TestContext context) {
+  private Future<Void> postUser(TestContext context, boolean withUserName) {
     System.out.println("Creating a new user\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
-      .put("username", "joeblock")
       .put("id", joeBlockId)
       .put("active", true);
+    if (withUserName) {
+      userObject.put("username", "joeblock");
+    }
     addTags(userObject);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
@@ -500,15 +502,17 @@ public class RestVerticleIT {
     return future;
   }
 
-  private Future<Void> putUserGood(TestContext context) {
+  private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
     System.out.println("Making a valid user modification\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
-      .put("username", "bobcircle")
-      .put("id", bobCircleId)
+      .put("id", id)
       .put("active", false);
+    if (withUserName) {
+      userObject.put("username", "bobcircle");
+    }
     HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
+    client.put(port, "localhost", "/users/" + id, res -> {
       assertStatus(context, res, 204);
       future.complete();
     })
@@ -1380,9 +1384,12 @@ public class RestVerticleIT {
     Future<Void> f1 = Future.future();
     getEmptyUsers(context).setHandler(f1.completer());
     startFuture = f1
-      .compose(v -> postUser(context))
+      .compose(v -> postUser(context, false))
+      .compose(v -> putUserGood(context, joeBlockId, false))
       .compose(v -> deleteUser(context))
-      .compose(v -> postUser(context))
+      .compose(v -> postUser(context, true))
+      .compose(v -> deleteUser(context))
+      .compose(v -> postUser(context, true))
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
@@ -1392,7 +1399,7 @@ public class RestVerticleIT {
       .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
       .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
       .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
-      .compose(v -> putUserGood(context))
+      .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
