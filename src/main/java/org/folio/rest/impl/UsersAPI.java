@@ -6,11 +6,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.function.Function;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
@@ -44,6 +46,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.LinkedList;
+
+import static io.vertx.core.Future.succeededFuture;
 
 
 /**
@@ -177,9 +181,9 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void postUsers(String lang, User entity,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+          Map<String, String> okapiHeaders,
+          Handler<AsyncResult<Response>> asyncResultHandler,
+          Context vertxContext) {
     try {
       vertxContext.runOnContext( v -> {
         String tableName = getTableName(null);
@@ -189,7 +193,7 @@ public class UsersAPI implements Users {
                       "Users are limited to one address per addresstype")));
           return;
         }
-        try {
+          try {
           Criteria idCrit = new Criteria();
           idCrit.addField(USER_ID_FIELD);
           idCrit.setOperation("=");
@@ -205,7 +209,6 @@ public class UsersAPI implements Users {
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
           PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
-
           checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(
                   checkRes -> {
             if (checkRes.failed()) {
@@ -258,46 +261,20 @@ public class UsersAPI implements Users {
                                   .respond500WithTextPlain("")));
                               return;
                             } else {
-                              postgresClient.startTx(connection -> {
-                                logger.debug("Attempting to save new record");
-                                try {
-                                  Date now = new Date();
-                                  entity.setCreatedDate(now);
-                                  entity.setUpdatedDate(now);
-                                  postgresClient.save(connection, tableName, entity.getId(), entity,
-                                          reply -> {
-                                    try {
-                                      if (reply.succeeded()) {
-                                        logger.debug("Save successful");
-                                        final User user = entity;
-                                        user.setId(entity.getId());
-                                        postgresClient.endTx(connection, done -> {
-                                          asyncResultHandler.handle(
-                                                  Future.succeededFuture(
-                                                    PostUsersResponse.respond201WithApplicationJson(user,
-                                                     PostUsersResponse.headersFor201().withLocation(reply.result()))));
-                                        });
-                                      } else {
-                                        postgresClient.rollbackTx(connection, rollback -> {
-                                          asyncResultHandler.handle(Future.succeededFuture(
-                                                  PostUsersResponse.respond400WithTextPlain(
-                                                  messages.getMessage(lang,
-                                                  MessageConsts.UnableToProcessRequest))));
-                                        });
-                                      }
-                                    } catch(Exception e) {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                          PostUsersResponse.respond500WithTextPlain(
-                                                  e.getMessage())));
-                                    }
-                                  });
-                                } catch(Exception e) {
-                                  postgresClient.rollbackTx(connection, rollback -> {
-                                    asyncResultHandler.handle(Future.succeededFuture(
-                                            PostUsersResponse.respond500WithTextPlain(
-                                            getReply.cause().getMessage())));
-                                  });
+                              Date now = new Date();
+                              entity.setCreatedDate(now);
+                              entity.setUpdatedDate(now);
+                              PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
+                                if (isMultipleBarcodeError(reply)) {
+                                  asyncResultHandler.handle(
+                                      succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                                        ValidationHelper.createValidationErrorMessage(
+                                          "barcode", entity.getBarcode(),
+                                          "This barcode has already been taken"))));
+                                  return;
                                 }
+                                logger.debug("Save successful");
+                                asyncResultHandler.handle(reply);
                               });
                             }
                           });
@@ -308,7 +285,7 @@ public class UsersAPI implements Users {
                                   messages.getMessage(lang, MessageConsts.InternalServerError))));
                         }
                       }
-                   }
+                    }
                   });
               } catch(Exception e) {
                 asyncResultHandler.handle(Future.succeededFuture(
@@ -322,15 +299,19 @@ public class UsersAPI implements Users {
           asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-
         }
-
       });
     } catch(Exception e) {
       asyncResultHandler.handle(Future.succeededFuture(
               PostUsersResponse.respond500WithTextPlain(
               messages.getMessage(lang, MessageConsts.InternalServerError))));
     }
+  }
+
+  private boolean isMultipleBarcodeError(AsyncResult<Response> reply) {
+    return reply.succeeded()
+    && reply.result().getStatus() == 400
+    && reply.result().getEntity().toString().contains("users_barcode_idx_unique");
   }
 
   @Validate
@@ -367,13 +348,11 @@ public class UsersAPI implements Users {
               PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
           return;
         }
-
         if (!userId.equals(entity.getId())) {
           asyncResultHandler.handle(Future.succeededFuture(
                           PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
         } else {
           String tableName = getTableName(null);
-
           try {
             Criteria nameCrit = new Criteria();
             nameCrit.addField(USER_NAME_FIELD);
@@ -384,7 +363,6 @@ public class UsersAPI implements Users {
               nameCrit.setVal(entity.getUsername());
             }
             PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
-
             checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
               if (checkRes.failed()) {
                 logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
@@ -437,33 +415,17 @@ public class UsersAPI implements Users {
                               }
                               entity.setUpdatedDate(now);
                               entity.setCreatedDate(createdDate);
-                              try {
-                                postgresClient.update(tableName, entity, userId, putReply -> {
-                                  try {
-                                    if (putReply.failed()) {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.respond500WithTextPlain(
-                                          putReply.cause().getMessage())));
-                                    } else if (putReply.result().getUpdated() == 0) {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.respond404WithTextPlain(userId)));
-
-                                    } else {
-                                      asyncResultHandler.handle(Future.succeededFuture(
-                                        PutUsersByUserIdResponse.respond204()));
-                                    }
-                                  } catch (Exception e) {
-                                    asyncResultHandler.handle(Future.succeededFuture(
-                                      PutUsersByUserIdResponse.respond500WithTextPlain(
-                                        messages.getMessage(lang, MessageConsts.InternalServerError))));
-                                  }
-                                });
-                              } catch(Exception e) {
-                                asyncResultHandler.handle(Future.succeededFuture(
-                                                    PutUsersByUserIdResponse.respond500WithTextPlain(
-                                                            messages.getMessage(lang,
-                                                                    MessageConsts.InternalServerError))));
-                              }
+                              PgUtil.put(TABLE_NAME_USERS, entity, entity.getId(), okapiHeaders, vertxContext, PutUsersByUserIdResponse.class, reply -> {
+                                if (isMultipleBarcodeError(reply)) {
+                                  asyncResultHandler.handle(
+                                      succeededFuture(PutUsersByUserIdResponse
+                                        .respond400WithTextPlain(
+                                          "This barcode has already been taken")));
+                                  return;
+                                }
+                                logger.debug("Save successful");
+                                asyncResultHandler.handle(reply);
+                              });
                             }
                           });
                         } catch (Exception e) {
