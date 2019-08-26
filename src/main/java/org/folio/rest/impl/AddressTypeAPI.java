@@ -13,8 +13,6 @@ import org.folio.rest.jaxrs.resource.Addresstypes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.persist.PgUtil;
-import org.folio.rest.utils.PostgresClientUtil;
-
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
@@ -77,7 +75,7 @@ public class AddressTypeAPI implements Addresstypes {
       /* CQL statement to check for users with addresses that use a particular address type */
       String query = "personal.addresses=" + addresstypeId;
       CQLWrapper cql = UsersAPI.getCQL(query, 1, 0);
-      PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+      PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
       postgresClient.get(
         UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
         cql, true, false, reply -> {
@@ -89,17 +87,17 @@ public class AddressTypeAPI implements Addresstypes {
                 getErrorResponse(message))));
           } else {
             List<User> userList = reply.result().getResults();
-            if (userList.size() > 0) {
+            if (! userList.isEmpty()) {
               String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
               logger.error(message);
               asyncResultHandler.handle(Future.succeededFuture(DeleteAddresstypesByAddresstypeIdResponse
                 .respond400WithTextPlain(message)));
-            } else {
-              logger.info("Removing non-associated address type '" + addresstypeId + "'");
-
-              PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
-                vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
+              return;
             }
+            logger.info("Removing non-associated address type '" + addresstypeId + "'");
+
+            PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
+              vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
           }
         });
     } catch (Exception e) {

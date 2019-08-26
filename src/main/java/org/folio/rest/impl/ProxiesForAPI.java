@@ -18,8 +18,7 @@ import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.utils.PostgresClientUtil;
-import org.folio.rest.utils.ValidationHelper;
+import org.folio.rest.tools.utils.ValidationHelper;
 
 /**
  *
@@ -67,7 +66,7 @@ public class ProxiesForAPI implements Proxiesfor {
     Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
-    PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+    PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     userAndProxyUserComboExists(entity.getUserId(), entity.getProxyUserId(),
       postgresClient).setHandler(existsRes -> {
         if (existsRes.failed()) {
@@ -136,11 +135,7 @@ public class ProxiesForAPI implements Proxiesfor {
         future.fail(getReply.cause());
       } else {
         List<ProxiesFor> proxyForList = getReply.result().getResults();
-        if (proxyForList.isEmpty()) {
-          future.complete(false);
-        } else {
-          future.complete(true);
-        }
+        future.complete(! proxyForList.isEmpty());
       }
     });
     return future;
