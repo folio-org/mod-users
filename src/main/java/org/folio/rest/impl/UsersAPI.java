@@ -1,6 +1,5 @@
 package org.folio.rest.impl;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,8 +30,7 @@ import org.folio.rest.persist.facets.FacetManager;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.utils.PostgresClientUtil;
-import org.folio.rest.utils.ValidationHelper;
+import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.z3950.zing.cql.CQLParseException;
 
@@ -90,7 +88,7 @@ public class UsersAPI implements Users {
     return cql;
   }
 
-  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
+  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
     if (query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
       List<String> fields = new LinkedList<>();
@@ -145,7 +143,7 @@ public class UsersAPI implements Users {
       String[] fieldList = {"*"};
       logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
 
-      PostgresClientUtil.getInstance(vertxContext, okapiHeaders)
+      PgUtil.postgresClient(vertxContext, okapiHeaders)
           .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
         try {
           if (reply.succeeded()) {
@@ -204,7 +202,7 @@ public class UsersAPI implements Users {
           }
           Criterion crit = new Criterion();
           crit.addCriterion(idCrit, "OR", nameCrit);
-          PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+          PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
           checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(
                   checkRes -> {
@@ -213,7 +211,7 @@ public class UsersAPI implements Users {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-            } else if (checkRes.result() == false) {
+            } else if (Boolean.FALSE.equals(checkRes.result())) {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond400WithTextPlain(
                         "You cannot add addresses with non-existant address types")));
@@ -383,7 +381,7 @@ public class UsersAPI implements Users {
               nameCrit.setOperation("=");
               nameCrit.setVal(entity.getUsername());
             }
-            PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
+            PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
             checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
               if (checkRes.failed()) {
@@ -391,7 +389,7 @@ public class UsersAPI implements Users {
                   asyncResultHandler.handle(Future.succeededFuture(
                     PutUsersByUserIdResponse.respond500WithTextPlain(
                             messages.getMessage(lang, MessageConsts.InternalServerError))));
-              } else if (!checkRes.result()) {
+              } else if (Boolean.FALSE.equals(checkRes.result())) {
                 asyncResultHandler.handle(Future.succeededFuture(
                   PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
               } else {
@@ -620,9 +618,8 @@ public class UsersAPI implements Users {
         future.fail(res.cause());
       } else {
         boolean bad = false;
-        for(Future f : futureList) {
-          Boolean result = ((Future<Boolean>)f).result();
-          if (!result) {
+        for (Future<Boolean> f : futureList) {
+          if (Boolean.FALSE.equals(f.result())) {
             future.complete(false);
             bad = true;
             break;
