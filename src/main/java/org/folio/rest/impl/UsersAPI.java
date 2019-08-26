@@ -211,7 +211,7 @@ public class UsersAPI implements Users {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond500WithTextPlain(
                   messages.getMessage(lang, MessageConsts.InternalServerError))));
-            } else if (checkRes.result() == false) {
+            } else if (Boolean.FALSE.equals(checkRes.result())) {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond400WithTextPlain(
                         "You cannot add addresses with non-existant address types")));
@@ -389,7 +389,7 @@ public class UsersAPI implements Users {
                   asyncResultHandler.handle(Future.succeededFuture(
                     PutUsersByUserIdResponse.respond500WithTextPlain(
                             messages.getMessage(lang, MessageConsts.InternalServerError))));
-              } else if (!checkRes.result()) {
+              } else if (Boolean.FALSE.equals(checkRes.result())) {
                 asyncResultHandler.handle(Future.succeededFuture(
                   PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
               } else {
@@ -618,9 +618,8 @@ public class UsersAPI implements Users {
         future.fail(res.cause());
       } else {
         boolean bad = false;
-        for(Future f : futureList) {
-          Boolean result = ((Future<Boolean>)f).result();
-          if (!result) {
+        for (Future<Boolean> f : futureList) {
+          if (Boolean.FALSE.equals(f.result())) {
             future.complete(false);
             bad = true;
             break;
