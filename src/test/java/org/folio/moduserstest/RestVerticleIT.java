@@ -587,6 +587,32 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> putUserWithoutIdInMetadata(TestContext context) {
+    System.out.println("Changing a user with numeric name\n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+        .put("username", "bobcircle")
+        .put("id", bobCircleId)
+        .put("active", false)
+        // metadata with createdDate but without createdByUserId
+        // https://issues.folio.org/browse/RMB-459
+        // https://issues.folio.org/browse/UIU-1069
+        .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
+      assertStatus(context, res, 204);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "text/plain")
+      .exceptionHandler(e -> {
+        context.fail(e);
+      })
+      .end(userObject.encode());
+    return future;
+  }
+
   private Future<Void> putUserBadId(TestContext context) {
     System.out.println("Trying to assign an invalid id \n");
     Future<Void> future = Future.future();
@@ -1401,6 +1427,7 @@ public class RestVerticleIT {
       .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
+      .compose(v -> putUserWithoutIdInMetadata(context))
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
       .compose(v -> putUserWithNumericName(context))
