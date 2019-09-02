@@ -30,6 +30,10 @@
         {
           "fieldName" : "id",
           "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "barcode",
+          "tOps" : "ADD"
         }
       ],
       "index" : [
@@ -39,10 +43,6 @@
         },
         {
           "fieldName" : "username",
-          "tOps" : "ADD"
-        },
-        {
-          "fieldName" : "barcode",
           "tOps" : "ADD"
         },
         {

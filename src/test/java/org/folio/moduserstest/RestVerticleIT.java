@@ -916,6 +916,128 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> postUserWithDuplicateBarcode(TestContext context) {
+    Future<Void> future = Future.future();
+    JsonObject userObject1 = new JsonObject()
+      .put("username", "test_one")
+      .put("id",  UUID.randomUUID().toString())
+      .put("active", true)
+      .put("barcode", "943259854978643")
+      .put("personal", new JsonObject()
+        .put("lastName", "One")
+        .put("firstName", "Test")
+      );
+    JsonObject userObject2 = new JsonObject()
+      .put("username", "test_two")
+      .put("id",  UUID.randomUUID().toString())
+      .put("active", true)
+      .put("barcode", "943259854978643")
+      .put("personal", new JsonObject()
+        .put("lastName", "Two")
+        .put("firstName", "Test")
+      );
+    HttpClient client = vertx.createHttpClient();
+    // create test user one
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      // fail attempting to create user with duplicate barcode
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 422);
+        res2.bodyHandler(err -> {
+          JsonObject validationErrorRes = err.toJsonObject();
+          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+          if (validationErrors.isEmpty()) {
+            future.fail("Did not return expected validation errors");
+          } else {
+            String errorMessage = validationErrors.getJsonObject(0).getString("message");
+            assertThat(1, is(validationErrors.size()));
+            assertThat(errorMessage, is("This barcode has already been taken"));
+            future.complete();
+          }
+        });
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(userObject2.encode());
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(userObject1.encode());
+    return future;
+  }
+
+  private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
+    Future<Void> future = Future.future();
+    JsonObject userObject1 = new JsonObject()
+      .put("username", "test_three")
+      .put("id", UUID.randomUUID().toString())
+      .put("active", true)
+      .put("barcode", "304276530498752")
+      .put("personal", new JsonObject()
+        .put("lastName", "Three")
+        .put("firstName", "Test")
+      );
+    String testUserFourId = UUID.randomUUID().toString();
+    JsonObject userObject2 = new JsonObject()
+      .put("username", "test_four")
+      .put("id", testUserFourId)
+      .put("active", true)
+      .put("barcode", "098743509873450")
+      .put("personal", new JsonObject()
+        .put("lastName", "Four")
+        .put("firstName", "Test")
+      );
+    HttpClient client = vertx.createHttpClient();
+    // create test user one
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      // create test user two
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 201);
+        // fail attempting to update user changing barcode to a duplicate
+        userObject2.put("barcode", "304276530498752");
+        client.put(port, "localhost", "/users/" + testUserFourId, res3 -> {
+          assertStatus(context, res3, 400);
+          res3.bodyHandler(err -> {
+            String errorMessage = err.toString();
+            assertThat(errorMessage, is("This barcode has already been taken"));
+            future.complete();
+          });
+        })
+          .putHeader("X-Okapi-Tenant", "diku")
+          .putHeader("content-type", "application/json")
+          .putHeader("accept", "text/plain")
+          .exceptionHandler(e -> {
+            future.fail(e);
+          })
+          .end(userObject2.encode());
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(userObject2.encode());
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(userObject1.encode());
+    return future;
+  }
+
   private Future<Void> createProxyfor(TestContext context) {
     System.out.println("Creating a new proxyfor entry\n");
     Future<Void> future = Future.future();
@@ -1309,6 +1431,7 @@ public class RestVerticleIT {
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
       .compose(v -> putUserWithNumericName(context))
+      .compose(v -> putUserWithDuplicateBarcode(context))
       .compose(v -> createAddressType(context))
       .compose(v -> createBadAddressType(context))
       .compose(v -> getAddressTypeUpdateUser(context))
@@ -1318,6 +1441,7 @@ public class RestVerticleIT {
       .compose(v -> postUserWithDuplicateAddressType(context))
       .compose(v -> postUserBadAddress(context))
       .compose(v -> postUserWithNumericName(context))
+      .compose(v -> postUserWithDuplicateBarcode(context))
       .compose(v -> createProxyfor(context))
       .compose(v -> createProxyforWithSameUserId(context))
       .compose(v -> createProxyforWithSameProxyUserId(context))
