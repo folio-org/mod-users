@@ -182,7 +182,6 @@ public class UsersAPI implements Users {
           Context vertxContext) {
     try {
       vertxContext.runOnContext( v -> {
-        String tableName = getTableName(null);
         if(checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
               PostUsersResponse.respond400WithTextPlain(
