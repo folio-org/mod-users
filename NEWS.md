@@ -1,3 +1,9 @@
+## 15.6.2 2019-09-11
+ * MODUSERS-138 POST requests to /users fail
+ * MODUSERS-147 "Username already exists" error when creating second user with null username
+
+This does *not* contain MODUSERS-118 "Duplicate user barcode".
+
 ## 15.6.1 2019-07-23
  * MODUSERS-129 Use PgUtil / refactor
  * MODUSERS-131 Upgrade to RMB 26.2.2
