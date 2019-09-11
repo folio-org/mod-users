@@ -319,11 +319,11 @@ public class RestVerticleIT {
                 return;
               }
               Date now = new Date();
-              if (createdDate.before(now)) {
-                future.complete();
-              } else {
-                future.fail("Bad value for createdDate");
+              if (createdDate.after(now)) {
+                future.fail(new AssertionError("Bad value for createdDate"));
+                return;
               }
+              future.complete();
             }
           } else {
             future.fail("Unable to read proper data from JSON return value: " + buf.toString());
@@ -545,11 +545,11 @@ public class RestVerticleIT {
             return;
           }
           Date now = new Date();
-          if (createdDate.before(now) && updatedDate.before(now) && createdDate.before(updatedDate)) {
-            future.complete();
-          } else {
-            future.fail("Bad value for createdDate and/or updatedDate");
+          if (createdDate.after(now) || updatedDate.after(now) || createdDate.after(updatedDate)) {
+            future.fail(new AssertionError("Bad value for createdDate and/or updatedDate"));
+            return;
           }
+          future.complete();
         } else {
           future.fail("Unable to read proper data from JSON return value: " + buf.toString());
         }
@@ -916,6 +916,221 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> postUserWithDuplicateId(TestContext context) {
+    Future<Void> future = Future.future();
+    String uuid = UUID.randomUUID().toString();
+    JsonObject user1 = new JsonObject().put("id", uuid);
+    JsonObject user2 = new JsonObject().put("id", uuid);
+    HttpClient client = vertx.createHttpClient();
+    // create test user one
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      // fail attempting to create user with duplicate id
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 422);
+        res2.bodyHandler(err -> {
+          JsonObject validationErrorRes = err.toJsonObject();
+          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+          if (validationErrors.isEmpty()) {
+            future.fail("Did not return expected validation errors");
+          } else {
+            String errorMessage = validationErrors.getJsonObject(0).getString("message");
+            context.assertEquals(1, validationErrors.size());
+            context.assertEquals(errorMessage, "User with this id already exists");
+            future.complete();
+          }
+        });
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(user2.encode());
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(user1.encode());
+    return future;
+  }
+
+  private Future<Void> postUserWithDuplicateUsername(TestContext context) {
+    Future<Void> future = Future.future();
+    JsonObject user1 = new JsonObject()
+      .put("username", "the_twin")
+      .put("id",  UUID.randomUUID().toString());
+    JsonObject user2 = new JsonObject()
+      .put("username", "the_twin")
+      .put("id",  UUID.randomUUID().toString());
+    HttpClient client = vertx.createHttpClient();
+    // create test user one
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      // creating a second user with the same username should fail
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 422);
+        res2.bodyHandler(err -> {
+          JsonObject validationErrorRes = err.toJsonObject();
+          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+          if (validationErrors.isEmpty()) {
+            future.fail("Did not return expected validation errors");
+          } else {
+            String errorMessage = validationErrors.getJsonObject(0).getString("message");
+            context.assertEquals(1, validationErrors.size());
+            context.assertEquals(errorMessage, "User with this username already exists");
+            future.complete();
+          }
+        });
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(user2.encode());
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(user1.encode());
+    return future;
+  }
+
+  private Future<Void> putUserWithDuplicateUsername(TestContext context) {
+    Future<Void> future = Future.future();
+    JsonObject user1 = new JsonObject()
+      .put("username", "left_shoe")
+      .put("id", UUID.randomUUID().toString());
+    JsonObject user2 = new JsonObject()
+      .put("username", "right_shoe")
+      .put("id", UUID.randomUUID().toString());
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 201);
+        // attempt to update user2 changing username to a duplicate
+        user2.put("username", "left_shoe");
+        client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
+          assertStatus(context, res3, 400);
+          res3.bodyHandler(err -> {
+            context.assertEquals("User with this username already exists", err.toString());
+            future.complete();
+          });
+        })
+          .putHeader("X-Okapi-Tenant", "diku")
+          .putHeader("content-type", "application/json")
+          .putHeader("accept", "text/plain")
+          .exceptionHandler(e -> {
+            future.fail(e);
+          })
+          .end(user2.encode());
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(user2.encode());
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(user1.encode());
+    return future;
+  }
+
+  // https://issues.folio.org/browse/MODUSERS-147
+  private Future<Void> postTwoUsersWithoutUsername(TestContext context) {
+    Future<Void> future = Future.future();
+    JsonObject user1 = new JsonObject()
+      .put("id",  UUID.randomUUID().toString());
+    JsonObject user2 = new JsonObject()
+      .put("id",  UUID.randomUUID().toString());
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      client.post(port, "localhost", "/users", res2 -> {
+        // should succeed, there can be any number of users without username
+        assertStatus(context, res2, 201);
+        future.complete();
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(user2.encode());
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(user1.encode());
+    return future;
+  }
+
+  // https://issues.folio.org/browse/MODUSERS-147
+  private Future<Void> putSecondUserWithoutUsername(TestContext context) {
+    Future<Void> future = Future.future();
+    JsonObject user1 = new JsonObject()
+      .put("id", UUID.randomUUID().toString());
+    JsonObject user2 = new JsonObject()
+        .put("username", "name_for_sale")
+        .put("id", UUID.randomUUID().toString());
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      client.post(port, "localhost", "/users", res2 -> {
+        assertStatus(context, res2, 201);
+        user2.remove("username");  // try to PUT with username removed
+        client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
+          assertStatus(context, res3, 204);
+          future.complete();
+        })
+          .putHeader("X-Okapi-Tenant", "diku")
+          .putHeader("content-type", "application/json")
+          .putHeader("accept", "text/plain")
+          .exceptionHandler(e -> {
+            future.fail(e);
+          })
+          .end(user2.encode());
+      })
+        .putHeader("X-Okapi-Tenant", "diku")
+        .putHeader("content-type", "application/json")
+        .putHeader("accept", "application/json")
+        .exceptionHandler(e -> {
+          future.fail(e);
+        })
+        .end(user2.encode());
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json")
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(user1.encode());
+    return future;
+  }
+
+  // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> postUserWithDuplicateBarcode(TestContext context) {
     Future<Void> future = Future.future();
     JsonObject userObject1 = new JsonObject()
@@ -974,6 +1189,7 @@ public class RestVerticleIT {
     return future;
   }
 
+  // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
     Future<Void> future = Future.future();
     JsonObject userObject1 = new JsonObject()
@@ -1431,6 +1647,7 @@ public class RestVerticleIT {
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
       .compose(v -> putUserWithNumericName(context))
+      .compose(v -> putUserWithDuplicateUsername(context))
       .compose(v -> putUserWithDuplicateBarcode(context))
       .compose(v -> createAddressType(context))
       .compose(v -> createBadAddressType(context))
@@ -1441,6 +1658,10 @@ public class RestVerticleIT {
       .compose(v -> postUserWithDuplicateAddressType(context))
       .compose(v -> postUserBadAddress(context))
       .compose(v -> postUserWithNumericName(context))
+      .compose(v -> postUserWithDuplicateId(context))
+      .compose(v -> postUserWithDuplicateUsername(context))
+      .compose(v -> postTwoUsersWithoutUsername(context))
+      .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))
       .compose(v -> createProxyfor(context))
       .compose(v -> createProxyforWithSameUserId(context))
