@@ -1,38 +1,20 @@
 package org.folio.rest.impl;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
 import org.folio.rest.annotations.Validate;
-import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.model.Usergroups;
 import org.folio.rest.jaxrs.resource.Groups;
-import org.folio.rest.jaxrs.resource.Users.GetUsersResponse;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.persist.Criteria.Criteria;
-import org.folio.rest.persist.Criteria.Criterion;
-import org.folio.rest.persist.Criteria.Limit;
-import org.folio.rest.persist.Criteria.Offset;
-import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.tools.messages.MessageConsts;
-import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.utils.PostgresClientUtil;
-import org.folio.rest.utils.ValidationHelper;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
-import org.z3950.zing.cql.cql2pgjson.CQL2PgJSONException;
-import org.z3950.zing.cql.cql2pgjson.FieldException;
+import org.folio.rest.persist.PgUtil;
+import org.folio.rest.tools.utils.ValidationHelper;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import java.util.UUID;
 
 /**
  * @author shale
@@ -40,323 +22,72 @@ import java.util.UUID;
  */
 public class UserGroupAPI implements Groups {
 
-  public static final String       GROUP_TABLE           = "groups";
-  public static final String       GROUP_USER_JOIN_TABLE = "groups_users";
-  public static final String       ID_FIELD_NAME         = "id";
-
-  private static final String       LOCATION_PREFIX       = "/groups/";
-  private static final Logger       log                   = LoggerFactory.getLogger(UserGroupAPI.class);
-  private final Messages            messages              = Messages.getInstance();
+  public static final String GROUP_TABLE = "groups";
+  public static final String GROUP_USER_JOIN_TABLE = "groups_users";
+  public static final String ID_FIELD_NAME = "id";
 
   @Validate
   @Override
   public void getGroups(String query, int offset, int limit,
-      String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    String lang, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    /**
-    * http://host:port/groups
-    */
-    vertxContext.runOnContext(v -> {
-      try {
-        System.out.println("sending... getGroups");
-        CQLWrapper cql = getCQL(query,limit, offset);
-
-        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class,
-          new String[]{"*"}, cql, true, true,
-            reply -> {
-              try {
-                if(reply.succeeded()){
-                  Usergroups groups = new Usergroups();
-                  @SuppressWarnings("unchecked")
-                  List<Usergroup> groupList = reply.result().getResults();
-                  groups.setUsergroups(groupList);
-                  groups.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-                    .respond200WithApplicationJson(groups)));
-                }
-                else{
-                  log.error(reply.cause().getMessage(), reply.cause());
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-                    .respond400WithTextPlain(reply.cause().getMessage())));
-                }
-              } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-                  .respond500WithTextPlain(messages.getMessage(
-                    lang, MessageConsts.InternalServerError))));
-              }
-            });
-      }
-      catch(FieldException fe){
-        log.error(fe.getLocalizedMessage(), fe);
-        asyncResultHandler.handle(Future.succeededFuture(GetUsersResponse.respond400WithTextPlain(
-                "CQL Parsing Error for '" + query + "': " + fe.getLocalizedMessage())));
-      }
-      catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsResponse
-          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
-
+    PgUtil.get(GROUP_TABLE, Usergroup.class, Usergroups.class, query, offset, limit, okapiHeaders,
+      vertxContext, GetGroupsResponse.class, asyncResultHandler);
   }
 
   @Validate
   @Override
   public void postGroups(String lang, Usergroup entity,
-          Map<String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) {
+    Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
 
-    vertxContext.runOnContext(v -> {
+    PgUtil.post(GROUP_TABLE, entity, okapiHeaders, vertxContext, PostGroupsResponse.class, post -> {
       try {
-        System.out.println("sending... postGroups");
-        String id = entity.getId();
-        if(id == null) {
-          id = UUID.randomUUID().toString();
-          entity.setId(id);
+        if (post.succeeded() && isDuplicate(post.result().getEntity().toString())) {
+          asyncResultHandler.handle(Future.succeededFuture(
+              PostGroupsResponse.respond422WithApplicationJson(
+                ValidationHelper.createValidationErrorMessage(
+                  "group", entity.getGroup(), "Group exists"))));
+          return;
         }
-        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).save(
-          GROUP_TABLE, id, entity, reply -> {
-            try {
-              if(reply.succeeded()){
-                String ret = reply.result();
-                entity.setId(ret);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                  PostGroupsResponse.respond201WithApplicationJson(entity,
-                    PostGroupsResponse.headersFor201().withLocation(LOCATION_PREFIX + ret))));
-              }
-              else{
-                log.error(reply.cause().getMessage(), reply.cause());
-                if(isDuplicate(reply.cause().getMessage())){
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                          PostGroupsResponse.respond422WithApplicationJson(
-                          ValidationHelper.createValidationErrorMessage(
-                          "group", entity.getGroup(), "Group exists"))));
-                }
-                else{
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                          PostGroupsResponse.respond500WithTextPlain(
-                          messages.getMessage(lang,
-                          MessageConsts.InternalServerError))));
-                }
-              }
-            } catch (Exception e) {
-              log.error(e.getMessage(), e);
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                      PostGroupsResponse.respond500WithTextPlain(
-                      messages.getMessage(lang, MessageConsts.InternalServerError))));
-            }
-          });
+        asyncResultHandler.handle(post);
       } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
-                PostGroupsResponse.respond500WithTextPlain(
-                messages.getMessage(lang, MessageConsts.InternalServerError))));
+        ValidationHelper.handleError(e, asyncResultHandler);
       }
     });
-
   }
 
   @Validate
   @Override
   public void getGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    vertxContext.runOnContext(v -> {
-      try {
-        System.out.println("sending... getGroupsByGroupId");
-
-        Criterion c = new Criterion(
-          new Criteria().addField(ID_FIELD_NAME).setJSONB(false).setOperation("=").setValue("'"+groupId+"'"));
-
-        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).get(GROUP_TABLE, Usergroup.class, c, false,
-            reply -> {
-              try {
-                if(reply.succeeded()){
-                  @SuppressWarnings("unchecked")
-                  List<Usergroup> userGroup = reply.result().getResults();
-                  if(userGroup.isEmpty()){
-                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .respond404WithTextPlain(groupId)));
-                  }
-                  else{
-                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .respond200WithApplicationJson(userGroup.get(0))));
-                  }
-                }
-                else{
-                  log.error(reply.cause().getMessage(), reply.cause());
-                  if(isInvalidUUID(reply.cause().getMessage())){
-                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .respond404WithTextPlain(groupId)));
-                  }
-                  else{
-                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                      .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-                  }
-                }
-              } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-                  .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-              }
-        });
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(GetGroupsByGroupIdResponse
-          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
+    PgUtil.getById(GROUP_TABLE, Usergroup.class, groupId, okapiHeaders, vertxContext,
+        GetGroupsByGroupIdResponse.class, asyncResultHandler);
   }
 
   @Validate
   @Override
   public void deleteGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    vertxContext.runOnContext(v -> {
-      System.out.println("sending... deleteGroupsByGroupId");
-      try {
-        Criterion criterion = new Criterion(
-          new Criteria()
-            .addField(ID_FIELD_NAME)
-            .setJSONB(false)
-            .setOperation("=")
-            .setValue("'"+ groupId +"'"));
-        PostgresClient postgresClient = PostgresClientUtil.getInstance(vertxContext, okapiHeaders);
-        postgresClient.get(GROUP_TABLE, Usergroup.class, criterion, true, getReply -> {
-          try {
-            if(getReply.failed()) {
-               log.error(getReply.cause().getMessage(), getReply.cause());
-               asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                 .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-            } else {
-              List<Usergroup> userGroup = getReply.result().getResults();
-              if(userGroup.isEmpty()) {
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                        .respond404WithTextPlain(groupId)));
-                return;
-              }
-              User u = new User();
-              u.setPatronGroup(groupId);
-              postgresClient.get(UsersAPI.TABLE_NAME_USERS, u, true, false, replyHandler -> {
-                if(replyHandler.succeeded()) {
-                  List<User> userList = replyHandler.result().getResults();
-                  if(userList.size() > 0){
-                    log.error("Can not delete group, "+ groupId + ". " + userList.size()  + " users associated with it");
-                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                      .respond400WithTextPlain("Can not delete group, " + userList.size()  + " users associated with it")));
-                    return;
-                  }
-                  else{
-                    log.info("Deleting empty group, "+ groupId);
-                  }
-                  try {
-                    postgresClient.delete(GROUP_TABLE, groupId, reply -> {
-                        try {
-                          if(reply.succeeded()){
-                            if(reply.result().getUpdated() == 1){
-                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                                .respond204()));
-                            }
-                            else{
-                              log.error(messages.getMessage(lang, MessageConsts.DeletedCountError, 1, reply.result().getUpdated()));
-                              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                                .respond404WithTextPlain(messages.getMessage(lang, MessageConsts.DeletedCountError,1 , reply.result().getUpdated()))));
-                            }
-                          }
-                          else{
-                            log.error(reply.cause().getMessage(), reply.cause());
-                            asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                              .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-                          }
-                        } catch (Exception e) {
-                          log.error(e.getMessage(), e);
-                          asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                            .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-                        }
-                      });
-                  } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                      .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-                  }
-                }
-                else{
-                  log.error(replyHandler.cause().getMessage(), replyHandler.cause());
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-                    .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-                }
-              });
-            }
-          } catch(Exception e) {
-            log.error(e.getMessage(), e);
-            asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-              .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-          }
-        });
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(DeleteGroupsByGroupIdResponse
-          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
+    PgUtil.deleteById(GROUP_TABLE, groupId, okapiHeaders, vertxContext,
+        DeleteGroupsByGroupIdResponse.class, asyncResultHandler);
   }
 
   @Validate
   @Override
   public void putGroupsByGroupId(String groupId, String lang, Usergroup entity,
-      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
 
-    vertxContext.runOnContext(v -> {
-      System.out.println("sending... putGroupsByGroupId");
-      try {
-        PostgresClientUtil.getInstance(vertxContext, okapiHeaders).update(
-          GROUP_TABLE, entity, groupId,
-          reply -> {
-            try {
-              if(reply.succeeded()){
-                if(reply.result().getUpdated() == 0){
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                    .respond404WithTextPlain(messages.getMessage(lang, MessageConsts.NoRecordsUpdated))));
-                }
-                else{
-                  asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                    .respond204()));
-                }
-              }
-              else{
-                log.error(reply.cause().getMessage());
-                asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                  .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-              }
-            } catch (Exception e) {
-              log.error(e.getMessage(), e);
-              asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-                .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-            }
-          });
-      } catch (Exception e) {
-        log.error(e.getMessage(), e);
-        asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(PutGroupsByGroupIdResponse
-          .respond500WithTextPlain(messages.getMessage(lang, MessageConsts.InternalServerError))));
-      }
-    });
+    PgUtil.put(GROUP_TABLE, entity, groupId, okapiHeaders, vertxContext,
+        PutGroupsByGroupIdResponse.class, asyncResultHandler);
   }
 
-  private CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException, IOException {
-    CQL2PgJSON cql2pgJson = new CQL2PgJSON(GROUP_TABLE + ".jsonb");
-    return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
-  }
-
-  private boolean isDuplicate(String errorMessage){
+  protected boolean isDuplicate(String errorMessage) {
     return errorMessage != null && errorMessage.contains("duplicate key value violates unique constraint");
-  }
-
-  private boolean isInvalidUUID(String errorMessage){
-    return errorMessage != null && errorMessage.contains("uuid");
   }
 }

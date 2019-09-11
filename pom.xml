@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>15.6.1-SNAPSHOT</version>
+  <version>15.6.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -174,22 +174,6 @@
             </goals>
             <configuration>
               <outputDirectory>${basedir}/target/classes/apidocs/raml</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${ramlfiles_path}</directory>
-                  <filtering>true</filtering>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-resources-2</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${basedir}/target/classes/apidocs/raml-util</outputDirectory>
               <resources>
                 <resource>
                   <directory>${ramlfiles_path}</directory>
@@ -427,7 +411,7 @@
     <url>https://github.com/folio-org/mod-users</url>
     <connection>scm:git:git://github.com:folio-org/mod-users.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-users.git</developerConnection>
-    <tag>v15.6.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <properties>
@@ -435,11 +419,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <raml-module-builder.version>24.0.0</raml-module-builder.version>
+    <raml-module-builder.version>26.2.2</raml-module-builder.version>
     <vertx.version>3.5.4</vertx.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
-    <postgresrunner.port>5434</postgresrunner.port>
-    <!-- Postgres port for Jenkins CI build environment https://issues.folio.org/browse/METADATA-10 -->
-    <postgres.port>5433</postgres.port>
   </properties>
 </project>

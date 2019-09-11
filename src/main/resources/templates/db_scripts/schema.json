@@ -2,12 +2,26 @@
   "scripts" : [],
   "tables" : [
     {
-      "tableName" : "users",
-      "pkColumnName": "id",
-      "generateId" : true,
+      "tableName" : "groups",
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
       "withMetadata" : true,
+      "uniqueIndex" : [
+        {
+          "fieldName" : "group",
+          "tOps" : "ADD"
+        }
+      ]
+    },
+    {
+      "tableName" : "users",
+      "fromModuleVersion" : "14.3",
+      "withMetadata" : true,
+      "foreignKeys": [
+        {
+          "fieldName": "patronGroup",
+          "targetTable": "groups"
+        }
+      ],
       "uniqueIndex" : [
         {
           "fieldName" : "username",
@@ -84,25 +98,8 @@
       ]
     },
     {
-      "tableName" : "groups",
-      "pkColumnName": "id",
-      "generateId" : false,
-      "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
-      "withMetadata" : true,
-      "uniqueIndex" : [
-        {
-          "fieldName" : "group",
-          "tOps" : "ADD"
-        }
-      ]
-    },
-    {
       "tableName" : "addresstype",
-      "pkColumnName": "id",
-      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
       "withMetadata" : true,
       "uniqueIndex" : [
         {
@@ -113,17 +110,13 @@
     },
     {
       "tableName" : "proxyfor",
-      "pkColumnName": "id",
-      "generateId" : false,
       "fromModuleVersion" : "14.3",
-      "populateJsonWithId" : false,
       "withMetadata" : true
     }
   ],
   "views" : [
     {
       "viewName": "users_groups_view",
-      "pkColumnName": "id",
       "join": [
         {
           "table": {
