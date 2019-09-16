@@ -4,6 +4,7 @@ buildMvn {
   publishAPI = true
   mvnDeploy = true
   runLintRamlCop = true
+  doKubeDeploy = true
 
   doDocker = {
     buildJavaDocker {
