@@ -117,6 +117,38 @@
       ]
     },
     {
+      "id": "custom-fields",
+      "version": "1.0",
+      "interfaceType" : "multiple",
+      "handlers": [
+        {
+          "methods": ["GET"],
+          "pathPattern": "/custom-fields",
+          "permissionsRequired": ["custom.fields.collection.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/custom-fields",
+          "permissionsRequired": ["custom.fields.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/custom-fields/{id}",
+          "permissionsRequired": ["custom.fields.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/custom-fields/{id}",
+          "permissionsRequired": ["custom.fields.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/custom-fields/{id}",
+          "permissionsRequired": ["custom.fields.item.delete"]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "1.2",
       "interfaceType" : "system",
