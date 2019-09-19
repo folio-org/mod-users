@@ -194,8 +194,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -231,8 +231,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -260,17 +260,18 @@ public class RestVerticleIT {
   private Future<Void> deleteUser(TestContext context) {
     System.out.println("Deleting existing user\n");
     Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.delete(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 204);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("accept", "*/*")
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
+//    HttpClient client = vertx.createHttpClient();
+//    client.delete(port, "localhost", "/users/" + joeBlockId, res -> {
+//      assertStatus(context, res, 204);
+//      future.complete();
+//    })
+//      .putHeader("X-Okapi-Tenant", "diku")
+//      .putHeader("accept", "*/*")
+//      .exceptionHandler(e -> {
+//        future.fail(e);
+//      })
+//      .end();
+    deleteWithNoContentStatus(context, future, "/users/" + joeBlockId);
     return future;
   }
 
@@ -287,8 +288,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -334,8 +335,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -371,8 +372,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -405,8 +406,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -428,8 +429,8 @@ public class RestVerticleIT {
         future.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -453,8 +454,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -490,8 +491,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -517,8 +518,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -556,8 +557,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -578,8 +579,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -604,8 +605,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         context.fail(e);
       })
@@ -626,8 +627,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -650,8 +651,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -671,8 +672,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -692,8 +693,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -739,16 +740,16 @@ public class RestVerticleIT {
                 future.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("content-type", "application/json")
-              .putHeader("accept", "text/plain")
+              .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
               .exceptionHandler(e -> {
                 future.fail(e);
               })
               .end();
           })
             .putHeader("X-Okapi-Tenant", "diku")
-            .putHeader("content-type", "application/json")
-            .putHeader("accept", "text/plain")
+            .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+            .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
             .exceptionHandler(e -> {
               future.fail(e);
             })
@@ -757,8 +758,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -776,8 +777,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -794,8 +795,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -821,8 +822,8 @@ public class RestVerticleIT {
             future.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
@@ -830,8 +831,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -872,8 +873,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -907,8 +908,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -942,16 +943,16 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -988,16 +989,16 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1028,24 +1029,24 @@ public class RestVerticleIT {
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1069,16 +1070,16 @@ public class RestVerticleIT {
         future.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1105,24 +1106,24 @@ public class RestVerticleIT {
           future.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1172,16 +1173,16 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1229,24 +1230,24 @@ public class RestVerticleIT {
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
           .end(userObject2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1266,8 +1267,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1287,8 +1288,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1309,8 +1310,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1330,8 +1331,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1356,8 +1357,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1391,8 +1392,8 @@ public class RestVerticleIT {
                 future.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", "application/json")
-                .putHeader("accept", "application/json")
+                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .exceptionHandler(e -> {
                   future.fail(e);
                 })
@@ -1403,8 +1404,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -1444,9 +1445,9 @@ public class RestVerticleIT {
                 future.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", "application/json")
-                .putHeader("accept", "application/json")
-                .putHeader("accept", "text/plain")
+                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
                 .exceptionHandler(e -> {
                   future.fail(e);
                 })
@@ -1457,8 +1458,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -1494,9 +1495,9 @@ public class RestVerticleIT {
                 future.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", "application/json")
-                .putHeader("accept", "application/json")
-                .putHeader("accept", "text/plain")
+                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
                 .exceptionHandler(e -> {
                   future.fail(e);
                 })
@@ -1507,8 +1508,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -1563,8 +1564,9 @@ public class RestVerticleIT {
               future.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("Content-Type", "application/json")
-              .putHeader("Accept", "application/json,text/plain")
+              .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
               .exceptionHandler(e -> {
                 future.fail(e);
               })
@@ -1572,8 +1574,9 @@ public class RestVerticleIT {
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("Content-Type", "application/json")
-          .putHeader("Accept", "application/json,text/plain")
+          .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
@@ -1582,8 +1585,9 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("Content-Type", "application/json")
-      .putHeader("Accept", "application/json,text/plain")
+      .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .putHeader("X-Okapi-Token", fakeJWT)
       .exceptionHandler(e -> {
         future.fail(e);
@@ -1601,8 +1605,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -2109,8 +2113,9 @@ public class RestVerticleIT {
       .handler(handler);
     //request.putHeader("Authorization", "diku");
     request.putHeader("x-okapi-tenant", "diku");
-    request.putHeader("Accept", "application/json,text/plain");
-    request.putHeader("Content-type", contentType);
+    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF);
+    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF);
+    request.putHeader("Content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF);
     request.end(buffer);
   }
 
