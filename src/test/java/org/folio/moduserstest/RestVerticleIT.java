@@ -1,5 +1,38 @@
 package org.folio.moduserstest;
 
+import static io.vertx.core.http.HttpMethod.DELETE;
+import static io.vertx.core.http.HttpMethod.GET;
+import static io.vertx.core.http.HttpMethod.POST;
+import static io.vertx.core.http.HttpMethod.PUT;
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
+import static org.folio.util.StringUtil.urlEncode;
+
+import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -16,25 +49,14 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import junit.framework.AssertionFailedError;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
-
-import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import org.joda.time.DateTime;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
@@ -45,29 +67,31 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.tools.utils.VertxUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.util.StringUtil;
-import org.joda.time.DateTime;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RestVerticleIT {
 
   private static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
+  private static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
+  private static final String HTTP_LOCALHOST = "http://localhost:";
+
+  private final String userUrl = HTTP_LOCALHOST + port + "/users";
+  private final String groupUrl = HTTP_LOCALHOST + port + "/groups";
+  private final String customFieldsPath = "/custom-fields";
 
   private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
   private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
+
+  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\",\"name\": \"Department\",\"visible\": true,\"required\": true,\"helpText\": \"Provide a department\",\"entityType\": \"user\",\"type\": \"TEXTBOX_SHORT\"}";
+  private static final String putCustomField = "{\"name\": \"Department updated\",\"visible\": true,\"required\": false,\"helpText\": \"Provide a department\",\"entityType\": \"user\",\"type\": \"RADIO_BUTTON\"}";
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static final String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
+  private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
@@ -142,7 +166,7 @@ public class RestVerticleIT {
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
+    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port))
       .setWorker(true);
@@ -194,8 +218,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -231,8 +255,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -260,17 +284,7 @@ public class RestVerticleIT {
   private Future<Void> deleteUser(TestContext context) {
     System.out.println("Deleting existing user\n");
     Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.delete(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 204);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("accept", "*/*")
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
+    deleteWithNoContentStatus(context, future, "/users/" + joeBlockId);
     return future;
   }
 
@@ -287,8 +301,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -334,8 +348,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -371,8 +385,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -388,7 +402,7 @@ public class RestVerticleIT {
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
-      client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode("(id==" + joeBlockId + ")"), res -> {
+      client.get(port, "localhost", "/users?query=" + urlEncode("(id==" + joeBlockId + ")"), res -> {
         assertStatus(context, res, 200);
         res.bodyHandler(buf -> {
           try {
@@ -405,8 +419,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -428,8 +442,8 @@ public class RestVerticleIT {
         future.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -453,8 +467,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -467,7 +481,7 @@ public class RestVerticleIT {
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
-      client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode(cql), res -> {
+      client.get(port, "localhost", "/users?query=" + urlEncode(cql), res -> {
         assertStatus(context, res, 200);
         res.bodyHandler(buf -> {
           try {
@@ -490,8 +504,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -517,8 +531,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -556,8 +570,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -578,8 +592,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -604,8 +618,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         context.fail(e);
       })
@@ -626,8 +640,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -650,8 +664,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -671,8 +685,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -692,8 +706,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -739,16 +753,16 @@ public class RestVerticleIT {
                 future.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("content-type", "application/json")
-              .putHeader("accept", "text/plain")
+              .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
               .exceptionHandler(e -> {
                 future.fail(e);
               })
               .end();
           })
             .putHeader("X-Okapi-Tenant", "diku")
-            .putHeader("content-type", "application/json")
-            .putHeader("accept", "text/plain")
+            .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+            .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
             .exceptionHandler(e -> {
               future.fail(e);
             })
@@ -757,8 +771,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -776,8 +790,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -794,8 +808,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -821,8 +835,8 @@ public class RestVerticleIT {
             future.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
@@ -830,8 +844,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "text/plain")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -872,8 +886,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -907,8 +921,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -942,16 +956,16 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -988,16 +1002,16 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1028,24 +1042,24 @@ public class RestVerticleIT {
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1069,16 +1083,16 @@ public class RestVerticleIT {
         future.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1105,24 +1119,24 @@ public class RestVerticleIT {
           future.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1172,16 +1186,16 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1229,24 +1243,24 @@ public class RestVerticleIT {
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", "application/json")
-          .putHeader("accept", "text/plain")
+          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
           .end(userObject2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1266,8 +1280,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1287,8 +1301,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1309,8 +1323,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1330,8 +1344,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1356,8 +1370,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1391,8 +1405,8 @@ public class RestVerticleIT {
                 future.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", "application/json")
-                .putHeader("accept", "application/json")
+                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .exceptionHandler(e -> {
                   future.fail(e);
                 })
@@ -1403,8 +1417,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -1444,9 +1458,9 @@ public class RestVerticleIT {
                 future.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", "application/json")
-                .putHeader("accept", "application/json")
-                .putHeader("accept", "text/plain")
+                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
                 .exceptionHandler(e -> {
                   future.fail(e);
                 })
@@ -1457,8 +1471,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -1494,9 +1508,9 @@ public class RestVerticleIT {
                 future.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", "application/json")
-                .putHeader("accept", "application/json")
-                .putHeader("accept", "text/plain")
+                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
                 .exceptionHandler(e -> {
                   future.fail(e);
                 })
@@ -1507,8 +1521,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", "application/json")
-        .putHeader("accept", "application/json")
+        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(e -> {
           future.fail(e);
         })
@@ -1563,8 +1577,9 @@ public class RestVerticleIT {
               future.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("Content-Type", "application/json")
-              .putHeader("Accept", "application/json,text/plain")
+              .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
               .exceptionHandler(e -> {
                 future.fail(e);
               })
@@ -1572,8 +1587,9 @@ public class RestVerticleIT {
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("Content-Type", "application/json")
-          .putHeader("Accept", "application/json,text/plain")
+          .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(e -> {
             future.fail(e);
           })
@@ -1582,8 +1598,9 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("Content-Type", "application/json")
-      .putHeader("Accept", "application/json,text/plain")
+      .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .putHeader("X-Okapi-Token", fakeJWT)
       .exceptionHandler(e -> {
         future.fail(e);
@@ -1601,8 +1618,8 @@ public class RestVerticleIT {
       future.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", "application/json")
-      .putHeader("accept", "application/json")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1692,31 +1709,26 @@ public class RestVerticleIT {
 
   @Test
   public void test2Group(TestContext context) throws Exception {
-    String url = "http://localhost:" + port + "/groups";
-    String userUrl = "http://localhost:" + port + "/users";
 
     /**
      * add a group
      */
     CompletableFuture<Response> addGroupCF = new CompletableFuture();
-    String addGroupURL = url;
-    send(addGroupURL, context, HttpMethod.POST, fooGroupData,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, new HTTPResponseHandler(addGroupCF));
-    Response addGroupResponse = addGroupCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(addGroupResponse.code, HttpURLConnection.HTTP_CREATED);
+    send(groupUrl, context, POST, fooGroupData,  new HTTPResponseHandler(addGroupCF));
+    Response addGroupResponse = addGroupCF.get(5, SECONDS);
+    context.assertEquals(addGroupResponse.code, HTTP_CREATED);
     groupID1 = addGroupResponse.body.getString("id");
     System.out.println(addGroupResponse.body
-      + "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
+      + "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
     /**
      * update a group
      */
     CompletableFuture<Response> updateGroupCF = new CompletableFuture();
-    String updateGroupURL = url + "/" + groupID1;
-    send(updateGroupURL, context, HttpMethod.PUT, barGroupData,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(updateGroupCF));
-    Response updateGroupResponse = updateGroupCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(updateGroupResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
+    String updateGroupURL = groupUrl + "/" + groupID1;
+    send(updateGroupURL, context, PUT, barGroupData, new HTTPNoBodyResponseHandler(updateGroupCF));
+    Response updateGroupResponse = updateGroupCF.get(5, SECONDS);
+    context.assertEquals(updateGroupResponse.code, HTTP_NO_CONTENT);
     System.out.println(updateGroupResponse.body
       + "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
 
@@ -1724,11 +1736,10 @@ public class RestVerticleIT {
      * delete a group
      */
     CompletableFuture<Response> deleteCleanCF = new CompletableFuture();
-    String deleteCleanURL = url + "/" + groupID1;
-    send(deleteCleanURL, context, HttpMethod.DELETE, null,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(deleteCleanCF));
-    Response deleteCleanResponse = deleteCleanCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(deleteCleanResponse.code, HttpURLConnection.HTTP_NO_CONTENT);
+    String deleteCleanURL = groupUrl + "/" + groupID1;
+    send(deleteCleanURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCleanCF));
+    Response deleteCleanResponse = deleteCleanCF.get(5, SECONDS);
+    context.assertEquals(deleteCleanResponse.code, HTTP_NO_CONTENT);
     System.out.println(deleteCleanResponse.body
       + "\nStatus - " + deleteCleanResponse.code + " at " + System.currentTimeMillis() + " for " + deleteCleanURL);
 
@@ -1736,23 +1747,22 @@ public class RestVerticleIT {
      * re-add a group
      */
     CompletableFuture<Response> addNewGroupCF = new CompletableFuture();
-    send(addGroupURL, context, HttpMethod.POST, fooGroupData,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, new HTTPResponseHandler(addNewGroupCF));
-    Response addNewGroupResponse = addNewGroupCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(addNewGroupResponse.code, HttpURLConnection.HTTP_CREATED);
+    send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(addNewGroupCF));
+    Response addNewGroupResponse = addNewGroupCF.get(5, SECONDS);
+    context.assertEquals(addNewGroupResponse.code, HTTP_CREATED);
     groupID1 = addNewGroupResponse.body.getString("id");
     System.out.println(addNewGroupResponse.body
-      + "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + addGroupURL);
+      + "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
     /**
      * add a user
      */
     CompletableFuture<Response> addUserCF = new CompletableFuture();
     String addUserURL = userUrl;
-    send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID1).encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, new HTTPResponseHandler(addUserCF));
-    Response addUserResponse = addUserCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(addUserResponse.code, HttpURLConnection.HTTP_CREATED);
+    send(addUserURL, context, POST, createUser(null, "jhandley", groupID1).encode(),
+      new HTTPResponseHandler(addUserCF));
+    Response addUserResponse = addUserCF.get(5, SECONDS);
+    context.assertEquals(addUserResponse.code, HTTP_CREATED);
     String userID = addUserResponse.body.getString("id");
     System.out.println(addUserResponse.body
       + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
@@ -1761,9 +1771,9 @@ public class RestVerticleIT {
      * add the same user name again
      */
     CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-    send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley", groupID1).encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, new HTTPResponseHandler(addUserCF2));
-    Response addUserResponse2 = addUserCF2.get(5, TimeUnit.SECONDS);
+    send(addUserURL, context, POST, createUser(null, "jhandley", groupID1).encode(),
+       new HTTPResponseHandler(addUserCF2));
+    Response addUserResponse2 = addUserCF2.get(5, SECONDS);
     context.assertEquals(addUserResponse2.code, 422);
     System.out.println(addUserResponse2.body
       + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
@@ -1772,9 +1782,9 @@ public class RestVerticleIT {
      * add the same user again with same id
      */
     CompletableFuture<Response> addUserCF3 = new CompletableFuture();
-    send(addUserURL, context, HttpMethod.POST, createUser(userID, "jhandley", groupID1).encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, new HTTPResponseHandler(addUserCF3));
-    Response addUserResponse3 = addUserCF3.get(5, TimeUnit.SECONDS);
+    send(addUserURL, context, POST, createUser(userID, "jhandley", groupID1).encode(),
+       new HTTPResponseHandler(addUserCF3));
+    Response addUserResponse3 = addUserCF3.get(5, SECONDS);
     context.assertEquals(addUserResponse3.code, 422);
     System.out.println(addUserResponse3.body
       + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
@@ -1783,10 +1793,10 @@ public class RestVerticleIT {
      * add a user again with non existent patron group
      */
     CompletableFuture<Response> addUserCF4 = new CompletableFuture();
-    send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(addUserCF4));
-    Response addUserResponse4 = addUserCF4.get(5, TimeUnit.SECONDS);
-    context.assertEquals(addUserResponse4.code, 400);
+    send(addUserURL, context, POST, createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
+       new HTTPNoBodyResponseHandler(addUserCF4));
+    Response addUserResponse4 = addUserCF4.get(5, SECONDS);
+    context.assertEquals(addUserResponse4.code, HTTP_BAD_REQUEST);
     System.out.println(addUserResponse4.body
       + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
@@ -1794,10 +1804,10 @@ public class RestVerticleIT {
      * add a user again with invalid uuid
      */
     CompletableFuture<Response> addUserCF4a = new CompletableFuture();
-    send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(addUserCF4a));
-    Response addUserResponse4a = addUserCF4a.get(5, TimeUnit.SECONDS);
-    context.assertEquals(addUserResponse4a.code, 400);
+    send(addUserURL, context, POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
+       new HTTPNoBodyResponseHandler(addUserCF4a));
+    Response addUserResponse4a = addUserCF4a.get(5, SECONDS);
+    context.assertEquals(addUserResponse4a.code, HTTP_BAD_REQUEST);
     System.out.println(addUserResponse4a.body
       + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
@@ -1805,10 +1815,10 @@ public class RestVerticleIT {
      * update a user again with non existent patron group
      */
     CompletableFuture<Response> updateUserCF = new CompletableFuture();
-    send(addUserURL + "/" + userID, context, HttpMethod.PUT, createUser(userID, "jhandley2nd", "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(updateUserCF));
-    Response updateUserResponse = updateUserCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(updateUserResponse.code, 400);
+    send(addUserURL + "/" + userID, context, PUT, createUser(userID, "jhandley2nd",
+      "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), new HTTPNoBodyResponseHandler(updateUserCF));
+    Response updateUserResponse = updateUserCF.get(5, SECONDS);
+    context.assertEquals(updateUserResponse.code, HTTP_BAD_REQUEST);
     System.out.println(updateUserResponse.body
       + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
 
@@ -1816,10 +1826,10 @@ public class RestVerticleIT {
      * update a user again with existent patron group
      */
     CompletableFuture<Response> updateUser2CF = new CompletableFuture();
-    send(addUserURL + "/" + userID, context, HttpMethod.PUT, createUser(userID, "jhandley2nd", groupID1).encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 204, new HTTPNoBodyResponseHandler(updateUser2CF));
-    Response updateUser2Response = updateUser2CF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(updateUser2Response.code, 204);
+    send(addUserURL + "/" + userID, context, PUT, createUser(userID, "jhandley2nd", groupID1).encode(),
+      new HTTPNoBodyResponseHandler(updateUser2CF));
+    Response updateUser2Response = updateUser2CF.get(5, SECONDS);
+    context.assertEquals(updateUser2Response.code, HTTP_NO_CONTENT);
     System.out.println(updateUser2Response.body
       + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
 
@@ -1828,10 +1838,10 @@ public class RestVerticleIT {
      */
     CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
     String getUsersInGroupURL = userUrl + "?query=patronGroup==" + groupID1;
-    send(getUsersInGroupURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF,
-      200, new HTTPResponseHandler(getUsersInGroupCF));
-    Response getUsersInGroupResponse = getUsersInGroupCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(getUsersInGroupResponse.code, HttpURLConnection.HTTP_OK);
+    send(getUsersInGroupURL, context, GET, null,
+      new HTTPResponseHandler(getUsersInGroupCF));
+    Response getUsersInGroupResponse = getUsersInGroupCF.get(5, SECONDS);
+    context.assertEquals(getUsersInGroupResponse.code, HTTP_OK);
     System.out.println(getUsersInGroupResponse.body
       + "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
       + getUsersInGroupURL);
@@ -1841,26 +1851,21 @@ public class RestVerticleIT {
      * get all groups in groups table
      */
     CompletableFuture<Response> getAllGroupCF = new CompletableFuture();
-    String getAllGroupURL = url;
-    send(getAllGroupURL, context, HttpMethod.GET, null,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, new HTTPResponseHandler(getAllGroupCF));
-    Response getAllGroupResponse = getAllGroupCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(getAllGroupResponse.code, HttpURLConnection.HTTP_OK);
+    send(groupUrl, context, GET, null, new HTTPResponseHandler(getAllGroupCF));
+    Response getAllGroupResponse = getAllGroupCF.get(5, SECONDS);
+    context.assertEquals(getAllGroupResponse.code, HTTP_OK);
     System.out.println(getAllGroupResponse.body
-      + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for "
-      + getAllGroupURL);
+      + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
     context.assertTrue(isSizeMatch(getAllGroupResponse, 5)); // 4 in reference + 1 in test
 
     /**
      * try to get via cql
      */
     CompletableFuture<Response> cqlCF = new CompletableFuture();
-    String cqlURL = url + "?query=group==librarianFOO";
-    send(cqlURL,
-      context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
-      new HTTPResponseHandler(cqlCF));
-    Response cqlResponse = cqlCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(cqlResponse.code, HttpURLConnection.HTTP_OK);
+    String cqlURL = groupUrl + "?query=group==librarianFOO";
+    send(cqlURL, context, GET, null, new HTTPResponseHandler(cqlCF));
+    Response cqlResponse = cqlCF.get(5, SECONDS);
+    context.assertEquals(cqlResponse.code, HTTP_OK);
     System.out.println(cqlResponse.body
       + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
     context.assertTrue(isSizeMatch(cqlResponse, 1));
@@ -1869,11 +1874,10 @@ public class RestVerticleIT {
      * delete a group - should fail as there is a user associated with the group
      */
     CompletableFuture<Response> delete1CF = new CompletableFuture();
-    String delete1URL = url + "/" + groupID1;
-    send(delete1URL, context, HttpMethod.DELETE, null,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(delete1CF));
-    Response delete1Response = delete1CF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(delete1Response.code, HttpURLConnection.HTTP_BAD_REQUEST);
+    String delete1URL = groupUrl + "/" + groupID1;
+    send(delete1URL, context, DELETE, null, new HTTPNoBodyResponseHandler(delete1CF));
+    Response delete1Response = delete1CF.get(5, SECONDS);
+    context.assertEquals(delete1Response.code, HTTP_BAD_REQUEST);
     System.out.println(delete1Response.body
       + "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
 
@@ -1881,11 +1885,10 @@ public class RestVerticleIT {
      * delete a nonexistent group - should return 404
      */
     CompletableFuture<Response> deleteNEGCF = new CompletableFuture();
-    String deleteNEGURL = url + "/a492ffd2-b848-48bf-b716-1a645822279e";
-    send(deleteNEGURL, context, HttpMethod.DELETE, null,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 404, new HTTPNoBodyResponseHandler(deleteNEGCF));
-    Response deleteNEGResponse = deleteNEGCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(deleteNEGResponse.code, HttpURLConnection.HTTP_NOT_FOUND);
+    String deleteNEGURL = groupUrl + "/a492ffd2-b848-48bf-b716-1a645822279e";
+    send(deleteNEGURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteNEGCF));
+    Response deleteNEGResponse = deleteNEGCF.get(5, SECONDS);
+    context.assertEquals(deleteNEGResponse.code, HTTP_NOT_FOUND);
     System.out.println(deleteNEGResponse.body
       + "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
 
@@ -1893,22 +1896,20 @@ public class RestVerticleIT {
      * try to add a duplicate group
      */
     CompletableFuture<Response> dupCF = new CompletableFuture();
-    send(url, context, HttpMethod.POST, fooGroupData,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPResponseHandler(dupCF));
-    Response dupResponse = dupCF.get(5, TimeUnit.SECONDS);
+    send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(dupCF));
+    Response dupResponse = dupCF.get(5, SECONDS);
     context.assertEquals(dupResponse.code, 422);
     System.out.println(dupResponse.body
-      + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + url);
+      + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
     /**
      * get a group
      */
     CompletableFuture<Response> getSpecGroupCF = new CompletableFuture();
-    String getSpecGroupURL = url + "/" + groupID1;
-    send(getSpecGroupURL, context, HttpMethod.GET, null,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 200, new HTTPResponseHandler(getSpecGroupCF));
-    Response getSpecGroupResponse = getSpecGroupCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(getSpecGroupResponse.code, HttpURLConnection.HTTP_OK);
+    String getSpecGroupURL = groupUrl + "/" + groupID1;
+    send(getSpecGroupURL, context, GET, null,  new HTTPResponseHandler(getSpecGroupCF));
+    Response getSpecGroupResponse = getSpecGroupCF.get(5, SECONDS);
+    context.assertEquals(getSpecGroupResponse.code, HTTP_OK);
     System.out.println(getSpecGroupResponse.body
       + "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
     context.assertTrue("librarianFOO".equals(getSpecGroupResponse.body.getString("group")));
@@ -1917,11 +1918,10 @@ public class RestVerticleIT {
      * get a group bad id
      */
     CompletableFuture<Response> getBadIDCF = new CompletableFuture();
-    String getBadIDURL = url + "/3748ec8d-8dbc-4717-819d-87c839e6905e";
-    send(getBadIDURL, context, HttpMethod.GET, null,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 404, new HTTPNoBodyResponseHandler(getBadIDCF));
-    Response getBadIDResponse = getBadIDCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(getBadIDResponse.code, HttpURLConnection.HTTP_NOT_FOUND);
+    String getBadIDURL = groupUrl + "/3748ec8d-8dbc-4717-819d-87c839e6905e";
+    send(getBadIDURL, context, GET, null, new HTTPNoBodyResponseHandler(getBadIDCF));
+    Response getBadIDResponse = getBadIDCF.get(5, SECONDS);
+    context.assertEquals(getBadIDResponse.code, HTTP_NOT_FOUND);
     System.out.println(getBadIDResponse.body
       + "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
 
@@ -1929,11 +1929,10 @@ public class RestVerticleIT {
      * delete a group with users should fail
      */
     CompletableFuture<Response> deleteCF = new CompletableFuture();
-    String delete = url + "/" + groupID1;
-    send(delete, context, HttpMethod.DELETE, null,
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 400, new HTTPNoBodyResponseHandler(deleteCF));
-    Response deleteResponse = deleteCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(deleteResponse.code, HttpURLConnection.HTTP_BAD_REQUEST);
+    String delete = groupUrl + "/" + groupID1;
+    send(delete, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCF));
+    Response deleteResponse = deleteCF.get(5, SECONDS);
+    context.assertEquals(deleteResponse.code, HTTP_BAD_REQUEST);
     System.out.println(deleteResponse.body
       + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
 
@@ -1954,10 +1953,8 @@ public class RestVerticleIT {
           .put("firstName", "Moses")
         );
       CompletableFuture<Response> addExpiredUserCF = new CompletableFuture();
-      send(addUserURL, context, HttpMethod.POST, expiredUserJson.encode(),
-        SUPPORTED_CONTENT_TYPE_JSON_DEF, 201,
-        new HTTPResponseHandler(addExpiredUserCF));
-      Response addExpiredUserResponse = addExpiredUserCF.get(5, TimeUnit.SECONDS);
+      send(addUserURL, context, POST, expiredUserJson.encode(), new HTTPResponseHandler(addExpiredUserCF));
+      Response addExpiredUserResponse = addExpiredUserCF.get(5, SECONDS);
       System.out.println(addExpiredUserResponse.body
         + "\nStatus - " + addExpiredUserResponse.code + " at "
         + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
@@ -1966,66 +1963,61 @@ public class RestVerticleIT {
       ExpirationTool.doExpirationForTenant(vertx, vertxContext, "diku").setHandler(res -> {
         getExpirationCF.complete(null);
       });
-      getExpirationCF.get(5, TimeUnit.SECONDS);
+      getExpirationCF.get(5, SECONDS);
       //TimeUnit.SECONDS.sleep(15);
       CompletableFuture<Response> getExpiredUserCF = new CompletableFuture();
-      send(addUserURL + "/" + expiredUserId.toString(), context, HttpMethod.GET, null,
-        SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
-        new HTTPResponseHandler(getExpiredUserCF));
-      Response getExpiredUserResponse = getExpiredUserCF.get(5, TimeUnit.SECONDS);
+      send(addUserURL + "/" + expiredUserId.toString(), context, GET, null,
+         new HTTPResponseHandler(getExpiredUserCF));
+      Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
       context.assertEquals(getExpiredUserResponse.body.getBoolean("active"), false);
     }
   }
 
   @Test
   public void test3CrossTableQueries(TestContext context) throws Exception {
-    String url = "http://localhost:" + port + "/users?query=";
-    String userUrl = "http://localhost:" + port + "/users";
+    String url = HTTP_LOCALHOST + port + "/users?query=";
 
     CompletableFuture<Response> postGroupCF = new CompletableFuture();
-    String postGroupURL = "http://localhost:" + port + "/groups";
-    send(postGroupURL, context, HttpMethod.POST, barGroupData, SUPPORTED_CONTENT_TYPE_JSON_DEF,
-      201, new HTTPResponseHandler(postGroupCF));
-    Response postGroupResponse = postGroupCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(postGroupResponse.code, HttpURLConnection.HTTP_CREATED);
+    send(groupUrl, context, POST, barGroupData,  new HTTPResponseHandler(postGroupCF));
+    Response postGroupResponse = postGroupCF.get(5, SECONDS);
+    context.assertEquals(postGroupResponse.code, HTTP_CREATED);
     String barGroupId = postGroupResponse.body.getString("id");
     context.assertNotNull(barGroupId);
 
     int inc = 0;
     CompletableFuture<Response> addUserCF = new CompletableFuture();
-    String addUserURL = userUrl;
-    send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, new HTTPResponseHandler(addUserCF));
-    Response addUserResponse = addUserCF.get(5, TimeUnit.SECONDS);
-    context.assertEquals(addUserResponse.code, HttpURLConnection.HTTP_CREATED);
+    send(userUrl, context, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
+       new HTTPResponseHandler(addUserCF));
+    Response addUserResponse = addUserCF.get(5, SECONDS);
+    context.assertEquals(addUserResponse.code, HTTP_CREATED);
     System.out.println(addUserResponse.body
-      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-    send(addUserURL, context, HttpMethod.POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-      SUPPORTED_CONTENT_TYPE_JSON_DEF, 201, new HTTPResponseHandler(addUserCF2));
-    Response addUserResponse2 = addUserCF2.get(5, TimeUnit.SECONDS);
-    context.assertEquals(addUserResponse2.code, HttpURLConnection.HTTP_CREATED);
+    send(userUrl, context, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
+        new HTTPResponseHandler(addUserCF2));
+    Response addUserResponse2 = addUserCF2.get(5, SECONDS);
+    context.assertEquals(addUserResponse2.code, HTTP_CREATED);
     System.out.println(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     //query on users and sort by groups
     String url0 = userUrl;
-    String url1 = url + StringUtil.urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
+    String url1 = url + urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
     //String url1 = userUrl;
-    String url2 = url + StringUtil.urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
+    String url2 = url + urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
     //query and sort on groups via users endpoint
-    String url3 = url + StringUtil.urlEncode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending");
+    String url3 = url + urlEncode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending");
     //query on users sort on users and groups
-    String url4 = url + StringUtil.urlEncode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName");
+    String url4 = url + urlEncode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName");
     //query on users and groups sort by groups
-    String url5 = url + StringUtil.urlEncode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group");
+    String url5 = url + urlEncode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group");
     //query on users and sort by users
-    String url6 = url + StringUtil.urlEncode("active=true sortBy username", "UTF-8");
+    String url6 = url + urlEncode("active=true sortBy username", "UTF-8");
     //non existant group - should be 0 results
-    String url7 = url + StringUtil.urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
+    String url7 = url + urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
     //query by tag, should get one record
-    String url8 = url + StringUtil.urlEncode("tags=foo");
+    String url8 = url + urlEncode("tags=foo");
 
     CompletableFuture<Response> cqlCF0 = new CompletableFuture();
     CompletableFuture<Response> cqlCF1 = new CompletableFuture();
@@ -2043,10 +2035,9 @@ public class RestVerticleIT {
     for (int i = 0; i < 9; i++) {
       CompletableFuture<Response> cf = cqlCF[i];
       String cqlURL = urls[i];
-      send(cqlURL, context, HttpMethod.GET, null, SUPPORTED_CONTENT_TYPE_JSON_DEF, 200,
-        new HTTPResponseHandler(cf));
-      Response cqlResponse = cf.get(5, TimeUnit.SECONDS);
-      context.assertEquals(cqlResponse.code, HttpURLConnection.HTTP_OK);
+      send(cqlURL, context, GET, null,  new HTTPResponseHandler(cf));
+      Response cqlResponse = cf.get(5, SECONDS);
+      context.assertEquals(cqlResponse.code, HTTP_OK);
       System.out.println(cqlResponse.body
         + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
       //requests should usually have 3 or 4 results
@@ -2085,8 +2076,7 @@ public class RestVerticleIT {
     }
   }
 
-  private void send(String url, TestContext context, HttpMethod method, String content,
-    String contentType, int errorCode, Handler<HttpClientResponse> handler) {
+  private void send(String url, TestContext context, HttpMethod method, String content, Handler<HttpClientResponse> handler) {
     HttpClient client = vertx.createHttpClient();
     HttpClientRequest request;
     if (content == null) {
@@ -2094,11 +2084,11 @@ public class RestVerticleIT {
     }
     Buffer buffer = Buffer.buffer(content);
 
-    if (method == HttpMethod.POST) {
+    if (method == POST) {
       request = client.postAbs(url);
-    } else if (method == HttpMethod.DELETE) {
+    } else if (method == DELETE) {
       request = client.deleteAbs(url);
-    } else if (method == HttpMethod.GET) {
+    } else if (method == GET) {
       request = client.getAbs(url);
     } else {
       request = client.putAbs(url);
@@ -2109,8 +2099,9 @@ public class RestVerticleIT {
       .handler(handler);
     //request.putHeader("Authorization", "diku");
     request.putHeader("x-okapi-tenant", "diku");
-    request.putHeader("Accept", "application/json,text/plain");
-    request.putHeader("Content-type", contentType);
+    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF);
+    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF);
+    request.putHeader("Content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF);
     request.end(buffer);
   }
 
@@ -2197,5 +2188,133 @@ public class RestVerticleIT {
         .getBytes(StandardCharsets.UTF_8)),
       Base64.getEncoder().encodeToString((header.encode() + payload.encode())
         .getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @Test
+  public void test4CustomFields(TestContext context) {
+
+    Async async = context.async();
+    postCustomField(context)
+      .compose(v -> putCustomField(context))
+      .compose(v -> queryCustomField(context)).compose(this::assertCustomFieldValues)
+      .compose(v -> deleteCustomField(context))
+      .setHandler(res -> {
+        if (res.succeeded()) {
+          async.complete();
+        } else {
+          res.cause().printStackTrace();
+          context.fail(res.cause());
+        }
+    });
+  }
+
+  private Future<Void> assertCustomFieldValues(JsonObject result) {
+    Future<Void> future = Future.succeededFuture();
+    int totalRecords = result.getInteger("totalRecords");
+    if (totalRecords != 1) {
+      future.fail("Expected 1 record, got " + totalRecords);
+    }
+    JsonArray customFields = result.getJsonArray("customFields");
+    JsonObject customField = customFields.getJsonObject(0);
+    assertThat(customField.getString("entityType"), is("user"));
+    return future;
+  }
+
+  private Future<Void> deleteCustomField(TestContext context) {
+    System.out.println("Deleting existing custom field\n");
+    Future<Void> future = Future.future();
+    deleteWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId);
+    return future;
+  }
+
+  private Future<JsonObject> queryCustomField(TestContext context) {
+    String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
+    System.out.println("Getting custom field via CQL, by entityType\n");
+    Future<JsonObject> future = Future.future();
+    try {
+      getByQuery(context, requestUrl, future);
+    } catch (Exception e) {
+      future.fail(e);
+    }
+    return future;
+  }
+
+  private void getByQuery(TestContext context, String requestUrl, Future<JsonObject> future) {
+    HttpClient client = vertx.createHttpClient();
+    client.get(port, "localhost", requestUrl, res -> {
+      assertStatus(context, res, HTTP_OK);
+      res.bodyHandler(buf -> {
+        try {
+          JsonObject resultObject = buf.toJsonObject();
+            future.complete(resultObject);
+        } catch (Exception e) {
+          future.fail(e);
+        }
+      });
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(future::fail)
+      .end();
+  }
+
+  private Future<Void> postCustomField(TestContext context) {
+    System.out.println("Creating a new custom field definition\n");
+    Future<Void> future = Future.future();
+    postWithOkStatus(future, customFieldsPath, postCustomField);
+    return future;
+  }
+
+  private Future<Void> putCustomField(TestContext context) {
+    System.out.println("Update custom field definition\n");
+    Future<Void> future = Future.future();
+    return putWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId, putCustomField);
+  }
+
+  private void postWithOkStatus(Future<Void> future, String request, String body) {
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", request, res -> {
+      if (res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE) {
+        future.complete();
+      } else {
+        future.fail("Got status code: " + res.statusCode());
+      }
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("X-Okapi-Url", HTTP_LOCALHOST + port)
+      .putHeader(OKAPI_USERID_HEADER, joeBlockId)
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(future::fail)
+      .end(body);
+  }
+
+  private Future<Void> putWithNoContentStatus(TestContext context, Future<Void> future, String request, String body) {
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", request, res -> {
+      assertStatus(context, res, HTTP_NO_CONTENT);
+      future.complete();
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("X-Okapi-Url", HTTP_LOCALHOST + port)
+      .putHeader(OKAPI_USERID_HEADER, joeBlockId)
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(future::fail)
+      .end(body);
+    return future;
+  }
+
+  private void deleteWithNoContentStatus(TestContext context, Future<Void> future, String request) {
+    HttpClient client = vertx.createHttpClient();
+    client.delete(port, "localhost", request, res -> {
+      assertStatus(context, res, HTTP_NO_CONTENT);
+      future.complete();
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("accept", "*/*")
+      .exceptionHandler(future::fail)
+      .end();
   }
 }

@@ -117,6 +117,38 @@
       ]
     },
     {
+      "id": "custom-fields",
+      "version": "1.0",
+      "interfaceType" : "multiple",
+      "handlers": [
+        {
+          "methods": ["GET"],
+          "pathPattern": "/custom-fields",
+          "permissionsRequired": ["user-settings.custom-fields.collection.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/custom-fields",
+          "permissionsRequired": ["user-settings.custom-fields.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/custom-fields/{id}",
+          "permissionsRequired": ["user-settings.custom-fields.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/custom-fields/{id}",
+          "permissionsRequired": ["user-settings.custom-fields.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/custom-fields/{id}",
+          "permissionsRequired": ["user-settings.custom-fields.item.delete"]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "1.2",
       "interfaceType" : "system",
@@ -267,6 +299,43 @@
         "proxiesfor.item.put",
         "proxiesfor.item.delete"
       ]
+    },{
+      "permissionName": "user-settings.custom-fields.collection.get",
+      "displayName": "User Custom Fields - get collection",
+      "description": "Get User Custom Fields collection"
+    },
+    {
+      "permissionName": "user-settings.custom-fields.item.post",
+      "displayName": "User Custom Fields - create field",
+      "description": "Create User Custom Field"
+    },
+    {
+      "permissionName": "user-settings.custom-fields.item.get",
+      "displayName": "User Custom Fields - get field",
+      "description": "Get User Custom Field"
+    },
+    {
+      "permissionName": "user-settings.custom-fields.item.put",
+      "displayName": "User Custom Fields - modify field",
+      "description": "Modify User Custom Field"
+    },
+    {
+      "permissionName": "user-settings.custom-fields.item.delete",
+      "displayName": "User Custom Fields - delete field",
+      "description": "Delete User Custom Field"
+    },
+    {
+      "permissionName": "user-settings.custom-fields.all",
+      "displayName": "User Custom Fields module - all permissions",
+      "description": "Entire set of permissions needed to use the user custom fields",
+      "subPermissions": [
+        "user-settings.custom-fields.collection.get",
+        "user-settings.custom-fields.item.post",
+        "user-settings.custom-fields.item.get",
+        "user-settings.custom-fields.item.put",
+        "user-settings.custom-fields.item.delete"
+      ],
+      "visible": false
     }
   ],
   "metadata": {
