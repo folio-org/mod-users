@@ -2216,7 +2216,7 @@ public class RestVerticleIT {
     }
     JsonArray customFields = result.getJsonArray("customFields");
     JsonObject customField = customFields.getJsonObject(0);
-    assertEquals(customField.getString("entityType"), "user");
+    assertThat(customField.getString("entityType"), is("user"));
     return future;
   }
 
