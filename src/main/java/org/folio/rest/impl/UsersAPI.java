@@ -190,14 +190,8 @@ public class UsersAPI implements Users {
       .compose(o -> {
         PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
         return checkAllAddressTypesValid(entity, vertxContext, postgresClient)
-          .setHandler(
-            checkRes -> {
-              if (checkRes.failed()) {
-                logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
-                asyncResultHandler.handle(Future.succeededFuture(
-                  PostUsersResponse.respond500WithTextPlain(
-                    messages.getMessage(lang, MessageConsts.InternalServerError))));
-              } else if (Boolean.FALSE.equals(checkRes.result())) {
+          .compose(result -> {
+            if (Boolean.FALSE.equals(result)) {
                 asyncResultHandler.handle(Future.succeededFuture(
                   PostUsersResponse.respond400WithTextPlain(
                           "You cannot add addresses with non-existant address types")));
@@ -260,8 +254,7 @@ public class UsersAPI implements Users {
                       PostUsersResponse.respond500WithTextPlain(
                           messages.getMessage(lang, MessageConsts.InternalServerError))));
                 }
-              }
-            });
+              }}, Future.succeededFuture());
       })
       .otherwise(e -> {
         logger.error(e.getLocalizedMessage(), e);
