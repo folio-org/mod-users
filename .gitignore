@@ -9,3 +9,7 @@ nbproject/
 .project
 .settings/
 .classpath
+
+#Intellij Idea
+.idea/
+*.iml
