@@ -1,8 +1,11 @@
 package org.folio.rest.impl;
 
+import static io.vertx.core.Future.succeededFuture;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -18,20 +21,20 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
+import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
-import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
+import org.folio.rest.persist.PgUtil;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.persist.facets.FacetField;
 import org.folio.rest.persist.facets.FacetManager;
-import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.ValidationHelper;
-import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.core.AsyncResult;
@@ -41,9 +44,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import java.util.LinkedList;
-
-import static io.vertx.core.Future.succeededFuture;
 
 
 /**
@@ -180,93 +180,96 @@ public class UsersAPI implements Users {
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) {
-    if(checkForDuplicateAddressTypes(entity)) {
+    if (checkForDuplicateAddressTypes(entity)) {
       asyncResultHandler.handle(Future.succeededFuture(
-          PostUsersResponse.respond400WithTextPlain(
-                  "Users are limited to one address per addresstype")));
+        PostUsersResponse.respond400WithTextPlain(
+          "Users are limited to one address per addresstype")));
       return;
     }
-    try {
-      PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-
-      checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(
-              checkRes -> {
-        if (checkRes.failed()) {
-          logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
-          asyncResultHandler.handle(Future.succeededFuture(
-            PostUsersResponse.respond500WithTextPlain(
-              messages.getMessage(lang, MessageConsts.InternalServerError))));
-        } else if (Boolean.FALSE.equals(checkRes.result())) {
-          asyncResultHandler.handle(Future.succeededFuture(
-            PostUsersResponse.respond400WithTextPlain(
-                    "You cannot add addresses with non-existant address types")));
-        } else {
-          try {
-            getPG(postgresClient, entity, handler -> {
-
-              int res = handler.result();
-              if (res == 0) {
-                String message = "Cannot add " +
-                    entity.getPatronGroup() +
-                    ". Patron group not found";
-                logger.error(message);
+    Future.succeededFuture()
+      .compose(o -> {
+        PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+        return checkAllAddressTypesValid(entity, vertxContext, postgresClient)
+          .setHandler(
+            checkRes -> {
+              if (checkRes.failed()) {
+                logger.error(checkRes.cause().getLocalizedMessage(), checkRes.cause());
                 asyncResultHandler.handle(Future.succeededFuture(
-                    PostUsersResponse.respond400WithTextPlain(
-                        message)));
-                return;
-              } else if (res == -1) {
+                  PostUsersResponse.respond500WithTextPlain(
+                    messages.getMessage(lang, MessageConsts.InternalServerError))));
+              } else if (Boolean.FALSE.equals(checkRes.result())) {
                 asyncResultHandler.handle(Future.succeededFuture(
-                    PostUsersResponse
-                    .respond500WithTextPlain("")));
-                return;
+                  PostUsersResponse.respond400WithTextPlain(
+                          "You cannot add addresses with non-existant address types")));
               } else {
-                Date now = new Date();
-                entity.setCreatedDate(now);
-                entity.setUpdatedDate(now);
-                PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
-                  if (isDuplicateIdError(reply)) {
-                    asyncResultHandler.handle(
-                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                            ValidationHelper.createValidationErrorMessage(
-                                "id", entity.getId(),
-                                "User with this id already exists"))));
-                    return;
-                  }
-                  if (isDuplicateUsernameError(reply)) {
-                    asyncResultHandler.handle(
-                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                            ValidationHelper.createValidationErrorMessage(
-                                "username", entity.getUsername(),
-                                "User with this username already exists"))));
-                    return;
-                  }
-                  if (isDuplicateBarcodeError(reply)) {
-                    asyncResultHandler.handle(
-                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                            ValidationHelper.createValidationErrorMessage(
-                                "barcode", entity.getBarcode(),
-                                "This barcode has already been taken"))));
-                    return;
-                  }
-                  logger.debug("Save successful");
-                  asyncResultHandler.handle(reply);
-                });
+                try {
+                  getPG(postgresClient, entity, handler -> {
+
+                    int res = handler.result();
+                    if (res == 0) {
+                      String message = "Cannot add " +
+                          entity.getPatronGroup() +
+                          ". Patron group not found";
+                      logger.error(message);
+                      asyncResultHandler.handle(Future.succeededFuture(
+                          PostUsersResponse.respond400WithTextPlain(
+                              message)));
+                      return;
+                    } else if (res == -1) {
+                      asyncResultHandler.handle(Future.succeededFuture(
+                          PostUsersResponse
+                          .respond500WithTextPlain("")));
+                      return;
+                    } else {
+                      Date now = new Date();
+                      entity.setCreatedDate(now);
+                      entity.setUpdatedDate(now);
+                      PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
+                        if (isDuplicateIdError(reply)) {
+                          asyncResultHandler.handle(
+                              succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                                  ValidationHelper.createValidationErrorMessage(
+                                      "id", entity.getId(),
+                                      "User with this id already exists"))));
+                          return;
+                        }
+                        if (isDuplicateUsernameError(reply)) {
+                          asyncResultHandler.handle(
+                              succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                                  ValidationHelper.createValidationErrorMessage(
+                                      "username", entity.getUsername(),
+                                      "User with this username already exists"))));
+                          return;
+                        }
+                        if (isDuplicateBarcodeError(reply)) {
+                          asyncResultHandler.handle(
+                              succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                                  ValidationHelper.createValidationErrorMessage(
+                                      "barcode", entity.getBarcode(),
+                                      "This barcode has already been taken"))));
+                          return;
+                        }
+                        logger.debug("Save successful");
+                        asyncResultHandler.handle(reply);
+                      });
+                    }
+                  });
+                } catch (Exception e) {
+                  logger.error(e.getLocalizedMessage(), e);
+                  asyncResultHandler.handle(Future.succeededFuture(
+                      PostUsersResponse.respond500WithTextPlain(
+                          messages.getMessage(lang, MessageConsts.InternalServerError))));
+                }
               }
             });
-          } catch (Exception e) {
-            logger.error(e.getLocalizedMessage(), e);
-            asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.respond500WithTextPlain(
-                    messages.getMessage(lang, MessageConsts.InternalServerError))));
-          }
-        }
+      })
+      .otherwise(e -> {
+        logger.error(e.getLocalizedMessage(), e);
+        asyncResultHandler.handle(Future.succeededFuture(
+          PostUsersResponse.respond500WithTextPlain(
+            messages.getMessage(lang, MessageConsts.InternalServerError))));
+        return null;
       });
-    } catch(Exception e) {
-      logger.error(e.getLocalizedMessage(), e);
-      asyncResultHandler.handle(Future.succeededFuture(
-            PostUsersResponse.respond500WithTextPlain(
-              messages.getMessage(lang, MessageConsts.InternalServerError))));
-    }
   }
 
   private boolean isDuplicateIdError(AsyncResult<Response> reply) {
