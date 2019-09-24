@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,6 +14,7 @@ import java.util.function.Function;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
@@ -180,86 +182,87 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void postUsers(String lang, User entity,
-          Map<String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) {
+                        Map<String, String> okapiHeaders,
+                        Handler<AsyncResult<Response>> asyncResultHandler,
+                        Context vertxContext) {
     if (checkForDuplicateAddressTypes(entity)) {
       asyncResultHandler.handle(Future.succeededFuture(
         PostUsersResponse.respond400WithTextPlain(
           "Users are limited to one address per addresstype")));
       return;
     }
+
+    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
     succeededFuture()
       .compose(o -> {
-        PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+        postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
         String tenantId = TenantTool.tenantId(okapiHeaders);
-        return new ValidationServiceImpl().validateCustomFields(entity.getCustomFields().getAdditionalProperties(), tenantId)
-          .compose(o2 -> checkAllAddressTypesValid(entity, vertxContext, postgresClient))
-          .compose(result -> {
-            if (Boolean.FALSE.equals(result)) {
-              asyncResultHandler.handle(succeededFuture(
+        return new ValidationServiceImpl().validateCustomFields(getCustomFields(entity), tenantId);
+      })
+      .compose(o2 -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
+      .compose(result -> {
+        if (Boolean.FALSE.equals(result)) {
+          asyncResultHandler.handle(succeededFuture(
+            PostUsersResponse.respond400WithTextPlain(
+              "You cannot add addresses with non-existant address types")));
+        } else {
+          getPG(postgresClient.getValue(), entity, handler -> {
+            int res = handler.result();
+            if (res == 0) {
+              String message = "Cannot add " +
+                entity.getPatronGroup() +
+                ". Patron group not found";
+              logger.error(message);
+              asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond400WithTextPlain(
-                  "You cannot add addresses with non-existant address types")));
+                  message)));
+              return;
+            } else if (res == -1) {
+              asyncResultHandler.handle(Future.succeededFuture(
+                PostUsersResponse
+                  .respond500WithTextPlain("")));
+              return;
             } else {
-              getPG(postgresClient, entity, handler -> {
-                int res = handler.result();
-                if (res == 0) {
-                  String message = "Cannot add " +
-                    entity.getPatronGroup() +
-                    ". Patron group not found";
-                  logger.error(message);
-                  asyncResultHandler.handle(Future.succeededFuture(
-                    PostUsersResponse.respond400WithTextPlain(
-                      message)));
+              Date now = new Date();
+              entity.setCreatedDate(now);
+              entity.setUpdatedDate(now);
+              PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
+                if (isDuplicateIdError(reply)) {
+                  asyncResultHandler.handle(
+                    succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                      ValidationHelper.createValidationErrorMessage(
+                        "id", entity.getId(),
+                        "User with this id already exists"))));
                   return;
-                } else if (res == -1) {
-                  asyncResultHandler.handle(Future.succeededFuture(
-                    PostUsersResponse
-                      .respond500WithTextPlain("")));
-                  return;
-                } else {
-                  Date now = new Date();
-                  entity.setCreatedDate(now);
-                  entity.setUpdatedDate(now);
-                  PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
-                    if (isDuplicateIdError(reply)) {
-                      asyncResultHandler.handle(
-                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                          ValidationHelper.createValidationErrorMessage(
-                            "id", entity.getId(),
-                            "User with this id already exists"))));
-                      return;
-                    }
-                    if (isDuplicateUsernameError(reply)) {
-                      asyncResultHandler.handle(
-                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                          ValidationHelper.createValidationErrorMessage(
-                            "username", entity.getUsername(),
-                            "User with this username already exists"))));
-                      return;
-                    }
-                    if (isDuplicateBarcodeError(reply)) {
-                      asyncResultHandler.handle(
-                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                          ValidationHelper.createValidationErrorMessage(
-                            "barcode", entity.getBarcode(),
-                            "This barcode has already been taken"))));
-                      return;
-                    }
-                    logger.debug("Save successful");
-                    asyncResultHandler.handle(reply);
-                  });
                 }
+                if (isDuplicateUsernameError(reply)) {
+                  asyncResultHandler.handle(
+                    succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                      ValidationHelper.createValidationErrorMessage(
+                        "username", entity.getUsername(),
+                        "User with this username already exists"))));
+                  return;
+                }
+                if (isDuplicateBarcodeError(reply)) {
+                  asyncResultHandler.handle(
+                    succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                      ValidationHelper.createValidationErrorMessage(
+                        "barcode", entity.getBarcode(),
+                        "This barcode has already been taken"))));
+                  return;
+                }
+                logger.debug("Save successful");
+                asyncResultHandler.handle(reply);
               });
             }
-            return null;
-            });
+          });
+        }
+        return Future.succeededFuture();
       })
       .otherwise(e -> {
-        if(e instanceof CustomFieldValidationException){
-          asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(((CustomFieldValidationException)e).getErrors())));
-        }
-        else {
+        if (e instanceof CustomFieldValidationException) {
+          asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(((CustomFieldValidationException) e).getErrors())));
+        } else {
           logger.error(e.getLocalizedMessage(), e);
           asyncResultHandler.handle(Future.succeededFuture(
             PostUsersResponse.respond500WithTextPlain(
@@ -535,5 +538,14 @@ public class UsersAPI implements Users {
       }
     });
     return future;
+  }
+
+  private Map<String, Object> getCustomFields(User entity) {
+    if(entity.getCustomFields()!= null){
+      return entity.getCustomFields().getAdditionalProperties();
+    }
+    else{
+      return Collections.emptyMap();
+    }
   }
 }
