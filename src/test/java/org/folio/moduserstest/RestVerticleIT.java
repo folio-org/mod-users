@@ -239,6 +239,8 @@ public class RestVerticleIT {
   private static void addCustomFields(JsonObject u) {
     JsonObject customFields = new JsonObject();
     customFields.put("department", "math");
+    JsonArray departmentsArray = new JsonArray(Arrays.asList("Math", "History"));
+    customFields.put("departments", departmentsArray);
     u.put("customFields", customFields);
   }
 
@@ -332,7 +334,7 @@ public class RestVerticleIT {
             if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
               future.fail("Bad value for tag list. " + buf.toString());
             }
-            else if (customFields == null || !customFields.encode().equals("{\"department\":\"math\"}")) {
+            else if (customFields == null || !customFieldsAreCorrect(customFields)) {
               future.fail("Bad value for customFields. " + buf.toString());
             }
             else {
@@ -368,6 +370,11 @@ public class RestVerticleIT {
       })
       .end();
     return future;
+  }
+
+  private boolean customFieldsAreCorrect(JsonObject customFields) {
+    return "math".equals(customFields.getString("department")) &&
+      Arrays.asList("Math", "History").containsAll(customFields.getJsonArray("departments").getList());
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
