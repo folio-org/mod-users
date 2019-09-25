@@ -162,6 +162,7 @@
       "$ref": "raml-util/schemas/tags.schema"
     },
     "customFields" : {
+      "description": "Object that contains custom field",
       "type": "object",
       "additionalProperties": true
     }
