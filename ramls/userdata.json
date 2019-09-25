@@ -160,6 +160,10 @@
     "tags": {
       "type": "object",
       "$ref": "raml-util/schemas/tags.schema"
+    },
+    "customFields" : {
+      "type": "object",
+      "additionalProperties": true
     }
   },
   "additionalProperties": false,
