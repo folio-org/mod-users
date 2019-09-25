@@ -197,7 +197,7 @@ public class UsersAPI implements Users {
       .compose(o -> {
         postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
         String tenantId = TenantTool.tenantId(okapiHeaders);
-        return new ValidationServiceImpl().validateCustomFields(getCustomFields(entity), tenantId);
+        return new ValidationServiceImpl(vertxContext).validateCustomFields(getCustomFields(entity), tenantId);
       })
       .compose(o2 -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
       .compose(result -> {
@@ -320,18 +320,18 @@ public class UsersAPI implements Users {
     Future.succeededFuture()
       .compose(o -> {
         String tenantId = TenantTool.tenantId(okapiHeaders);
-        return new ValidationServiceImpl().validateCustomFields(getCustomFields(entity), tenantId);
+        return new ValidationServiceImpl(vertxContext).validateCustomFields(getCustomFields(entity), tenantId);
       })
       .compose(o -> {
         if (checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
             PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
-          return;
+          return Future.succeededFuture();
         }
         if (!userId.equals(entity.getId())) {
           asyncResultHandler.handle(Future.succeededFuture(
             PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
-          return;
+          return Future.succeededFuture();
         }
         PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
@@ -392,7 +392,8 @@ public class UsersAPI implements Users {
             }
           }
         });
-      }, Future.succeededFuture())
+        return Future.succeededFuture();
+      })
       .otherwise(e -> {
         logger.debug(e.getLocalizedMessage());
         if (e instanceof CustomFieldValidationException) {
