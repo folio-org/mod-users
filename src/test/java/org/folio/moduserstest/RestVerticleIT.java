@@ -236,6 +236,14 @@ public class RestVerticleIT {
     u.put("tags", tagobj);
   }
 
+  private static void addCustomFields(JsonObject u) {
+    JsonObject customFields = new JsonObject();
+    customFields.put("department", "math");
+    JsonArray departmentsArray = new JsonArray(Arrays.asList("Math", "History"));
+    customFields.put("departments", departmentsArray);
+    u.put("customFields", customFields);
+  }
+
   private Future<Void> postUser(TestContext context, boolean withUserName) {
     System.out.println("Creating a new user\n");
     Future<Void> future = Future.future();
@@ -246,6 +254,7 @@ public class RestVerticleIT {
       userObject.put("username", "joeblock");
     }
     addTags(userObject);
+    addCustomFields(userObject);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       if (res.statusCode() >= 200 && res.statusCode() < 300) {
@@ -320,9 +329,15 @@ public class RestVerticleIT {
           JsonObject userObject = buf.toJsonObject();
           if (userObject.getString("username").equals("joeblock")) {
             JsonObject tags = userObject.getJsonObject("tags");
+            JsonObject customFields = userObject.getJsonObject("customFields");
+
             if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
               future.fail("Bad value for tag list. " + buf.toString());
-            } else {
+            }
+            else if (customFields == null || !customFieldsAreCorrect(customFields)) {
+              future.fail("Bad value for customFields. " + buf.toString());
+            }
+            else {
               DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
               Date createdDate = null;
               try {
@@ -355,6 +370,11 @@ public class RestVerticleIT {
       })
       .end();
     return future;
+  }
+
+  private boolean customFieldsAreCorrect(JsonObject customFields) {
+    return "math".equals(customFields.getString("department")) &&
+      Arrays.asList("Math", "History").containsAll(customFields.getJsonArray("departments").getList());
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
