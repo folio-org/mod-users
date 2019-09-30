@@ -11,13 +11,12 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
-
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.util.StringUtil.urlEncode;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -31,6 +30,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.tools.parser.JsonPathParser;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.tools.utils.VertxUtils;
+import org.folio.rest.utils.ExpirationTool;
+import org.folio.util.StringUtil;
+import org.joda.time.DateTime;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
@@ -51,26 +69,6 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import junit.framework.AssertionFailedError;
-
-import org.folio.rest.jaxrs.model.Errors;
-import org.joda.time.DateTime;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.tools.parser.JsonPathParser;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
-import org.folio.rest.utils.ExpirationTool;
-import org.folio.util.StringUtil;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -751,6 +749,97 @@ public class RestVerticleIT {
       .exceptionHandler(e -> {
         future.fail(e);
       })
+      .end(userObject.encode());
+    return future;
+  }
+
+  private Future<Void> putUserNotMatchingId(TestContext context) {
+    log.info("Trying to Update user id \n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", "joeblock")
+      .put("id", bobCircleId)
+      .put("active", false);
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+      assertStatus(context, res, 400);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(future::fail)
+      .end(userObject.encode());
+    return future;
+  }
+
+  private Future<Void> putUserDuplicatedAddressType(TestContext context) {
+    log.info("Attempting to update a user with two of the same address types\n");
+    Future<Void> future = Future.future();
+    String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
+    JsonObject userObject = new JsonObject()
+      .put("username", "joeblock")
+      .put("id", joeBlockId)
+      .put("active", false)
+      .put("personal", new JsonObject()
+        .put("lastName", "Joe")
+        .put("firstName", "Block")
+        .put("addresses", new JsonArray()
+          .add(new JsonObject()
+            .put("countryId", "USA")
+            .put("addressLine1", "123 Somestreet")
+            .put("city", "Somewheresville")
+            .put("addressTypeId", addressTypeId)
+          )
+          .add(new JsonObject()
+            .put("countryId", "USA")
+            .put("addressLine1", "234 Somestreet")
+            .put("city", "Somewheresville")
+            .put("addressTypeId", addressTypeId)
+          )
+        )
+      );
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+      assertStatus(context, res, 400);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(future::fail)
+      .end(userObject.encode());
+    return future;
+  }
+
+  private Future<Void> putUserInvalidAddressType(TestContext context) {
+    log.info("Attempting to update a user with two of the same address types\n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", "joeblock")
+      .put("id", joeBlockId)
+      .put("active", false)
+      .put("personal", new JsonObject()
+        .put("lastName", "Joe")
+        .put("firstName", "Block")
+        .put("addresses", new JsonArray()
+          .add(new JsonObject()
+            .put("countryId", "USA")
+            .put("addressLine1", "123 Somestreet")
+            .put("city", "Somewheresville")
+            .put("addressTypeId", UUID.randomUUID().toString())
+          )
+        )
+      );
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+      assertStatus(context, res, 400);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(future::fail)
       .end(userObject.encode());
     return future;
   }
@@ -1809,6 +1898,9 @@ public class RestVerticleIT {
       .compose(v -> putUserWithNotExistingCustomField(context))
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
+      .compose(v -> putUserNotMatchingId(context))
+      .compose(v -> putUserDuplicatedAddressType(context))
+      .compose(v -> putUserInvalidAddressType(context))
       .compose(v -> putUserWithNumericName(context))
       .compose(v -> putUserWithDuplicateUsername(context))
       .compose(v -> putUserWithDuplicateBarcode(context))
