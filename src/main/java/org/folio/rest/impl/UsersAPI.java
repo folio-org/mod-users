@@ -197,14 +197,14 @@ public class UsersAPI implements Users {
         postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
         return new ValidationServiceImpl(vertxContext).validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
       })
-      .compose(o2 -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
+      .compose(o -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
       .compose(result -> {
         if (Boolean.FALSE.equals(result)) {
           asyncResultHandler.handle(succeededFuture(
             PostUsersResponse.respond400WithTextPlain(
               "You cannot add addresses with non-existant address types")));
         } else {
-          getPGAndValidate(postgresClient.getValue(), entity, asyncResultHandler,
+          getAndValidatePatronGroup(postgresClient.getValue(), entity, asyncResultHandler,
                   handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
         }
         return Future.succeededFuture();
@@ -322,15 +322,8 @@ public class UsersAPI implements Users {
               asyncResultHandler.handle(Future.succeededFuture(
                 PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
             } else {
-              try {
-                getPGAndValidate(postgresClient, entity, asyncResultHandler,
-                  handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
-              } catch (Exception e) {
-                logger.error(e.getLocalizedMessage(), e);
-                asyncResultHandler.handle(Future.succeededFuture(
-                  PutUsersByUserIdResponse.respond500WithTextPlain(
-                    messages.getMessage(lang, MessageConsts.InternalServerError))));
-              }
+              getAndValidatePatronGroup(postgresClient, entity, asyncResultHandler,
+                handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
             }
             return Future.succeededFuture();
           });
@@ -406,7 +399,7 @@ public class UsersAPI implements Users {
    }
  }
 
- private void getPGAndValidate(PostgresClient postgresClient, User user, Handler<AsyncResult<Response>> asyncResultHandler, Handler<AsyncResult<Void>> onSuccess){
+ private void getAndValidatePatronGroup(PostgresClient postgresClient, User user, Handler<AsyncResult<Response>> asyncResultHandler, Handler<AsyncResult<Void>> onSuccess){
      getPG(postgresClient, user, handler -> {
          int res = handler.result();
          if (res == 0) {
@@ -417,12 +410,10 @@ public class UsersAPI implements Users {
              asyncResultHandler.handle(Future.succeededFuture(
                      PostUsersResponse.respond400WithTextPlain(
                              message)));
-             return;
          } else if (res == -1) {
              asyncResultHandler.handle(Future.succeededFuture(
                      PostUsersResponse
                              .respond500WithTextPlain("")));
-             return;
          } else {
              onSuccess.handle(Future.succeededFuture());
          }
