@@ -316,28 +316,24 @@ public class UsersAPI implements Users {
         }
         PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-        checkAllAddressTypesValid(entity, vertxContext, postgresClient).setHandler(checkRes -> {
-          if (checkRes.failed()) {
-            logger.debug(checkRes.cause().getLocalizedMessage(), checkRes.cause());
-            asyncResultHandler.handle(Future.succeededFuture(
-              PutUsersByUserIdResponse.respond500WithTextPlain(
-                messages.getMessage(lang, MessageConsts.InternalServerError))));
-          } else if (Boolean.FALSE.equals(checkRes.result())) {
-            asyncResultHandler.handle(Future.succeededFuture(
-              PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
-          } else {
-            try {
-              getPGAndValidate(postgresClient, entity,asyncResultHandler,
-                      handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
-            } catch (Exception e) {
-              logger.error(e.getLocalizedMessage(), e);
+        return checkAllAddressTypesValid(entity, vertxContext, postgresClient)
+          .compose(result -> {
+            if (Boolean.FALSE.equals(result)) {
               asyncResultHandler.handle(Future.succeededFuture(
-                PutUsersByUserIdResponse.respond500WithTextPlain(
-                  messages.getMessage(lang, MessageConsts.InternalServerError))));
+                PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
+            } else {
+              try {
+                getPGAndValidate(postgresClient, entity, asyncResultHandler,
+                  handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
+              } catch (Exception e) {
+                logger.error(e.getLocalizedMessage(), e);
+                asyncResultHandler.handle(Future.succeededFuture(
+                  PutUsersByUserIdResponse.respond500WithTextPlain(
+                    messages.getMessage(lang, MessageConsts.InternalServerError))));
+              }
             }
-          }
-        });
-        return Future.succeededFuture();
+            return Future.succeededFuture();
+          });
       })
       .otherwise(e -> {
         logger.debug(e.getLocalizedMessage());
@@ -409,7 +405,7 @@ public class UsersAPI implements Users {
      });
    }
  }
- 
+
  private void getPGAndValidate(PostgresClient postgresClient, User user, Handler<AsyncResult<Response>> asyncResultHandler, Handler<AsyncResult<Void>> onSuccess){
      getPG(postgresClient, user, handler -> {
          int res = handler.result();
