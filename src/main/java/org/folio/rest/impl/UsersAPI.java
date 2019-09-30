@@ -76,7 +76,6 @@ public class UsersAPI implements Users {
   private String getTableName(String cql) {
     if(cql != null && cql.contains("patronGroup.")){
       return VIEW_NAME_USER_GROUPS_JOIN;
-      //}
     }
     return TABLE_NAME_USERS;
   }
@@ -196,8 +195,7 @@ public class UsersAPI implements Users {
     succeededFuture()
       .compose(o -> {
         postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
-        String tenantId = TenantTool.tenantId(okapiHeaders);
-        return new ValidationServiceImpl(vertxContext).validateCustomFields(getCustomFields(entity), tenantId);
+        return new ValidationServiceImpl(vertxContext).validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
       })
       .compose(o2 -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
       .compose(result -> {
@@ -206,56 +204,8 @@ public class UsersAPI implements Users {
             PostUsersResponse.respond400WithTextPlain(
               "You cannot add addresses with non-existant address types")));
         } else {
-          getPG(postgresClient.getValue(), entity, handler -> {
-            int res = handler.result();
-            if (res == 0) {
-              String message = "Cannot add " +
-                entity.getPatronGroup() +
-                ". Patron group not found";
-              logger.error(message);
-              asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.respond400WithTextPlain(
-                  message)));
-              return;
-            } else if (res == -1) {
-              asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse
-                  .respond500WithTextPlain("")));
-              return;
-            } else {
-              Date now = new Date();
-              entity.setCreatedDate(now);
-              entity.setUpdatedDate(now);
-              PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
-                if (isDuplicateIdError(reply)) {
-                  asyncResultHandler.handle(
-                    succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                      ValidationHelper.createValidationErrorMessage(
-                        "id", entity.getId(),
-                        "User with this id already exists"))));
-                  return;
-                }
-                if (isDuplicateUsernameError(reply)) {
-                  asyncResultHandler.handle(
-                    succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                      ValidationHelper.createValidationErrorMessage(
-                        "username", entity.getUsername(),
-                        "User with this username already exists"))));
-                  return;
-                }
-                if (isDuplicateBarcodeError(reply)) {
-                  asyncResultHandler.handle(
-                    succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-                      ValidationHelper.createValidationErrorMessage(
-                        "barcode", entity.getBarcode(),
-                        "This barcode has already been taken"))));
-                  return;
-                }
-                logger.debug("Save successful");
-                asyncResultHandler.handle(reply);
-              });
-            }
-          });
+          getPGAndValidate(postgresClient.getValue(), entity, asyncResultHandler,
+                  handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
         }
         return Future.succeededFuture();
       })
@@ -272,7 +222,41 @@ public class UsersAPI implements Users {
       });
   }
 
-  private boolean isDuplicateIdError(AsyncResult<Response> reply) {
+    private void saveUser(User entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+        Date now = new Date();
+        entity.setCreatedDate(now);
+        entity.setUpdatedDate(now);
+        PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
+            if (isDuplicateIdError(reply)) {
+                asyncResultHandler.handle(
+                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                                ValidationHelper.createValidationErrorMessage(
+                                        "id", entity.getId(),
+                                        "User with this id already exists"))));
+                return;
+            }
+            if (isDuplicateUsernameError(reply)) {
+                asyncResultHandler.handle(
+                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                                ValidationHelper.createValidationErrorMessage(
+                                        "username", entity.getUsername(),
+                                        "User with this username already exists"))));
+                return;
+            }
+            if (isDuplicateBarcodeError(reply)) {
+                asyncResultHandler.handle(
+                        succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+                                ValidationHelper.createValidationErrorMessage(
+                                        "barcode", entity.getBarcode(),
+                                        "This barcode has already been taken"))));
+                return;
+            }
+            logger.debug("Save successful");
+            asyncResultHandler.handle(reply);
+        });
+    }
+
+    private boolean isDuplicateIdError(AsyncResult<Response> reply) {
     return reply.succeeded()
     && reply.result().getStatus() == 400
     && reply.result().getEntity().toString().contains("users_pkey");
@@ -318,10 +302,7 @@ public class UsersAPI implements Users {
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) {
     Future.succeededFuture()
-      .compose(o -> {
-        String tenantId = TenantTool.tenantId(okapiHeaders);
-        return new ValidationServiceImpl(vertxContext).validateCustomFields(getCustomFields(entity), tenantId);
-      })
+      .compose(o -> new ValidationServiceImpl(vertxContext).validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders)))
       .compose(o -> {
         if (checkForDuplicateAddressTypes(entity)) {
           asyncResultHandler.handle(Future.succeededFuture(
@@ -346,44 +327,8 @@ public class UsersAPI implements Users {
               PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
           } else {
             try {
-              getPG(postgresClient, entity, handler -> {
-
-                int res = handler.result();
-                if (res == 0) {
-                  String message = "Can not add " + entity.getPatronGroup() + ". Patron group not found";
-                  logger.error(message);
-                  asyncResultHandler.handle(Future.succeededFuture(PostUsersResponse
-                    .respond400WithTextPlain(message)));
-                  return;
-                } else if (res == -1) {
-                  asyncResultHandler.handle(Future.succeededFuture(
-                    PostUsersResponse
-                      .respond500WithTextPlain("")));
-                  return;
-                } else {
-                  Date now = new Date();
-                  entity.setCreatedDate(now);
-                  entity.setUpdatedDate(now);
-                  PgUtil.put(TABLE_NAME_USERS, entity, entity.getId(), okapiHeaders, vertxContext, PutUsersByUserIdResponse.class, reply -> {
-                    if (isDuplicateUsernameError(reply)) {
-                      asyncResultHandler.handle(
-                        succeededFuture(PutUsersByUserIdResponse
-                          .respond400WithTextPlain(
-                            "User with this username already exists")));
-                      return;
-                    }
-                    if (isDuplicateBarcodeError(reply)) {
-                      asyncResultHandler.handle(
-                        succeededFuture(PutUsersByUserIdResponse
-                          .respond400WithTextPlain(
-                            "This barcode has already been taken")));
-                      return;
-                    }
-                    logger.debug("Save successful");
-                    asyncResultHandler.handle(reply);
-                  });
-                }
-              });
+              getPGAndValidate(postgresClient, entity,asyncResultHandler,
+                      handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
             } catch (Exception e) {
               logger.error(e.getLocalizedMessage(), e);
               asyncResultHandler.handle(Future.succeededFuture(
@@ -407,7 +352,31 @@ public class UsersAPI implements Users {
       });
   }
 
-  /**
+    private void updateUser(User entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+        Date now = new Date();
+        entity.setCreatedDate(now);
+        entity.setUpdatedDate(now);
+        PgUtil.put(TABLE_NAME_USERS, entity, entity.getId(), okapiHeaders, vertxContext, PutUsersByUserIdResponse.class, reply -> {
+          if (isDuplicateUsernameError(reply)) {
+            asyncResultHandler.handle(
+              succeededFuture(PutUsersByUserIdResponse
+                .respond400WithTextPlain(
+                  "User with this username already exists")));
+            return;
+          }
+          if (isDuplicateBarcodeError(reply)) {
+            asyncResultHandler.handle(
+              succeededFuture(PutUsersByUserIdResponse
+                .respond400WithTextPlain(
+                  "This barcode has already been taken")));
+            return;
+          }
+          logger.debug("Save successful");
+          asyncResultHandler.handle(reply);
+        });
+    }
+
+    /**
   *
   * @param vertx
   * @param tenantId
@@ -439,6 +408,29 @@ public class UsersAPI implements Users {
        }
      });
    }
+ }
+ 
+ private void getPGAndValidate(PostgresClient postgresClient, User user, Handler<AsyncResult<Response>> asyncResultHandler, Handler<AsyncResult<Void>> onSuccess){
+     getPG(postgresClient, user, handler -> {
+         int res = handler.result();
+         if (res == 0) {
+             String message = "Cannot add " +
+                     user.getPatronGroup() +
+                     ". Patron group not found";
+             logger.error(message);
+             asyncResultHandler.handle(Future.succeededFuture(
+                     PostUsersResponse.respond400WithTextPlain(
+                             message)));
+             return;
+         } else if (res == -1) {
+             asyncResultHandler.handle(Future.succeededFuture(
+                     PostUsersResponse
+                             .respond500WithTextPlain("")));
+             return;
+         } else {
+             onSuccess.handle(Future.succeededFuture());
+         }
+     });
  }
 
   private boolean checkForDuplicateAddressTypes(User user) {
