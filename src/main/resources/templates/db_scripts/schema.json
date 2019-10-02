@@ -52,6 +52,14 @@
           "tOps" : "ADD"
         },
         {
+          "fieldName" : "personal.firstName",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "personal.lastName",
+          "tOps" : "ADD"
+        },
+        {
           "fieldName" : "expirationDate",
           "tOps" : "ADD",
           "caseSensitive": true,
@@ -118,10 +126,6 @@
           "tOps" : "ADD"
         },
         {
-          "fieldName" : "username",
-          "tOps" : "ADD"
-        },
-        {
           "fieldName" : "personal.firstName",
           "tOps" : "ADD"
         },
@@ -139,6 +143,10 @@
         },
         {
           "fieldName" : "active",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "patronGroup",
           "tOps" : "ADD"
         }
       ]
