@@ -11,14 +11,12 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.util.StringUtil.urlEncode;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -33,6 +31,25 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.tools.parser.JsonPathParser;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.tools.utils.VertxUtils;
+import org.folio.rest.utils.ExpirationTool;
+import org.folio.util.StringUtil;
+import org.joda.time.DateTime;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
+
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -43,30 +60,15 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import junit.framework.AssertionFailedError;
-import org.joda.time.DateTime;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.tools.parser.JsonPathParser;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
-import org.folio.rest.utils.ExpirationTool;
-import org.folio.util.StringUtil;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -75,6 +77,7 @@ public class RestVerticleIT {
   private static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
   private static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
   private static final String HTTP_LOCALHOST = "http://localhost:";
+  private static final Logger log = LoggerFactory.getLogger(RestVerticleIT.class);
 
   private final String userUrl = HTTP_LOCALHOST + port + "/users";
   private final String groupUrl = HTTP_LOCALHOST + port + "/groups";
@@ -89,9 +92,11 @@ public class RestVerticleIT {
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static final String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
+  private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
+  private static final String notExistingCustomField = "notExistingCustomField";
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
@@ -202,7 +207,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getEmptyUsers(TestContext context) {
-    System.out.println("Getting an empty user set\n");
+    log.info("Getting an empty user set\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users", res -> {
@@ -238,14 +243,12 @@ public class RestVerticleIT {
 
   private static void addCustomFields(JsonObject u) {
     JsonObject customFields = new JsonObject();
-    customFields.put("department", "math");
-    JsonArray departmentsArray = new JsonArray(Arrays.asList("Math", "History"));
-    customFields.put("departments", departmentsArray);
+    customFields.put("department_1", "Math");
     u.put("customFields", customFields);
   }
 
   private Future<Void> postUser(TestContext context, boolean withUserName) {
-    System.out.println("Creating a new user\n");
+    log.info("Creating a new user\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("id", joeBlockId)
@@ -254,6 +257,31 @@ public class RestVerticleIT {
       userObject.put("username", "joeblock");
     }
     addTags(userObject);
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      if (res.statusCode() >= 200 && res.statusCode() < 300) {
+        future.complete();
+      } else {
+        future.fail("Got status code: " + res.statusCode());
+      }
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(userObject.encode());
+    return future;
+  }
+
+  private Future<Void> postUserWithCustomFields(TestContext context) {
+    log.info("Creating a new user\n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("id", johnRectangleId)
+      .put("active", true)
+      .put("username", "johnRectangle");
     addCustomFields(userObject);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
@@ -274,7 +302,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> deleteNonExistingUser(TestContext context) {
-    System.out.println("Deleting non-existing user\n");
+    log.info("Deleting non-existing user\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.delete(port, "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
@@ -290,15 +318,15 @@ public class RestVerticleIT {
     return future;
   }
 
-  private Future<Void> deleteUser(TestContext context) {
-    System.out.println("Deleting existing user\n");
+  private Future<Void> deleteUser(TestContext context, String userId) {
+    log.info("Deleting existing user\n");
     Future<Void> future = Future.future();
-    deleteWithNoContentStatus(context, future, "/users/" + joeBlockId);
+    deleteWithNoContentStatus(context, future, "/users/" + userId);
     return future;
   }
 
   private Future<Void> postUserWithNumericName(TestContext context) {
-    System.out.println("Creating a user with a numeric name\n");
+    log.info("Creating a user with a numeric name\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("username", "777777")
@@ -320,7 +348,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getUser(TestContext context) {
-    System.out.println("Retrieving a user\n");
+    log.info("Retrieving a user\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users/" + joeBlockId, res -> {
@@ -329,13 +357,9 @@ public class RestVerticleIT {
           JsonObject userObject = buf.toJsonObject();
           if (userObject.getString("username").equals("joeblock")) {
             JsonObject tags = userObject.getJsonObject("tags");
-            JsonObject customFields = userObject.getJsonObject("customFields");
 
             if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
               future.fail("Bad value for tag list. " + buf.toString());
-            }
-            else if (customFields == null || !customFieldsAreCorrect(customFields)) {
-              future.fail("Bad value for customFields. " + buf.toString());
             }
             else {
               DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
@@ -372,13 +396,37 @@ public class RestVerticleIT {
     return future;
   }
 
-  private boolean customFieldsAreCorrect(JsonObject customFields) {
-    return "math".equals(customFields.getString("department")) &&
-      Arrays.asList("Math", "History").containsAll(customFields.getJsonArray("departments").getList());
+  private Future<Void> getUserWithCustomFields(TestContext context) {
+    log.info("Retrieving a user with custom fields\n");
+    Future<Void> future = Future.future();
+    HttpClient client = vertx.createHttpClient();
+    client.get(port, "localhost", "/users/" + johnRectangleId, res -> {
+      if (res.statusCode() == 200) {
+        res.bodyHandler(buf -> {
+          JsonObject userObject = buf.toJsonObject();
+          JsonObject customFields = userObject.getJsonObject("customFields");
+          if (customFields == null || !customFields.encode().equals("{\"department_1\":\"Math\"}")) {
+            future.fail("Bad value for customFields. " + buf.toString());
+          }else{
+            future.complete();
+          }
+        });
+      } else {
+        future.fail("Bad response: " + res.statusCode());
+      }
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end();
+    return future;
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
-    System.out.println("Getting user via CQL, by username\n");
+    log.info("Getting user via CQL, by username\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
@@ -418,7 +466,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getUserByCqlById(TestContext context) {
-    System.out.println("Getting user via CQL, by user id\n");
+    log.info("Getting user via CQL, by user id\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
@@ -452,7 +500,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getUserByInvalidCQL(TestContext context) {
-    System.out.println("Getting user via invalid CQL\n");
+    log.info("Getting user via invalid CQL\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
@@ -475,7 +523,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> postAnotherUser(TestContext context) {
-    System.out.println("Creating another user\n");
+    log.info("Creating another user\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("username", "bobcircle")
@@ -497,7 +545,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
-    System.out.println("Query users via CQL\n");
+    log.info("Query users via CQL\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
@@ -537,7 +585,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
-    System.out.println("Making a valid user modification\n");
+    log.info("Making a valid user modification\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("id", id)
@@ -545,6 +593,7 @@ public class RestVerticleIT {
     if (withUserName) {
       userObject.put("username", "bobcircle");
     }
+    addCustomFields(userObject);
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + id, res -> {
       assertStatus(context, res, 204);
@@ -561,7 +610,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getGoodUser(TestContext context) {
-    System.out.println("Getting the modified user\n");
+    log.info("Getting the modified user\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users/" + bobCircleId, res -> {
@@ -600,7 +649,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> putUserBadUsername(TestContext context) {
-    System.out.println("Trying to assign an invalid username \n");
+    log.info("Trying to assign an invalid username \n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("username", "joeblock")
@@ -622,7 +671,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> putUserWithoutIdInMetadata(TestContext context) {
-    System.out.println("Changing a user with numeric name\n");
+    log.info("Changing a user with numeric name\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
         .put("username", "bobcircle")
@@ -647,8 +696,43 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> putUserWithNotExistingCustomField(TestContext context) {
+    log.info("Changing a user with not existing custom field");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", "johnrectangle")
+      .put("id", johnRectangleId)
+      .put("active", true)
+      .put("personal", new JsonObject()
+        .put("lastName", "Rectangle")
+        .put("firstName", "John")
+      )
+      .put("customFields", new JsonObject()
+        .put(notExistingCustomField, "abc")
+      );
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + johnRectangleId, res -> {
+      assertStatus(context, res, 422);
+      res.bodyHandler(err -> {
+        Errors errors = Json.decodeValue(err, Errors.class);
+        Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
+        context.assertEquals("customFields", errorParam.getKey());
+        context.assertEquals(notExistingCustomField, errorParam.getValue());
+        future.complete();
+      });
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(userObject.encode());
+    return future;
+  }
+
   private Future<Void> putUserBadId(TestContext context) {
-    System.out.println("Trying to assign an invalid id \n");
+    log.info("Trying to assign an invalid id \n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("username", "bobcircle")
@@ -669,10 +753,101 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> putUserNotMatchingId(TestContext context) {
+    log.info("Trying to Update user id \n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", "joeblock")
+      .put("id", bobCircleId)
+      .put("active", false);
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+      assertStatus(context, res, 400);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(future::fail)
+      .end(userObject.encode());
+    return future;
+  }
+
+  private Future<Void> putUserDuplicatedAddressType(TestContext context) {
+    log.info("Attempting to update a user with two of the same address types\n");
+    Future<Void> future = Future.future();
+    String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
+    JsonObject userObject = new JsonObject()
+      .put("username", "joeblock")
+      .put("id", joeBlockId)
+      .put("active", false)
+      .put("personal", new JsonObject()
+        .put("lastName", "Joe")
+        .put("firstName", "Block")
+        .put("addresses", new JsonArray()
+          .add(new JsonObject()
+            .put("countryId", "USA")
+            .put("addressLine1", "123 Somestreet")
+            .put("city", "Somewheresville")
+            .put("addressTypeId", addressTypeId)
+          )
+          .add(new JsonObject()
+            .put("countryId", "USA")
+            .put("addressLine1", "234 Somestreet")
+            .put("city", "Somewheresville")
+            .put("addressTypeId", addressTypeId)
+          )
+        )
+      );
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+      assertStatus(context, res, 400);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(future::fail)
+      .end(userObject.encode());
+    return future;
+  }
+
+  private Future<Void> putUserInvalidAddressType(TestContext context) {
+    log.info("Attempting to update a user with two of the same address types\n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", "joeblock")
+      .put("id", joeBlockId)
+      .put("active", false)
+      .put("personal", new JsonObject()
+        .put("lastName", "Joe")
+        .put("firstName", "Block")
+        .put("addresses", new JsonArray()
+          .add(new JsonObject()
+            .put("countryId", "USA")
+            .put("addressLine1", "123 Somestreet")
+            .put("city", "Somewheresville")
+            .put("addressTypeId", UUID.randomUUID().toString())
+          )
+        )
+      );
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+      assertStatus(context, res, 400);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(future::fail)
+      .end(userObject.encode());
+    return future;
+  }
+
   // https://issues.folio.org/browse/MODUSERS-90
   // https://issues.folio.org/browse/MODUSERS-108
   private Future<Void> putUserWithNumericName(TestContext context) {
-    System.out.println("Changing a user with numeric name\n");
+    log.info("Changing a user with numeric name\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("username", "777777")
@@ -694,7 +869,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createAddressType(TestContext context) {
-    System.out.println("Creating an address type\n");
+    log.info("Creating an address type\n");
     Future<Void> future = Future.future();
     JsonObject addressTypeObject = new JsonObject()
       .put("addressType", "sweethome")
@@ -716,7 +891,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createBadAddressType(TestContext context) {
-    System.out.println("Creating a bad address type\n");
+    log.info("Creating a bad address type\n");
     Future<Void> future = Future.future();
     JsonObject addressTypeObject = new JsonObject()
       .put("desc", "The patron's summer residence");
@@ -736,7 +911,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
-    System.out.println("Getting the new addresstype, updating a user with it\n");
+    log.info("Getting the new addresstype, updating a user with it\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/addresstypes?query=addressType=sweethome", res -> {
@@ -802,7 +977,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> deleteAddressTypeSQLError(TestContext context) {
-    System.out.println("Deleting address type SQL error\n");
+    log.info("Deleting address type SQL error\n");
     Future<Void> future = Future.future();
     HttpClient deleteClient = vertx.createHttpClient();
     deleteClient.delete(port, "localhost", "/addresstypes/x%2F", deleteRes -> {
@@ -820,7 +995,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> deleteAddressTypeCQLError(TestContext context) {
-    System.out.println("Deleting address type CQL error\n");
+    log.info("Deleting address type CQL error\n");
     Future<Void> future = Future.future();
     HttpClient deleteClient = vertx.createHttpClient();
     deleteClient.delete(port, "localhost", "/addresstypes/x=", deleteRes -> {
@@ -838,7 +1013,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createAndDeleteAddressType(TestContext context) {
-    System.out.println("Creating and deleting an address type\n");
+    log.info("Creating and deleting an address type\n");
     Future<Void> future = Future.future();
     HttpClient postClient = vertx.createHttpClient();
     JsonObject addressTypeObject = new JsonObject()
@@ -875,7 +1050,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
-    System.out.println("Attempting to create a user with two of the same address types");
+    log.info("Attempting to create a user with two of the same address types");
     Future<Void> future = Future.future();
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
     JsonObject userObject = new JsonObject()
@@ -915,8 +1090,43 @@ public class RestVerticleIT {
     return future;
   }
 
+  private Future<Void> postUserWithNotExistingCustomField(TestContext context) {
+    log.info("Attempting to create a user with not existing custom field");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", "johnrectangle")
+      .put("id", johnRectangleId)
+      .put("active", true)
+      .put("personal", new JsonObject()
+        .put("lastName", "Rectangle")
+        .put("firstName", "John")
+      )
+      .put("customFields", new JsonObject()
+        .put(notExistingCustomField, "abc")
+      );
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 422);
+      res.bodyHandler(err -> {
+        Errors errors = Json.decodeValue(err, Errors.class);
+        Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
+        context.assertEquals("customFields", errorParam.getKey());
+        context.assertEquals(notExistingCustomField, errorParam.getValue());
+        future.complete();
+      });
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(userObject.encode());
+    return future;
+  }
+
   private Future<Void> postUserBadAddress(TestContext context) {
-    System.out.println("Trying to create a bad address\n");
+    log.info("Trying to create a bad address\n");
     Future<Void> future = Future.future();
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
     JsonObject userObject = new JsonObject()
@@ -1289,7 +1499,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createProxyfor(TestContext context) {
-    System.out.println("Creating a new proxyfor entry\n");
+    log.info("Creating a new proxyfor entry\n");
     Future<Void> future = Future.future();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
@@ -1310,7 +1520,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createProxyforWithSameUserId(TestContext context) {
-    System.out.println("Trying to create a proxyfor with an existing userid\n");
+    log.info("Trying to create a proxyfor with an existing userid\n");
     Future<Void> future = Future.future();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
@@ -1332,7 +1542,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
-    System.out.println("Trying to create a proxyfor with an existing proxy userid\n");
+    log.info("Trying to create a proxyfor with an existing proxy userid\n");
     Future<Void> future = Future.future();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
@@ -1353,7 +1563,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
-    System.out.println("Trying to create a proxyfor entry with the same id and proxy user id\n");
+    log.info("Trying to create a proxyfor entry with the same id and proxy user id\n");
     Future<Void> future = Future.future();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
@@ -1374,7 +1584,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getProxyforCollection(TestContext context) {
-    System.out.println("Getting proxyfor entries\n");
+    log.info("Getting proxyfor entries\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/proxiesfor", res -> {
@@ -1400,11 +1610,11 @@ public class RestVerticleIT {
   }
 
   private Future<Void> findAndGetProxyfor(TestContext context) {
-    System.out.println("Find and retrieve a particular proxyfor entry\n");
+    log.info("Find and retrieve a particular proxyfor entry\n");
     Future<Void> future = Future.future();
     try {
       HttpClient client = vertx.createHttpClient();
-      System.out.println("Making CQL request\n");
+      log.info("Making CQL request\n");
       client.get(port, "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
@@ -1419,7 +1629,7 @@ public class RestVerticleIT {
               }
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
               String proxyForId = proxyForObject.getString("id");
-              System.out.println("Making get-by-id request\n");
+              log.info("Making get-by-id request\n");
               client.get(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 assertStatus(context, res2, 200);
                 future.complete();
@@ -1450,14 +1660,14 @@ public class RestVerticleIT {
   }
 
   private Future<Void> findAndUpdateProxyfor(TestContext context) {
-    System.out.println("Find and update a particular proxyfor entry\n");
+    log.info("Find and update a particular proxyfor entry\n");
     Future<Void> future = Future.future();
     JsonObject modifiedProxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     try {
       HttpClient client = vertx.createHttpClient();
-      System.out.println("Making CQL request\n");
+      log.info("Making CQL request\n");
       client.get(port, "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
@@ -1472,7 +1682,7 @@ public class RestVerticleIT {
               }
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
               String proxyForId = proxyForObject.getString("id");
-              System.out.println("Making put-by-id request\n");
+              log.info("Making put-by-id request\n");
               client.put(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 assertStatus(context, res2, 204);
                 future.complete();
@@ -1507,7 +1717,7 @@ public class RestVerticleIT {
     Future<Void> future = Future.future();
     try {
       HttpClient client = vertx.createHttpClient();
-      System.out.println("Making CQL request\n");
+      log.info("Making CQL request\n");
       client.get(port, "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
@@ -1522,7 +1732,7 @@ public class RestVerticleIT {
               }
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
               String proxyForId = proxyForObject.getString("id");
-              System.out.println("Making delete-by-id request\n");
+              log.info("Making delete-by-id request\n");
               client.delete(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 assertStatus(context, res2, 204);
                 future.complete();
@@ -1556,7 +1766,7 @@ public class RestVerticleIT {
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
     String endpoint, boolean checkMeta) {
     Future<Void> future = Future.future();
-    System.out.println(String.format(
+    log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
     HttpClient client = vertx.createHttpClient();
     String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
@@ -1630,7 +1840,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getGroupByInvalidUuid(TestContext context) {
-    System.out.println("Retrieving a group by invalid uuid\n");
+    log.info("Retrieving a group by invalid uuid\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/groups/q", res -> {
@@ -1664,11 +1874,15 @@ public class RestVerticleIT {
     getEmptyUsers(context).setHandler(f1.completer());
     startFuture = f1
       .compose(v -> postUser(context, false))
+      .compose(v -> postCustomField(context))
       .compose(v -> putUserGood(context, joeBlockId, false))
-      .compose(v -> deleteUser(context))
+      .compose(v -> deleteUser(context, joeBlockId))
       .compose(v -> postUser(context, true))
-      .compose(v -> deleteUser(context))
+      .compose(v -> deleteUser(context, joeBlockId))
       .compose(v -> postUser(context, true))
+      .compose(v -> postUserWithCustomFields(context))
+      .compose(v -> getUserWithCustomFields(context))
+      .compose(v -> deleteUser(context, johnRectangleId))
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
@@ -1681,8 +1895,12 @@ public class RestVerticleIT {
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
+      .compose(v -> putUserWithNotExistingCustomField(context))
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
+      .compose(v -> putUserNotMatchingId(context))
+      .compose(v -> putUserDuplicatedAddressType(context))
+      .compose(v -> putUserInvalidAddressType(context))
       .compose(v -> putUserWithNumericName(context))
       .compose(v -> putUserWithDuplicateUsername(context))
       .compose(v -> putUserWithDuplicateBarcode(context))
@@ -1697,6 +1915,7 @@ public class RestVerticleIT {
       .compose(v -> postUserWithNumericName(context))
       .compose(v -> postUserWithDuplicateId(context))
       .compose(v -> postUserWithDuplicateUsername(context))
+      .compose(v -> postUserWithNotExistingCustomField(context))
       .compose(v -> postTwoUsersWithoutUsername(context))
       .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))
@@ -1708,6 +1927,7 @@ public class RestVerticleIT {
       .compose(v -> findAndGetProxyfor(context))
       .compose(v -> findAndUpdateProxyfor(context))
       .compose(v -> findAndDeleteProxyfor(context))
+      .compose(v -> deleteCustomField(context))
       .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
       .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
       .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
@@ -1738,7 +1958,7 @@ public class RestVerticleIT {
     Response addGroupResponse = addGroupCF.get(5, SECONDS);
     context.assertEquals(addGroupResponse.code, HTTP_CREATED);
     groupID1 = addGroupResponse.body.getString("id");
-    System.out.println(addGroupResponse.body
+    log.info(addGroupResponse.body
       + "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
     /**
@@ -1749,7 +1969,7 @@ public class RestVerticleIT {
     send(updateGroupURL, context, PUT, barGroupData, new HTTPNoBodyResponseHandler(updateGroupCF));
     Response updateGroupResponse = updateGroupCF.get(5, SECONDS);
     context.assertEquals(updateGroupResponse.code, HTTP_NO_CONTENT);
-    System.out.println(updateGroupResponse.body
+    log.info(updateGroupResponse.body
       + "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
 
     /**
@@ -1760,7 +1980,7 @@ public class RestVerticleIT {
     send(deleteCleanURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCleanCF));
     Response deleteCleanResponse = deleteCleanCF.get(5, SECONDS);
     context.assertEquals(deleteCleanResponse.code, HTTP_NO_CONTENT);
-    System.out.println(deleteCleanResponse.body
+    log.info(deleteCleanResponse.body
       + "\nStatus - " + deleteCleanResponse.code + " at " + System.currentTimeMillis() + " for " + deleteCleanURL);
 
     /**
@@ -1771,7 +1991,7 @@ public class RestVerticleIT {
     Response addNewGroupResponse = addNewGroupCF.get(5, SECONDS);
     context.assertEquals(addNewGroupResponse.code, HTTP_CREATED);
     groupID1 = addNewGroupResponse.body.getString("id");
-    System.out.println(addNewGroupResponse.body
+    log.info(addNewGroupResponse.body
       + "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
     /**
@@ -1784,7 +2004,7 @@ public class RestVerticleIT {
     Response addUserResponse = addUserCF.get(5, SECONDS);
     context.assertEquals(addUserResponse.code, HTTP_CREATED);
     String userID = addUserResponse.body.getString("id");
-    System.out.println(addUserResponse.body
+    log.info(addUserResponse.body
       + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
     /**
@@ -1795,7 +2015,7 @@ public class RestVerticleIT {
        new HTTPResponseHandler(addUserCF2));
     Response addUserResponse2 = addUserCF2.get(5, SECONDS);
     context.assertEquals(addUserResponse2.code, 422);
-    System.out.println(addUserResponse2.body
+    log.info(addUserResponse2.body
       + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
     /**
@@ -1806,7 +2026,7 @@ public class RestVerticleIT {
        new HTTPResponseHandler(addUserCF3));
     Response addUserResponse3 = addUserCF3.get(5, SECONDS);
     context.assertEquals(addUserResponse3.code, 422);
-    System.out.println(addUserResponse3.body
+    log.info(addUserResponse3.body
       + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
     /**
@@ -1817,7 +2037,7 @@ public class RestVerticleIT {
        new HTTPNoBodyResponseHandler(addUserCF4));
     Response addUserResponse4 = addUserCF4.get(5, SECONDS);
     context.assertEquals(addUserResponse4.code, HTTP_BAD_REQUEST);
-    System.out.println(addUserResponse4.body
+    log.info(addUserResponse4.body
       + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
     /**
@@ -1828,7 +2048,7 @@ public class RestVerticleIT {
        new HTTPNoBodyResponseHandler(addUserCF4a));
     Response addUserResponse4a = addUserCF4a.get(5, SECONDS);
     context.assertEquals(addUserResponse4a.code, HTTP_BAD_REQUEST);
-    System.out.println(addUserResponse4a.body
+    log.info(addUserResponse4a.body
       + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
     /**
@@ -1839,7 +2059,7 @@ public class RestVerticleIT {
       "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), new HTTPNoBodyResponseHandler(updateUserCF));
     Response updateUserResponse = updateUserCF.get(5, SECONDS);
     context.assertEquals(updateUserResponse.code, HTTP_BAD_REQUEST);
-    System.out.println(updateUserResponse.body
+    log.info(updateUserResponse.body
       + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
 
     /**
@@ -1850,7 +2070,7 @@ public class RestVerticleIT {
       new HTTPNoBodyResponseHandler(updateUser2CF));
     Response updateUser2Response = updateUser2CF.get(5, SECONDS);
     context.assertEquals(updateUser2Response.code, HTTP_NO_CONTENT);
-    System.out.println(updateUser2Response.body
+    log.info(updateUser2Response.body
       + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
 
     /**
@@ -1862,7 +2082,7 @@ public class RestVerticleIT {
       new HTTPResponseHandler(getUsersInGroupCF));
     Response getUsersInGroupResponse = getUsersInGroupCF.get(5, SECONDS);
     context.assertEquals(getUsersInGroupResponse.code, HTTP_OK);
-    System.out.println(getUsersInGroupResponse.body
+    log.info(getUsersInGroupResponse.body
       + "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
       + getUsersInGroupURL);
     context.assertTrue(isSizeMatch(getUsersInGroupResponse, 1));
@@ -1874,7 +2094,7 @@ public class RestVerticleIT {
     send(groupUrl, context, GET, null, new HTTPResponseHandler(getAllGroupCF));
     Response getAllGroupResponse = getAllGroupCF.get(5, SECONDS);
     context.assertEquals(getAllGroupResponse.code, HTTP_OK);
-    System.out.println(getAllGroupResponse.body
+    log.info(getAllGroupResponse.body
       + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
     context.assertTrue(isSizeMatch(getAllGroupResponse, 5)); // 4 in reference + 1 in test
 
@@ -1886,7 +2106,7 @@ public class RestVerticleIT {
     send(cqlURL, context, GET, null, new HTTPResponseHandler(cqlCF));
     Response cqlResponse = cqlCF.get(5, SECONDS);
     context.assertEquals(cqlResponse.code, HTTP_OK);
-    System.out.println(cqlResponse.body
+    log.info(cqlResponse.body
       + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
     context.assertTrue(isSizeMatch(cqlResponse, 1));
 
@@ -1898,7 +2118,7 @@ public class RestVerticleIT {
     send(delete1URL, context, DELETE, null, new HTTPNoBodyResponseHandler(delete1CF));
     Response delete1Response = delete1CF.get(5, SECONDS);
     context.assertEquals(delete1Response.code, HTTP_BAD_REQUEST);
-    System.out.println(delete1Response.body
+    log.info(delete1Response.body
       + "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
 
     /**
@@ -1909,7 +2129,7 @@ public class RestVerticleIT {
     send(deleteNEGURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteNEGCF));
     Response deleteNEGResponse = deleteNEGCF.get(5, SECONDS);
     context.assertEquals(deleteNEGResponse.code, HTTP_NOT_FOUND);
-    System.out.println(deleteNEGResponse.body
+    log.info(deleteNEGResponse.body
       + "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
 
     /**
@@ -1919,7 +2139,7 @@ public class RestVerticleIT {
     send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(dupCF));
     Response dupResponse = dupCF.get(5, SECONDS);
     context.assertEquals(dupResponse.code, 422);
-    System.out.println(dupResponse.body
+    log.info(dupResponse.body
       + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
     /**
@@ -1930,7 +2150,7 @@ public class RestVerticleIT {
     send(getSpecGroupURL, context, GET, null,  new HTTPResponseHandler(getSpecGroupCF));
     Response getSpecGroupResponse = getSpecGroupCF.get(5, SECONDS);
     context.assertEquals(getSpecGroupResponse.code, HTTP_OK);
-    System.out.println(getSpecGroupResponse.body
+    log.info(getSpecGroupResponse.body
       + "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
     context.assertTrue("librarianFOO".equals(getSpecGroupResponse.body.getString("group")));
 
@@ -1942,7 +2162,7 @@ public class RestVerticleIT {
     send(getBadIDURL, context, GET, null, new HTTPNoBodyResponseHandler(getBadIDCF));
     Response getBadIDResponse = getBadIDCF.get(5, SECONDS);
     context.assertEquals(getBadIDResponse.code, HTTP_NOT_FOUND);
-    System.out.println(getBadIDResponse.body
+    log.info(getBadIDResponse.body
       + "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
 
     /**
@@ -1953,7 +2173,7 @@ public class RestVerticleIT {
     send(delete, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCF));
     Response deleteResponse = deleteCF.get(5, SECONDS);
     context.assertEquals(deleteResponse.code, HTTP_BAD_REQUEST);
-    System.out.println(deleteResponse.body
+    log.info(deleteResponse.body
       + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
 
     /* Create a user with a past-due expiration date */
@@ -1975,7 +2195,7 @@ public class RestVerticleIT {
       CompletableFuture<Response> addExpiredUserCF = new CompletableFuture();
       send(addUserURL, context, POST, expiredUserJson.encode(), new HTTPResponseHandler(addExpiredUserCF));
       Response addExpiredUserResponse = addExpiredUserCF.get(5, SECONDS);
-      System.out.println(addExpiredUserResponse.body
+      log.info(addExpiredUserResponse.body
         + "\nStatus - " + addExpiredUserResponse.code + " at "
         + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
       context.assertEquals(addExpiredUserResponse.code, 201);
@@ -2010,7 +2230,7 @@ public class RestVerticleIT {
        new HTTPResponseHandler(addUserCF));
     Response addUserResponse = addUserCF.get(5, SECONDS);
     context.assertEquals(addUserResponse.code, HTTP_CREATED);
-    System.out.println(addUserResponse.body
+    log.info(addUserResponse.body
       + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     CompletableFuture<Response> addUserCF2 = new CompletableFuture();
@@ -2018,7 +2238,7 @@ public class RestVerticleIT {
         new HTTPResponseHandler(addUserCF2));
     Response addUserResponse2 = addUserCF2.get(5, SECONDS);
     context.assertEquals(addUserResponse2.code, HTTP_CREATED);
-    System.out.println(addUserResponse2.body
+    log.info(addUserResponse2.body
       + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     //query on users and sort by groups
@@ -2058,7 +2278,7 @@ public class RestVerticleIT {
       send(cqlURL, context, GET, null,  new HTTPResponseHandler(cf));
       Response cqlResponse = cf.get(5, SECONDS);
       context.assertEquals(cqlResponse.code, HTTP_OK);
-      System.out.println(cqlResponse.body
+      log.info(cqlResponse.body
         + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
       //requests should usually have 3 or 4 results
       switch (i) {
@@ -2241,7 +2461,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> deleteCustomField(TestContext context) {
-    System.out.println("Deleting existing custom field\n");
+    log.info("Deleting existing custom field\n");
     Future<Void> future = Future.future();
     deleteWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId);
     return future;
@@ -2249,7 +2469,7 @@ public class RestVerticleIT {
 
   private Future<JsonObject> queryCustomField(TestContext context) {
     String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
-    System.out.println("Getting custom field via CQL, by entityType\n");
+    log.info("Getting custom field via CQL, by entityType\n");
     Future<JsonObject> future = Future.future();
     try {
       getByQuery(context, requestUrl, future);
@@ -2280,14 +2500,14 @@ public class RestVerticleIT {
   }
 
   private Future<Void> postCustomField(TestContext context) {
-    System.out.println("Creating a new custom field definition\n");
+    log.info("Creating a new custom field definition\n");
     Future<Void> future = Future.future();
     postWithOkStatus(future, customFieldsPath, postCustomField);
     return future;
   }
 
   private Future<Void> putCustomField(TestContext context) {
-    System.out.println("Update custom field definition\n");
+    log.info("Update custom field definition\n");
     Future<Void> future = Future.future();
     return putWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId, putCustomField);
   }
