@@ -2214,6 +2214,29 @@ public class RestVerticleIT {
   }
 
   @Test
+  public void testSaveUserWithEmptyUsername(TestContext context) throws Exception {
+    String dateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
+    JsonObject userJson = new JsonObject()
+      .put("id", UUID.randomUUID().toString())
+      .put("username", "")
+      .put("patronGroup", groupID1)
+      .put("active", true)
+      .put("expirationDate", dateString)
+      .put("personal", new JsonObject()
+        .put("lastName", "Alex")
+        .put("firstName", "Max")
+      );
+
+    CompletableFuture<Response> future = new CompletableFuture();
+    send(userUrl, context, POST, userJson.encode(), new HTTPResponseHandler(future));
+    Response response = future.get(5, SECONDS);
+    log.info(response.body
+      + "\nStatus - " + response.code + " at "
+      + System.currentTimeMillis() + " for " + userJson + " (userJson)");
+    context.assertEquals(response.code, 400);
+  }
+
+  @Test
   public void test3CrossTableQueries(TestContext context) throws Exception {
     String url = HTTP_LOCALHOST + port + "/users?query=";
 

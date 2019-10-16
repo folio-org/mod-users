@@ -14,6 +14,7 @@ import java.util.function.Function;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
@@ -190,6 +191,14 @@ public class UsersAPI implements Users {
           "Users are limited to one address per addresstype")));
       return;
     }
+
+    if (checkUsername(entity)) {
+      asyncResultHandler.handle(Future.succeededFuture(
+        PostUsersResponse.respond400WithTextPlain(
+          "The username must not be blank")));
+      return;
+    }
+    trimWhiteSpaceInUsername(entity);
 
     MutableObject<PostgresClient> postgresClient = new MutableObject<>();
     succeededFuture()
@@ -469,6 +478,15 @@ public class UsersAPI implements Users {
       }
     }
     return false;
+  }
+
+  private boolean checkUsername(User entity) {
+    return StringUtils.isBlank(entity.getUsername());
+  }
+
+  private void trimWhiteSpaceInUsername(User entity) {
+    String username = entity.getUsername().trim();
+    entity.setUsername(username);
   }
 
   private Future<Boolean> checkAddressTypeValid(
