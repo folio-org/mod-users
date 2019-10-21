@@ -86,8 +86,8 @@ public class RestVerticleIT {
   private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
   private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
-  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\",\"name\": \"Department\",\"visible\": true,\"required\": true,\"helpText\": \"Provide a department\",\"entityType\": \"user\",\"type\": \"TEXTBOX_SHORT\"}";
-  private static final String putCustomField = "{\"name\": \"Department updated\",\"visible\": true,\"required\": false,\"helpText\": \"Provide a department\",\"entityType\": \"user\",\"type\": \"RADIO_BUTTON\"}";
+  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", \"name\": \"Department\", \"visible\": true, \"required\": true, \"helpText\": \"Provide a department\", \"entityType\": \"user\", \"type\": \"TEXTBOX_SHORT\", \"textField\": { \"maxSize\": 150 }}";
+  private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", \"name\": \"Department updated\", \"visible\": false, \"required\": true, \"helpText\": \"Provide a department\", \"entityType\": \"user\", \"type\": \"TEXTBOX_SHORT\", \"textField\": {   \"maxSize\": 250 }}";
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
@@ -671,7 +671,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> putUserWithoutIdInMetadata(TestContext context) {
-    log.info("Changing a user with numeric name\n");
+    log.info("Changing a user without id in metadata\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
         .put("username", "bobcircle")
@@ -813,7 +813,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> putUserInvalidAddressType(TestContext context) {
-    log.info("Attempting to update a user with two of the same address types\n");
+    log.info("Attempting to update a user with invalid address types\n");
     Future<Void> future = Future.future();
     JsonObject userObject = new JsonObject()
       .put("username", "joeblock")
@@ -1161,6 +1161,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> postUserWithDuplicateId(TestContext context) {
+    log.info("Attempting to create a user with duplicate id");
     Future<Void> future = Future.future();
     String uuid = UUID.randomUUID().toString();
     JsonObject user1 = new JsonObject().put("id", uuid);
@@ -1204,6 +1205,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> postUserWithDuplicateUsername(TestContext context) {
+    log.info("Attempting to create a user with duplicate username");
     Future<Void> future = Future.future();
     JsonObject user1 = new JsonObject()
       .put("username", "the_twin")
@@ -1250,6 +1252,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> putUserWithDuplicateUsername(TestContext context) {
+    log.info("Changing a user to username that already exists\n");
     Future<Void> future = Future.future();
     JsonObject user1 = new JsonObject()
       .put("username", "left_shoe")
@@ -1299,6 +1302,7 @@ public class RestVerticleIT {
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> postTwoUsersWithoutUsername(TestContext context) {
+    log.info("Attempting to create two users without username");
     Future<Void> future = Future.future();
     JsonObject user1 = new JsonObject()
       .put("id",  UUID.randomUUID().toString());
@@ -1332,6 +1336,7 @@ public class RestVerticleIT {
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> putSecondUserWithoutUsername(TestContext context) {
+    log.info("Updating second user to have no username");
     Future<Void> future = Future.future();
     JsonObject user1 = new JsonObject()
       .put("id", UUID.randomUUID().toString());
@@ -1376,6 +1381,7 @@ public class RestVerticleIT {
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> postUserWithDuplicateBarcode(TestContext context) {
+    log.info("Attempting to create a user with duplicate barcode");
     Future<Void> future = Future.future();
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_one")
@@ -1435,6 +1441,7 @@ public class RestVerticleIT {
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
+    log.info("Changing a user to barcode that already exists\n");
     Future<Void> future = Future.future();
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_three")
@@ -1714,6 +1721,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> findAndDeleteProxyfor(TestContext context) {
+    log.info("Find and delete a particular proxyfor entry");
     Future<Void> future = Future.future();
     try {
       HttpClient client = vertx.createHttpClient();
