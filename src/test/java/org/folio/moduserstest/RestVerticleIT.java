@@ -86,8 +86,8 @@ public class RestVerticleIT {
   private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
   private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
-  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", \"name\": \"Department\", \"visible\": true, \"required\": true, \"helpText\": \"Provide a department\", \"entityType\": \"user\", \"type\": \"TEXTBOX_SHORT\", \"textField\": { \"maxSize\": 150 }}";
-  private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", \"name\": \"Department updated\", \"visible\": false, \"required\": true, \"helpText\": \"Provide a department\", \"entityType\": \"user\", \"type\": \"TEXTBOX_SHORT\", \"textField\": {   \"maxSize\": 250 }}";
+  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", \"name\": \"Department\", \"visible\": true, \"required\": true, \"helpText\": \"Provide a department\", \"entityType\": \"user\", \"order\": 1, \"type\": \"TEXTBOX_SHORT\", \"textField\": { \"maxSize\": 150 }}";
+  private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", \"name\": \"Department updated\", \"visible\": false, \"required\": true, \"helpText\": \"Provide a department\", \"entityType\": \"user\", \"order\": 2, \"type\": \"TEXTBOX_SHORT\", \"textField\": {   \"maxSize\": 250 }}";
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
