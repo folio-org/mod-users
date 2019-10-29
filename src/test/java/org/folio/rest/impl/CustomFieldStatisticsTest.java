@@ -1,21 +1,18 @@
 package org.folio.rest.impl;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
+import static org.folio.test.util.TestUtil.mockGetWithBody;
 import static org.folio.test.util.TestUtil.readFile;
 import static org.folio.test.util.TestUtil.toJson;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import com.github.tomakehurst.wiremock.matching.UrlPathPattern;
 import io.restassured.http.Header;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
@@ -49,12 +46,7 @@ public class CustomFieldStatisticsTest extends TestBase {
 
     user8 = postWithStatus(USERS_PATH, user8Body, SC_CREATED, USER8).as(User.class);
 
-    stubFor(
-      get(new UrlPathPattern(new EqualToPattern("/" + USERS_PATH + "/" + user8.getId()), false))
-        .willReturn(new ResponseDefinitionBuilder()
-          .withStatus(200)
-          .withBody(user8Body)
-        ));
+    mockGetWithBody(new EqualToPattern("/" + USERS_PATH + "/" + user8.getId()), user8Body);
 
     textField = postWithStatus(CUSTOM_FIELDS_PATH, readFile("fields/shortTextField.json"), SC_CREATED, USER8)
       .as(CustomField.class);
