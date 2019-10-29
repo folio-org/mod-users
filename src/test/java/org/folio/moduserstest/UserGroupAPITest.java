@@ -1,28 +1,42 @@
 package org.folio.moduserstest;
 
 import java.util.Collections;
-
-import org.folio.rest.impl.UserGroupAPI;
-import org.folio.rest.jaxrs.model.Usergroup;
-import org.folio.rest.tools.utils.VertxUtils;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.junit.AfterClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import org.folio.rest.impl.UserGroupAPI;
+import org.folio.rest.jaxrs.model.Usergroup;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.VertxUtils;
 
 @RunWith(VertxUnitRunner.class)
 public class UserGroupAPITest {
-  Vertx vertx = VertxUtils.getVertxWithExceptionHandler();
-  Context vertxContext = vertx.getOrCreateContext();
+  private static Vertx vertx = VertxUtils.getVertxWithExceptionHandler();
+  private static Context vertxContext = vertx.getOrCreateContext();
+
 
   public class MyUserGroupAPI extends UserGroupAPI {
     @Override
     protected boolean isDuplicate(String errorMessage) {
       throw new RuntimeException("testing exception handling");
     }
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    vertx.close(res -> {
+      PostgresClient.stopEmbeddedPostgres();
+      future.complete(null);
+    });
+    future.join();
   }
 
   @Test
