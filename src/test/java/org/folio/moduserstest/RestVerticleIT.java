@@ -11,12 +11,13 @@ import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
-import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
-import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
+
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
+import static org.folio.util.StringUtil.urlEncode;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -30,25 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.tools.parser.JsonPathParser;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
-import org.folio.rest.utils.ExpirationTool;
-import org.folio.util.StringUtil;
-import org.joda.time.DateTime;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
@@ -69,6 +51,27 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import junit.framework.AssertionFailedError;
+import org.joda.time.DateTime;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
+
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.parser.JsonPathParser;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.tools.utils.VertxUtils;
+import org.folio.rest.utils.ExpirationTool;
+import org.folio.util.StringUtil;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -204,6 +207,16 @@ public class RestVerticleIT {
           }
         });
     }));
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    vertx.close(res -> {
+      PostgresClient.stopEmbeddedPostgres();
+      future.complete(null);
+    });
+    future.join();
   }
 
   private Future<Void> getEmptyUsers(TestContext context) {
