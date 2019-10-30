@@ -192,13 +192,9 @@ public class UsersAPI implements Users {
       return;
     }
 
-    if (checkUsername(entity)) {
-      asyncResultHandler.handle(Future.succeededFuture(
-        PostUsersResponse.respond400WithTextPlain(
-          "The username must not be blank")));
-      return;
+    if (StringUtils.isNotBlank(entity.getUsername())) {
+      trimWhiteSpaceInUsername(entity);
     }
-    trimWhiteSpaceInUsername(entity);
 
     MutableObject<PostgresClient> postgresClient = new MutableObject<>();
     succeededFuture()
@@ -478,10 +474,6 @@ public class UsersAPI implements Users {
       }
     }
     return false;
-  }
-
-  private boolean checkUsername(User entity) {
-    return StringUtils.isBlank(entity.getUsername());
   }
 
   private void trimWhiteSpaceInUsername(User entity) {
