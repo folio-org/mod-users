@@ -118,7 +118,7 @@
     },
     {
       "id": "custom-fields",
-      "version": "1.0",
+      "version": "1.1",
       "interfaceType" : "multiple",
       "handlers": [
         {
@@ -145,6 +145,11 @@
           "methods": ["DELETE"],
           "pathPattern": "/custom-fields/{id}",
           "permissionsRequired": ["user-settings.custom-fields.item.delete"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/custom-fields/{id}/stats",
+          "permissionsRequired": ["user-settings.custom-fields.item.stats.get"]
         }
       ]
     },
@@ -325,6 +330,11 @@
       "description": "Delete User Custom Field"
     },
     {
+      "permissionName": "user-settings.custom-fields.item.stats.get",
+      "displayName": "User Custom Fields - get item usage statistic",
+      "description": "Get Custom Field Statistic"
+    },
+    {
       "permissionName": "user-settings.custom-fields.all",
       "displayName": "User Custom Fields module - all permissions",
       "description": "Entire set of permissions needed to use the user custom fields",
@@ -333,15 +343,12 @@
         "user-settings.custom-fields.item.post",
         "user-settings.custom-fields.item.get",
         "user-settings.custom-fields.item.put",
-        "user-settings.custom-fields.item.delete"
+        "user-settings.custom-fields.item.delete",
+        "user-settings.custom-fields.item.stats.get"
       ],
       "visible": false
     }
   ],
-  "metadata": {
-    "containerMemory": "384",
-    "databaseConnection": "true"
-  },
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerPull": false,
