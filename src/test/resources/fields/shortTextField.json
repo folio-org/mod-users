@@ -1,0 +1,13 @@
+{
+  "name": "Department",
+  "type" : "TEXTBOX_SHORT",
+  "refId": "not-null-ref-id",
+  "visible": true,
+  "required": true,
+  "entityType": "user",
+  "helpText": "Provide a department",
+  "order": 1,
+  "textField": {
+    "maxSize": 100
+  }
+}
