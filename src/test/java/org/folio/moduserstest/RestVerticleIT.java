@@ -2486,6 +2486,46 @@ public class RestVerticleIT {
     });
   }
 
+  @Test
+  public void test5UserName(TestContext context) {
+    Async async = context.async();
+    postCustomField(context)
+      .compose(v -> postUserWithWhitespace(context))
+      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), "user name"))
+      .compose(v -> deleteUser(context, userIdWithWhitespace))
+      .compose(v -> deleteCustomField(context))
+      .setHandler(res -> {
+        if (res.succeeded()) {
+          async.complete();
+        } else {
+          res.cause().printStackTrace();
+          context.fail(res.cause());
+        }
+      });
+  }
+
+  private Future<Void> postUserWithWhitespace(TestContext context) {
+    log.info("Creating a user with a numeric name\n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", " user name ")
+      .put("id", userIdWithWhitespace)
+      .put("active", true);
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(userObject.encode());
+    return future;
+  }
+
   private Future<Void> assertCustomFieldValues(JsonObject result) {
     Future<Void> future = Future.succeededFuture();
     int totalRecords = result.getInteger("totalRecords");
