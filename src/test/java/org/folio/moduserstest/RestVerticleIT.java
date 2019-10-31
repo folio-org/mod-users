@@ -114,6 +114,7 @@ public class RestVerticleIT {
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
+  private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
   private static final String notExistingCustomField = "notExistingCustomField";
 
@@ -2483,6 +2484,46 @@ public class RestVerticleIT {
           context.fail(res.cause());
         }
     });
+  }
+
+  @Test
+  public void test5UserName(TestContext context) {
+    Async async = context.async();
+    postCustomField(context)
+      .compose(v -> postUserWithWhitespace(context))
+      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), "user name"))
+      .compose(v -> deleteUser(context, userIdWithWhitespace))
+      .compose(v -> deleteCustomField(context))
+      .setHandler(res -> {
+        if (res.succeeded()) {
+          async.complete();
+        } else {
+          res.cause().printStackTrace();
+          context.fail(res.cause());
+        }
+      });
+  }
+
+  private Future<Void> postUserWithWhitespace(TestContext context) {
+    log.info("Creating a user with a numeric name\n");
+    Future<Void> future = Future.future();
+    JsonObject userObject = new JsonObject()
+      .put("username", " user name ")
+      .put("id", userIdWithWhitespace)
+      .put("active", true);
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", "/users", res -> {
+      assertStatus(context, res, 201);
+      future.complete();
+    })
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(e -> {
+        future.fail(e);
+      })
+      .end(userObject.encode());
+    return future;
   }
 
   private Future<Void> assertCustomFieldValues(JsonObject result) {
