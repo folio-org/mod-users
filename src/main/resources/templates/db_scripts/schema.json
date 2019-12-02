@@ -3,7 +3,7 @@
     {
       "run": "after",
       "snippetPath": "create_custom_fields_table.sql",
-      "fromModuleVersion": "1.0"
+      "fromModuleVersion": "mod-users-15.7.0"
     }
   ],
   "tables" : [
