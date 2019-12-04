@@ -1,3 +1,24 @@
+## 16.0.0 2019-12-04
+ * [MODUSERS-118](https://issues.folio.org/browse/MODUSERS-118) Reject duplicate user barcode
+ * [MODUSERS-126](https://issues.folio.org/browse/MODUSERS-126) [MODUSERS-131](https://issues.folio.org/browse/MODUSERS-131) [MODUSERS-142](https://issues.folio.org/browse/MODUSERS-142) Upgrade to RMB 25, RMB 26, RMB 27
+ * [MODUSERS-138](https://issues.folio.org/browse/MODUSERS-138) POST requests to /users fail - syntax error at or near ")"
+ * [MODUSERS-143](https://issues.folio.org/browse/MODUSERS-143) PUT and POST requests fail with an error related to a null metadata field
+ * [MODUSERS-147](https://issues.folio.org/browse/MODUSERS-147) "Username already exists" error when creating second user with null username
+ * [MODUSERS-151](https://issues.folio.org/browse/MODUSERS-151) Exclude whitespace in the username when creating a new user
+ * [MODUSERS-134](https://issues.folio.org/browse/MODUSERS-134) [MODUSERS-146](https://issues.folio.org/browse/MODUSERS-146) [MODUSERS-149](https://issues.folio.org/browse/MODUSERS-149) Add Custom fields to user schema
+ * [MODUSERS-153](https://issues.folio.org/browse/MODUSERS-153) Calculate custom field usage on User records
+ * [MODUSERS-129](https://issues.folio.org/browse/MODUSERS-129) Use PgUtil / refactor
+ * [MODUSERS-130](https://issues.folio.org/browse/MODUSERS-130) Updating user without metadata erroneously sets createdDate
+ * [MODUSERS-135](https://issues.folio.org/browse/MODUSERS-135) Address index warnings from perf test
+ * [MODUSERS-150](https://issues.folio.org/browse/MODUSERS-150) Add indexes to improve performance
+ * [MODUSERS-160](https://issues.folio.org/browse/MODUSERS-160) [FOLIO-2358](https://issues.folio.org/browse/FOLIO-2358) Manage container memory, switch to alpine-jre-openjdk8 Docker container
+ * [FOLIO-2256](https://issues.folio.org/browse/FOLIO-2256) Publish container to ci kubernetes when release/snap build
+ * [FOLIO-2234](https://issues.folio.org/browse/FOLIO-2234) Add LaunchDescriptor settings
+
+## 15.6.2 2019-09-11
+ * [MODUSERS-138](https://issues.folio.org/browse/MODUSERS-138) POST requests to /users fail
+ * [MODUSERS-147](https://issues.folio.org/browse/MODUSERS-147) "Username already exists" error when creating second user with null username
+
 ## 15.6.1 2019-07-23
  * MODUSERS-129 Use PgUtil / refactor
  * MODUSERS-131 Upgrade to RMB 26.2.2
