@@ -14,8 +14,18 @@ import java.util.function.Function;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Promise;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.z3950.zing.cql.CQLParseException;
+
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
@@ -26,12 +36,12 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
+import org.folio.rest.persist.PgUtil;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
-import org.folio.rest.persist.PgUtil;
-import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.persist.facets.FacetField;
 import org.folio.rest.persist.facets.FacetManager;
@@ -41,15 +51,6 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
-import org.z3950.zing.cql.CQLParseException;
-
-import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 
 /**
@@ -63,8 +64,6 @@ public class UsersAPI implements Users {
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private final Messages messages = Messages.getInstance();
-  public static final String USER_ID_FIELD = "'id'";
-  public static final String USER_NAME_FIELD = "'username'";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
   /**
@@ -484,7 +483,7 @@ public class UsersAPI implements Users {
   private Future<Boolean> checkAddressTypeValid(
       String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
 
-    Future<Boolean> future = Future.future();
+    Promise<Boolean> promise = Promise.promise();
     Criterion criterion = new Criterion(
           new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
                   setJSONB(false).setOperation("=").setVal(addressTypeId));
@@ -495,36 +494,32 @@ public class UsersAPI implements Users {
             if (reply.failed()) {
               String message = reply.cause().getLocalizedMessage();
               logger.error(message, reply.cause());
-              future.fail(reply.cause());
+              promise.fail(reply.cause());
             } else {
               List<AddressType> addressTypeList = reply.result().getResults();
-              if (addressTypeList.isEmpty()) {
-                future.complete(false);
-              } else {
-                future.complete(true);
-              }
+              promise.complete(!addressTypeList.isEmpty());
             }
           } catch (Exception e) {
             String message = e.getLocalizedMessage();
             logger.error(message, e);
-            future.fail(e);
+            promise.fail(e);
           }
         });
       } catch (Exception e) {
         String message = e.getLocalizedMessage();
         logger.error(message, e);
-        future.fail(e);
+        promise.fail(e);
       }
     });
-    return future;
+    return promise.future();
   }
 
   private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
-    Future<Boolean> future = Future.future();
+    Promise<Boolean> promise = Promise.promise();
     List<Future> futureList = new ArrayList<>();
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
-      future.complete(true);
-      return future;
+      promise.complete(true);
+      return promise.future();
     }
     for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
@@ -534,22 +529,22 @@ public class UsersAPI implements Users {
     CompositeFuture compositeFuture = CompositeFuture.all(futureList);
     compositeFuture.setHandler(res -> {
       if (res.failed()) {
-        future.fail(res.cause());
+        promise.fail(res.cause());
       } else {
         boolean bad = false;
         for (Future<Boolean> f : futureList) {
           if (Boolean.FALSE.equals(f.result())) {
-            future.complete(false);
+            promise.complete(false);
             bad = true;
             break;
           }
         }
         if (!bad) {
-          future.complete(true);
+          promise.complete(true);
         }
       }
     });
-    return future;
+    return promise.future();
   }
 
   private Map<String, Object> getCustomFields(User entity) {

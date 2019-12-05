@@ -1,19 +1,23 @@
 package org.folio.rest.utils;
 
 
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
+
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
@@ -66,26 +70,27 @@ public class ExpirationTool {
 
   public static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
-    Future<Integer> future = Future.future();
+    Promise<Integer> promise = Promise.promise();
     String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
+
     context.runOnContext(v -> {
       PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
-      CQL2PgJSON cql2pgJson = null;
-      CQLWrapper cqlWrapper = null;
+      CQL2PgJSON cql2pgJson;
+      CQLWrapper cqlWrapper;
       String[] fieldList = {"*"};
       try {
         cql2pgJson = new CQL2PgJSON(Arrays.asList(TABLE_NAME_USERS+".jsonb"));
         cqlWrapper = new CQLWrapper(cql2pgJson, query);
       } catch(Exception e) {
-        future.fail(e.getLocalizedMessage());
+        promise.fail(e.getLocalizedMessage());
         return;
       }
       pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
         if(reply.failed()) {
           logger.info(String.format("Error executing postgres query: '%s', %s",
             query, reply.cause().getLocalizedMessage()));
-          future.fail(reply.cause());
+          promise.fail(reply.cause());
         } else if(reply.result().getResults().isEmpty()) {
           logger.info(String.format("No results found for query %s", query));
         } else {
@@ -104,18 +109,18 @@ public class ExpirationTool {
                 succeededCount++;
               }
             }
-            future.complete(succeededCount);
+            promise.complete(succeededCount);
           });
         }
       });
     });
-    return future;
+    return promise.future();
   }
 
   private static Future<Void> saveUser(Vertx vertx, Context context, String tenant, User user) {
     final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
     logger.info(String.format("Updating user with id %s", user.getId()));
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     context.runOnContext(v -> {
       try {
         PostgresClient pgClient = PostgresClient.getInstance(vertx, tenant);
@@ -123,16 +128,16 @@ public class ExpirationTool {
           if(updateReply.failed()) {
             logger.info(String.format("Error updating user %s: %s", user.getId(),
               updateReply.cause().getLocalizedMessage()));
-            future.fail(updateReply.cause());
+            promise.fail(updateReply.cause());
           } else {
-            future.complete();
+            promise.complete();
           }
         });
       } catch(Exception e) {
-        future.tryFail(e);
+        promise.tryFail(e);
       }
     });
-    return future;
+    return promise.future();
   }
 
 }

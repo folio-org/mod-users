@@ -36,6 +36,7 @@ import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
@@ -50,6 +51,8 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 import junit.framework.AssertionFailedError;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -138,6 +141,7 @@ public class RestVerticleIT {
 
   private static Vertx vertx;
   private static Context vertxContext;
+  private static WebClient client;
   static int port;
 
   private String groupID1;
@@ -171,6 +175,19 @@ public class RestVerticleIT {
     });
   }
 
+  private static void fail(TestContext context, String message, HttpResponse<Buffer> response,
+                           StackTraceElement [] stacktrace) {
+    Async async = context.async();
+
+    Throwable t = new AssertionFailedError((message == null ? "" : message + ": ")
+      + response.statusCode() + " " + response.statusMessage() + " " + response.bodyAsString());
+    // t contains the stacktrace of bodyHandler but does not contain the method that
+    // called this fail method. Therefore exchange the stacktrace:
+    t.setStackTrace(stacktrace);
+    context.fail(t);
+    async.complete();
+  }
+
   /**
    * Fail the context if response does not have the provided status.
    */
@@ -184,10 +201,22 @@ public class RestVerticleIT {
         response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
   }
 
+  private static void assertStatus(TestContext context, HttpResponse<Buffer> response, int status) {
+    if (response.statusCode() == status) {
+      return;
+    }
+    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
+    // remove the element with this assertStatus method from the stacktrace
+    fail(context, "Expected status " + status + " but got",
+      response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
+  }
+
   @BeforeClass
   public static void setup(TestContext context) throws SQLException {
     vertx = VertxUtils.getVertxWithExceptionHandler();
     vertxContext = vertx.getOrCreateContext();
+
+    client = WebClient.create(vertx);
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
@@ -238,28 +267,48 @@ public class RestVerticleIT {
 
   private Future<Void> getEmptyUsers(TestContext context) {
     log.info("Getting an empty user set\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users", res -> {
+    Promise<Void> promise = Promise.promise();
+    //HttpClient client = vertx.createHttpClient();
+
+    client.get(port, "localhost", "/users")
+      .putHeader("X-Okapi-Tenant", "diku")
+      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .send(ar -> {
+        if (ar.succeeded()) {
+          HttpResponse<Buffer> response = ar.result();
+          assertStatus(context, response, 200);
+
+          JsonObject userCollectionObject = response.bodyAsJsonObject();;
+          if (userCollectionObject.getJsonArray("users").size() == 0
+            && userCollectionObject.getInteger("totalRecords") == 00) {
+            promise.complete();
+          } else {
+            promise.fail("Invalid return JSON: " + response.bodyAsString());
+          }
+        } else {
+          promise.fail(ar.cause());
+        }
+      });
+
+    /*client.get(port, "localhost", "/users", res -> {
       assertStatus(context, res, 200);
       res.bodyHandler(buf -> {
         JsonObject userCollectionObject = buf.toJsonObject();
         if (userCollectionObject.getJsonArray("users").size() == 0
           && userCollectionObject.getInteger("totalRecords") == 00) {
-          future.complete();
+          promise.complete();
         } else {
-          future.fail("Invalid return JSON: " + buf.toString());
+          promise.fail("Invalid return JSON: " + buf.toString());
         }
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+      .exceptionHandler(promise::fail)
+      .end();*/
+    return promise.future();
   }
 
   private static void addTags(JsonObject u) {
@@ -279,7 +328,7 @@ public class RestVerticleIT {
 
   private Future<Void> postUser(TestContext context, boolean withUserName) {
     log.info("Creating a new user\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("id", joeBlockId)
       .put("active", true);
@@ -290,24 +339,22 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       if (res.statusCode() >= 200 && res.statusCode() < 300) {
-        future.complete();
+        promise.complete();
       } else {
-        future.fail("Got status code: " + res.statusCode());
+        promise.fail("Got status code: " + res.statusCode());
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> postUserWithCustomFields(TestContext context) {
     log.info("Creating a new user\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("id", johnRectangleId)
       .put("active", true)
@@ -316,48 +363,44 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       if (res.statusCode() >= 200 && res.statusCode() < 300) {
-        future.complete();
+        promise.complete();
       } else {
-        future.fail("Got status code: " + res.statusCode());
+        promise.fail("Got status code: " + res.statusCode());
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> deleteNonExistingUser(TestContext context) {
     log.info("Deleting non-existing user\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.delete(port, "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
       assertStatus(context, res, 404);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("accept", "*/*")
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   private Future<Void> deleteUser(TestContext context, String userId) {
     log.info("Deleting existing user\n");
-    Future<Void> future = Future.future();
-    deleteWithNoContentStatus(context, future, "/users/" + userId);
-    return future;
+    Promise<Void> promise = Promise.promise();
+    deleteWithNoContentStatus(context, promise, "/users/" + userId);
+    return promise.future();
   }
 
   private Future<Void> postUserWithNumericName(TestContext context) {
     log.info("Creating a user with a numeric name\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "777777")
       .put("id", user777777Id)
@@ -365,21 +408,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getUser(TestContext context) {
     log.info("Retrieving a user\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users/" + joeBlockId, res -> {
       if (res.statusCode() == 200) {
@@ -389,7 +430,7 @@ public class RestVerticleIT {
             JsonObject tags = userObject.getJsonObject("tags");
 
             if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
-              future.fail("Bad value for tag list. " + buf.toString());
+              promise.fail("Bad value for tag list. " + buf.toString());
             }
             else {
               DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
@@ -398,37 +439,35 @@ public class RestVerticleIT {
                 //createdDate = DatatypeConverter.parseDateTime(userObject.getString("createdDate")).getTime();
                 createdDate = new DateTime(userObject.getString("createdDate")).toDate();
               } catch (Exception e) {
-                future.fail(e);
+                promise.fail(e);
                 return;
               }
               Date now = new Date();
               if (createdDate.after(now)) {
-                future.fail(new AssertionError("Bad value for createdDate"));
+                promise.fail(new AssertionError("Bad value for createdDate"));
                 return;
               }
-              future.complete();
+              promise.complete();
             }
           } else {
-            future.fail("Unable to read proper data from JSON return value: " + buf.toString());
+            promise.fail("Unable to read proper data from JSON return value: " + buf.toString());
           }
         });
       } else {
-        future.fail("Bad response: " + res.statusCode());
+        promise.fail("Bad response: " + res.statusCode());
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getUserWithCustomFields(TestContext context) {
     log.info("Retrieving a user with custom fields\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users/" + johnRectangleId, res -> {
       if (res.statusCode() == 200) {
@@ -436,28 +475,26 @@ public class RestVerticleIT {
           JsonObject userObject = buf.toJsonObject();
           JsonObject customFields = userObject.getJsonObject("customFields");
           if (customFields == null || !customFields.encode().equals("{\"department_1\":\"Math\"}")) {
-            future.fail("Bad value for customFields. " + buf.toString());
+            promise.fail("Bad value for customFields. " + buf.toString());
           }else{
-            future.complete();
+            promise.complete();
           }
         });
       } else {
-        future.fail("Bad response: " + res.statusCode());
+        promise.fail("Bad response: " + res.statusCode());
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
     log.info("Getting user via CQL, by username\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     try {
       client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode("username==joeblock"), res -> {
@@ -467,37 +504,35 @@ public class RestVerticleIT {
             JsonObject resultObject = buf.toJsonObject();
             int totalRecords = resultObject.getInteger("totalRecords");
             if (totalRecords != 1) {
-              future.fail("Expected 1 record, got " + totalRecords);
+              promise.fail("Expected 1 record, got " + totalRecords);
               return;
             }
             JsonArray userList = resultObject.getJsonArray("users");
             JsonObject userObject = userList.getJsonObject(0);
             if (userObject.getString("username").equals("joeblock")) {
-              future.complete();
+              promise.complete();
             } else {
-              future.fail("Unable to read proper data from JSON return value: " + buf.toString());
+              promise.fail("Unable to read proper data from JSON return value: " + buf.toString());
             }
           } catch (Exception e) {
-            future.fail(e);
+            promise.fail(e);
           }
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getUserByCqlById(TestContext context) {
     log.info("Getting user via CQL, by user id\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     try {
       client.get(port, "localhost", "/users?query=" + urlEncode("(id==" + joeBlockId + ")"), res -> {
@@ -510,51 +545,47 @@ public class RestVerticleIT {
             JsonArray userList = resultObject.getJsonArray("users");
             JsonObject userObject = userList.getJsonObject(0);
             assertThat("username of " + buf, userObject.getString("username"), is("joeblock"));
-            future.complete();
+            promise.complete();
           } catch (Exception e) {
-            future.fail(e);
+            promise.fail(e);
           }
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getUserByInvalidCQL(TestContext context) {
     log.info("Getting user via invalid CQL\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     try {
       // empty CQL query triggers parse exception
       client.get(port, "localhost", "/users?query=", res -> {
         assertStatus(context, res, 400);
-        future.complete();
+        promise.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private Future<Void> postAnotherUser(TestContext context) {
     log.info("Creating another user\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "bobcircle")
       .put("id", bobCircleId)
@@ -562,21 +593,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res,  201);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
     log.info("Query users via CQL\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     try {
       client.get(port, "localhost", "/users?query=" + urlEncode(cql), res -> {
@@ -587,7 +616,7 @@ public class RestVerticleIT {
             int totalRecords = resultObject.getInteger("totalRecords");
             JsonArray userList = resultObject.getJsonArray("users");
             if (userList.size() != totalRecords) {
-              future.fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
+              promise.fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
               return;
             }
             List<String> usernames = new ArrayList<>();
@@ -595,28 +624,26 @@ public class RestVerticleIT {
               usernames.add(userList.getJsonObject(i).getString("username"));
             }
             assertThat(usernames, containsInAnyOrder(expectedUsernames));
-            future.complete();
+            promise.complete();
           } catch (Exception e) {
-            future.fail(e);
+            promise.fail(e);
           }
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
     log.info("Making a valid user modification\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("id", id)
       .put("active", false);
@@ -627,60 +654,56 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + id, res -> {
       assertStatus(context, res, 204);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getGoodUser(TestContext context) {
     log.info("Getting the modified user\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users/" + bobCircleId, res -> {
       assertStatus(context, res, 200);
       res.bodyHandler(buf -> {
         JsonObject userObject = buf.toJsonObject();
         if (userObject.getString("username").equals("bobcircle")) {
-          Date createdDate = null;
-          Date updatedDate = null;
+          Date createdDate;
+          Date updatedDate;
           try {
             createdDate = new DateTime(userObject.getString("createdDate")).toDate();
             updatedDate = new DateTime(userObject.getString("updatedDate")).toDate();
           } catch (Exception e) {
-            future.fail(e);
+            promise.fail(e);
             return;
           }
           Date now = new Date();
           if (createdDate.after(now) || updatedDate.after(now) || createdDate.after(updatedDate)) {
-            future.fail(new AssertionError("Bad value for createdDate and/or updatedDate"));
+            promise.fail(new AssertionError("Bad value for createdDate and/or updatedDate"));
             return;
           }
-          future.complete();
+          promise.complete();
         } else {
-          future.fail("Unable to read proper data from JSON return value: " + buf.toString());
+          promise.fail("Unable to read proper data from JSON return value: " + buf.toString());
         }
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserBadUsername(TestContext context) {
     log.info("Trying to assign an invalid username \n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "joeblock")
       .put("id", bobCircleId)
@@ -688,21 +711,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + bobCircleId, res -> {
       assertStatus(context, res, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserWithoutIdInMetadata(TestContext context) {
     log.info("Changing a user without id in metadata\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
         .put("username", "bobcircle")
         .put("id", bobCircleId)
@@ -714,21 +735,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + bobCircleId, res -> {
       assertStatus(context, res, 204);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        context.fail(e);
-      })
+      .exceptionHandler(context::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserWithNotExistingCustomField(TestContext context) {
     log.info("Changing a user with not existing custom field");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "johnrectangle")
       .put("id", johnRectangleId)
@@ -748,22 +767,20 @@ public class RestVerticleIT {
         Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
         context.assertEquals("customFields", errorParam.getKey());
         context.assertEquals(notExistingCustomField, errorParam.getValue());
-        future.complete();
+        promise.complete();
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserBadId(TestContext context) {
     log.info("Trying to assign an invalid id \n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "bobcircle")
       .put("id", joeBlockId)
@@ -771,21 +788,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
       assertStatus(context, res, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserNotMatchingId(TestContext context) {
     log.info("Trying to Update user id \n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "joeblock")
       .put("id", bobCircleId)
@@ -793,19 +808,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
       assertStatus(context, res, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserDuplicatedAddressType(TestContext context) {
     log.info("Attempting to update a user with two of the same address types\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
     JsonObject userObject = new JsonObject()
       .put("username", "joeblock")
@@ -832,19 +847,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
       assertStatus(context, res, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserInvalidAddressType(TestContext context) {
     log.info("Attempting to update a user with invalid address types\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "joeblock")
       .put("id", joeBlockId)
@@ -864,21 +879,21 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
       assertStatus(context, res, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   // https://issues.folio.org/browse/MODUSERS-90
   // https://issues.folio.org/browse/MODUSERS-108
   private Future<Void> putUserWithNumericName(TestContext context) {
     log.info("Changing a user with numeric name\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "777777")
       .put("id", user777777Id)
@@ -886,63 +901,57 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + user777777Id, res -> {
       assertStatus(context, res, 404);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> createAddressType(TestContext context) {
     log.info("Creating an address type\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject addressTypeObject = new JsonObject()
       .put("addressType", "sweethome")
       .put("desc", "The patron's primary residence");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/addresstypes", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(addressTypeObject.encode());
-    return future;
+    return promise.future();
 
   }
 
   private Future<Void> createBadAddressType(TestContext context) {
     log.info("Creating a bad address type\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject addressTypeObject = new JsonObject()
       .put("desc", "The patron's summer residence");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/addresstypes", res -> {
       assertStatus(context, res, 422);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(addressTypeObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
     log.info("Getting the new addresstype, updating a user with it\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/addresstypes?query=addressType=sweethome", res -> {
       assertStatus(context, res, 200);
@@ -950,7 +959,7 @@ public class RestVerticleIT {
         JsonObject result = new JsonObject(body.toString());
         JsonObject addressType = result.getJsonArray("addressTypes").getJsonObject(0);
         if (!addressType.getString("addressType").equals("sweethome")) {
-          future.fail("addressType is not 'sweethome' in return addresstype");
+          promise.fail("addressType is not 'sweethome' in return addresstype");
         } else {
           JsonObject userObject = new JsonObject()
             .put("username", "bobcircle")
@@ -975,22 +984,18 @@ public class RestVerticleIT {
             deleteClient.delete(port, "localhost", "/addresstypes/"
               + addressType.getString("id"), deleteRes -> {
                 assertStatus(context, deleteRes, 400);
-                future.complete();
+                promise.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
               .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
               .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-              .exceptionHandler(e -> {
-                future.fail(e);
-              })
+              .exceptionHandler(promise::fail)
               .end();
           })
             .putHeader("X-Okapi-Tenant", "diku")
             .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
             .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-            .exceptionHandler(e -> {
-              future.fail(e);
-            })
+            .exceptionHandler(promise::fail)
             .end(userObject.encode());
         }
       });
@@ -998,53 +1003,47 @@ public class RestVerticleIT {
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
 
   }
 
   private Future<Void> deleteAddressTypeSQLError(TestContext context) {
     log.info("Deleting address type SQL error\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient deleteClient = vertx.createHttpClient();
     deleteClient.delete(port, "localhost", "/addresstypes/x%2F", deleteRes -> {
       assertStatus(context, deleteRes, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   private Future<Void> deleteAddressTypeCQLError(TestContext context) {
     log.info("Deleting address type CQL error\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient deleteClient = vertx.createHttpClient();
     deleteClient.delete(port, "localhost", "/addresstypes/x=", deleteRes -> {
       assertStatus(context, deleteRes, 500);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   private Future<Void> createAndDeleteAddressType(TestContext context) {
     log.info("Creating and deleting an address type\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient postClient = vertx.createHttpClient();
     JsonObject addressTypeObject = new JsonObject()
       .put("addressType", "hardwork")
@@ -1057,31 +1056,27 @@ public class RestVerticleIT {
         deleteClient.delete(port, "localhost", "/addresstypes/"
           + newAddressTypeObject.getString("id"), deleteRes -> {
             assertStatus(context, deleteRes, 204);
-            future.complete();
+            promise.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
           .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
           .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
+          .exceptionHandler(promise::fail)
           .end();
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(addressTypeObject.encode());
 
-    return future;
+    return promise.future();
   }
 
   private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
     log.info("Attempting to create a user with two of the same address types");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
     JsonObject userObject = new JsonObject()
       .put("username", "jacktriangle")
@@ -1108,21 +1103,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> postUserWithNotExistingCustomField(TestContext context) {
     log.info("Attempting to create a user with not existing custom field");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", "johnrectangle")
       .put("id", johnRectangleId)
@@ -1142,22 +1135,20 @@ public class RestVerticleIT {
         Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
         context.assertEquals("customFields", errorParam.getKey());
         context.assertEquals(notExistingCustomField, errorParam.getValue());
-        future.complete();
+        promise.complete();
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> postUserBadAddress(TestContext context) {
     log.info("Trying to create a bad address\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
     JsonObject userObject = new JsonObject()
       .put("username", "annarhombus")
@@ -1178,21 +1169,19 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res, 400);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> postUserWithDuplicateId(TestContext context) {
     log.info("Attempting to create a user with duplicate id");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     String uuid = UUID.randomUUID().toString();
     JsonObject user1 = new JsonObject().put("id", uuid);
     JsonObject user2 = new JsonObject().put("id", uuid);
@@ -1207,36 +1196,32 @@ public class RestVerticleIT {
           JsonObject validationErrorRes = err.toJsonObject();
           JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
           if (validationErrors.isEmpty()) {
-            future.fail("Did not return expected validation errors");
+            promise.fail("Did not return expected validation errors");
           } else {
             String errorMessage = validationErrors.getJsonObject(0).getString("message");
             context.assertEquals(1, validationErrors.size());
             context.assertEquals(errorMessage, "User with this id already exists");
-            future.complete();
+            promise.complete();
           }
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(user1.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> postUserWithDuplicateUsername(TestContext context) {
     log.info("Attempting to create a user with duplicate username");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject user1 = new JsonObject()
       .put("username", "the_twin")
       .put("id",  UUID.randomUUID().toString());
@@ -1254,36 +1239,32 @@ public class RestVerticleIT {
           JsonObject validationErrorRes = err.toJsonObject();
           JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
           if (validationErrors.isEmpty()) {
-            future.fail("Did not return expected validation errors");
+            promise.fail("Did not return expected validation errors");
           } else {
             String errorMessage = validationErrors.getJsonObject(0).getString("message");
             context.assertEquals(1, validationErrors.size());
             context.assertEquals(errorMessage, "User with this username already exists");
-            future.complete();
+            promise.complete();
           }
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(user1.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> putUserWithDuplicateUsername(TestContext context) {
     log.info("Changing a user to username that already exists\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject user1 = new JsonObject()
       .put("username", "left_shoe")
       .put("id", UUID.randomUUID().toString());
@@ -1301,39 +1282,33 @@ public class RestVerticleIT {
           assertStatus(context, res3, 400);
           res3.bodyHandler(err -> {
             context.assertEquals("User with this username already exists", err.toString());
-            future.complete();
+            promise.complete();
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
           .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
           .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
+          .exceptionHandler(promise::fail)
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(user1.encode());
-    return future;
+    return promise.future();
   }
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> postTwoUsersWithoutUsername(TestContext context) {
     log.info("Attempting to create two users without username");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject user1 = new JsonObject()
       .put("id",  UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
@@ -1344,30 +1319,26 @@ public class RestVerticleIT {
       client.post(port, "localhost", "/users", res2 -> {
         // should succeed, there can be any number of users without username
         assertStatus(context, res2, 201);
-        future.complete();
+        promise.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(user1.encode());
-    return future;
+    return promise.future();
   }
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> putSecondUserWithoutUsername(TestContext context) {
     log.info("Updating second user to have no username");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject user1 = new JsonObject()
       .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
@@ -1381,38 +1352,32 @@ public class RestVerticleIT {
         user2.remove("username");  // try to PUT with username removed
         client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
           assertStatus(context, res3, 204);
-          future.complete();
+          promise.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
           .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
           .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
+          .exceptionHandler(promise::fail)
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(user1.encode());
-    return future;
+    return promise.future();
   }
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> postUserWithDuplicateBarcode(TestContext context) {
     log.info("Attempting to create a user with duplicate barcode");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_one")
       .put("id",  UUID.randomUUID().toString())
@@ -1442,37 +1407,33 @@ public class RestVerticleIT {
           JsonObject validationErrorRes = err.toJsonObject();
           JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
           if (validationErrors.isEmpty()) {
-            future.fail("Did not return expected validation errors");
+            promise.fail("Did not return expected validation errors");
           } else {
             String errorMessage = validationErrors.getJsonObject(0).getString("message");
             assertThat(1, is(validationErrors.size()));
             assertThat(errorMessage, is("This barcode has already been taken"));
-            future.complete();
+            promise.complete();
           }
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject1.encode());
-    return future;
+    return promise.future();
   }
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
     log.info("Changing a user to barcode that already exists\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_three")
       .put("id", UUID.randomUUID().toString())
@@ -1506,123 +1467,109 @@ public class RestVerticleIT {
           res3.bodyHandler(err -> {
             String errorMessage = err.toString();
             assertThat(errorMessage, is("This barcode has already been taken"));
-            future.complete();
+            promise.complete();
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
           .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
           .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
+          .exceptionHandler(promise::fail)
           .end(userObject2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject1.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> createProxyfor(TestContext context) {
     log.info("Creating a new proxyfor entry\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> createProxyforWithSameUserId(TestContext context) {
     log.info("Trying to create a proxyfor with an existing userid\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "5b0a9a0b-6eb6-447c-bc31-9c99940a29c5");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
 
-    return future;
+    return promise.future();
   }
 
   private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
     log.info("Trying to create a proxyfor with an existing proxy userid\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
     log.info("Trying to create a proxyfor entry with the same id and proxy user id\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
       assertStatus(context, res, 422);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getProxyforCollection(TestContext context) {
     log.info("Getting proxyfor entries\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/proxiesfor", res -> {
       assertStatus(context, res, 200);
@@ -1630,25 +1577,23 @@ public class RestVerticleIT {
         JsonObject resultJson = body.toJsonObject();
         JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
         if (proxyForArray.size() == 3) {
-          future.complete();
+          promise.complete();
         } else {
-          future.fail("Expected 3 entries, found " + proxyForArray.size());
+          promise.fail("Expected 3 entries, found " + proxyForArray.size());
         }
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   private Future<Void> findAndGetProxyfor(TestContext context) {
     log.info("Find and retrieve a particular proxyfor entry\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     try {
       HttpClient client = vertx.createHttpClient();
       log.info("Making CQL request\n");
@@ -1661,7 +1606,7 @@ public class RestVerticleIT {
               JsonObject resultJson = body.toJsonObject();
               JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
               if (proxyForArray.size() != 1) {
-                future.fail("Expected 1 entry, found " + proxyForArray.size());
+                promise.fail("Expected 1 entry, found " + proxyForArray.size());
                 return;
               }
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
@@ -1669,36 +1614,32 @@ public class RestVerticleIT {
               log.info("Making get-by-id request\n");
               client.get(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 assertStatus(context, res2, 200);
-                future.complete();
+                promise.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
                 .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .exceptionHandler(e -> {
-                  future.fail(e);
-                })
+                .exceptionHandler(promise::fail)
                 .end();
             } catch (Exception e) {
-              future.fail(e);
+              promise.fail(e);
             }
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private Future<Void> findAndUpdateProxyfor(TestContext context) {
     log.info("Find and update a particular proxyfor entry\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject modifiedProxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
@@ -1714,7 +1655,7 @@ public class RestVerticleIT {
               JsonObject resultJson = body.toJsonObject();
               JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
               if (proxyForArray.size() != 1) {
-                future.fail("Expected 1 entry, found " + proxyForArray.size());
+                promise.fail("Expected 1 entry, found " + proxyForArray.size());
                 return;
               }
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
@@ -1722,37 +1663,33 @@ public class RestVerticleIT {
               log.info("Making put-by-id request\n");
               client.put(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 assertStatus(context, res2, 204);
-                future.complete();
+                promise.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
                 .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-                .exceptionHandler(e -> {
-                  future.fail(e);
-                })
+                .exceptionHandler(promise::fail)
                 .end(modifiedProxyObject.encode());
             } catch (Exception e) {
-              future.fail(e);
+              promise.fail(e);
             }
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private Future<Void> findAndDeleteProxyfor(TestContext context) {
     log.info("Find and delete a particular proxyfor entry");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     try {
       HttpClient client = vertx.createHttpClient();
       log.info("Making CQL request\n");
@@ -1765,7 +1702,7 @@ public class RestVerticleIT {
               JsonObject resultJson = body.toJsonObject();
               JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
               if (proxyForArray.size() != 1) {
-                future.fail("Expected 1 entry, found " + proxyForArray.size());
+                promise.fail("Expected 1 entry, found " + proxyForArray.size());
                 return;
               }
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
@@ -1773,37 +1710,33 @@ public class RestVerticleIT {
               log.info("Making delete-by-id request\n");
               client.delete(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 assertStatus(context, res2, 204);
-                future.complete();
+                promise.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
                 .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-                .exceptionHandler(e -> {
-                  future.fail(e);
-                })
+                .exceptionHandler(promise::fail)
                 .end();
             } catch (Exception e) {
-              future.fail(e);
+              promise.fail(e);
             }
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
         .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
+        .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
     String endpoint, boolean checkMeta) {
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
     HttpClient client = vertx.createHttpClient();
@@ -1824,33 +1757,31 @@ public class RestVerticleIT {
                 JsonObject resultOb = body2.toJsonObject();
                 JsonObject metadata = resultOb.getJsonObject("metadata");
                 if (metadata == null) {
-                  future.fail(String.format("No 'metadata' field in result: %s",
+                  promise.fail(String.format("No 'metadata' field in result: %s",
                     body2.toString()));
                   return;
                 }
                 createdDate = new DateTime(metadata.getString("createdDate")).toDate();
               } catch (Exception e) {
-                future.fail(e);
+                promise.fail(e);
                 return;
               }
               Date now = new Date();
               if (!createdDate.before(now)) {
-                future.fail("metadata createdDate is not correct");
+                promise.fail("metadata createdDate is not correct");
                 return;
               }
             }
             //delete the object by id
             client.delete(port, "localhost", endpoint + "/" + id, res3 -> {
               assertStatus(context, res3, 204);
-              future.complete();
+              promise.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
               .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
               .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
               .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-              .exceptionHandler(e -> {
-                future.fail(e);
-              })
+              .exceptionHandler(promise::fail)
               .end();
           });
         })
@@ -1858,9 +1789,7 @@ public class RestVerticleIT {
           .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
           .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
           .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
+          .exceptionHandler(promise::fail)
           .end();
 
       });
@@ -1870,29 +1799,25 @@ public class RestVerticleIT {
       .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .putHeader("X-Okapi-Token", fakeJWT)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(ob.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> getGroupByInvalidUuid(TestContext context) {
     log.info("Retrieving a group by invalid uuid\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/groups/q", res -> {
       assertStatus(context, res, 404);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end();
-    return future;
+    return promise.future();
   }
 
   @Test
@@ -1908,9 +1833,7 @@ public class RestVerticleIT {
 
     Async async = context.async();
     Future<Void> startFuture;
-    Future<Void> f1 = Future.future();
-    getEmptyUsers(context).setHandler(f1.completer());
-    startFuture = f1
+    startFuture = getEmptyUsers(context)
       .compose(v -> postUser(context, false))
       .compose(v -> postCustomField(context))
       .compose(v -> putUserGood(context, joeBlockId, false))
@@ -2506,7 +2429,7 @@ public class RestVerticleIT {
 
   private Future<Void> postUserWithWhitespace(TestContext context) {
     log.info("Creating a user with a numeric name\n");
-    Future<Void> future = Future.future();
+    Promise<Void> promise = Promise.promise();
     JsonObject userObject = new JsonObject()
       .put("username", " user name ")
       .put("id", userIdWithWhitespace)
@@ -2514,89 +2437,89 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
       assertStatus(context, res, 201);
-      future.complete();
+      promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
+      .exceptionHandler(promise::fail)
       .end(userObject.encode());
-    return future;
+    return promise.future();
   }
 
   private Future<Void> assertCustomFieldValues(JsonObject result) {
-    Future<Void> future = Future.succeededFuture();
+    Promise<Void> promise = Promise.promise();
     int totalRecords = result.getInteger("totalRecords");
     if (totalRecords != 1) {
-      future.fail("Expected 1 record, got " + totalRecords);
+      promise.fail("Expected 1 record, got " + totalRecords);
     }
     JsonArray customFields = result.getJsonArray("customFields");
     JsonObject customField = customFields.getJsonObject(0);
     assertThat(customField.getString("entityType"), is("user"));
-    return future;
+
+    promise.complete();
+    return promise.future();
   }
 
   private Future<Void> deleteCustomField(TestContext context) {
     log.info("Deleting existing custom field\n");
-    Future<Void> future = Future.future();
-    deleteWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId);
-    return future;
+    Promise<Void> promise = Promise.promise();
+    deleteWithNoContentStatus(context, promise, customFieldsPath + "/" + customFieldId);
+    return promise.future();
   }
 
   private Future<JsonObject> queryCustomField(TestContext context) {
     String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
     log.info("Getting custom field via CQL, by entityType\n");
-    Future<JsonObject> future = Future.future();
+    Promise<JsonObject> promise = Promise.promise();
     try {
-      getByQuery(context, requestUrl, future);
+      getByQuery(context, requestUrl, promise);
     } catch (Exception e) {
-      future.fail(e);
+      promise.fail(e);
     }
-    return future;
+    return promise.future();
   }
 
-  private void getByQuery(TestContext context, String requestUrl, Future<JsonObject> future) {
+  private void getByQuery(TestContext context, String requestUrl, Promise<JsonObject> promise) {
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", requestUrl, res -> {
       assertStatus(context, res, HTTP_OK);
       res.bodyHandler(buf -> {
         try {
           JsonObject resultObject = buf.toJsonObject();
-            future.complete(resultObject);
+            promise.complete(resultObject);
         } catch (Exception e) {
-          future.fail(e);
+          promise.fail(e);
         }
       });
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(future::fail)
+      .exceptionHandler(promise::fail)
       .end();
   }
 
   private Future<Void> postCustomField(TestContext context) {
     log.info("Creating a new custom field definition\n");
-    Future<Void> future = Future.future();
-    postWithOkStatus(future, customFieldsPath, postCustomField);
-    return future;
+    Promise<Void> promise = Promise.promise();
+    postWithOkStatus(promise, customFieldsPath, postCustomField);
+    return promise.future();
   }
 
   private Future<Void> putCustomField(TestContext context) {
     log.info("Update custom field definition\n");
-    Future<Void> future = Future.future();
-    return putWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId, putCustomField);
+    Promise<Void> promise = Promise.promise();
+    return putWithNoContentStatus(context, promise, customFieldsPath + "/" + customFieldId, putCustomField);
   }
 
-  private void postWithOkStatus(Future<Void> future, String request, String body) {
+  private void postWithOkStatus(Promise<Void> promise, String request, String body) {
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", request, res -> {
       if (res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE) {
-        future.complete();
+        promise.complete();
       } else {
-        future.fail("Got status code: " + res.statusCode());
+        promise.fail("Got status code: " + res.statusCode());
       }
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
@@ -2604,35 +2527,35 @@ public class RestVerticleIT {
       .putHeader(OKAPI_USERID_HEADER, joeBlockId)
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(future::fail)
+      .exceptionHandler(promise::fail)
       .end(body);
   }
 
-  private Future<Void> putWithNoContentStatus(TestContext context, Future<Void> future, String request, String body) {
+  private Future<Void> putWithNoContentStatus(TestContext context, Promise<Void> promise, String request, String body) {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", request, res -> {
       assertStatus(context, res, HTTP_NO_CONTENT);
-      future.complete();
+      promise.complete();
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
       .putHeader("X-Okapi-Url", HTTP_LOCALHOST + port)
       .putHeader(OKAPI_USERID_HEADER, joeBlockId)
       .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
+      .exceptionHandler(promise::fail)
       .end(body);
-    return future;
+    return promise.future();
   }
 
-  private void deleteWithNoContentStatus(TestContext context, Future<Void> future, String request) {
+  private void deleteWithNoContentStatus(TestContext context, Promise<Void> promise, String request) {
     HttpClient client = vertx.createHttpClient();
     client.delete(port, "localhost", request, res -> {
       assertStatus(context, res, HTTP_NO_CONTENT);
-      future.complete();
+      promise.complete();
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
       .putHeader("accept", "*/*")
-      .exceptionHandler(future::fail)
+      .exceptionHandler(promise::fail)
       .end();
   }
 }

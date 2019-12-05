@@ -1,23 +1,26 @@
 package org.folio.rest.impl;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.core.Response;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import javax.ws.rs.core.Response;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.ProxiesFor;
 import org.folio.rest.jaxrs.model.ProxyforCollection;
 import org.folio.rest.jaxrs.resource.Proxiesfor;
-import org.folio.rest.persist.Criteria.Criteria;
-import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.Criteria.Criteria;
+import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.tools.utils.ValidationHelper;
 
 /**
@@ -27,10 +30,8 @@ import org.folio.rest.tools.utils.ValidationHelper;
 public class ProxiesForAPI implements Proxiesfor {
 
   public static final String PROXY_FOR_TABLE = "proxyfor";
-  public static final String ID_FIELD_NAME = "id";
   public static final String USERID_FIELD_NAME = "'userId'";
   public static final String PROXY_USERID_FIELD_NAME = "'proxyUserId'";
-  public static final String URL_PREFIX = "/proxiesfor";
   private static final Logger logger = LoggerFactory.getLogger(ProxiesForAPI.class);
   private boolean suppressErrorResponse = false;
 
@@ -123,7 +124,7 @@ public class ProxiesForAPI implements Proxiesfor {
     String userId,
     String proxyUserId,
     PostgresClient postgresClient) {
-    Future<Boolean> future = Future.future();
+    Promise<Boolean> promise = Promise.promise();
     Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).
       setOperation("=").setVal(userId).setJSONB(true);
     Criteria proxyUserCrit = new Criteria().addField(PROXY_USERID_FIELD_NAME).
@@ -132,12 +133,12 @@ public class ProxiesForAPI implements Proxiesfor {
     criterion.addCriterion(userCrit, "AND", proxyUserCrit);
     postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {
       if (getReply.failed()) {
-        future.fail(getReply.cause());
+        promise.fail(getReply.cause());
       } else {
         List<ProxiesFor> proxyForList = getReply.result().getResults();
-        future.complete(! proxyForList.isEmpty());
+        promise.complete(! proxyForList.isEmpty());
       }
     });
-    return future;
+    return promise.future();
   }
 }

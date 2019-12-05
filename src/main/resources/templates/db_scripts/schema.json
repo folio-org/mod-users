@@ -34,10 +34,6 @@
           "tOps" : "ADD"
         },
         {
-          "fieldName" : "id",
-          "tOps" : "ADD"
-        },
-        {
           "fieldName" : "barcode",
           "tOps" : "ADD"
         }
@@ -45,10 +41,6 @@
       "index" : [
         {
           "fieldName" : "externalSystemId",
-          "tOps" : "ADD"
-        },
-        {
-          "fieldName" : "username",
           "tOps" : "ADD"
         },
         {
@@ -67,12 +59,6 @@
         }
       ],
       "ginIndex": [
-        {
-          "fieldName": "id",
-          "tOps": "ADD",
-          "caseSensitive": false,
-          "removeAccents": true
-        },
         {
           "fieldName": "username",
           "tOps": "ADD",
