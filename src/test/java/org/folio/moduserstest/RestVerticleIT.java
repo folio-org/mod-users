@@ -1,48 +1,20 @@
 package org.folio.moduserstest;
 
-import static io.vertx.core.http.HttpMethod.DELETE;
-import static io.vertx.core.http.HttpMethod.GET;
-import static io.vertx.core.http.HttpMethod.POST;
-import static io.vertx.core.http.HttpMethod.PUT;
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
-
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.util.StringUtil.urlEncode;
-
-import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-
-import io.vertx.core.Context;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -53,7 +25,25 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import junit.framework.AssertionFailedError;
+import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.tools.utils.VertxUtils;
+import org.folio.util.StringUtil;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -64,33 +54,13 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.parser.JsonPathParser;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
-import org.folio.rest.utils.ExpirationTool;
-import org.folio.util.StringUtil;
-
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RestVerticleIT {
 
-  private static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
-  private static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
-  private static final String HTTP_LOCALHOST = "http://localhost:";
   private static final Logger log = LoggerFactory.getLogger(RestVerticleIT.class);
 
-  private final String userUrl = HTTP_LOCALHOST + port + "/users";
-  private final String groupUrl = HTTP_LOCALHOST + port + "/groups";
   private final String customFieldsPath = "/custom-fields";
-
-  private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
-  private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
   private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
     "\"name\": \"Department\", " +
@@ -140,87 +110,22 @@ public class RestVerticleIT {
     .put("accrueTo", "Sponsor");
 
   private static Vertx vertx;
-  private static Context vertxContext;
   private static WebClient client;
   static int port;
 
-  private String groupID1;
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
-  private static void fail(TestContext context, HttpClientResponse response) {
-    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
-    // remove the element with this fail method from the stacktrace
-    fail(context, null, response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
-  private static void fail(TestContext context, String message, HttpClientResponse response) {
-    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
-    // remove the element with this fail method from the stacktrace
-    fail(context, message, response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
-  private static void fail(TestContext context, String message, HttpClientResponse response,
-      StackTraceElement [] stacktrace) {
-    Async async = context.async();
-    response.bodyHandler(body -> {
-      Throwable t = new AssertionFailedError((message == null ? "" : message + ": ")
-          + response.statusCode() + " " + response.statusMessage() + " " + body.toString());
-      // t contains the stacktrace of bodyHandler but does not contain the method that
-      // called this fail method. Therefore exchange the stacktrace:
-      t.setStackTrace(stacktrace);
-      context.fail(t);
-      async.complete();
-    });
-  }
-
-  private static void fail(TestContext context, String message, HttpResponse<Buffer> response,
-                           StackTraceElement [] stacktrace) {
-    Async async = context.async();
-
-    Throwable t = new AssertionFailedError((message == null ? "" : message + ": ")
-      + response.statusCode() + " " + response.statusMessage() + " " + response.bodyAsString());
-    // t contains the stacktrace of bodyHandler but does not contain the method that
-    // called this fail method. Therefore exchange the stacktrace:
-    t.setStackTrace(stacktrace);
-    context.fail(t);
-    async.complete();
-  }
-
-  /**
-   * Fail the context if response does not have the provided status.
-   */
-  private static void assertStatus(TestContext context, HttpClientResponse response, int status) {
-    if (response.statusCode() == status) {
-      return;
-    }
-    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
-    // remove the element with this assertStatus method from the stacktrace
-    fail(context, "Expected status " + status + " but got",
-        response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
-  private static void assertStatus(TestContext context, HttpResponse<Buffer> response, int status) {
-    if (response.statusCode() == status) {
-      return;
-    }
-    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
-    // remove the element with this assertStatus method from the stacktrace
-    fail(context, "Expected status " + status + " but got",
-      response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
   @BeforeClass
-  public static void setup(TestContext context) throws SQLException {
+  public static void setup(TestContext context) {
     vertx = VertxUtils.getVertxWithExceptionHandler();
-    vertxContext = vertx.getOrCreateContext();
 
     client = WebClient.create(vertx);
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + Integer.toString(port), "diku", "diku");
+    TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + port, "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port))
       .setWorker(true);
@@ -232,7 +137,7 @@ public class RestVerticleIT {
           case 204: break;  // existing schema has been deleted
           case 400: break;  // schema does not exist
           default:
-            fail(context, "deleteTenant", delete);
+            RestITSupport.fail(context, "deleteTenant", delete);
             return;
           }
           try {
@@ -244,7 +149,7 @@ public class RestVerticleIT {
             ta.setParameters(parameters);
             tenantClient.postTenant(ta, post -> {
               if (post.statusCode() != 201) {
-                fail(context, "postTenant", post);
+                RestITSupport.fail(context, "postTenant", post);
               }
               async.complete();
             });
@@ -272,12 +177,12 @@ public class RestVerticleIT {
 
     client.get(port, "localhost", "/users")
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .send(ar -> {
         if (ar.succeeded()) {
           HttpResponse<Buffer> response = ar.result();
-          assertStatus(context, response, 200);
+          RestITSupport.assertStatus(context, response, 200);
 
           JsonObject userCollectionObject = response.bodyAsJsonObject();;
           if (userCollectionObject.getJsonArray("users").size() == 0
@@ -345,8 +250,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -369,8 +274,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -381,7 +286,7 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.delete(port, "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
-      assertStatus(context, res, 404);
+      RestITSupport.assertStatus(context, res, 404);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
@@ -407,12 +312,12 @@ public class RestVerticleIT {
       .put("active", true);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -458,8 +363,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -485,8 +390,8 @@ public class RestVerticleIT {
       }
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -498,7 +403,7 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     try {
       client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode("username==joeblock"), res -> {
-        assertStatus(context, res, 200);
+        RestITSupport.assertStatus(context, res, 200);
         res.bodyHandler(buf -> {
           try {
             JsonObject resultObject = buf.toJsonObject();
@@ -520,8 +425,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
@@ -536,7 +441,7 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     try {
       client.get(port, "localhost", "/users?query=" + urlEncode("(id==" + joeBlockId + ")"), res -> {
-        assertStatus(context, res, 200);
+        RestITSupport.assertStatus(context, res, 200);
         res.bodyHandler(buf -> {
           try {
             JsonObject resultObject = buf.toJsonObject();
@@ -552,8 +457,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
@@ -569,12 +474,12 @@ public class RestVerticleIT {
     try {
       // empty CQL query triggers parse exception
       client.get(port, "localhost", "/users?query=", res -> {
-        assertStatus(context, res, 400);
+        RestITSupport.assertStatus(context, res, 400);
         promise.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
@@ -592,12 +497,12 @@ public class RestVerticleIT {
       .put("active", true);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res,  201);
+      RestITSupport.assertStatus(context, res,  201);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -609,7 +514,7 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     try {
       client.get(port, "localhost", "/users?query=" + urlEncode(cql), res -> {
-        assertStatus(context, res, 200);
+        RestITSupport.assertStatus(context, res, 200);
         res.bodyHandler(buf -> {
           try {
             JsonObject resultObject = buf.toJsonObject();
@@ -631,8 +536,8 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
@@ -653,12 +558,12 @@ public class RestVerticleIT {
     addCustomFields(userObject);
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + id, res -> {
-      assertStatus(context, res, 204);
+      RestITSupport.assertStatus(context, res, 204);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -669,7 +574,7 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/users/" + bobCircleId, res -> {
-      assertStatus(context, res, 200);
+      RestITSupport.assertStatus(context, res, 200);
       res.bodyHandler(buf -> {
         JsonObject userObject = buf.toJsonObject();
         if (userObject.getString("username").equals("bobcircle")) {
@@ -694,8 +599,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -710,12 +615,12 @@ public class RestVerticleIT {
       .put("active", false);
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + bobCircleId, res -> {
-      assertStatus(context, res, 400);
+      RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -734,12 +639,12 @@ public class RestVerticleIT {
         .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + bobCircleId, res -> {
-      assertStatus(context, res, 204);
+      RestITSupport.assertStatus(context, res, 204);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(context::fail)
       .end(userObject.encode());
     return promise.future();
@@ -761,7 +666,7 @@ public class RestVerticleIT {
       );
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + johnRectangleId, res -> {
-      assertStatus(context, res, 422);
+      RestITSupport.assertStatus(context, res, 422);
       res.bodyHandler(err -> {
         Errors errors = Json.decodeValue(err, Errors.class);
         Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
@@ -771,8 +676,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -787,12 +692,12 @@ public class RestVerticleIT {
       .put("active", false);
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
+      RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -807,12 +712,12 @@ public class RestVerticleIT {
       .put("active", false);
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
+      RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -846,12 +751,12 @@ public class RestVerticleIT {
       );
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
+      RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -878,12 +783,12 @@ public class RestVerticleIT {
       );
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
+      RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -900,12 +805,12 @@ public class RestVerticleIT {
       .put("active", false);
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", "/users/" + user777777Id, res -> {
-      assertStatus(context, res, 404);
+      RestITSupport.assertStatus(context, res, 404);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -919,12 +824,12 @@ public class RestVerticleIT {
       .put("desc", "The patron's primary residence");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/addresstypes", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(addressTypeObject.encode());
     return promise.future();
@@ -938,12 +843,12 @@ public class RestVerticleIT {
       .put("desc", "The patron's summer residence");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/addresstypes", res -> {
-      assertStatus(context, res, 422);
+      RestITSupport.assertStatus(context, res, 422);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(addressTypeObject.encode());
     return promise.future();
@@ -954,7 +859,7 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/addresstypes?query=addressType=sweethome", res -> {
-      assertStatus(context, res, 200);
+      RestITSupport.assertStatus(context, res, 200);
       res.bodyHandler(body -> {
         JsonObject result = new JsonObject(body.toString());
         JsonObject addressType = result.getJsonArray("addressTypes").getJsonObject(0);
@@ -979,30 +884,30 @@ public class RestVerticleIT {
             );
           HttpClient putClient = vertx.createHttpClient();
           putClient.put(port, "localhost", "/users/" + bobCircleId, putRes -> {
-            assertStatus(context, putRes, 204);
+            RestITSupport.assertStatus(context, putRes, 204);
             HttpClient deleteClient = vertx.createHttpClient();
             deleteClient.delete(port, "localhost", "/addresstypes/"
               + addressType.getString("id"), deleteRes -> {
-                assertStatus(context, deleteRes, 400);
+                RestITSupport.assertStatus(context, deleteRes, 400);
                 promise.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+              .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
               .exceptionHandler(promise::fail)
               .end();
           })
             .putHeader("X-Okapi-Tenant", "diku")
-            .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-            .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+            .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+            .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
             .exceptionHandler(promise::fail)
             .end(userObject.encode());
         }
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -1014,12 +919,12 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     HttpClient deleteClient = vertx.createHttpClient();
     deleteClient.delete(port, "localhost", "/addresstypes/x%2F", deleteRes -> {
-      assertStatus(context, deleteRes, 400);
+      RestITSupport.assertStatus(context, deleteRes, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -1030,12 +935,12 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     HttpClient deleteClient = vertx.createHttpClient();
     deleteClient.delete(port, "localhost", "/addresstypes/x=", deleteRes -> {
-      assertStatus(context, deleteRes, 500);
+      RestITSupport.assertStatus(context, deleteRes, 500);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -1049,25 +954,25 @@ public class RestVerticleIT {
       .put("addressType", "hardwork")
       .put("desc", "The patron's work address");
     postClient.post(port, "localhost", "/addresstypes", postRes -> {
-      assertStatus(context, postRes, 201);
+      RestITSupport.assertStatus(context, postRes, 201);
       postRes.bodyHandler(postBody -> {
         JsonObject newAddressTypeObject = new JsonObject(postBody.toString());
         HttpClient deleteClient = vertx.createHttpClient();
         deleteClient.delete(port, "localhost", "/addresstypes/"
           + newAddressTypeObject.getString("id"), deleteRes -> {
-            assertStatus(context, deleteRes, 204);
+            RestITSupport.assertStatus(context, deleteRes, 204);
             promise.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(promise::fail)
           .end();
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(addressTypeObject.encode());
 
@@ -1102,12 +1007,12 @@ public class RestVerticleIT {
       );
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 400);
+      RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -1129,7 +1034,7 @@ public class RestVerticleIT {
       );
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 422);
+      RestITSupport.assertStatus(context, res, 422);
       res.bodyHandler(err -> {
         Errors errors = Json.decodeValue(err, Errors.class);
         Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
@@ -1139,8 +1044,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -1168,12 +1073,12 @@ public class RestVerticleIT {
       );
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 400);
+      RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -1188,10 +1093,10 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     // create test user one
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       // fail attempting to create user with duplicate id
       client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 422);
+        RestITSupport.assertStatus(context, res2, 422);
         res2.bodyHandler(err -> {
           JsonObject validationErrorRes = err.toJsonObject();
           JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
@@ -1206,14 +1111,14 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(user1.encode());
     return promise.future();
@@ -1231,10 +1136,10 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     // create test user one
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       // creating a second user with the same username should fail
       client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 422);
+        RestITSupport.assertStatus(context, res2, 422);
         res2.bodyHandler(err -> {
           JsonObject validationErrorRes = err.toJsonObject();
           JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
@@ -1249,14 +1154,14 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(user1.encode());
     return promise.future();
@@ -1273,33 +1178,33 @@ public class RestVerticleIT {
       .put("id", UUID.randomUUID().toString());
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 201);
+        RestITSupport.assertStatus(context, res2, 201);
         // attempt to update user2 changing username to a duplicate
         user2.put("username", "left_shoe");
         client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
-          assertStatus(context, res3, 400);
+          RestITSupport.assertStatus(context, res3, 400);
           res3.bodyHandler(err -> {
             context.assertEquals("User with this username already exists", err.toString());
             promise.complete();
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(promise::fail)
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(user1.encode());
     return promise.future();
@@ -1315,21 +1220,21 @@ public class RestVerticleIT {
       .put("id",  UUID.randomUUID().toString());
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       client.post(port, "localhost", "/users", res2 -> {
         // should succeed, there can be any number of users without username
-        assertStatus(context, res2, 201);
+        RestITSupport.assertStatus(context, res2, 201);
         promise.complete();
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(user1.encode());
     return promise.future();
@@ -1346,29 +1251,29 @@ public class RestVerticleIT {
         .put("id", UUID.randomUUID().toString());
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 201);
+        RestITSupport.assertStatus(context, res2, 201);
         user2.remove("username");  // try to PUT with username removed
         client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
-          assertStatus(context, res3, 204);
+          RestITSupport.assertStatus(context, res3, 204);
           promise.complete();
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(promise::fail)
           .end(user2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end(user2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(user1.encode());
     return promise.future();
@@ -1399,10 +1304,10 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     // create test user one
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       // fail attempting to create user with duplicate barcode
       client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 422);
+        RestITSupport.assertStatus(context, res2, 422);
         res2.bodyHandler(err -> {
           JsonObject validationErrorRes = err.toJsonObject();
           JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
@@ -1417,14 +1322,14 @@ public class RestVerticleIT {
         });
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject1.encode());
     return promise.future();
@@ -1456,14 +1361,14 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     // create test user one
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       // create test user two
       client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 201);
+        RestITSupport.assertStatus(context, res2, 201);
         // fail attempting to update user changing barcode to a duplicate
         userObject2.put("barcode", "304276530498752");
         client.put(port, "localhost", "/users/" + testUserFourId, res3 -> {
-          assertStatus(context, res3, 400);
+          RestITSupport.assertStatus(context, res3, 400);
           res3.bodyHandler(err -> {
             String errorMessage = err.toString();
             assertThat(errorMessage, is("This barcode has already been taken"));
@@ -1471,20 +1376,20 @@ public class RestVerticleIT {
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(promise::fail)
           .end(userObject2.encode());
       })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end(userObject2.encode());
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject1.encode());
     return promise.future();
@@ -1498,12 +1403,12 @@ public class RestVerticleIT {
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
     return promise.future();
@@ -1517,12 +1422,12 @@ public class RestVerticleIT {
       .put("proxyUserId", "5b0a9a0b-6eb6-447c-bc31-9c99940a29c5");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
 
@@ -1537,12 +1442,12 @@ public class RestVerticleIT {
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
     return promise.future();
@@ -1556,12 +1461,12 @@ public class RestVerticleIT {
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 422);
+      RestITSupport.assertStatus(context, res, 422);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(proxyObject.encode());
     return promise.future();
@@ -1572,7 +1477,7 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 200);
+      RestITSupport.assertStatus(context, res, 200);
       res.bodyHandler(body -> {
         JsonObject resultJson = body.toJsonObject();
         JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
@@ -1584,8 +1489,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -1600,7 +1505,7 @@ public class RestVerticleIT {
       client.get(port, "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
-          assertStatus(context, res, 200);
+          RestITSupport.assertStatus(context, res, 200);
           res.bodyHandler(body -> {
             try {
               JsonObject resultJson = body.toJsonObject();
@@ -1613,12 +1518,12 @@ public class RestVerticleIT {
               String proxyForId = proxyForObject.getString("id");
               log.info("Making get-by-id request\n");
               client.get(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                assertStatus(context, res2, 200);
+                RestITSupport.assertStatus(context, res2, 200);
                 promise.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
                 .exceptionHandler(promise::fail)
                 .end();
             } catch (Exception e) {
@@ -1627,8 +1532,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
@@ -1649,7 +1554,7 @@ public class RestVerticleIT {
       client.get(port, "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
-          assertStatus(context, res, 200);
+          RestITSupport.assertStatus(context, res, 200);
           res.bodyHandler(body -> {
             try {
               JsonObject resultJson = body.toJsonObject();
@@ -1662,13 +1567,13 @@ public class RestVerticleIT {
               String proxyForId = proxyForObject.getString("id");
               log.info("Making put-by-id request\n");
               client.put(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                assertStatus(context, res2, 204);
+                RestITSupport.assertStatus(context, res2, 204);
                 promise.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+                .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
                 .exceptionHandler(promise::fail)
                 .end(modifiedProxyObject.encode());
             } catch (Exception e) {
@@ -1677,8 +1582,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
@@ -1696,7 +1601,7 @@ public class RestVerticleIT {
       client.get(port, "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
-          assertStatus(context, res, 200);
+          RestITSupport.assertStatus(context, res, 200);
           res.bodyHandler(body -> {
             try {
               JsonObject resultJson = body.toJsonObject();
@@ -1709,13 +1614,13 @@ public class RestVerticleIT {
               String proxyForId = proxyForObject.getString("id");
               log.info("Making delete-by-id request\n");
               client.delete(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                assertStatus(context, res2, 204);
+                RestITSupport.assertStatus(context, res2, 204);
                 promise.complete();
               })
                 .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+                .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
                 .exceptionHandler(promise::fail)
                 .end();
             } catch (Exception e) {
@@ -1724,8 +1629,8 @@ public class RestVerticleIT {
           });
         })
         .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
         .exceptionHandler(promise::fail)
         .end();
     } catch (Exception e) {
@@ -1742,12 +1647,12 @@ public class RestVerticleIT {
     HttpClient client = vertx.createHttpClient();
     String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
     client.post(port, "localhost", endpoint, res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       res.bodyHandler(body -> {
         //Get the object by id
         String id = body.toJsonObject().getString("id");
         client.get(port, "localhost", endpoint + "/" + id, res2 -> {
-          assertStatus(context, res2, 200);
+          RestITSupport.assertStatus(context, res2, 200);
           res2.bodyHandler(body2 -> {
             if (checkMeta) {
               DateFormat gmtFormat = new SimpleDateFormat(
@@ -1774,30 +1679,30 @@ public class RestVerticleIT {
             }
             //delete the object by id
             client.delete(port, "localhost", endpoint + "/" + id, res3 -> {
-              assertStatus(context, res3, 204);
+              RestITSupport.assertStatus(context, res3, 204);
               promise.complete();
             })
               .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+              .putHeader("Content-Type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+              .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
               .exceptionHandler(promise::fail)
               .end();
           });
         })
           .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+          .putHeader("Content-Type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+          .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
           .exceptionHandler(promise::fail)
           .end();
 
       });
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("Content-Type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .putHeader("X-Okapi-Token", fakeJWT)
       .exceptionHandler(promise::fail)
       .end(ob.encode());
@@ -1809,12 +1714,12 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", "/groups/q", res -> {
-      assertStatus(context, res, 404);
+      RestITSupport.assertStatus(context, res, 404);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end();
     return promise.future();
@@ -1908,473 +1813,6 @@ public class RestVerticleIT {
     });
   }
 
-  @Test
-  public void test2Group(TestContext context) throws Exception {
-
-    /**
-     * add a group
-     */
-    CompletableFuture<Response> addGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, fooGroupData,  new HTTPResponseHandler(addGroupCF));
-    Response addGroupResponse = addGroupCF.get(5, SECONDS);
-    context.assertEquals(addGroupResponse.code, HTTP_CREATED);
-    groupID1 = addGroupResponse.body.getString("id");
-    log.info(addGroupResponse.body
-      + "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-
-    /**
-     * update a group
-     */
-    CompletableFuture<Response> updateGroupCF = new CompletableFuture();
-    String updateGroupURL = groupUrl + "/" + groupID1;
-    send(updateGroupURL, context, PUT, barGroupData, new HTTPNoBodyResponseHandler(updateGroupCF));
-    Response updateGroupResponse = updateGroupCF.get(5, SECONDS);
-    context.assertEquals(updateGroupResponse.code, HTTP_NO_CONTENT);
-    log.info(updateGroupResponse.body
-      + "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
-
-    /**
-     * delete a group
-     */
-    CompletableFuture<Response> deleteCleanCF = new CompletableFuture();
-    String deleteCleanURL = groupUrl + "/" + groupID1;
-    send(deleteCleanURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCleanCF));
-    Response deleteCleanResponse = deleteCleanCF.get(5, SECONDS);
-    context.assertEquals(deleteCleanResponse.code, HTTP_NO_CONTENT);
-    log.info(deleteCleanResponse.body
-      + "\nStatus - " + deleteCleanResponse.code + " at " + System.currentTimeMillis() + " for " + deleteCleanURL);
-
-    /**
-     * re-add a group
-     */
-    CompletableFuture<Response> addNewGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(addNewGroupCF));
-    Response addNewGroupResponse = addNewGroupCF.get(5, SECONDS);
-    context.assertEquals(addNewGroupResponse.code, HTTP_CREATED);
-    groupID1 = addNewGroupResponse.body.getString("id");
-    log.info(addNewGroupResponse.body
-      + "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-
-    /**
-     * add a user
-     */
-    CompletableFuture<Response> addUserCF = new CompletableFuture();
-    String addUserURL = userUrl;
-    send(addUserURL, context, POST, createUser(null, "jhandley", groupID1).encode(),
-      new HTTPResponseHandler(addUserCF));
-    Response addUserResponse = addUserCF.get(5, SECONDS);
-    context.assertEquals(addUserResponse.code, HTTP_CREATED);
-    String userID = addUserResponse.body.getString("id");
-    log.info(addUserResponse.body
-      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add the same user name again
-     */
-    CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(null, "jhandley", groupID1).encode(),
-       new HTTPResponseHandler(addUserCF2));
-    Response addUserResponse2 = addUserCF2.get(5, SECONDS);
-    context.assertEquals(addUserResponse2.code, 422);
-    log.info(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add the same user again with same id
-     */
-    CompletableFuture<Response> addUserCF3 = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(userID, "jhandley", groupID1).encode(),
-       new HTTPResponseHandler(addUserCF3));
-    Response addUserResponse3 = addUserCF3.get(5, SECONDS);
-    context.assertEquals(addUserResponse3.code, 422);
-    log.info(addUserResponse3.body
-      + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add a user again with non existent patron group
-     */
-    CompletableFuture<Response> addUserCF4 = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
-       new HTTPNoBodyResponseHandler(addUserCF4));
-    Response addUserResponse4 = addUserCF4.get(5, SECONDS);
-    context.assertEquals(addUserResponse4.code, HTTP_BAD_REQUEST);
-    log.info(addUserResponse4.body
-      + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add a user again with invalid uuid
-     */
-    CompletableFuture<Response> addUserCF4a = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
-       new HTTPNoBodyResponseHandler(addUserCF4a));
-    Response addUserResponse4a = addUserCF4a.get(5, SECONDS);
-    context.assertEquals(addUserResponse4a.code, HTTP_BAD_REQUEST);
-    log.info(addUserResponse4a.body
-      + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * update a user again with non existent patron group
-     */
-    CompletableFuture<Response> updateUserCF = new CompletableFuture();
-    send(addUserURL + "/" + userID, context, PUT, createUser(userID, "jhandley2nd",
-      "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), new HTTPNoBodyResponseHandler(updateUserCF));
-    Response updateUserResponse = updateUserCF.get(5, SECONDS);
-    context.assertEquals(updateUserResponse.code, HTTP_BAD_REQUEST);
-    log.info(updateUserResponse.body
-      + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
-
-    /**
-     * update a user again with existent patron group
-     */
-    CompletableFuture<Response> updateUser2CF = new CompletableFuture();
-    send(addUserURL + "/" + userID, context, PUT, createUser(userID, "jhandley2nd", groupID1).encode(),
-      new HTTPNoBodyResponseHandler(updateUser2CF));
-    Response updateUser2Response = updateUser2CF.get(5, SECONDS);
-    context.assertEquals(updateUser2Response.code, HTTP_NO_CONTENT);
-    log.info(updateUser2Response.body
-      + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
-
-    /**
-     * get all users belonging to a specific group
-     */
-    CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
-    String getUsersInGroupURL = userUrl + "?query=patronGroup==" + groupID1;
-    send(getUsersInGroupURL, context, GET, null,
-      new HTTPResponseHandler(getUsersInGroupCF));
-    Response getUsersInGroupResponse = getUsersInGroupCF.get(5, SECONDS);
-    context.assertEquals(getUsersInGroupResponse.code, HTTP_OK);
-    log.info(getUsersInGroupResponse.body
-      + "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
-      + getUsersInGroupURL);
-    context.assertTrue(isSizeMatch(getUsersInGroupResponse, 1));
-
-    /**
-     * get all groups in groups table
-     */
-    CompletableFuture<Response> getAllGroupCF = new CompletableFuture();
-    send(groupUrl, context, GET, null, new HTTPResponseHandler(getAllGroupCF));
-    Response getAllGroupResponse = getAllGroupCF.get(5, SECONDS);
-    context.assertEquals(getAllGroupResponse.code, HTTP_OK);
-    log.info(getAllGroupResponse.body
-      + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-    context.assertTrue(isSizeMatch(getAllGroupResponse, 5)); // 4 in reference + 1 in test
-
-    /**
-     * try to get via cql
-     */
-    CompletableFuture<Response> cqlCF = new CompletableFuture();
-    String cqlURL = groupUrl + "?query=group==librarianFOO";
-    send(cqlURL, context, GET, null, new HTTPResponseHandler(cqlCF));
-    Response cqlResponse = cqlCF.get(5, SECONDS);
-    context.assertEquals(cqlResponse.code, HTTP_OK);
-    log.info(cqlResponse.body
-      + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
-    context.assertTrue(isSizeMatch(cqlResponse, 1));
-
-    /**
-     * delete a group - should fail as there is a user associated with the group
-     */
-    CompletableFuture<Response> delete1CF = new CompletableFuture();
-    String delete1URL = groupUrl + "/" + groupID1;
-    send(delete1URL, context, DELETE, null, new HTTPNoBodyResponseHandler(delete1CF));
-    Response delete1Response = delete1CF.get(5, SECONDS);
-    context.assertEquals(delete1Response.code, HTTP_BAD_REQUEST);
-    log.info(delete1Response.body
-      + "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
-
-    /**
-     * delete a nonexistent group - should return 404
-     */
-    CompletableFuture<Response> deleteNEGCF = new CompletableFuture();
-    String deleteNEGURL = groupUrl + "/a492ffd2-b848-48bf-b716-1a645822279e";
-    send(deleteNEGURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteNEGCF));
-    Response deleteNEGResponse = deleteNEGCF.get(5, SECONDS);
-    context.assertEquals(deleteNEGResponse.code, HTTP_NOT_FOUND);
-    log.info(deleteNEGResponse.body
-      + "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
-
-    /**
-     * try to add a duplicate group
-     */
-    CompletableFuture<Response> dupCF = new CompletableFuture();
-    send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(dupCF));
-    Response dupResponse = dupCF.get(5, SECONDS);
-    context.assertEquals(dupResponse.code, 422);
-    log.info(dupResponse.body
-      + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-
-    /**
-     * get a group
-     */
-    CompletableFuture<Response> getSpecGroupCF = new CompletableFuture();
-    String getSpecGroupURL = groupUrl + "/" + groupID1;
-    send(getSpecGroupURL, context, GET, null,  new HTTPResponseHandler(getSpecGroupCF));
-    Response getSpecGroupResponse = getSpecGroupCF.get(5, SECONDS);
-    context.assertEquals(getSpecGroupResponse.code, HTTP_OK);
-    log.info(getSpecGroupResponse.body
-      + "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
-    context.assertTrue("librarianFOO".equals(getSpecGroupResponse.body.getString("group")));
-
-    /**
-     * get a group bad id
-     */
-    CompletableFuture<Response> getBadIDCF = new CompletableFuture();
-    String getBadIDURL = groupUrl + "/3748ec8d-8dbc-4717-819d-87c839e6905e";
-    send(getBadIDURL, context, GET, null, new HTTPNoBodyResponseHandler(getBadIDCF));
-    Response getBadIDResponse = getBadIDCF.get(5, SECONDS);
-    context.assertEquals(getBadIDResponse.code, HTTP_NOT_FOUND);
-    log.info(getBadIDResponse.body
-      + "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
-
-    /**
-     * delete a group with users should fail
-     */
-    CompletableFuture<Response> deleteCF = new CompletableFuture();
-    String delete = groupUrl + "/" + groupID1;
-    send(delete, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCF));
-    Response deleteResponse = deleteCF.get(5, SECONDS);
-    context.assertEquals(deleteResponse.code, HTTP_BAD_REQUEST);
-    log.info(deleteResponse.body
-      + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
-
-    /* Create a user with a past-due expiration date */
-    UUID expiredUserId = UUID.randomUUID();
-    {
-      Date now = new Date();
-      Date pastDate = new Date(now.getTime() - (10 * 24 * 60 * 60 * 1000));
-      String dateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(pastDate);
-      JsonObject expiredUserJson = new JsonObject()
-        .put("id", expiredUserId.toString())
-        .put("username", "bmoses")
-        .put("patronGroup", groupID1)
-        .put("active", true)
-        .put("expirationDate", dateString)
-        .put("personal", new JsonObject()
-          .put("lastName", "Brown")
-          .put("firstName", "Moses")
-        );
-      CompletableFuture<Response> addExpiredUserCF = new CompletableFuture();
-      send(addUserURL, context, POST, expiredUserJson.encode(), new HTTPResponseHandler(addExpiredUserCF));
-      Response addExpiredUserResponse = addExpiredUserCF.get(5, SECONDS);
-      log.info(addExpiredUserResponse.body
-        + "\nStatus - " + addExpiredUserResponse.code + " at "
-        + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
-      context.assertEquals(addExpiredUserResponse.code, 201);
-      CompletableFuture<Void> getExpirationCF = new CompletableFuture();
-      ExpirationTool.doExpirationForTenant(vertx, vertxContext, "diku").setHandler(res -> {
-        getExpirationCF.complete(null);
-      });
-      getExpirationCF.get(5, SECONDS);
-      //TimeUnit.SECONDS.sleep(15);
-      CompletableFuture<Response> getExpiredUserCF = new CompletableFuture();
-      send(addUserURL + "/" + expiredUserId.toString(), context, GET, null,
-         new HTTPResponseHandler(getExpiredUserCF));
-      Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
-      context.assertEquals(getExpiredUserResponse.body.getBoolean("active"), false);
-    }
-  }
-
-  @Test
-  public void test3CrossTableQueries(TestContext context) throws Exception {
-    String url = HTTP_LOCALHOST + port + "/users?query=";
-
-    CompletableFuture<Response> postGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, barGroupData,  new HTTPResponseHandler(postGroupCF));
-    Response postGroupResponse = postGroupCF.get(5, SECONDS);
-    context.assertEquals(postGroupResponse.code, HTTP_CREATED);
-    String barGroupId = postGroupResponse.body.getString("id");
-    context.assertNotNull(barGroupId);
-
-    int inc = 0;
-    CompletableFuture<Response> addUserCF = new CompletableFuture();
-    send(userUrl, context, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-       new HTTPResponseHandler(addUserCF));
-    Response addUserResponse = addUserCF.get(5, SECONDS);
-    context.assertEquals(addUserResponse.code, HTTP_CREATED);
-    log.info(addUserResponse.body
-      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
-    CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-    send(userUrl, context, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-        new HTTPResponseHandler(addUserCF2));
-    Response addUserResponse2 = addUserCF2.get(5, SECONDS);
-    context.assertEquals(addUserResponse2.code, HTTP_CREATED);
-    log.info(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
-    //query on users and sort by groups
-    String url0 = userUrl;
-    String url1 = url + urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
-    //String url1 = userUrl;
-    String url2 = url + urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
-    //query and sort on groups via users endpoint
-    String url3 = url + urlEncode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending");
-    //query on users sort on users and groups
-    String url4 = url + urlEncode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName");
-    //query on users and groups sort by groups
-    String url5 = url + urlEncode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group");
-    //query on users and sort by users
-    String url6 = url + urlEncode("active=true sortBy username", "UTF-8");
-    //non existant group - should be 0 results
-    String url7 = url + urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
-    //query by tag, should get one record
-    String url8 = url + urlEncode("tags=foo");
-
-    CompletableFuture<Response> cqlCF0 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF1 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF2 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF3 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF4 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF5 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF6 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF7 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF8 = new CompletableFuture();
-
-    String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7, url8};
-    CompletableFuture<Response>[] cqlCF = new CompletableFuture[]{cqlCF0, cqlCF1, cqlCF2, cqlCF3, cqlCF4, cqlCF5, cqlCF6, cqlCF7, cqlCF8};
-
-    for (int i = 0; i < 9; i++) {
-      CompletableFuture<Response> cf = cqlCF[i];
-      String cqlURL = urls[i];
-      send(cqlURL, context, GET, null,  new HTTPResponseHandler(cf));
-      Response cqlResponse = cf.get(5, SECONDS);
-      context.assertEquals(cqlResponse.code, HTTP_OK);
-      log.info(cqlResponse.body
-        + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
-      //requests should usually have 3 or 4 results
-      switch (i) {
-        case 8:
-          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
-          break;
-        case 7:
-          context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
-          break;
-        case 6:
-          context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
-          break;
-        case 5:
-          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
-          break;
-        case 1:
-          context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 1);
-          context.assertEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-          break;
-        case 2:
-          context.assertNotEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-          break;
-        case 4:
-          context.assertTrue(((String) (new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))).startsWith("Triangle"));
-          break;
-        case 0:
-          //Baseline test
-          int totalRecords = cqlResponse.body.getInteger("totalRecords");
-          context.assertTrue(totalRecords > 3, "totalRecords = " + totalRecords + " > 3");
-          break;
-        default:
-          context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
-          break;
-      }
-    }
-  }
-
-  private void send(String url, TestContext context, HttpMethod method, String content, Handler<HttpClientResponse> handler) {
-    HttpClient client = vertx.createHttpClient();
-    HttpClientRequest request;
-    if (content == null) {
-      content = "";
-    }
-    Buffer buffer = Buffer.buffer(content);
-
-    if (method == POST) {
-      request = client.postAbs(url);
-    } else if (method == DELETE) {
-      request = client.deleteAbs(url);
-    } else if (method == GET) {
-      request = client.getAbs(url);
-    } else {
-      request = client.putAbs(url);
-    }
-    request.exceptionHandler(error -> {
-      context.fail(error.getMessage());
-    })
-      .handler(handler);
-    //request.putHeader("Authorization", "diku");
-    request.putHeader("x-okapi-tenant", "diku");
-    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF);
-    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF);
-    request.putHeader("Content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF);
-    request.end(buffer);
-  }
-
-  class HTTPResponseHandler implements Handler<HttpClientResponse> {
-
-    CompletableFuture<Response> event;
-
-    public HTTPResponseHandler(CompletableFuture<Response> cf) {
-      event = cf;
-    }
-
-    @Override
-    public void handle(HttpClientResponse hcr) {
-      hcr.bodyHandler(bh -> {
-        Response r = new Response();
-        r.code = hcr.statusCode();
-        r.body = bh.toJsonObject();
-        event.complete(r);
-      });
-    }
-  }
-
-  class HTTPNoBodyResponseHandler implements Handler<HttpClientResponse> {
-
-    CompletableFuture<Response> event;
-
-    public HTTPNoBodyResponseHandler(CompletableFuture<Response> cf) {
-      event = cf;
-    }
-
-    @Override
-    public void handle(HttpClientResponse hcr) {
-      Response r = new Response();
-      r.code = hcr.statusCode();
-      event.complete(r);
-    }
-  }
-
-  class Response {
-
-    int code;
-    JsonObject body;
-  }
-
-  private boolean isSizeMatch(Response r, int size) {
-    if (r.body.getInteger("totalRecords") == size) {
-      return true;
-    }
-    return false;
-  }
-
-  private static int userInc = 0;
-
-  private static JsonObject createUser(String id, String name, String pgId) {
-    userInc++;
-    JsonObject user = new JsonObject();
-    if (id != null) {
-      user.put("id", id);
-    } else {
-      id = UUID.randomUUID().toString();
-      user.put("id", id);
-    }
-    user.put("username", name);
-    user.put("patronGroup", pgId);
-    user.put("active", true);
-    user.put("personal", new JsonObject()
-      .put("lastName", "Triangle" + userInc)
-      .put("firstName", "Jack" + userInc)
-    );
-    return user;
-  }
-
   private static String makeFakeJWT(String username, String id, String tenant) {
     JsonObject header = new JsonObject()
       .put("alg", "HS512");
@@ -2436,12 +1874,12 @@ public class RestVerticleIT {
       .put("active", true);
     HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+      RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
       .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(userObject.encode());
     return promise.future();
@@ -2483,7 +1921,7 @@ public class RestVerticleIT {
   private void getByQuery(TestContext context, String requestUrl, Promise<JsonObject> promise) {
     HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", requestUrl, res -> {
-      assertStatus(context, res, HTTP_OK);
+      RestITSupport.assertStatus(context, res, HTTP_OK);
       res.bodyHandler(buf -> {
         try {
           JsonObject resultObject = buf.toJsonObject();
@@ -2494,8 +1932,8 @@ public class RestVerticleIT {
       });
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end();
   }
@@ -2523,10 +1961,10 @@ public class RestVerticleIT {
       }
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", HTTP_LOCALHOST + port)
+      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
       .putHeader(OKAPI_USERID_HEADER, joeBlockId)
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
       .end(body);
   }
@@ -2534,14 +1972,14 @@ public class RestVerticleIT {
   private Future<Void> putWithNoContentStatus(TestContext context, Promise<Void> promise, String request, String body) {
     HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", request, res -> {
-      assertStatus(context, res, HTTP_NO_CONTENT);
+      RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
       promise.complete();
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", HTTP_LOCALHOST + port)
+      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
       .putHeader(OKAPI_USERID_HEADER, joeBlockId)
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(body);
     return promise.future();
@@ -2550,7 +1988,7 @@ public class RestVerticleIT {
   private void deleteWithNoContentStatus(TestContext context, Promise<Void> promise, String request) {
     HttpClient client = vertx.createHttpClient();
     client.delete(port, "localhost", request, res -> {
-      assertStatus(context, res, HTTP_NO_CONTENT);
+      RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
       promise.complete();
     })
       .putHeader(OKAPI_HEADER_TENANT, "diku")
