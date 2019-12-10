@@ -1,14 +1,23 @@
 package org.folio.moduserstest;
 
-import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
-import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
-import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
+
+import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
+import static org.folio.util.StringUtil.urlEncode;
+
+import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -25,25 +34,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
-import org.folio.util.StringUtil;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -54,32 +44,21 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.tools.utils.VertxUtils;
+import org.folio.util.StringUtil;
+
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RestVerticleIT {
 
   private static final Logger log = LoggerFactory.getLogger(RestVerticleIT.class);
-
-  private final String customFieldsPath = "/custom-fields";
-
-  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
-    "\"name\": \"Department\", " +
-    "\"visible\": true, " +
-    "\"required\": true, " +
-    "\"helpText\": \"Provide a department\", " +
-    "\"entityType\": \"user\", " +
-    "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": { \"maxSize\": 150 }}";
-  private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
-    "\"name\": \"Department updated\", " +
-    "\"visible\": false, " +
-    "\"required\": true, " +
-    "\"helpText\": \"Provide a department\", " +
-    "\"entityType\": \"user\", " +
-    "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": {   \"maxSize\": 250 }}";
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
@@ -88,7 +67,6 @@ public class RestVerticleIT {
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
-  private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
   private static final String notExistingCustomField = "notExistingCustomField";
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
@@ -1740,7 +1718,6 @@ public class RestVerticleIT {
     Future<Void> startFuture;
     startFuture = getEmptyUsers(context)
       .compose(v -> postUser(context, false))
-      .compose(v -> postCustomField(context))
       .compose(v -> putUserGood(context, joeBlockId, false))
       .compose(v -> deleteUser(context, joeBlockId))
       .compose(v -> postUser(context, true))
@@ -1793,7 +1770,6 @@ public class RestVerticleIT {
       .compose(v -> findAndGetProxyfor(context))
       .compose(v -> findAndUpdateProxyfor(context))
       .compose(v -> findAndDeleteProxyfor(context))
-      .compose(v -> deleteCustomField(context))
       .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
       .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
       .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
@@ -1830,31 +1806,11 @@ public class RestVerticleIT {
   }
 
   @Test
-  public void test4CustomFields(TestContext context) {
-
-    Async async = context.async();
-    postCustomField(context)
-      .compose(v -> putCustomField(context))
-      .compose(v -> queryCustomField(context)).compose(this::assertCustomFieldValues)
-      .compose(v -> deleteCustomField(context))
-      .setHandler(res -> {
-        if (res.succeeded()) {
-          async.complete();
-        } else {
-          res.cause().printStackTrace();
-          context.fail(res.cause());
-        }
-    });
-  }
-
-  @Test
   public void test5UserName(TestContext context) {
     Async async = context.async();
-    postCustomField(context)
-      .compose(v -> postUserWithWhitespace(context))
+    postUserWithWhitespace(context)
       .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), "user name"))
       .compose(v -> deleteUser(context, userIdWithWhitespace))
-      .compose(v -> deleteCustomField(context))
       .setHandler(res -> {
         if (res.succeeded()) {
           async.complete();
@@ -1885,115 +1841,4 @@ public class RestVerticleIT {
     return promise.future();
   }
 
-  private Future<Void> assertCustomFieldValues(JsonObject result) {
-    Promise<Void> promise = Promise.promise();
-    int totalRecords = result.getInteger("totalRecords");
-    if (totalRecords != 1) {
-      promise.fail("Expected 1 record, got " + totalRecords);
-    }
-    JsonArray customFields = result.getJsonArray("customFields");
-    JsonObject customField = customFields.getJsonObject(0);
-    assertThat(customField.getString("entityType"), is("user"));
-
-    promise.complete();
-    return promise.future();
-  }
-
-  private Future<Void> deleteCustomField(TestContext context) {
-    log.info("Deleting existing custom field\n");
-    Promise<Void> promise = Promise.promise();
-    deleteWithNoContentStatus(context, promise, customFieldsPath + "/" + customFieldId);
-    return promise.future();
-  }
-
-  private Future<JsonObject> queryCustomField(TestContext context) {
-    String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
-    log.info("Getting custom field via CQL, by entityType\n");
-    Promise<JsonObject> promise = Promise.promise();
-    try {
-      getByQuery(context, requestUrl, promise);
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
-  }
-
-  private void getByQuery(TestContext context, String requestUrl, Promise<JsonObject> promise) {
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", requestUrl, res -> {
-      RestITSupport.assertStatus(context, res, HTTP_OK);
-      res.bodyHandler(buf -> {
-        try {
-          JsonObject resultObject = buf.toJsonObject();
-            promise.complete(resultObject);
-        } catch (Exception e) {
-          promise.fail(e);
-        }
-      });
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-  }
-
-  private Future<Void> postCustomField(TestContext context) {
-    log.info("Creating a new custom field definition\n");
-    Promise<Void> promise = Promise.promise();
-    postWithOkStatus(promise, customFieldsPath, postCustomField);
-    return promise.future();
-  }
-
-  private Future<Void> putCustomField(TestContext context) {
-    log.info("Update custom field definition\n");
-    Promise<Void> promise = Promise.promise();
-    return putWithNoContentStatus(context, promise, customFieldsPath + "/" + customFieldId, putCustomField);
-  }
-
-  private void postWithOkStatus(Promise<Void> promise, String request, String body) {
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", request, res -> {
-      if (res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE) {
-        promise.complete();
-      } else {
-        promise.fail("Got status code: " + res.statusCode());
-      }
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
-      .putHeader(OKAPI_USERID_HEADER, joeBlockId)
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(body);
-  }
-
-  private Future<Void> putWithNoContentStatus(TestContext context, Promise<Void> promise, String request, String body) {
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", request, res -> {
-      RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
-      promise.complete();
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
-      .putHeader(OKAPI_USERID_HEADER, joeBlockId)
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(body);
-    return promise.future();
-  }
-
-  private void deleteWithNoContentStatus(TestContext context, Promise<Void> promise, String request) {
-    HttpClient client = vertx.createHttpClient();
-    client.delete(port, "localhost", request, res -> {
-      RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
-      promise.complete();
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("accept", "*/*")
-      .exceptionHandler(promise::fail)
-      .end();
-  }
 }

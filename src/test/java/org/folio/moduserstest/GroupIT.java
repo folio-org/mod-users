@@ -24,10 +24,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
@@ -39,7 +37,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.ext.web.client.WebClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -55,8 +52,6 @@ import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.parser.JsonPathParser;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
 import org.folio.rest.utils.ExpirationTool;
 
 
@@ -64,18 +59,13 @@ import org.folio.rest.utils.ExpirationTool;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GroupIT {
 
-  private final String userUrl = HTTP_LOCALHOST + port + "/users";
-  private final String groupUrl = HTTP_LOCALHOST + port + "/groups";
+  private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
+  private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
 
   private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
   private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
   private static final Logger log = LoggerFactory.getLogger(GroupIT.class);
-
-  private static Vertx vertx;
-  private static Context vertxContext;
-  private static WebClient client;
-  private static int port;
 
   private static int userInc = 0;
 
@@ -85,19 +75,16 @@ public class GroupIT {
 
   @BeforeClass
   public static void setup(TestContext context) {
-    vertx = VertxUtils.getVertxWithExceptionHandler();
-    vertxContext = vertx.getOrCreateContext();
-
-    client = WebClient.create(vertx);
+    RestITSupport.setUp();
 
     Async async = context.async();
-    port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + port, "diku", "diku");
+
+    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + RestITSupport.port(), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", port))
+      .setConfig(new JsonObject().put("http.port", RestITSupport.port()))
       .setWorker(true);
 
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
+    RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       // remove existing schema from previous tests
       tenantClient.deleteTenant(delete -> {
         switch (delete.statusCode()) {
@@ -130,7 +117,7 @@ public class GroupIT {
   @AfterClass
   public static void tearDown() {
     CompletableFuture<Void> future = new CompletableFuture<>();
-    vertx.close(res -> {
+    RestITSupport.vertx().close(res -> {
       PostgresClient.stopEmbeddedPostgres();
       future.complete(null);
     });
@@ -139,10 +126,10 @@ public class GroupIT {
 
   @Test
   public void test3CrossTableQueries(TestContext context) throws Exception {
-    String url = HTTP_LOCALHOST + port + "/users?query=";
+    String url = HTTP_LOCALHOST + RestITSupport.port() + "/users?query=";
 
     CompletableFuture<Response> postGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, barGroupData,  new HTTPResponseHandler(postGroupCF));
+    send(groupUrl, context, POST, barGroupData, new HTTPResponseHandler(postGroupCF));
     Response postGroupResponse = postGroupCF.get(5, SECONDS);
     context.assertEquals(postGroupResponse.code, HTTP_CREATED);
     String barGroupId = postGroupResponse.body.getString("id");
@@ -199,7 +186,7 @@ public class GroupIT {
     for (int i = 0; i < 9; i++) {
       CompletableFuture<Response> cf = cqlCF[i];
       String cqlURL = urls[i];
-      send(cqlURL, context, GET, null,  new HTTPResponseHandler(cf));
+      send(cqlURL, context, GET, null, new HTTPResponseHandler(cf));
       Response cqlResponse = cf.get(5, SECONDS);
       context.assertEquals(cqlResponse.code, HTTP_OK);
       log.info(cqlResponse.body
@@ -207,6 +194,7 @@ public class GroupIT {
       //requests should usually have 3 or 4 results
       switch (i) {
         case 8:
+        case 5:
           context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
           break;
         case 7:
@@ -214,9 +202,6 @@ public class GroupIT {
           break;
         case 6:
           context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
-          break;
-        case 5:
-          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
           break;
         case 1:
           context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 1);
@@ -247,7 +232,7 @@ public class GroupIT {
      * add a group
      */
     CompletableFuture<Response> addGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, fooGroupData,  new HTTPResponseHandler(addGroupCF));
+    send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(addGroupCF));
     Response addGroupResponse = addGroupCF.get(5, SECONDS);
     context.assertEquals(addGroupResponse.code, HTTP_CREATED);
     String groupID1 = addGroupResponse.body.getString("id");
@@ -440,7 +425,7 @@ public class GroupIT {
      */
     CompletableFuture<Response> getSpecGroupCF = new CompletableFuture();
     String getSpecGroupURL = groupUrl + "/" + groupID1;
-    send(getSpecGroupURL, context, GET, null,  new HTTPResponseHandler(getSpecGroupCF));
+    send(getSpecGroupURL, context, GET, null, new HTTPResponseHandler(getSpecGroupCF));
     Response getSpecGroupResponse = getSpecGroupCF.get(5, SECONDS);
     context.assertEquals(getSpecGroupResponse.code, HTTP_OK);
     log.info(getSpecGroupResponse.body
@@ -493,7 +478,7 @@ public class GroupIT {
         + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
       context.assertEquals(addExpiredUserResponse.code, 201);
       CompletableFuture<Void> getExpirationCF = new CompletableFuture();
-      ExpirationTool.doExpirationForTenant(vertx, vertxContext, "diku").setHandler(res -> {
+      ExpirationTool.doExpirationForTenant(RestITSupport.vertx(), RestITSupport.context(), "diku").setHandler(res -> {
         getExpirationCF.complete(null);
       });
       getExpirationCF.get(5, SECONDS);
@@ -507,7 +492,7 @@ public class GroupIT {
   }
 
   private void send(String url, TestContext context, HttpMethod method, String content, Handler<HttpClientResponse> handler) {
-    HttpClient client = vertx.createHttpClient();
+    HttpClient client = RestITSupport.vertx().createHttpClient();
     HttpClientRequest request;
     if (content == null) {
       content = "";
@@ -555,13 +540,10 @@ public class GroupIT {
   }
 
   private boolean isSizeMatch(Response r, int size) {
-    if (r.body.getInteger("totalRecords") == size) {
-      return true;
-    }
-    return false;
+    return r.body.getInteger("totalRecords") == size;
   }
 
-  class HTTPResponseHandler implements Handler<HttpClientResponse> {
+  private static class HTTPResponseHandler implements Handler<HttpClientResponse> {
 
     CompletableFuture<Response> event;
 
@@ -580,7 +562,7 @@ public class GroupIT {
     }
   }
 
-  class HTTPNoBodyResponseHandler implements Handler<HttpClientResponse> {
+  private static class HTTPNoBodyResponseHandler implements Handler<HttpClientResponse> {
 
     CompletableFuture<Response> event;
 
@@ -596,7 +578,7 @@ public class GroupIT {
     }
   }
 
-  class Response {
+  private static class Response {
 
     int code;
     JsonObject body;

@@ -1,12 +1,30 @@
 package org.folio.moduserstest;
 
+import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_OK;
+
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
+
+import io.vertx.core.Context;
+import java.util.Arrays;
+
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.client.HttpResponse;
-import java.util.Arrays;
+import io.vertx.ext.web.client.WebClient;
 import junit.framework.AssertionFailedError;
+
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.rest.tools.utils.VertxUtils;
 
 class RestITSupport {
 
@@ -14,7 +32,36 @@ class RestITSupport {
   static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
   static final String HTTP_LOCALHOST = "http://localhost:";
 
-  RestITSupport() {
+  private static Vertx vertx;
+  private static Context context;
+  private static WebClient client;
+  private static int port;
+
+
+  private RestITSupport() {
+  }
+
+  static void setUp() {
+    vertx = VertxUtils.getVertxWithExceptionHandler();
+    context = vertx.getOrCreateContext();
+    client = WebClient.create(vertx);
+    port = NetworkUtils.nextFreePort();
+  }
+
+  static Vertx vertx() {
+    return vertx;
+  }
+
+  static Context context() {
+    return context;
+  }
+
+  static WebClient webClient() {
+    return client;
+  }
+
+  static int port() {
+    return port;
   }
 
   static void fail(TestContext context, HttpClientResponse response) {
@@ -79,4 +126,71 @@ class RestITSupport {
       response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
   }
 
+
+  static void postWithOkStatus(Promise<Void> promise, String userId, String request, String body) {
+    HttpClient client = vertx.createHttpClient();
+    client.post(port, "localhost", request, res -> {
+      if (res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE) {
+        promise.complete();
+      } else {
+        promise.fail("Got status code: " + res.statusCode());
+      }
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
+      .putHeader(OKAPI_USERID_HEADER, userId)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(promise::fail)
+      .end(body);
+  }
+
+  static Future<Void> putWithNoContentStatus(TestContext context, Promise<Void> promise, String userId, String request,
+       String body) {
+    HttpClient client = vertx.createHttpClient();
+    client.put(port, "localhost", request, res -> {
+      RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
+      promise.complete();
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
+      .putHeader(OKAPI_USERID_HEADER, userId)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .exceptionHandler(promise::fail)
+      .end(body);
+    return promise.future();
+  }
+
+  static void deleteWithNoContentStatus(TestContext context, Promise<Void> promise, String request) {
+    HttpClient client = vertx.createHttpClient();
+    client.delete(port, "localhost", request, res -> {
+      RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
+      promise.complete();
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("accept", "*/*")
+      .exceptionHandler(promise::fail)
+      .end();
+  }
+
+  static void getByQuery(TestContext context, String requestUrl, Promise<JsonObject> promise) {
+    HttpClient client = vertx.createHttpClient();
+    client.get(port, "localhost", requestUrl, res -> {
+      RestITSupport.assertStatus(context, res, HTTP_OK);
+      res.bodyHandler(buf -> {
+        try {
+          JsonObject resultObject = buf.toJsonObject();
+          promise.complete(resultObject);
+        } catch (Exception e) {
+          promise.fail(e);
+        }
+      });
+    })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .exceptionHandler(promise::fail)
+      .end();
+  }
 }
