@@ -3,13 +3,9 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
-
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
-
 import io.vertx.core.Context;
-import java.util.Arrays;
-
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -21,8 +17,9 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.predicate.ResponsePredicateResult;
+import java.util.Arrays;
 import junit.framework.AssertionFailedError;
-
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.tools.utils.VertxUtils;
 
@@ -31,6 +28,8 @@ class RestITSupport {
   static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
   static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
   static final String HTTP_LOCALHOST = "http://localhost:";
+
+  private static final String LOCALHOST = "localhost";
 
   private static Vertx vertx;
   private static Context context;
@@ -127,8 +126,8 @@ class RestITSupport {
   }
 
 
-  static void postWithOkStatus(Promise<Void> promise, String userId, String request, String body) {
-    HttpClient client = vertx.createHttpClient();
+  static Future<Void> postWithOkStatus(String userId, String request, String body) {
+    /*HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", request, res -> {
       if (res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE) {
         promise.complete();
@@ -142,12 +141,28 @@ class RestITSupport {
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
-      .end(body);
+      .end(body);*/
+
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
+
+    client.post(port, LOCALHOST, request)
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
+      .putHeader(OKAPI_USERID_HEADER, userId)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .expect(res ->
+        res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE
+              ? ResponsePredicateResult.success()
+              : ResponsePredicateResult.failure("Got status code: " + res.statusCode())
+      )
+      .sendBuffer(Buffer.buffer(body), promise);
+
+    return promise.future().mapEmpty();
   }
 
-  static Future<Void> putWithNoContentStatus(TestContext context, Promise<Void> promise, String userId, String request,
-       String body) {
-    HttpClient client = vertx.createHttpClient();
+  static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body) {
+    /*HttpClient client = vertx.createHttpClient();
     client.put(port, "localhost", request, res -> {
       RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
       promise.complete();
@@ -159,19 +174,47 @@ class RestITSupport {
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
       .end(body);
-    return promise.future();
+    return promise.future();*/
+
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
+
+    client.put(port, LOCALHOST, request)
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
+      .putHeader(OKAPI_USERID_HEADER, userId)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
+      .sendBuffer(Buffer.buffer(body), promise);
+
+    return promise.future().map(res -> {
+      assertStatus(context, res, HTTP_NO_CONTENT);
+      return null;
+    });
   }
 
-  static void deleteWithNoContentStatus(TestContext context, Promise<Void> promise, String request) {
-    HttpClient client = vertx.createHttpClient();
+
+  static Future<Void> deleteWithNoContentStatus(TestContext context, String request) {
+    /*HttpClient client = vertx.createHttpClient();
     client.delete(port, "localhost", request, res -> {
       RestITSupport.assertStatus(context, res, HTTP_NO_CONTENT);
       promise.complete();
     })
+      .putHeader(OKAPI_HEADER_TENANT, "diku")*/
+      //.putHeader("accept", "*/*")
+      /*.exceptionHandler(promise::fail)
+      .end();*/
+
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
+
+    client.delete(port, LOCALHOST, request)
       .putHeader(OKAPI_HEADER_TENANT, "diku")
       .putHeader("accept", "*/*")
-      .exceptionHandler(promise::fail)
-      .end();
+      .send(promise);
+
+    return promise.future().map(res -> {
+      assertStatus(context, res, HTTP_NO_CONTENT);
+      return null;
+    });
   }
 
   static void getByQuery(TestContext context, String requestUrl, Promise<JsonObject> promise) {
