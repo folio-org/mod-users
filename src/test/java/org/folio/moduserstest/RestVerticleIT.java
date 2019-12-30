@@ -276,9 +276,7 @@ public class RestVerticleIT {
 
   private Future<Void> deleteUser(TestContext context, String userId) {
     log.info("Deleting existing user\n");
-    Promise<Void> promise = Promise.promise();
-    deleteWithNoContentStatus(context, promise, "/users/" + userId);
-    return promise.future();
+    return deleteWithNoContentStatus(context, "/users/" + userId);
   }
 
   private Future<Void> postUserWithNumericName(TestContext context) {

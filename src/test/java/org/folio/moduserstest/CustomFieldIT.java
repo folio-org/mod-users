@@ -124,7 +124,7 @@ public class CustomFieldIT {
   public void test4CustomFields(TestContext context) {
 
     Async async = context.async();
-    postCustomField(context)
+    postCustomField()
       .compose(v -> putCustomField(context))
       .compose(v -> queryCustomField(context)).compose(this::assertCustomFieldValues)
       .compose(v -> deleteCustomField(context))
@@ -154,33 +154,23 @@ public class CustomFieldIT {
 
   private Future<Void> deleteCustomField(TestContext context) {
     log.info("Deleting existing custom field\n");
-    Promise<Void> promise = Promise.promise();
-    deleteWithNoContentStatus(context, promise, customFieldsPath + "/" + customFieldId);
-    return promise.future();
+    return deleteWithNoContentStatus(context, customFieldsPath + "/" + customFieldId);
   }
 
   private Future<JsonObject> queryCustomField(TestContext context) {
     String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
     log.info("Getting custom field via CQL, by entityType\n");
-    Promise<JsonObject> promise = Promise.promise();
-    try {
-      getByQuery(context, requestUrl, promise);
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    return getByQuery(context, requestUrl);
   }
 
-  private Future<Void> postCustomField(TestContext context) {
+  private Future<Void> postCustomField() {
     log.info("Creating a new custom field definition\n");
-    Promise<Void> promise = Promise.promise();
-    postWithOkStatus(promise, joeBlockId, customFieldsPath, postCustomField);
-    return promise.future();
+    return postWithOkStatus(joeBlockId, customFieldsPath, postCustomField);
   }
 
   private Future<Void> putCustomField(TestContext context) {
     log.info("Update custom field definition\n");
-    Promise<Void> promise = Promise.promise();
-    return putWithNoContentStatus(context, promise, joeBlockId, customFieldsPath + "/" + customFieldId, putCustomField);
+    return putWithNoContentStatus(context, joeBlockId, customFieldsPath + "/" + customFieldId, putCustomField);
   }
 }

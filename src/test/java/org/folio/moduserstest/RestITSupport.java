@@ -10,7 +10,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -217,8 +216,8 @@ class RestITSupport {
     });
   }
 
-  static void getByQuery(TestContext context, String requestUrl, Promise<JsonObject> promise) {
-    HttpClient client = vertx.createHttpClient();
+  static Future<JsonObject> getByQuery(TestContext context, String requestUrl) {
+    /*HttpClient client = vertx.createHttpClient();
     client.get(port, "localhost", requestUrl, res -> {
       RestITSupport.assertStatus(context, res, HTTP_OK);
       res.bodyHandler(buf -> {
@@ -234,6 +233,19 @@ class RestITSupport {
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
-      .end();
+      .end();*/
+
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
+
+    client.get(port, LOCALHOST, requestUrl)
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .send(promise);
+
+    return promise.future().map(res -> {
+      RestITSupport.assertStatus(context, res, HTTP_OK);
+      return res.bodyAsJsonObject();
+    });
   }
 }
