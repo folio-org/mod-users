@@ -122,9 +122,9 @@ public class CustomFieldIT {
 
   @Test
   public void test4CustomFields(TestContext context) {
-
     Async async = context.async();
-    postCustomField()
+    postUser()
+      .compose(v -> postCustomField())
       .compose(v -> putCustomField(context))
       .compose(v -> queryCustomField(context)).compose(this::assertCustomFieldValues)
       .compose(v -> deleteCustomField(context))
@@ -136,6 +136,17 @@ public class CustomFieldIT {
           context.fail(res.cause());
         }
       });
+  }
+
+  private Future<Void> postUser() {
+    log.info("Creating a new user\n");
+
+    JsonObject user = new JsonObject()
+      .put("id", joeBlockId)
+      .put("active", true)
+      .put("username", "joeblock");
+
+    return postWithOkStatus(joeBlockId, "/users", user.encode());
   }
 
   private Future<Void> assertCustomFieldValues(JsonObject result) {
