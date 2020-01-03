@@ -4,7 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
-import static org.folio.moduserstest.RestITSupport.getByQuery;
+import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
@@ -172,7 +172,7 @@ public class CustomFieldIT {
     String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
     log.info("Getting custom field via CQL, by entityType\n");
 
-    return getByQuery(context, requestUrl);
+    return getJson(context, requestUrl);
   }
 
   private Future<Void> postCustomField() {

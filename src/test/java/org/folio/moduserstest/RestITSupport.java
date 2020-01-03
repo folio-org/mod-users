@@ -3,8 +3,12 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
+
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
+
+import java.util.Arrays;
+
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -17,8 +21,8 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicateResult;
-import java.util.Arrays;
 import junit.framework.AssertionFailedError;
+
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.tools.utils.VertxUtils;
 
@@ -125,6 +129,19 @@ class RestITSupport {
   }
 
 
+  static Future<HttpResponse<Buffer>> post(String request, String body) {
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
+
+    client.post(port, LOCALHOST, request)
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
+      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
+      .sendBuffer(Buffer.buffer(body), promise);
+
+    return promise.future();
+  }
+
   static Future<Void> postWithOkStatus(String userId, String request, String body) {
     /*HttpClient client = vertx.createHttpClient();
     client.post(port, "localhost", request, res -> {
@@ -216,24 +233,7 @@ class RestITSupport {
     });
   }
 
-  static Future<JsonObject> getByQuery(TestContext context, String requestUrl) {
-    /*HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", requestUrl, res -> {
-      RestITSupport.assertStatus(context, res, HTTP_OK);
-      res.bodyHandler(buf -> {
-        try {
-          JsonObject resultObject = buf.toJsonObject();
-          promise.complete(resultObject);
-        } catch (Exception e) {
-          promise.fail(e);
-        }
-      });
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();*/
+  static Future<HttpResponse<Buffer>> get(String requestUrl) {
 
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
 
@@ -243,7 +243,11 @@ class RestITSupport {
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .send(promise);
 
-    return promise.future().map(res -> {
+    return promise.future();
+  }
+
+  static Future<JsonObject> getJson(TestContext context, String requestUrl) {
+    return get(requestUrl).map(res -> {
       RestITSupport.assertStatus(context, res, HTTP_OK);
       return res.bodyAsJsonObject();
     });

@@ -1,10 +1,15 @@
 package org.folio.moduserstest;
 
+import static io.vertx.core.json.Json.encode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
+import static org.folio.moduserstest.RestITSupport.get;
+import static org.folio.moduserstest.RestITSupport.getJson;
+import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.util.StringUtil.urlEncode;
 
 import java.nio.charset.StandardCharsets;
@@ -52,7 +57,6 @@ import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.tools.utils.VertxUtils;
-import org.folio.util.StringUtil;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -150,48 +154,19 @@ public class RestVerticleIT {
 
   private Future<Void> getEmptyUsers(TestContext context) {
     log.info("Getting an empty user set\n");
-    Promise<Void> promise = Promise.promise();
-    //HttpClient client = vertx.createHttpClient();
 
-    client.get(port, "localhost", "/users")
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .send(ar -> {
-        if (ar.succeeded()) {
-          HttpResponse<Buffer> response = ar.result();
-          RestITSupport.assertStatus(context, response, 200);
+    Future<HttpResponse<Buffer>> future = get("/users");
 
-          JsonObject userCollectionObject = response.bodyAsJsonObject();;
-          if (userCollectionObject.getJsonArray("users").size() == 0
-            && userCollectionObject.getInteger("totalRecords") == 00) {
-            promise.complete();
-          } else {
-            promise.fail("Invalid return JSON: " + response.bodyAsString());
-          }
-        } else {
-          promise.fail(ar.cause());
-        }
-      });
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 200);
 
-    /*client.get(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 200);
-      res.bodyHandler(buf -> {
-        JsonObject userCollectionObject = buf.toJsonObject();
-        if (userCollectionObject.getJsonArray("users").size() == 0
-          && userCollectionObject.getInteger("totalRecords") == 00) {
-          promise.complete();
-        } else {
-          promise.fail("Invalid return JSON: " + buf.toString());
-        }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();*/
-    return promise.future();
+      JsonObject userCollectionObject = response.bodyAsJsonObject();
+      if (userCollectionObject.getJsonArray("users").size() != 0
+        || userCollectionObject.getInteger("totalRecords") != 00) {
+        fail("Invalid return JSON: " + response.bodyAsString());
+      }
+      return null;
+    });
   }
 
   private static void addTags(JsonObject u) {
@@ -301,167 +276,100 @@ public class RestVerticleIT {
 
   private Future<Void> getUser(TestContext context) {
     log.info("Retrieving a user\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users/" + joeBlockId, res -> {
-      if (res.statusCode() == 200) {
-        res.bodyHandler(buf -> {
-          JsonObject userObject = buf.toJsonObject();
-          if (userObject.getString("username").equals("joeblock")) {
-            JsonObject tags = userObject.getJsonObject("tags");
 
-            if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
-              promise.fail("Bad value for tag list. " + buf.toString());
-            }
-            else {
-              DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
-              Date createdDate = null;
-              try {
-                //createdDate = DatatypeConverter.parseDateTime(userObject.getString("createdDate")).getTime();
-                createdDate = new DateTime(userObject.getString("createdDate")).toDate();
-              } catch (Exception e) {
-                promise.fail(e);
-                return;
-              }
-              Date now = new Date();
-              if (createdDate.after(now)) {
-                promise.fail(new AssertionError("Bad value for createdDate"));
-                return;
-              }
-              promise.complete();
-            }
-          } else {
-            promise.fail("Unable to read proper data from JSON return value: " + buf.toString());
+    Future<JsonObject> future = getJson(context, "/users/" + joeBlockId);
+
+    return future.map(user -> {
+      if (user.getString("username").equals("joeblock")) {
+        JsonObject tags = user.getJsonObject("tags");
+
+        if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
+          fail("Bad value for tag list");
+        }
+        else {
+          Date createdDate = null;
+          try {
+            createdDate = new DateTime(user.getString("createdDate")).toDate();
+          } catch (Exception e) {
+            fail(e.getMessage());
           }
-        });
+          Date now = new Date();
+          if (createdDate.after(now)) {
+            fail("Bad value for createdDate");
+          }
+        }
       } else {
-        promise.fail("Bad response: " + res.statusCode());
+        fail("Unable to read proper data from JSON return value: " + encode(user));
       }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+      return null;
+    });
+
   }
 
   private Future<Void> getUserWithCustomFields(TestContext context) {
     log.info("Retrieving a user with custom fields\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users/" + johnRectangleId, res -> {
-      if (res.statusCode() == 200) {
-        res.bodyHandler(buf -> {
-          JsonObject userObject = buf.toJsonObject();
-          JsonObject customFields = userObject.getJsonObject("customFields");
-          if (customFields == null || !customFields.encode().equals("{\"department_1\":\"Math\"}")) {
-            promise.fail("Bad value for customFields. " + buf.toString());
-          }else{
-            promise.complete();
-          }
-        });
-      } else {
-        promise.fail("Bad response: " + res.statusCode());
+
+    Future<JsonObject> future = getJson(context, "/users/" + johnRectangleId);
+
+    return future.map(user -> {
+      JsonObject customFields = user.getJsonObject("customFields");
+
+      if (customFields == null || !customFields.encode().equals("{\"department_1\":\"Math\"}")) {
+        fail("Bad value for customFields. " + encode(customFields));
       }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+
+      return null;
+    });
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
     log.info("Getting user via CQL, by username\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode("username==joeblock"), res -> {
-        RestITSupport.assertStatus(context, res, 200);
-        res.bodyHandler(buf -> {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            int totalRecords = resultObject.getInteger("totalRecords");
-            if (totalRecords != 1) {
-              promise.fail("Expected 1 record, got " + totalRecords);
-              return;
-            }
-            JsonArray userList = resultObject.getJsonArray("users");
-            JsonObject userObject = userList.getJsonObject(0);
-            if (userObject.getString("username").equals("joeblock")) {
-              promise.complete();
-            } else {
-              promise.fail("Unable to read proper data from JSON return value: " + buf.toString());
-            }
-          } catch (Exception e) {
-            promise.fail(e);
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end();
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode("username==joeblock"));
+
+    return future.map(users -> {
+      int totalRecords = users.getInteger("totalRecords");
+      if (totalRecords != 1) {
+        fail("Expected 1 record, got " + totalRecords);
+      }
+
+      JsonArray userList = users.getJsonArray("users");
+      JsonObject userObject = userList.getJsonObject(0);
+      if (!userObject.getString("username").equals("joeblock")) {
+        fail("Unable to read proper data from JSON return value: " + encode(users));
+      }
+
+      return null;
+    });
   }
 
   private Future<Void> getUserByCqlById(TestContext context) {
     log.info("Getting user via CQL, by user id\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      client.get(port, "localhost", "/users?query=" + urlEncode("(id==" + joeBlockId + ")"), res -> {
-        RestITSupport.assertStatus(context, res, 200);
-        res.bodyHandler(buf -> {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            int totalRecords = resultObject.getInteger("totalRecords");
-            assertThat(totalRecords, is(1));
-            JsonArray userList = resultObject.getJsonArray("users");
-            JsonObject userObject = userList.getJsonObject(0);
-            assertThat("username of " + buf, userObject.getString("username"), is("joeblock"));
-            promise.complete();
-          } catch (Exception e) {
-            promise.fail(e);
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end();
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode("(id==" + joeBlockId + ")"));
+
+    return future.map(users -> {
+      int totalRecords = users.getInteger("totalRecords");
+      assertThat(totalRecords, is(1));
+
+      JsonArray userList = users.getJsonArray("users");
+      JsonObject userObject = userList.getJsonObject(0);
+      assertThat("username of " + encode(userObject), userObject.getString("username"), is("joeblock"));
+
+      return null;
+    });
   }
 
   private Future<Void> getUserByInvalidCQL(TestContext context) {
     log.info("Getting user via invalid CQL\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      // empty CQL query triggers parse exception
-      client.get(port, "localhost", "/users?query=", res -> {
-        RestITSupport.assertStatus(context, res, 400);
-        promise.complete();
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end();
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    // empty CQL query triggers parse exception
+    Future<HttpResponse<Buffer>> future = get("/users?query=");
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> postAnotherUser(TestContext context) {
@@ -486,40 +394,25 @@ public class RestVerticleIT {
 
   private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
     log.info("Query users via CQL\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      client.get(port, "localhost", "/users?query=" + urlEncode(cql), res -> {
-        RestITSupport.assertStatus(context, res, 200);
-        res.bodyHandler(buf -> {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            int totalRecords = resultObject.getInteger("totalRecords");
-            JsonArray userList = resultObject.getJsonArray("users");
-            if (userList.size() != totalRecords) {
-              promise.fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
-              return;
-            }
-            List<String> usernames = new ArrayList<>();
-            for (int i = 0; i < userList.size(); i++) {
-              usernames.add(userList.getJsonObject(i).getString("username"));
-            }
-            assertThat(usernames, containsInAnyOrder(expectedUsernames));
-            promise.complete();
-          } catch (Exception e) {
-            promise.fail(e);
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end();
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql));
+
+    return future.map(json -> {
+
+      int totalRecords = json.getInteger("totalRecords");
+      JsonArray userList = json.getJsonArray("users");
+      if (userList.size() != totalRecords) {
+        fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
+      }
+
+      List<String> usernames = new ArrayList<>();
+      for (int i = 0; i < userList.size(); i++) {
+        usernames.add(userList.getJsonObject(i).getString("username"));
+      }
+      assertThat(usernames, containsInAnyOrder(expectedUsernames));
+
+      return null;
+    });
   }
 
   private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
@@ -547,39 +440,29 @@ public class RestVerticleIT {
 
   private Future<Void> getGoodUser(TestContext context) {
     log.info("Getting the modified user\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users/" + bobCircleId, res -> {
-      RestITSupport.assertStatus(context, res, 200);
-      res.bodyHandler(buf -> {
-        JsonObject userObject = buf.toJsonObject();
-        if (userObject.getString("username").equals("bobcircle")) {
-          Date createdDate;
-          Date updatedDate;
-          try {
-            createdDate = new DateTime(userObject.getString("createdDate")).toDate();
-            updatedDate = new DateTime(userObject.getString("updatedDate")).toDate();
-          } catch (Exception e) {
-            promise.fail(e);
-            return;
-          }
-          Date now = new Date();
-          if (createdDate.after(now) || updatedDate.after(now) || createdDate.after(updatedDate)) {
-            promise.fail(new AssertionError("Bad value for createdDate and/or updatedDate"));
-            return;
-          }
-          promise.complete();
-        } else {
-          promise.fail("Unable to read proper data from JSON return value: " + buf.toString());
+
+    Future<JsonObject> future = getJson(context, "/users/" + bobCircleId);
+
+    return future.map(user -> {
+      if (user.getString("username").equals("bobcircle")) {
+        Date createdDate = null;
+        Date updatedDate = null;
+        try {
+          createdDate = new DateTime(user.getString("createdDate")).toDate();
+          updatedDate = new DateTime(user.getString("updatedDate")).toDate();
+        } catch (Exception e) {
+          fail(e.getMessage());
         }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+
+        Date now = new Date();
+        if (createdDate.after(now) || updatedDate.after(now) || createdDate.after(updatedDate)) {
+          fail("Bad value for createdDate and/or updatedDate");
+        }
+      } else {
+        fail("Unable to read proper data from JSON return value: " + encode(user));
+      }
+      return null;
+    });
   }
 
   private Future<Void> putUserBadUsername(TestContext context) {
@@ -1373,103 +1256,76 @@ public class RestVerticleIT {
 
   private Future<Void> createProxyfor(TestContext context) {
     log.info("Creating a new proxyfor entry\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(proxyObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> createProxyforWithSameUserId(TestContext context) {
     log.info("Trying to create a proxyfor with an existing userid\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "5b0a9a0b-6eb6-447c-bc31-9c99940a29c5");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(proxyObject.encode());
 
-    return promise.future();
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
     log.info("Trying to create a proxyfor with an existing proxy userid\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(proxyObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
     log.info("Trying to create a proxyfor entry with the same id and proxy user id\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      RestITSupport.assertStatus(context, res, 422);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(proxyObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 422);
+      return null;
+    });
   }
 
   private Future<Void> getProxyforCollection(TestContext context) {
     log.info("Getting proxyfor entries\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/proxiesfor", res -> {
-      RestITSupport.assertStatus(context, res, 200);
-      res.bodyHandler(body -> {
-        JsonObject resultJson = body.toJsonObject();
-        JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-        if (proxyForArray.size() == 3) {
-          promise.complete();
-        } else {
-          promise.fail("Expected 3 entries, found " + proxyForArray.size());
-        }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+
+    Future<JsonObject> future = getJson(context, "/proxiesfor");
+
+    return future.map(proxies -> {
+      JsonArray proxyForArray = proxies.getJsonArray("proxiesFor");
+      if (proxyForArray.size() != 3) {
+        fail("Expected 3 entries, found " + proxyForArray.size());
+      }
+      return null;
+    });
   }
 
   private Future<Void> findAndGetProxyfor(TestContext context) {
@@ -1687,18 +1543,13 @@ public class RestVerticleIT {
 
   private Future<Void> getGroupByInvalidUuid(TestContext context) {
     log.info("Retrieving a group by invalid uuid\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/groups/q", res -> {
-      RestITSupport.assertStatus(context, res, 404);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = get("/groups/q");
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 404);
+      return null;
+    });
   }
 
   @Test
@@ -1821,22 +1672,18 @@ public class RestVerticleIT {
 
   private Future<Void> postUserWithWhitespace(TestContext context) {
     log.info("Creating a user with a numeric name\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject userObject = new JsonObject()
       .put("username", " user name ")
       .put("id", userIdWithWhitespace)
       .put("active", true);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(userObject));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 201);
+      return null;
+    });
   }
 
 }
