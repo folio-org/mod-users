@@ -52,6 +52,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -538,7 +539,7 @@ public class UsersAPI implements Users {
   private Future<Boolean> checkAddressTypeValid(
       String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
 
-    Future<Boolean> future = Future.future();
+    Promise<Boolean> future = Promise.promise();
     Criterion criterion = new Criterion(
           new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
                   setJSONB(false).setOperation("=").setVal(addressTypeId));
@@ -570,15 +571,15 @@ public class UsersAPI implements Users {
         future.fail(e);
       }
     });
-    return future;
+    return future.future();
   }
 
   private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
-    Future<Boolean> future = Future.future();
+    Promise<Boolean> future = Promise.promise();
     List<Future> futureList = new ArrayList<>();
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
       future.complete(true);
-      return future;
+      return future.future();
     }
     for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
@@ -603,7 +604,7 @@ public class UsersAPI implements Users {
         }
       }
     });
-    return future;
+    return future.future();
   }
 
   private Map<String, Object> getCustomFields(User entity) {
