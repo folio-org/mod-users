@@ -63,6 +63,7 @@ import org.junit.runners.MethodSorters;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
+import org.folio.rest.impl.UsersAPI;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -117,6 +118,9 @@ public class RestVerticleIT {
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
   private static final String notExistingCustomField = "notExistingCustomField";
+
+  private static final String FAKE_TOKEN = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
+  private static final int DEFAULT_LIMIT = 10;
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
@@ -191,7 +195,7 @@ public class RestVerticleIT {
 
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + Integer.toString(port), "diku", "diku");
+    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + Integer.toString(port), "diku", FAKE_TOKEN);
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port))
       .setWorker(true);
@@ -574,12 +578,12 @@ public class RestVerticleIT {
     return future;
   }
 
-  private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
+  private Future<Void> getUsersByCQL(TestContext context, String cql, int limit, String... expectedUsernames) {
     log.info("Query users via CQL\n");
     Future<Void> future = Future.future();
     HttpClient client = vertx.createHttpClient();
     try {
-      client.get(port, "localhost", "/users?query=" + urlEncode(cql), res -> {
+      client.get(port, "localhost", "/users?query=" + urlEncode(cql) + "&limit=" + limit, res -> {
         assertStatus(context, res, 200);
         res.bodyHandler(buf -> {
           try {
@@ -1807,7 +1811,6 @@ public class RestVerticleIT {
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
     HttpClient client = vertx.createHttpClient();
-    String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
     client.post(port, "localhost", endpoint, res -> {
       assertStatus(context, res, 201);
       res.bodyHandler(body -> {
@@ -1869,7 +1872,7 @@ public class RestVerticleIT {
       .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .putHeader("X-Okapi-Token", fakeJWT)
+      .putHeader("X-Okapi-Token", FAKE_TOKEN)
       .exceptionHandler(e -> {
         future.fail(e);
       })
@@ -1927,9 +1930,12 @@ public class RestVerticleIT {
       .compose(v -> getUserByInvalidCQL(context))
       .compose(v -> deleteNonExistingUser(context))
       .compose(v -> postAnotherUser(context))
-      .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
-      .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
-      .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
+      .compose(v -> getUsersByCQL(context, "id==x", DEFAULT_LIMIT) /* empty result */)
+      .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
+      .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
+      .compose(v -> getUsersByCQL(context, "id==x", UsersAPI.STREAM_THRESHOLD) /* empty result */)
+      .compose(v -> getUsersByCQL(context, "id==\"\"", UsersAPI.STREAM_THRESHOLD, "bobcircle", "joeblock"))
+      .compose(v -> getUsersByCQL(context, jSearch, UsersAPI.STREAM_THRESHOLD, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
@@ -2491,7 +2497,7 @@ public class RestVerticleIT {
     Async async = context.async();
     postCustomField(context)
       .compose(v -> postUserWithWhitespace(context))
-      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), "user name"))
+      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), DEFAULT_LIMIT, "user name"))
       .compose(v -> deleteUser(context, userIdWithWhitespace))
       .compose(v -> deleteCustomField(context))
       .setHandler(res -> {
