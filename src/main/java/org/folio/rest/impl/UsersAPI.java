@@ -32,6 +32,8 @@ import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
+import org.folio.rest.jaxrs.model.Error;
+import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
@@ -229,34 +231,25 @@ public class UsersAPI implements Users {
       });
   }
 
-  private void saveUser(User entity, Map<String, String> okapiHeaders,
-                        Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  private void saveUser(User entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
     PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
-      if (isDuplicateIdError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-            ValidationHelper.createValidationErrorMessage(
-              "id", entity.getId(),
-              "User with this id already exists"))));
+      if (isDuplicateIdErrorOnPost(reply)) {
+        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(ValidationHelper
+            .createValidationErrorMessage("id", entity.getId(), "User with this id already exists"))));
         return;
       }
-      if (isDuplicateUsernameError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-            ValidationHelper.createValidationErrorMessage(
-              "username", entity.getUsername(),
-              "User with this username already exists"))));
+      if (isDuplicateUsernameErrorOnPost(reply)) {
+        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(ValidationHelper
+            .createValidationErrorMessage("username", entity.getUsername(), "User with this username already exists"))));
         return;
       }
-      if (isDuplicateBarcodeError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-            ValidationHelper.createValidationErrorMessage(
-              "barcode", entity.getBarcode(),
-              "This barcode has already been taken"))));
+      if (isDuplicateBarcodeErrorOnPost(reply)) {
+        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(ValidationHelper
+            .createValidationErrorMessage("barcode", entity.getBarcode(), "This barcode has already been taken"))));
         return;
       }
       logger.debug("Save successful");
@@ -264,22 +257,42 @@ public class UsersAPI implements Users {
     });
   }
 
-  private boolean isDuplicateIdError(AsyncResult<Response> reply) {
+  private boolean isDuplicateUsernameErrorOnPut(AsyncResult<Response> reply) {
     return reply.succeeded()
-    && reply.result().getStatus() == 400
-    && reply.result().getEntity().toString().contains("users_pkey");
+      && reply.result().getStatus() == 400
+      && reply.result().getEntity().toString().contains("username")
+      && reply.result().getEntity().toString().contains("already exists");
   }
 
-  private boolean isDuplicateUsernameError(AsyncResult<Response> reply) {
+  private boolean isDuplicateBarcodeErrorOnPut(AsyncResult<Response> reply) {
     return reply.succeeded()
-    && reply.result().getStatus() == 400
-    && reply.result().getEntity().toString().contains("users_username_idx_unique");
+      && reply.result().getStatus() == 400
+      && reply.result().getEntity().toString().contains("barcode")
+      && reply.result().getEntity().toString().contains("already exists");
   }
 
-  private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
-    return reply.succeeded()
-    && reply.result().getStatus() == 400
-    && reply.result().getEntity().toString().contains("users_barcode_idx_unique");
+  private boolean isDuplicateIdErrorOnPost(AsyncResult<Response> reply) {
+    return error422MessageContains(reply, "id value already exists in table users");
+  }
+
+  private boolean isDuplicateUsernameErrorOnPost(AsyncResult<Response> reply) {
+    return error422MessageContains(reply, "username") &&
+      error422MessageContains(reply, "already exists");
+  }
+
+  private boolean isDuplicateBarcodeErrorOnPost(AsyncResult<Response> reply) {
+    return error422MessageContains(reply, "barcode") &&
+      error422MessageContains(reply, "already exists");
+  }
+
+  private boolean error422MessageContains(AsyncResult<Response> reply, String message) {
+    if (reply.succeeded() && reply.result().getStatus() == 422) {
+      List<Error> errors = ((Errors) reply.result().getEntity()).getErrors();
+      return !errors.isEmpty() &&
+        errors.get(0).getMessage() != null &&
+        errors.get(0).getMessage().contains(message);
+    }
+    return false;
   }
 
   @Validate
@@ -358,14 +371,14 @@ public class UsersAPI implements Users {
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
     PgUtil.put(TABLE_NAME_USERS, entity, entity.getId(), okapiHeaders, vertxContext, PutUsersByUserIdResponse.class, reply -> {
-      if (isDuplicateUsernameError(reply)) {
+      if (isDuplicateUsernameErrorOnPut(reply)) {
         asyncResultHandler.handle(
           succeededFuture(PutUsersByUserIdResponse
             .respond400WithTextPlain(
               "User with this username already exists")));
         return;
       }
-      if (isDuplicateBarcodeError(reply)) {
+      if (isDuplicateBarcodeErrorOnPut(reply)) {
         asyncResultHandler.handle(
           succeededFuture(PutUsersByUserIdResponse
             .respond400WithTextPlain(

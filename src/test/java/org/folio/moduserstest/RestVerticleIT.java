@@ -6,10 +6,14 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.post;
+import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
+import static org.folio.moduserstest.RestITSupport.put;
+import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 
 import java.nio.charset.StandardCharsets;
@@ -148,7 +152,7 @@ public class RestVerticleIT {
 
       JsonObject userCollectionObject = response.bodyAsJsonObject();
       if (userCollectionObject.getJsonArray("users").size() != 0
-        || userCollectionObject.getInteger("totalRecords") != 00) {
+        || userCollectionObject.getInteger("totalRecords") != 0) {
         fail("Invalid return JSON: " + response.bodyAsString());
       }
       return null;
@@ -164,45 +168,29 @@ public class RestVerticleIT {
     u.put("tags", tagobj);
   }
 
-  private Future<Void> postUser(TestContext context, boolean withUserName) {
+  private Future<Void> postUser(boolean withUserName) {
     log.info("Creating a new user\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("id", joeBlockId)
       .put("active", true);
     if (withUserName) {
-      userObject.put("username", "joeblock");
+      user.put("username", "joeblock");
     }
-    addTags(userObject);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      if (res.statusCode() >= 200 && res.statusCode() < 300) {
-        promise.complete();
-      } else {
-        promise.fail("Got status code: " + res.statusCode());
-      }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+    addTags(user);
+
+    return postWithOkStatus(joeBlockId, "/users", user.encode());
   }
 
   private Future<Void> deleteNonExistingUser(TestContext context) {
     log.info("Deleting non-existing user\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.delete(RestITSupport.port(), "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
-      RestITSupport.assertStatus(context, res, 404);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("accept", "*/*")
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = delete("/users/85936906-4737-4da7-b0fb-e8da080b97d8");
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 404);
+      return null;
+    });
   }
 
   private Future<Void> deleteUser(TestContext context, String userId) {
@@ -212,22 +200,18 @@ public class RestVerticleIT {
 
   private Future<Void> postUserWithNumericName(TestContext context) {
     log.info("Creating a user with a numeric name\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "777777")
       .put("id", user777777Id)
       .put("active", true);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> getUser(TestContext context) {
@@ -274,8 +258,8 @@ public class RestVerticleIT {
       }
 
       JsonArray userList = users.getJsonArray("users");
-      JsonObject userObject = userList.getJsonObject(0);
-      if (!userObject.getString("username").equals("joeblock")) {
+      JsonObject user = userList.getJsonObject(0);
+      if (!user.getString("username").equals("joeblock")) {
         fail("Unable to read proper data from JSON return value: " + encode(users));
       }
 
@@ -293,8 +277,8 @@ public class RestVerticleIT {
       assertThat(totalRecords, is(1));
 
       JsonArray userList = users.getJsonArray("users");
-      JsonObject userObject = userList.getJsonObject(0);
-      assertThat("username of " + encode(userObject), userObject.getString("username"), is("joeblock"));
+      JsonObject user = userList.getJsonObject(0);
+      assertThat("username of " + encode(user), user.getString("username"), is("joeblock"));
 
       return null;
     });
@@ -314,22 +298,18 @@ public class RestVerticleIT {
 
   private Future<Void> postAnotherUser(TestContext context) {
     log.info("Creating another user\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "bobcircle")
       .put("id", bobCircleId)
       .put("active", true);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res,  201);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response,  201);
+      return null;
+    });
   }
 
   private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
@@ -357,24 +337,15 @@ public class RestVerticleIT {
 
   private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
     log.info("Making a valid user modification\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("id", id)
       .put("active", false);
     if (withUserName) {
-      userObject.put("username", "bobcircle");
+      user.put("username", "bobcircle");
     }
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + id, res -> {
-      RestITSupport.assertStatus(context, res, 204);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    return putWithNoContentStatus(context, id, "/users/" + id, encode(user));
   }
 
   private Future<Void> getGoodUser(TestContext context) {
@@ -406,28 +377,24 @@ public class RestVerticleIT {
 
   private Future<Void> putUserBadUsername(TestContext context) {
     log.info("Trying to assign an invalid username \n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", bobCircleId)
       .put("active", false);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + bobCircleId, res -> {
-      RestITSupport.assertStatus(context, res, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserWithoutIdInMetadata(TestContext context) {
     log.info("Changing a user without id in metadata\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
         .put("username", "bobcircle")
         .put("id", bobCircleId)
         .put("active", false)
@@ -435,64 +402,52 @@ public class RestVerticleIT {
         // https://issues.folio.org/browse/RMB-459
         // https://issues.folio.org/browse/UIU-1069
         .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + bobCircleId, res -> {
-      RestITSupport.assertStatus(context, res, 204);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(context::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 204);
+      return null;
+    });
   }
 
   private Future<Void> putUserBadId(TestContext context) {
     log.info("Trying to assign an invalid id \n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "bobcircle")
       .put("id", joeBlockId)
       .put("active", false);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
-      RestITSupport.assertStatus(context, res, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserNotMatchingId(TestContext context) {
     log.info("Trying to Update user id \n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", bobCircleId)
       .put("active", false);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
-      RestITSupport.assertStatus(context, res, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserDuplicatedAddressType(TestContext context) {
     log.info("Attempting to update a user with two of the same address types\n");
-    Promise<Void> promise = Promise.promise();
+
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", joeBlockId)
       .put("active", false)
@@ -514,23 +469,19 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
-      RestITSupport.assertStatus(context, res, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserInvalidAddressType(TestContext context) {
     log.info("Attempting to update a user with invalid address types\n");
     Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", joeBlockId)
       .put("active", false)
@@ -555,7 +506,7 @@ public class RestVerticleIT {
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
-      .end(userObject.encode());
+      .end(user.encode());
     return promise.future();
   }
 
@@ -564,7 +515,7 @@ public class RestVerticleIT {
   private Future<Void> putUserWithNumericName(TestContext context) {
     log.info("Changing a user with numeric name\n");
     Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "777777")
       .put("id", user777777Id)
       .put("active", false);
@@ -577,7 +528,7 @@ public class RestVerticleIT {
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
       .exceptionHandler(promise::fail)
-      .end(userObject.encode());
+      .end(user.encode());
     return promise.future();
   }
 
@@ -631,7 +582,7 @@ public class RestVerticleIT {
         if (!addressType.getString("addressType").equals("sweethome")) {
           promise.fail("addressType is not 'sweethome' in return addresstype");
         } else {
-          JsonObject userObject = new JsonObject()
+          JsonObject user = new JsonObject()
             .put("username", "bobcircle")
             .put("id", bobCircleId)
             .put("active", false)
@@ -666,7 +617,7 @@ public class RestVerticleIT {
             .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
             .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
             .exceptionHandler(promise::fail)
-            .end(userObject.encode());
+            .end(user.encode());
         }
       });
     })
@@ -748,7 +699,7 @@ public class RestVerticleIT {
     log.info("Attempting to create a user with two of the same address types");
     Promise<Void> promise = Promise.promise();
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "jacktriangle")
       .put("id", jackTriangleId)
       .put("active", true)
@@ -779,7 +730,7 @@ public class RestVerticleIT {
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
-      .end(userObject.encode());
+      .end(user.encode());
     return promise.future();
   }
 
@@ -787,7 +738,7 @@ public class RestVerticleIT {
     log.info("Trying to create a bad address\n");
     Promise<Void> promise = Promise.promise();
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "annarhombus")
       .put("id", annaRhombusId)
       .put("active", true)
@@ -812,7 +763,7 @@ public class RestVerticleIT {
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .exceptionHandler(promise::fail)
-      .end(userObject.encode());
+      .end(user.encode());
     return promise.future();
   }
 
@@ -1439,13 +1390,12 @@ public class RestVerticleIT {
     Async async = context.async();
     Future<Void> startFuture;
     startFuture = getEmptyUsers(context)
-      .compose(v -> postUser(context, false))
+      .compose(v -> postUser(false))
       .compose(v -> putUserGood(context, joeBlockId, false))
       .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(context, true))
+      .compose(v -> postUser(true))
       .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(context, true))
-      .compose(v -> deleteUser(context, johnRectangleId))
+      .compose(v -> postUser(true))
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
@@ -1542,12 +1492,12 @@ public class RestVerticleIT {
   private Future<Void> postUserWithWhitespace(TestContext context) {
     log.info("Creating a user with a numeric name\n");
 
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", " user name ")
       .put("id", userIdWithWhitespace)
       .put("active", true);
 
-    Future<HttpResponse<Buffer>> future = post("/users", encode(userObject));
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
 
     return future.map(response -> {
       RestITSupport.assertStatus(context, response, 201);

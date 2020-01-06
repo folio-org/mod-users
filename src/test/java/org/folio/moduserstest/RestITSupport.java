@@ -191,6 +191,16 @@ class RestITSupport {
     });
   }
 
+  static Future<HttpResponse<Buffer>> delete(String request) {
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
+
+    client.delete(port, LOCALHOST, request)
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("accept", "*/*")
+      .send(promise);
+
+    return promise.future();
+  }
 
   static Future<Void> deleteWithNoContentStatus(TestContext context, String request) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
