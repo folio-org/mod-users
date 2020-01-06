@@ -26,10 +26,8 @@ import java.util.concurrent.CompletableFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -38,7 +36,6 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -51,12 +48,9 @@ import org.junit.runners.MethodSorters;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -71,7 +65,6 @@ public class RestVerticleIT {
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
-  private static final String notExistingCustomField = "notExistingCustomField";
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
@@ -91,28 +84,21 @@ public class RestVerticleIT {
     .put("notificationsTo", "Proxy")
     .put("accrueTo", "Sponsor");
 
-  private static Vertx vertx;
-  private static WebClient client;
-  static int port;
-
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) {
-    vertx = VertxUtils.getVertxWithExceptionHandler();
-
-    client = WebClient.create(vertx);
+    RestITSupport.setUp();
 
     Async async = context.async();
-    port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + port, "diku", "diku");
+    TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + RestITSupport.port(), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", port))
+      .setConfig(new JsonObject().put("http.port", RestITSupport.port()))
       .setWorker(true);
 
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
+    RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
         // remove existing schema from previous tests
         tenantClient.deleteTenant(delete -> {
           switch (delete.statusCode()) {
@@ -145,7 +131,7 @@ public class RestVerticleIT {
   @AfterClass
   public static void tearDown() {
     CompletableFuture<Void> future = new CompletableFuture<>();
-    vertx.close(res -> {
+    RestITSupport.vertx().close(res -> {
       PostgresClient.stopEmbeddedPostgres();
       future.complete(null);
     });
@@ -178,12 +164,6 @@ public class RestVerticleIT {
     u.put("tags", tagobj);
   }
 
-  private static void addCustomFields(JsonObject u) {
-    JsonObject customFields = new JsonObject();
-    customFields.put("department_1", "Math");
-    u.put("customFields", customFields);
-  }
-
   private Future<Void> postUser(TestContext context, boolean withUserName) {
     log.info("Creating a new user\n");
     Promise<Void> promise = Promise.promise();
@@ -194,32 +174,8 @@ public class RestVerticleIT {
       userObject.put("username", "joeblock");
     }
     addTags(userObject);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      if (res.statusCode() >= 200 && res.statusCode() < 300) {
-        promise.complete();
-      } else {
-        promise.fail("Got status code: " + res.statusCode());
-      }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
-  }
-
-  private Future<Void> postUserWithCustomFields(TestContext context) {
-    log.info("Creating a new user\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("username", "johnRectangle");
-    addCustomFields(userObject);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       if (res.statusCode() >= 200 && res.statusCode() < 300) {
         promise.complete();
       } else {
@@ -237,8 +193,8 @@ public class RestVerticleIT {
   private Future<Void> deleteNonExistingUser(TestContext context) {
     log.info("Deleting non-existing user\n");
     Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    client.delete(port, "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.delete(RestITSupport.port(), "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
       RestITSupport.assertStatus(context, res, 404);
       promise.complete();
     })
@@ -261,8 +217,8 @@ public class RestVerticleIT {
       .put("username", "777777")
       .put("id", user777777Id)
       .put("active", true);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
@@ -304,22 +260,6 @@ public class RestVerticleIT {
       return null;
     });
 
-  }
-
-  private Future<Void> getUserWithCustomFields(TestContext context) {
-    log.info("Retrieving a user with custom fields\n");
-
-    Future<JsonObject> future = getJson(context, "/users/" + johnRectangleId);
-
-    return future.map(user -> {
-      JsonObject customFields = user.getJsonObject("customFields");
-
-      if (customFields == null || !customFields.encode().equals("{\"department_1\":\"Math\"}")) {
-        fail("Bad value for customFields. " + encode(customFields));
-      }
-
-      return null;
-    });
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
@@ -379,8 +319,8 @@ public class RestVerticleIT {
       .put("username", "bobcircle")
       .put("id", bobCircleId)
       .put("active", true);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res,  201);
       promise.complete();
     })
@@ -424,9 +364,8 @@ public class RestVerticleIT {
     if (withUserName) {
       userObject.put("username", "bobcircle");
     }
-    addCustomFields(userObject);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + id, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + id, res -> {
       RestITSupport.assertStatus(context, res, 204);
       promise.complete();
     })
@@ -472,8 +411,8 @@ public class RestVerticleIT {
       .put("username", "joeblock")
       .put("id", bobCircleId)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + bobCircleId, res -> {
       RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
@@ -496,8 +435,8 @@ public class RestVerticleIT {
         // https://issues.folio.org/browse/RMB-459
         // https://issues.folio.org/browse/UIU-1069
         .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + bobCircleId, res -> {
       RestITSupport.assertStatus(context, res, 204);
       promise.complete();
     })
@@ -509,39 +448,6 @@ public class RestVerticleIT {
     return promise.future();
   }
 
-  private Future<Void> putUserWithNotExistingCustomField(TestContext context) {
-    log.info("Changing a user with not existing custom field");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
-      .put("username", "johnrectangle")
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Rectangle")
-        .put("firstName", "John")
-      )
-      .put("customFields", new JsonObject()
-        .put(notExistingCustomField, "abc")
-      );
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + johnRectangleId, res -> {
-      RestITSupport.assertStatus(context, res, 422);
-      res.bodyHandler(err -> {
-        Errors errors = Json.decodeValue(err, Errors.class);
-        Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
-        context.assertEquals("customFields", errorParam.getKey());
-        context.assertEquals(notExistingCustomField, errorParam.getValue());
-        promise.complete();
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
-  }
-
   private Future<Void> putUserBadId(TestContext context) {
     log.info("Trying to assign an invalid id \n");
     Promise<Void> promise = Promise.promise();
@@ -549,8 +455,8 @@ public class RestVerticleIT {
       .put("username", "bobcircle")
       .put("id", joeBlockId)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
       RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
@@ -569,8 +475,8 @@ public class RestVerticleIT {
       .put("username", "joeblock")
       .put("id", bobCircleId)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
       RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
@@ -608,8 +514,8 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
       RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
@@ -640,8 +546,8 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
       RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
@@ -662,8 +568,8 @@ public class RestVerticleIT {
       .put("username", "777777")
       .put("id", user777777Id)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + user777777Id, res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.put(RestITSupport.port(), "localhost", "/users/" + user777777Id, res -> {
       RestITSupport.assertStatus(context, res, 404);
       promise.complete();
     })
@@ -681,8 +587,8 @@ public class RestVerticleIT {
     JsonObject addressTypeObject = new JsonObject()
       .put("addressType", "sweethome")
       .put("desc", "The patron's primary residence");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/addresstypes", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/addresstypes", res -> {
       RestITSupport.assertStatus(context, res, 201);
       promise.complete();
     })
@@ -700,8 +606,8 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     JsonObject addressTypeObject = new JsonObject()
       .put("desc", "The patron's summer residence");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/addresstypes", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/addresstypes", res -> {
       RestITSupport.assertStatus(context, res, 422);
       promise.complete();
     })
@@ -716,8 +622,8 @@ public class RestVerticleIT {
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
     log.info("Getting the new addresstype, updating a user with it\n");
     Promise<Void> promise = Promise.promise();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/addresstypes?query=addressType=sweethome", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.get(RestITSupport.port(), "localhost", "/addresstypes?query=addressType=sweethome", res -> {
       RestITSupport.assertStatus(context, res, 200);
       res.bodyHandler(body -> {
         JsonObject result = new JsonObject(body.toString());
@@ -741,11 +647,11 @@ public class RestVerticleIT {
                 )
               )
             );
-          HttpClient putClient = vertx.createHttpClient();
-          putClient.put(port, "localhost", "/users/" + bobCircleId, putRes -> {
+          HttpClient putClient = RestITSupport.vertx().createHttpClient();
+          putClient.put(RestITSupport.port(), "localhost", "/users/" + bobCircleId, putRes -> {
             RestITSupport.assertStatus(context, putRes, 204);
-            HttpClient deleteClient = vertx.createHttpClient();
-            deleteClient.delete(port, "localhost", "/addresstypes/"
+            HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
+            deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/"
               + addressType.getString("id"), deleteRes -> {
                 RestITSupport.assertStatus(context, deleteRes, 400);
                 promise.complete();
@@ -776,8 +682,8 @@ public class RestVerticleIT {
   private Future<Void> deleteAddressTypeSQLError(TestContext context) {
     log.info("Deleting address type SQL error\n");
     Promise<Void> promise = Promise.promise();
-    HttpClient deleteClient = vertx.createHttpClient();
-    deleteClient.delete(port, "localhost", "/addresstypes/x%2F", deleteRes -> {
+    HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
+    deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/x%2F", deleteRes -> {
       RestITSupport.assertStatus(context, deleteRes, 400);
       promise.complete();
     })
@@ -792,8 +698,8 @@ public class RestVerticleIT {
   private Future<Void> deleteAddressTypeCQLError(TestContext context) {
     log.info("Deleting address type CQL error\n");
     Promise<Void> promise = Promise.promise();
-    HttpClient deleteClient = vertx.createHttpClient();
-    deleteClient.delete(port, "localhost", "/addresstypes/x=", deleteRes -> {
+    HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
+    deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/x=", deleteRes -> {
       RestITSupport.assertStatus(context, deleteRes, 500);
       promise.complete();
     })
@@ -808,16 +714,16 @@ public class RestVerticleIT {
   private Future<Void> createAndDeleteAddressType(TestContext context) {
     log.info("Creating and deleting an address type\n");
     Promise<Void> promise = Promise.promise();
-    HttpClient postClient = vertx.createHttpClient();
+    HttpClient postClient = RestITSupport.vertx().createHttpClient();
     JsonObject addressTypeObject = new JsonObject()
       .put("addressType", "hardwork")
       .put("desc", "The patron's work address");
-    postClient.post(port, "localhost", "/addresstypes", postRes -> {
+    postClient.post(RestITSupport.port(), "localhost", "/addresstypes", postRes -> {
       RestITSupport.assertStatus(context, postRes, 201);
       postRes.bodyHandler(postBody -> {
         JsonObject newAddressTypeObject = new JsonObject(postBody.toString());
-        HttpClient deleteClient = vertx.createHttpClient();
-        deleteClient.delete(port, "localhost", "/addresstypes/"
+        HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
+        deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/"
           + newAddressTypeObject.getString("id"), deleteRes -> {
             RestITSupport.assertStatus(context, deleteRes, 204);
             promise.complete();
@@ -864,43 +770,10 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 400);
       promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject.encode());
-    return promise.future();
-  }
-
-  private Future<Void> postUserWithNotExistingCustomField(TestContext context) {
-    log.info("Attempting to create a user with not existing custom field");
-    Promise<Void> promise = Promise.promise();
-    JsonObject userObject = new JsonObject()
-      .put("username", "johnrectangle")
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Rectangle")
-        .put("firstName", "John")
-      )
-      .put("customFields", new JsonObject()
-        .put(notExistingCustomField, "abc")
-      );
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 422);
-      res.bodyHandler(err -> {
-        Errors errors = Json.decodeValue(err, Errors.class);
-        Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
-        context.assertEquals("customFields", errorParam.getKey());
-        context.assertEquals(notExistingCustomField, errorParam.getValue());
-        promise.complete();
-      });
     })
       .putHeader("X-Okapi-Tenant", "diku")
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
@@ -930,8 +803,8 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 400);
       promise.complete();
     })
@@ -949,12 +822,12 @@ public class RestVerticleIT {
     String uuid = UUID.randomUUID().toString();
     JsonObject user1 = new JsonObject().put("id", uuid);
     JsonObject user2 = new JsonObject().put("id", uuid);
-    HttpClient client = vertx.createHttpClient();
+    HttpClient client = RestITSupport.vertx().createHttpClient();
     // create test user one
-    client.post(port, "localhost", "/users", res -> {
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
       // fail attempting to create user with duplicate id
-      client.post(port, "localhost", "/users", res2 -> {
+      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
         RestITSupport.assertStatus(context, res2, 422);
         res2.bodyHandler(err -> {
           JsonObject validationErrorRes = err.toJsonObject();
@@ -992,12 +865,12 @@ public class RestVerticleIT {
     JsonObject user2 = new JsonObject()
       .put("username", "the_twin")
       .put("id",  UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
+    HttpClient client = RestITSupport.vertx().createHttpClient();
     // create test user one
-    client.post(port, "localhost", "/users", res -> {
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
       // creating a second user with the same username should fail
-      client.post(port, "localhost", "/users", res2 -> {
+      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
         RestITSupport.assertStatus(context, res2, 422);
         res2.bodyHandler(err -> {
           JsonObject validationErrorRes = err.toJsonObject();
@@ -1035,14 +908,14 @@ public class RestVerticleIT {
     JsonObject user2 = new JsonObject()
       .put("username", "right_shoe")
       .put("id", UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
-      client.post(port, "localhost", "/users", res2 -> {
+      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
         RestITSupport.assertStatus(context, res2, 201);
         // attempt to update user2 changing username to a duplicate
         user2.put("username", "left_shoe");
-        client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
+        client.put(RestITSupport.port(), "localhost", "/users/" + user2.getString("id"), res3 -> {
           RestITSupport.assertStatus(context, res3, 400);
           res3.bodyHandler(err -> {
             context.assertEquals("User with this username already exists", err.toString());
@@ -1077,10 +950,10 @@ public class RestVerticleIT {
       .put("id",  UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("id",  UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
-      client.post(port, "localhost", "/users", res2 -> {
+      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
         // should succeed, there can be any number of users without username
         RestITSupport.assertStatus(context, res2, 201);
         promise.complete();
@@ -1108,13 +981,13 @@ public class RestVerticleIT {
     JsonObject user2 = new JsonObject()
         .put("username", "name_for_sale")
         .put("id", UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
-      client.post(port, "localhost", "/users", res2 -> {
+      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
         RestITSupport.assertStatus(context, res2, 201);
         user2.remove("username");  // try to PUT with username removed
-        client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
+        client.put(RestITSupport.port(), "localhost", "/users/" + user2.getString("id"), res3 -> {
           RestITSupport.assertStatus(context, res3, 204);
           promise.complete();
         })
@@ -1160,12 +1033,12 @@ public class RestVerticleIT {
         .put("lastName", "Two")
         .put("firstName", "Test")
       );
-    HttpClient client = vertx.createHttpClient();
+    HttpClient client = RestITSupport.vertx().createHttpClient();
     // create test user one
-    client.post(port, "localhost", "/users", res -> {
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
       // fail attempting to create user with duplicate barcode
-      client.post(port, "localhost", "/users", res2 -> {
+      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
         RestITSupport.assertStatus(context, res2, 422);
         res2.bodyHandler(err -> {
           JsonObject validationErrorRes = err.toJsonObject();
@@ -1217,16 +1090,16 @@ public class RestVerticleIT {
         .put("lastName", "Four")
         .put("firstName", "Test")
       );
-    HttpClient client = vertx.createHttpClient();
+    HttpClient client = RestITSupport.vertx().createHttpClient();
     // create test user one
-    client.post(port, "localhost", "/users", res -> {
+    client.post(RestITSupport.port(), "localhost", "/users", res -> {
       RestITSupport.assertStatus(context, res, 201);
       // create test user two
-      client.post(port, "localhost", "/users", res2 -> {
+      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
         RestITSupport.assertStatus(context, res2, 201);
         // fail attempting to update user changing barcode to a duplicate
         userObject2.put("barcode", "304276530498752");
-        client.put(port, "localhost", "/users/" + testUserFourId, res3 -> {
+        client.put(RestITSupport.port(), "localhost", "/users/" + testUserFourId, res3 -> {
           RestITSupport.assertStatus(context, res3, 400);
           res3.bodyHandler(err -> {
             String errorMessage = err.toString();
@@ -1332,9 +1205,9 @@ public class RestVerticleIT {
     log.info("Find and retrieve a particular proxyfor entry\n");
     Promise<Void> promise = Promise.promise();
     try {
-      HttpClient client = vertx.createHttpClient();
+      HttpClient client = RestITSupport.vertx().createHttpClient();
       log.info("Making CQL request\n");
-      client.get(port, "localhost",
+      client.get(RestITSupport.port(), "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
           RestITSupport.assertStatus(context, res, 200);
@@ -1349,7 +1222,7 @@ public class RestVerticleIT {
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
               String proxyForId = proxyForObject.getString("id");
               log.info("Making get-by-id request\n");
-              client.get(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+              client.get(RestITSupport.port(), "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 RestITSupport.assertStatus(context, res2, 200);
                 promise.complete();
               })
@@ -1381,9 +1254,9 @@ public class RestVerticleIT {
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
     try {
-      HttpClient client = vertx.createHttpClient();
+      HttpClient client = RestITSupport.vertx().createHttpClient();
       log.info("Making CQL request\n");
-      client.get(port, "localhost",
+      client.get(RestITSupport.port(), "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
           RestITSupport.assertStatus(context, res, 200);
@@ -1398,7 +1271,7 @@ public class RestVerticleIT {
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
               String proxyForId = proxyForObject.getString("id");
               log.info("Making put-by-id request\n");
-              client.put(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+              client.put(RestITSupport.port(), "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 RestITSupport.assertStatus(context, res2, 204);
                 promise.complete();
               })
@@ -1428,9 +1301,9 @@ public class RestVerticleIT {
     log.info("Find and delete a particular proxyfor entry");
     Promise<Void> promise = Promise.promise();
     try {
-      HttpClient client = vertx.createHttpClient();
+      HttpClient client = RestITSupport.vertx().createHttpClient();
       log.info("Making CQL request\n");
-      client.get(port, "localhost",
+      client.get(RestITSupport.port(), "localhost",
         "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
         res -> {
           RestITSupport.assertStatus(context, res, 200);
@@ -1445,7 +1318,7 @@ public class RestVerticleIT {
               JsonObject proxyForObject = proxyForArray.getJsonObject(0);
               String proxyForId = proxyForObject.getString("id");
               log.info("Making delete-by-id request\n");
-              client.delete(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
+              client.delete(RestITSupport.port(), "localhost", "/proxiesfor/" + proxyForId, res2 -> {
                 RestITSupport.assertStatus(context, res2, 204);
                 promise.complete();
               })
@@ -1476,14 +1349,14 @@ public class RestVerticleIT {
     Promise<Void> promise = Promise.promise();
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
-    HttpClient client = vertx.createHttpClient();
+    HttpClient client = RestITSupport.vertx().createHttpClient();
     String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
-    client.post(port, "localhost", endpoint, res -> {
+    client.post(RestITSupport.port(), "localhost", endpoint, res -> {
       RestITSupport.assertStatus(context, res, 201);
       res.bodyHandler(body -> {
         //Get the object by id
         String id = body.toJsonObject().getString("id");
-        client.get(port, "localhost", endpoint + "/" + id, res2 -> {
+        client.get(RestITSupport.port(), "localhost", endpoint + "/" + id, res2 -> {
           RestITSupport.assertStatus(context, res2, 200);
           res2.bodyHandler(body2 -> {
             if (checkMeta) {
@@ -1510,7 +1383,7 @@ public class RestVerticleIT {
               }
             }
             //delete the object by id
-            client.delete(port, "localhost", endpoint + "/" + id, res3 -> {
+            client.delete(RestITSupport.port(), "localhost", endpoint + "/" + id, res3 -> {
               RestITSupport.assertStatus(context, res3, 204);
               promise.complete();
             })
@@ -1572,8 +1445,6 @@ public class RestVerticleIT {
       .compose(v -> postUser(context, true))
       .compose(v -> deleteUser(context, joeBlockId))
       .compose(v -> postUser(context, true))
-      .compose(v -> postUserWithCustomFields(context))
-      .compose(v -> getUserWithCustomFields(context))
       .compose(v -> deleteUser(context, johnRectangleId))
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
@@ -1587,7 +1458,6 @@ public class RestVerticleIT {
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
-      .compose(v -> putUserWithNotExistingCustomField(context))
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
       .compose(v -> putUserNotMatchingId(context))
@@ -1607,7 +1477,6 @@ public class RestVerticleIT {
       .compose(v -> postUserWithNumericName(context))
       .compose(v -> postUserWithDuplicateId(context))
       .compose(v -> postUserWithDuplicateUsername(context))
-      .compose(v -> postUserWithNotExistingCustomField(context))
       .compose(v -> postTwoUsersWithoutUsername(context))
       .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))
