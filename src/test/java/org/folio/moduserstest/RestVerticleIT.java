@@ -480,7 +480,7 @@ public class RestVerticleIT {
 
   private Future<Void> putUserInvalidAddressType(TestContext context) {
     log.info("Attempting to update a user with invalid address types\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", joeBlockId)
@@ -497,207 +497,152 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + joeBlockId, res -> {
-      RestITSupport.assertStatus(context, res, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   // https://issues.folio.org/browse/MODUSERS-90
   // https://issues.folio.org/browse/MODUSERS-108
   private Future<Void> putUserWithNumericName(TestContext context) {
     log.info("Changing a user with numeric name\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject user = new JsonObject()
       .put("username", "777777")
       .put("id", user777777Id)
       .put("active", false);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.put(RestITSupport.port(), "localhost", "/users/" + user777777Id, res -> {
-      RestITSupport.assertStatus(context, res, 404);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + user777777Id, encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 404);
+      return null;
+    });
   }
 
   private Future<Void> createAddressType(TestContext context) {
     log.info("Creating an address type\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject addressTypeObject = new JsonObject()
+
+    JsonObject addressType = new JsonObject()
       .put("addressType", "sweethome")
       .put("desc", "The patron's primary residence");
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/addresstypes", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(addressTypeObject.encode());
-    return promise.future();
 
+    Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> createBadAddressType(TestContext context) {
     log.info("Creating a bad address type\n");
-    Promise<Void> promise = Promise.promise();
-    JsonObject addressTypeObject = new JsonObject()
+
+    JsonObject addressType = new JsonObject()
       .put("desc", "The patron's summer residence");
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/addresstypes", res -> {
-      RestITSupport.assertStatus(context, res, 422);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(addressTypeObject.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 422);
+      return null;
+    });
   }
 
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
     log.info("Getting the new addresstype, updating a user with it\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.get(RestITSupport.port(), "localhost", "/addresstypes?query=addressType=sweethome", res -> {
-      RestITSupport.assertStatus(context, res, 200);
-      res.bodyHandler(body -> {
-        JsonObject result = new JsonObject(body.toString());
-        JsonObject addressType = result.getJsonArray("addressTypes").getJsonObject(0);
-        if (!addressType.getString("addressType").equals("sweethome")) {
-          promise.fail("addressType is not 'sweethome' in return addresstype");
-        } else {
-          JsonObject user = new JsonObject()
-            .put("username", "bobcircle")
-            .put("id", bobCircleId)
-            .put("active", false)
-            .put("personal", new JsonObject()
-              .put("lastName", "Circle")
-              .put("firstName", "Robert")
-              .put("addresses", new JsonArray()
-                .add(new JsonObject()
-                  .put("countryId", "USA")
-                  .put("addressLine1", "123 Somestreet")
-                  .put("city", "Somewheresville")
-                  .put("addressTypeId", addressType.getString("id"))
-                )
-              )
-            );
-          HttpClient putClient = RestITSupport.vertx().createHttpClient();
-          putClient.put(RestITSupport.port(), "localhost", "/users/" + bobCircleId, putRes -> {
-            RestITSupport.assertStatus(context, putRes, 204);
-            HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
-            deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/"
-              + addressType.getString("id"), deleteRes -> {
-                RestITSupport.assertStatus(context, deleteRes, 400);
-                promise.complete();
-            })
-              .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-              .exceptionHandler(promise::fail)
-              .end();
-          })
-            .putHeader("X-Okapi-Tenant", "diku")
-            .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-            .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-            .exceptionHandler(promise::fail)
-            .end(user.encode());
-        }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
 
+    Future<JsonObject> f1 = getJson(context, "/addresstypes?query=addressType=sweethome")
+      .map(entries -> {
+        JsonObject addressType = entries.getJsonArray("addressTypes").getJsonObject(0);
+
+        if (!addressType.getString("addressType").equals("sweethome")) {
+          fail("addressType is not 'sweethome' in return addresstype");
+        }
+        return addressType;
+      });
+
+    Future<JsonObject> f2 = f1.compose(addressType -> {
+      JsonObject user = new JsonObject()
+        .put("username", "bobcircle")
+        .put("id", bobCircleId)
+        .put("active", false)
+        .put("personal", new JsonObject()
+          .put("lastName", "Circle")
+          .put("firstName", "Robert")
+          .put("addresses", new JsonArray()
+            .add(new JsonObject()
+              .put("countryId", "USA")
+              .put("addressLine1", "123 Somestreet")
+              .put("city", "Somewheresville")
+              .put("addressTypeId", addressType.getString("id"))
+            )
+          )
+        );
+
+      return put("/users/" + bobCircleId, encode(user))
+        .map(response -> {
+          RestITSupport.assertStatus(context, response, 204);
+          return addressType;
+        });
+    });
+
+    return f2.compose(addressType -> delete("/addresstypes/" + addressType.getString("id")))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 400);
+        return null;
+      });
   }
 
   private Future<Void> deleteAddressTypeSQLError(TestContext context) {
     log.info("Deleting address type SQL error\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
-    deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/x%2F", deleteRes -> {
-      RestITSupport.assertStatus(context, deleteRes, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = delete("/addresstypes/x%2F");
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> deleteAddressTypeCQLError(TestContext context) {
     log.info("Deleting address type CQL error\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
-    deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/x=", deleteRes -> {
-      RestITSupport.assertStatus(context, deleteRes, 500);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end();
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = delete("/addresstypes/x=");
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 500);
+      return null;
+    });
   }
 
   private Future<Void> createAndDeleteAddressType(TestContext context) {
     log.info("Creating and deleting an address type\n");
-    Promise<Void> promise = Promise.promise();
-    HttpClient postClient = RestITSupport.vertx().createHttpClient();
+
     JsonObject addressTypeObject = new JsonObject()
       .put("addressType", "hardwork")
       .put("desc", "The patron's work address");
-    postClient.post(RestITSupport.port(), "localhost", "/addresstypes", postRes -> {
-      RestITSupport.assertStatus(context, postRes, 201);
-      postRes.bodyHandler(postBody -> {
-        JsonObject newAddressTypeObject = new JsonObject(postBody.toString());
-        HttpClient deleteClient = RestITSupport.vertx().createHttpClient();
-        deleteClient.delete(RestITSupport.port(), "localhost", "/addresstypes/"
-          + newAddressTypeObject.getString("id"), deleteRes -> {
-            RestITSupport.assertStatus(context, deleteRes, 204);
-            promise.complete();
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(promise::fail)
-          .end();
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(promise::fail)
-      .end(addressTypeObject.encode());
 
-    return promise.future();
+    Future<JsonObject> f1 = post("/addresstypes", encode(addressTypeObject))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return response.bodyAsJsonObject();
+      });
+
+    return f1.compose(at -> delete("/addresstypes/" + at.getString("id")))
+      .map(o -> {
+        RestITSupport.assertStatus(context, o, 204);
+        return null;
+      });
   }
 
   private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
     log.info("Attempting to create a user with two of the same address types");
-    Promise<Void> promise = Promise.promise();
+
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
     JsonObject user = new JsonObject()
       .put("username", "jacktriangle")
@@ -721,22 +666,18 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> postUserBadAddress(TestContext context) {
     log.info("Trying to create a bad address\n");
-    Promise<Void> promise = Promise.promise();
+
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
     JsonObject user = new JsonObject()
       .put("username", "annarhombus")
@@ -754,218 +695,182 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 400);
-      promise.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user.encode());
-    return promise.future();
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> postUserWithDuplicateId(TestContext context) {
     log.info("Attempting to create a user with duplicate id");
-    Promise<Void> promise = Promise.promise();
+
     String uuid = UUID.randomUUID().toString();
     JsonObject user1 = new JsonObject().put("id", uuid);
     JsonObject user2 = new JsonObject().put("id", uuid);
-    HttpClient client = RestITSupport.vertx().createHttpClient();
+
     // create test user one
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      // fail attempting to create user with duplicate id
-      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
-        RestITSupport.assertStatus(context, res2, 422);
-        res2.bodyHandler(err -> {
-          JsonObject validationErrorRes = err.toJsonObject();
-          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-          if (validationErrors.isEmpty()) {
-            promise.fail("Did not return expected validation errors");
-          } else {
-            String errorMessage = validationErrors.getJsonObject(0).getString("message");
-            context.assertEquals(1, validationErrors.size());
-            context.assertEquals(errorMessage, "User with this id already exists");
-            promise.complete();
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user1.encode());
-    return promise.future();
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    // fail attempting to create user with duplicate id
+    return f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 422);
+
+        JsonObject validationErrorRes = response.bodyAsJsonObject();
+        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+
+        if (validationErrors.isEmpty()) {
+          fail("Did not return expected validation errors");
+        } else {
+          String errorMessage = validationErrors.getJsonObject(0).getString("message");
+          context.assertEquals(1, validationErrors.size());
+          context.assertEquals(errorMessage, "User with this id already exists");
+        }
+        return null;
+      });
   }
 
   private Future<Void> postUserWithDuplicateUsername(TestContext context) {
     log.info("Attempting to create a user with duplicate username");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject user1 = new JsonObject()
       .put("username", "the_twin")
       .put("id",  UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("username", "the_twin")
       .put("id",  UUID.randomUUID().toString());
-    HttpClient client = RestITSupport.vertx().createHttpClient();
+
     // create test user one
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      // creating a second user with the same username should fail
-      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
-        RestITSupport.assertStatus(context, res2, 422);
-        res2.bodyHandler(err -> {
-          JsonObject validationErrorRes = err.toJsonObject();
-          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-          if (validationErrors.isEmpty()) {
-            promise.fail("Did not return expected validation errors");
-          } else {
-            String errorMessage = validationErrors.getJsonObject(0).getString("message");
-            context.assertEquals(1, validationErrors.size());
-            context.assertEquals(errorMessage, "User with this username already exists");
-            promise.complete();
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user1.encode());
-    return promise.future();
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    // creating a second user with the same username should fail
+    return f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 422);
+
+        JsonObject validationErrorRes = response.bodyAsJsonObject();
+        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+
+        if (validationErrors.isEmpty()) {
+          fail("Did not return expected validation errors");
+        } else {
+          String errorMessage = validationErrors.getJsonObject(0).getString("message");
+          context.assertEquals(1, validationErrors.size());
+          context.assertEquals(errorMessage, "User with this username already exists");
+        }
+        return null;
+      });
   }
 
   private Future<Void> putUserWithDuplicateUsername(TestContext context) {
     log.info("Changing a user to username that already exists\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject user1 = new JsonObject()
       .put("username", "left_shoe")
       .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("username", "right_shoe")
       .put("id", UUID.randomUUID().toString());
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
-        RestITSupport.assertStatus(context, res2, 201);
-        // attempt to update user2 changing username to a duplicate
-        user2.put("username", "left_shoe");
-        client.put(RestITSupport.port(), "localhost", "/users/" + user2.getString("id"), res3 -> {
-          RestITSupport.assertStatus(context, res3, 400);
-          res3.bodyHandler(err -> {
-            context.assertEquals("User with this username already exists", err.toString());
-            promise.complete();
-          });
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(promise::fail)
-          .end(user2.encode());
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user1.encode());
-    return promise.future();
+
+    // create test user one
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f2.compose(v -> {
+      // attempt to update user2 changing username to a duplicate
+      user2.put("username", "left_shoe");
+
+      return put("/users/" + user2.getString("id"), encode(user2))
+        .map(response -> {
+          RestITSupport.assertStatus(context, response, 400);
+
+          context.assertEquals("User with this username already exists", response.bodyAsString());
+
+          return null;
+        });
+    });
   }
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> postTwoUsersWithoutUsername(TestContext context) {
     log.info("Attempting to create two users without username");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject user1 = new JsonObject()
       .put("id",  UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("id",  UUID.randomUUID().toString());
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
+
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
         // should succeed, there can be any number of users without username
-        RestITSupport.assertStatus(context, res2, 201);
-        promise.complete();
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user1.encode());
-    return promise.future();
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
   }
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> putSecondUserWithoutUsername(TestContext context) {
     log.info("Updating second user to have no username");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject user1 = new JsonObject()
       .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
         .put("username", "name_for_sale")
         .put("id", UUID.randomUUID().toString());
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
-        RestITSupport.assertStatus(context, res2, 201);
-        user2.remove("username");  // try to PUT with username removed
-        client.put(RestITSupport.port(), "localhost", "/users/" + user2.getString("id"), res3 -> {
-          RestITSupport.assertStatus(context, res3, 204);
-          promise.complete();
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(promise::fail)
-          .end(user2.encode());
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(user1.encode());
-    return promise.future();
+
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f2.compose(v -> {
+      user2.remove("username");  // try to PUT with username removed
+
+      return put("/users/" + user2.getString("id"), encode(user2))
+        .map(response -> {
+          RestITSupport.assertStatus(context, response, 204);
+          return null;
+        });
+    });
   }
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> postUserWithDuplicateBarcode(TestContext context) {
     log.info("Attempting to create a user with duplicate barcode");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_one")
       .put("id",  UUID.randomUUID().toString())
@@ -984,44 +889,36 @@ public class RestVerticleIT {
         .put("lastName", "Two")
         .put("firstName", "Test")
       );
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    // create test user one
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
+
+    Future<Void> f1 = post("/users", encode(userObject1))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f1.compose(v -> post("/users", encode(userObject2)))
       // fail attempting to create user with duplicate barcode
-      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
-        RestITSupport.assertStatus(context, res2, 422);
-        res2.bodyHandler(err -> {
-          JsonObject validationErrorRes = err.toJsonObject();
-          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-          if (validationErrors.isEmpty()) {
-            promise.fail("Did not return expected validation errors");
-          } else {
-            String errorMessage = validationErrors.getJsonObject(0).getString("message");
-            assertThat(1, is(validationErrors.size()));
-            assertThat(errorMessage, is("This barcode has already been taken"));
-            promise.complete();
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end(userObject2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject1.encode());
-    return promise.future();
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 422);
+
+        JsonObject validationErrorRes = response.bodyAsJsonObject();
+        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+        if (validationErrors.isEmpty()) {
+          fail("Did not return expected validation errors");
+        } else {
+          String errorMessage = validationErrors.getJsonObject(0).getString("message");
+          assertThat(1, is(validationErrors.size()));
+          assertThat(errorMessage, is("This barcode has already been taken"));
+        }
+
+        return null;
+      });
   }
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
     log.info("Changing a user to barcode that already exists\n");
-    Promise<Void> promise = Promise.promise();
+
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_three")
       .put("id", UUID.randomUUID().toString())
@@ -1041,41 +938,35 @@ public class RestVerticleIT {
         .put("lastName", "Four")
         .put("firstName", "Test")
       );
-    HttpClient client = RestITSupport.vertx().createHttpClient();
+
     // create test user one
-    client.post(RestITSupport.port(), "localhost", "/users", res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      // create test user two
-      client.post(RestITSupport.port(), "localhost", "/users", res2 -> {
-        RestITSupport.assertStatus(context, res2, 201);
-        // fail attempting to update user changing barcode to a duplicate
-        userObject2.put("barcode", "304276530498752");
-        client.put(RestITSupport.port(), "localhost", "/users/" + testUserFourId, res3 -> {
-          RestITSupport.assertStatus(context, res3, 400);
-          res3.bodyHandler(err -> {
-            String errorMessage = err.toString();
-            assertThat(errorMessage, is("This barcode has already been taken"));
-            promise.complete();
-          });
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(promise::fail)
-          .end(userObject2.encode());
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end(userObject2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(promise::fail)
-      .end(userObject1.encode());
-    return promise.future();
+    Future<Void> f1 = post("/users", encode(userObject1))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    // create test user two
+    Future<Void> f2 = f1.compose(v -> post("/users", encode(userObject2)))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f2.compose(v -> {
+      // fail attempting to update user changing barcode to a duplicate
+      userObject2.put("barcode", "304276530498752");
+
+      return put("/users/" + testUserFourId, encode(userObject2))
+        .map(response -> {
+          RestITSupport.assertStatus(context, response, 400);
+
+          String errorMessage = response.bodyAsString();
+          assertThat(errorMessage, is("This barcode has already been taken"));
+
+          return null;
+        });
+    });
   }
 
   private Future<Void> createProxyfor(TestContext context) {
