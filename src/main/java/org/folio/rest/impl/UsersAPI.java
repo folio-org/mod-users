@@ -190,7 +190,6 @@ public class UsersAPI implements Users {
               if (reply.succeeded()) {
                 response.write(String.format(JSON_USERS_FOOTER, cnt[0], cnt[0]));
               } else {
-                logger.error("Get users as a stream failed: " + reply.cause().getMessage(), reply.cause());
                 response.setStatusCode(500).setStatusMessage(reply.cause().getMessage());
               }
               response.end();
