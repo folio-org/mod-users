@@ -174,23 +174,34 @@ public class UsersAPI implements Users {
       if (limit >= STREAM_THRESHOLD) {
         logger.debug("Getting users as a stream ...");
         HttpServerResponse response = routingContext.response().putHeader("content-type", "application/json")
-            .setChunked(true).write(JSON_USERS_HEADER);
+            .setChunked(true);
         final int[] cnt = { 0 };
         PgUtil.postgresClient(vertxContext, okapiHeaders).streamGet(tableName, new User(), "*", cql, true, null,
             user -> {
-              if (cnt[0]++ > 0) {
-                response.write(",");
-              }
+              String s;
               try {
-                response.write(JSON_MAPPER.writeValueAsString(user), "UTF-8");
+                s = JSON_MAPPER.writeValueAsString(user);
               } catch (JsonProcessingException e) {
                 throw new UncheckedIOException(e);
               }
-            }, reply -> {
-              if (reply.succeeded()) {
-                response.write(String.format(JSON_USERS_FOOTER, cnt[0], cnt[0]));
+              // at least first item could be written
+              if (cnt[0]++ > 0) {
+                response.write(",");
               } else {
+                response.write(JSON_USERS_HEADER);
+              }
+              response.write(s);
+            }, reply -> {
+              // can't return error if beyond first item
+              if (cnt[0] == 0 && reply.failed()) {
                 response.setStatusCode(500).setStatusMessage(reply.cause().getMessage());
+              }
+              else
+              {
+                if (cnt[0] == 0) {
+                  response.write(JSON_USERS_HEADER);
+                }
+                response.write(String.format(JSON_USERS_FOOTER, cnt[0], cnt[0]));
               }
               response.end();
               response.close();
