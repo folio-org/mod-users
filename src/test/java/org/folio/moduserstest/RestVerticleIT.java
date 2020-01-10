@@ -63,7 +63,6 @@ public class RestVerticleIT {
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static final String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
-  private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
@@ -81,7 +80,7 @@ public class RestVerticleIT {
     .put("proxyUserId", UUID.randomUUID().toString())
     .put("status", "Active")
     .put("expirationDate",
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date()))
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date()))
     .put("requestForSponsor", "Yes")
     .put("notificationsTo", "Proxy")
     .put("accrueTo", "Sponsor");
