@@ -17,11 +17,11 @@ import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -29,9 +29,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -1045,215 +1043,110 @@ public class RestVerticleIT {
 
   private Future<Void> findAndGetProxyfor(TestContext context) {
     log.info("Find and retrieve a particular proxyfor entry\n");
-    Promise<Void> promise = Promise.promise();
-    try {
-      HttpClient client = RestITSupport.vertx().createHttpClient();
-      log.info("Making CQL request\n");
-      client.get(RestITSupport.port(), "localhost",
-        "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
-        res -> {
-          RestITSupport.assertStatus(context, res, 200);
-          res.bodyHandler(body -> {
-            try {
-              JsonObject resultJson = body.toJsonObject();
-              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-              if (proxyForArray.size() != 1) {
-                promise.fail("Expected 1 entry, found " + proxyForArray.size());
-                return;
-              }
-              JsonObject proxyForObject = proxyForArray.getJsonObject(0);
-              String proxyForId = proxyForObject.getString("id");
-              log.info("Making get-by-id request\n");
-              client.get(RestITSupport.port(), "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                RestITSupport.assertStatus(context, res2, 200);
-                promise.complete();
-              })
-                .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .exceptionHandler(promise::fail)
-                .end();
-            } catch (Exception e) {
-              promise.fail(e);
-            }
-          });
-        })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end();
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    log.info("Making CQL request\n");
+    Future<String> proxyId = getProxyId(context,
+      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+
+    log.info("Making get-by-id request\n");
+
+    return proxyId.compose(id -> get("/proxiesfor/" + id))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 200);
+        return null;
+      });
   }
 
   private Future<Void> findAndUpdateProxyfor(TestContext context) {
     log.info("Find and update a particular proxyfor entry\n");
-    Promise<Void> promise = Promise.promise();
+
+    log.info("Making CQL request\n");
+    Future<String> proxyId = getProxyId(context,
+      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+
     JsonObject modifiedProxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    try {
-      HttpClient client = RestITSupport.vertx().createHttpClient();
-      log.info("Making CQL request\n");
-      client.get(RestITSupport.port(), "localhost",
-        "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
-        res -> {
-          RestITSupport.assertStatus(context, res, 200);
-          res.bodyHandler(body -> {
-            try {
-              JsonObject resultJson = body.toJsonObject();
-              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-              if (proxyForArray.size() != 1) {
-                promise.fail("Expected 1 entry, found " + proxyForArray.size());
-                return;
-              }
-              JsonObject proxyForObject = proxyForArray.getJsonObject(0);
-              String proxyForId = proxyForObject.getString("id");
-              log.info("Making put-by-id request\n");
-              client.put(RestITSupport.port(), "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                RestITSupport.assertStatus(context, res2, 204);
-                promise.complete();
-              })
-                .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-                .exceptionHandler(promise::fail)
-                .end(modifiedProxyObject.encode());
-            } catch (Exception e) {
-              promise.fail(e);
-            }
-          });
-        })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end();
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    log.info("Making put-by-id request\n");
+    return proxyId.compose(id -> put("/proxiesfor/" + id, encode(modifiedProxyObject)))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 204);
+        return null;
+      });
+  }
+
+  private Future<String> getProxyId(TestContext context, String requestUrl) {
+    Future<JsonObject> resultJson = getJson(context, requestUrl);
+
+    return resultJson.map(result -> {
+      JsonArray proxyForArray = result.getJsonArray("proxiesFor");
+      if (proxyForArray.size() != 1) {
+        fail("Expected 1 entry, found " + proxyForArray.size());
+      }
+
+      JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+      return proxyForObject.getString("id");
+    });
   }
 
   private Future<Void> findAndDeleteProxyfor(TestContext context) {
     log.info("Find and delete a particular proxyfor entry");
-    Promise<Void> promise = Promise.promise();
-    try {
-      HttpClient client = RestITSupport.vertx().createHttpClient();
-      log.info("Making CQL request\n");
-      client.get(RestITSupport.port(), "localhost",
-        "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
-        res -> {
-          RestITSupport.assertStatus(context, res, 200);
-          res.bodyHandler(body -> {
-            try {
-              JsonObject resultJson = body.toJsonObject();
-              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-              if (proxyForArray.size() != 1) {
-                promise.fail("Expected 1 entry, found " + proxyForArray.size());
-                return;
-              }
-              JsonObject proxyForObject = proxyForArray.getJsonObject(0);
-              String proxyForId = proxyForObject.getString("id");
-              log.info("Making delete-by-id request\n");
-              client.delete(RestITSupport.port(), "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                RestITSupport.assertStatus(context, res2, 204);
-                promise.complete();
-              })
-                .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-                .exceptionHandler(promise::fail)
-                .end();
-            } catch (Exception e) {
-              promise.fail(e);
-            }
-          });
-        })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(promise::fail)
-        .end();
-    } catch (Exception e) {
-      promise.fail(e);
-    }
-    return promise.future();
+
+    log.info("Making CQL request\n");
+    Future<String> proxyId = getProxyId(context,
+      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+
+    return proxyId.compose(id -> delete("/proxiesfor/" + id))
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 204);
+        return null;
+      });
   }
 
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
     String endpoint, boolean checkMeta) {
-    Promise<Void> promise = Promise.promise();
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
-    client.post(RestITSupport.port(), "localhost", endpoint, res -> {
-      RestITSupport.assertStatus(context, res, 201);
-      res.bodyHandler(body -> {
-        //Get the object by id
-        String id = body.toJsonObject().getString("id");
-        client.get(RestITSupport.port(), "localhost", endpoint + "/" + id, res2 -> {
-          RestITSupport.assertStatus(context, res2, 200);
-          res2.bodyHandler(body2 -> {
-            if (checkMeta) {
-              DateFormat gmtFormat = new SimpleDateFormat(
-                "yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
-              Date createdDate = null;
-              try {
-                JsonObject resultOb = body2.toJsonObject();
-                JsonObject metadata = resultOb.getJsonObject("metadata");
-                if (metadata == null) {
-                  promise.fail(String.format("No 'metadata' field in result: %s",
-                    body2.toString()));
-                  return;
-                }
-                createdDate = new DateTime(metadata.getString("createdDate")).toDate();
-              } catch (Exception e) {
-                promise.fail(e);
-                return;
-              }
-              Date now = new Date();
-              if (!createdDate.before(now)) {
-                promise.fail("metadata createdDate is not correct");
-                return;
-              }
-            }
-            //delete the object by id
-            client.delete(RestITSupport.port(), "localhost", endpoint + "/" + id, res3 -> {
-              RestITSupport.assertStatus(context, res3, 204);
-              promise.complete();
-            })
-              .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("Content-Type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-              .exceptionHandler(promise::fail)
-              .end();
-          });
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("Content-Type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(promise::fail)
-          .end();
 
+    String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
+
+    HashMap<String, String> ah = new HashMap<>();
+    ah.put("X-Okapi-Token", fakeJWT);
+
+    Future<String> f1 = post(endpoint, encode(ob), ah)
+      .map(response -> {
+        RestITSupport.assertStatus(context, response, 201);
+
+        return response.bodyAsJsonObject().getString("id");
       });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("Content-Type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("Accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .putHeader("X-Okapi-Token", fakeJWT)
-      .exceptionHandler(promise::fail)
-      .end(ob.encode());
-    return promise.future();
+
+    //Get the object by id
+    Future<String> f2 = f1.compose(v -> getJson(context, endpoint + "/" + v))
+      .map(response -> {
+        if (checkMeta) {
+          Date createdDate = null;
+          try {
+            JsonObject metadata = response.getJsonObject("metadata");
+            if (metadata == null) {
+              fail(String.format("No 'metadata' field in result: %s",
+                response.toString()));
+            }
+            createdDate = new DateTime(metadata.getString("createdDate")).toDate();
+          } catch (Exception e) {
+            fail(e.getMessage());
+          }
+
+          Date now = new Date();
+          if (!createdDate.before(now)) {
+            fail("metadata createdDate is not correct");
+          }
+        }
+        return response.getString("id");
+      });
+
+    //delete the object by id
+    return f2.compose(id -> deleteWithNoContentStatus(context, endpoint + "/" + id));
   }
 
   private Future<Void> getGroupByInvalidUuid(TestContext context) {
@@ -1269,9 +1162,9 @@ public class RestVerticleIT {
 
   @Test
   public void test1Sequential(TestContext context) {
-    /**
-     * The CQL used for searching when a single j has been entered into the
-     * search slot
+    /*
+      The CQL used for searching when a single j has been entered into the
+      search slot
      */
     final String jSearch = "(((username=\"j*\" or personal.firstName=\"j*\" or "
       + "personal.lastName=\"j*\" or personal.email=\"j*\" or barcode=\"j*\" or "
