@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -183,13 +184,13 @@ public class UsersAPI implements Users {
               try {
                 response.write(JSON_MAPPER.writeValueAsString(user), "UTF-8");
               } catch (JsonProcessingException e) {
-                logger.error("This error should never happen: " + e);
+                throw new UncheckedIOException(e);
               }
             }, reply -> {
               if (reply.succeeded()) {
                 response.write(String.format(JSON_USERS_FOOTER, cnt[0], cnt[0]));
               } else {
-                response.setStatusCode(500).setStatusMessage(reply.cause().getLocalizedMessage());
+                response.setStatusCode(500).setStatusMessage(reply.cause().getMessage());
               }
               response.end();
               response.close();
