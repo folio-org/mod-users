@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import static org.folio.moduserstest.RestITSupport.assertStatus;
 import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.folio.moduserstest.RestITSupport.get;
@@ -30,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -149,7 +151,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = get("/users");
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 200);
+      assertStatus(context, response, 200);
 
       JsonObject userCollectionObject = response.bodyAsJsonObject();
       if (userCollectionObject.getJsonArray("users").size() != 0
@@ -189,7 +191,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = delete("/users/85936906-4737-4da7-b0fb-e8da080b97d8");
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 404);
+      assertStatus(context, response, 404);
       return null;
     });
   }
@@ -210,7 +212,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/users", encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 201);
+      assertStatus(context, response, 201);
       return null;
     });
   }
@@ -292,7 +294,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = get("/users?query=");
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -308,7 +310,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/users", encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response,  201);
+      assertStatus(context, response,  201);
       return null;
     });
   }
@@ -316,24 +318,39 @@ public class RestVerticleIT {
   private Future<Void> getUsersByCQL(TestContext context, String cql, int limit, String... expectedUsernames) {
     log.info("Query users via CQL\n");
 
-    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql) + "&limit=" + limit);
+    Future<Void> future = Future.future();
+    HttpClient client = RestITSupport.vertx().createHttpClient();
+    try {
+      client.get(RestITSupport.port(), "localhost", "/users?query=" + urlEncode(cql) + "&limit=" + limit, res -> {
+        assertStatus(context, res, 200);
+        res.bodyHandler(buf -> {
+          try {
+            JsonObject resultObject = buf.toJsonObject();
+            int totalRecords = resultObject.getInteger("totalRecords");
+            JsonArray userList = resultObject.getJsonArray("users");
+            if (userList.size() != totalRecords) {
+              future.fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
+              return;
+            }
 
-    return future.map(json -> {
-
-      int totalRecords = json.getInteger("totalRecords");
-      JsonArray userList = json.getJsonArray("users");
-      if (userList.size() != totalRecords) {
-        fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
-      }
-
-      List<String> usernames = new ArrayList<>();
-      for (int i = 0; i < userList.size(); i++) {
-        usernames.add(userList.getJsonObject(i).getString("username"));
-      }
-      assertThat(usernames, containsInAnyOrder(expectedUsernames));
-
-      return null;
-    });
+            List<String> usernames = new ArrayList<>();
+            for (int i = 0; i < userList.size(); i++) {
+              usernames.add(userList.getJsonObject(i).getString("username"));
+            }
+            assertThat(usernames, containsInAnyOrder(expectedUsernames));
+            future.complete();
+          } catch (Exception e) {
+            future.fail(e);
+          }
+        });
+      }).putHeader("X-Okapi-Tenant", "diku").putHeader("content-type", "application/json").putHeader("accept",
+          "application/json").exceptionHandler(e -> {
+            future.fail(e);
+          }).end();
+    } catch (Exception e) {
+      future.fail(e);
+    }
+    return future;
   }
 
   private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
@@ -387,7 +404,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -407,7 +424,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 204);
+      assertStatus(context, response, 204);
       return null;
     });
   }
@@ -423,7 +440,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -439,7 +456,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -474,7 +491,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -502,7 +519,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -520,7 +537,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = put("/users/" + user777777Id, encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 404);
+      assertStatus(context, response, 404);
       return null;
     });
   }
@@ -535,7 +552,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 201);
+      assertStatus(context, response, 201);
       return null;
     });
   }
@@ -549,7 +566,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 422);
+      assertStatus(context, response, 422);
       return null;
     });
   }
@@ -587,14 +604,14 @@ public class RestVerticleIT {
 
       return put("/users/" + bobCircleId, encode(user))
         .map(response -> {
-          RestITSupport.assertStatus(context, response, 204);
+          assertStatus(context, response, 204);
           return addressType;
         });
     });
 
     return f2.compose(addressType -> delete("/addresstypes/" + addressType.getString("id")))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 400);
+        assertStatus(context, response, 400);
         return null;
       });
   }
@@ -605,7 +622,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = delete("/addresstypes/x%2F");
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -616,7 +633,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = delete("/addresstypes/x=");
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 500);
+      assertStatus(context, response, 500);
       return null;
     });
   }
@@ -630,13 +647,13 @@ public class RestVerticleIT {
 
     Future<JsonObject> f1 = post("/addresstypes", encode(addressTypeObject))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return response.bodyAsJsonObject();
       });
 
     return f1.compose(at -> delete("/addresstypes/" + at.getString("id")))
       .map(o -> {
-        RestITSupport.assertStatus(context, o, 204);
+        assertStatus(context, o, 204);
         return null;
       });
   }
@@ -671,7 +688,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/users", encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -700,7 +717,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/users", encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 400);
+      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -715,14 +732,14 @@ public class RestVerticleIT {
     // create test user one
     Future<Void> f1 = post("/users", encode(user1))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
     // fail attempting to create user with duplicate id
     return f1.compose(v -> post("/users", encode(user2)))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 422);
+        assertStatus(context, response, 422);
 
         JsonObject validationErrorRes = response.bodyAsJsonObject();
         JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
@@ -751,14 +768,14 @@ public class RestVerticleIT {
     // create test user one
     Future<Void> f1 = post("/users", encode(user1))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
     // creating a second user with the same username should fail
     return f1.compose(v -> post("/users", encode(user2)))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 422);
+        assertStatus(context, response, 422);
 
         JsonObject validationErrorRes = response.bodyAsJsonObject();
         JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
@@ -787,13 +804,13 @@ public class RestVerticleIT {
     // create test user one
     Future<Void> f1 = post("/users", encode(user1))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
     Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
@@ -803,7 +820,7 @@ public class RestVerticleIT {
 
       return put("/users/" + user2.getString("id"), encode(user2))
         .map(response -> {
-          RestITSupport.assertStatus(context, response, 400);
+          assertStatus(context, response, 400);
 
           context.assertEquals("User with this username already exists", response.bodyAsString());
 
@@ -823,14 +840,14 @@ public class RestVerticleIT {
 
     Future<Void> f1 = post("/users", encode(user1))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
     return f1.compose(v -> post("/users", encode(user2)))
       .map(response -> {
         // should succeed, there can be any number of users without username
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
   }
@@ -847,13 +864,13 @@ public class RestVerticleIT {
 
     Future<Void> f1 = post("/users", encode(user1))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
     Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
@@ -862,7 +879,7 @@ public class RestVerticleIT {
 
       return put("/users/" + user2.getString("id"), encode(user2))
         .map(response -> {
-          RestITSupport.assertStatus(context, response, 204);
+          assertStatus(context, response, 204);
           return null;
         });
     });
@@ -893,14 +910,14 @@ public class RestVerticleIT {
 
     Future<Void> f1 = post("/users", encode(userObject1))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
     return f1.compose(v -> post("/users", encode(userObject2)))
       // fail attempting to create user with duplicate barcode
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 422);
+        assertStatus(context, response, 422);
 
         JsonObject validationErrorRes = response.bodyAsJsonObject();
         JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
@@ -943,14 +960,14 @@ public class RestVerticleIT {
     // create test user one
     Future<Void> f1 = post("/users", encode(userObject1))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
     // create test user two
     Future<Void> f2 = f1.compose(v -> post("/users", encode(userObject2)))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
         return null;
       });
 
@@ -960,7 +977,7 @@ public class RestVerticleIT {
 
       return put("/users/" + testUserFourId, encode(userObject2))
         .map(response -> {
-          RestITSupport.assertStatus(context, response, 400);
+          assertStatus(context, response, 400);
 
           String errorMessage = response.bodyAsString();
           assertThat(errorMessage, is("This barcode has already been taken"));
@@ -980,7 +997,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 201);
+      assertStatus(context, response, 201);
       return null;
     });
   }
@@ -995,7 +1012,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 201);
+      assertStatus(context, response, 201);
       return null;
     });
   }
@@ -1010,7 +1027,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 201);
+      assertStatus(context, response, 201);
       return null;
     });
   }
@@ -1025,7 +1042,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 422);
+      assertStatus(context, response, 422);
       return null;
     });
   }
@@ -1055,7 +1072,7 @@ public class RestVerticleIT {
 
     return proxyId.compose(id -> get("/proxiesfor/" + id))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 200);
+        assertStatus(context, response, 200);
         return null;
       });
   }
@@ -1074,7 +1091,7 @@ public class RestVerticleIT {
     log.info("Making put-by-id request\n");
     return proxyId.compose(id -> put("/proxiesfor/" + id, encode(modifiedProxyObject)))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 204);
+        assertStatus(context, response, 204);
         return null;
       });
   }
@@ -1102,7 +1119,7 @@ public class RestVerticleIT {
 
     return proxyId.compose(id -> delete("/proxiesfor/" + id))
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 204);
+        assertStatus(context, response, 204);
         return null;
       });
   }
@@ -1117,7 +1134,7 @@ public class RestVerticleIT {
 
     Future<String> f1 = post(endpoint, encode(ob), ah)
       .map(response -> {
-        RestITSupport.assertStatus(context, response, 201);
+        assertStatus(context, response, 201);
 
         return response.bodyAsJsonObject().getString("id");
       });
@@ -1156,7 +1173,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = get("/groups/q");
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 404);
+      assertStatus(context, response, 404);
       return null;
     });
   }
@@ -1288,7 +1305,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/users", encode(user));
 
     return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 201);
+      assertStatus(context, response, 201);
       return null;
     });
   }

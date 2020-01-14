@@ -70,8 +70,6 @@ public class UsersAPI implements Users {
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private final Messages messages = Messages.getInstance();
-  public static final String USER_ID_FIELD = "'id'";
-  public static final String USER_NAME_FIELD = "'username'";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
   public static final int STREAM_THRESHOLD = 200;
