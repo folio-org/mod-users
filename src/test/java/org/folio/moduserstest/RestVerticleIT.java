@@ -50,6 +50,7 @@ import org.junit.runners.MethodSorters;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
+import org.folio.rest.impl.UsersAPI;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
@@ -66,6 +67,9 @@ public class RestVerticleIT {
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
+
+  private static final String FAKE_TOKEN = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
+  private static final int DEFAULT_LIMIT = 10;
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
@@ -94,7 +98,7 @@ public class RestVerticleIT {
     RestITSupport.setUp();
 
     Async async = context.async();
-    TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + RestITSupport.port(), "diku", "diku");
+    TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + RestITSupport.port(), "diku", FAKE_TOKEN);
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", RestITSupport.port()))
       .setWorker(true);
@@ -309,10 +313,10 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
+  private Future<Void> getUsersByCQL(TestContext context, String cql, int limit, String... expectedUsernames) {
     log.info("Query users via CQL\n");
 
-    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql));
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql) + "&limit=" + limit);
 
     return future.map(json -> {
 
@@ -1108,10 +1112,8 @@ public class RestVerticleIT {
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
 
-    String fakeJWT = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
-
     HashMap<String, String> ah = new HashMap<>();
-    ah.put("X-Okapi-Token", fakeJWT);
+    ah.put("X-Okapi-Token", FAKE_TOKEN);
 
     Future<String> f1 = post(endpoint, encode(ob), ah)
       .map(response -> {
@@ -1185,9 +1187,12 @@ public class RestVerticleIT {
       .compose(v -> getUserByInvalidCQL(context))
       .compose(v -> deleteNonExistingUser(context))
       .compose(v -> postAnotherUser(context))
-      .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
-      .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
-      .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
+      .compose(v -> getUsersByCQL(context, "id==x", DEFAULT_LIMIT) /* empty result */)
+      .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
+      .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
+      .compose(v -> getUsersByCQL(context, "id==x", UsersAPI.STREAM_THRESHOLD) /* empty result */)
+      .compose(v -> getUsersByCQL(context, "id==\"\"", UsersAPI.STREAM_THRESHOLD, "bobcircle", "joeblock"))
+      .compose(v -> getUsersByCQL(context, jSearch, UsersAPI.STREAM_THRESHOLD, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
@@ -1260,7 +1265,7 @@ public class RestVerticleIT {
   public void test5UserName(TestContext context) {
     Async async = context.async();
     postUserWithWhitespace(context)
-      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), "user name"))
+      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), DEFAULT_LIMIT, "user name"))
       .compose(v -> deleteUser(context, userIdWithWhitespace))
       .setHandler(res -> {
         if (res.succeeded()) {

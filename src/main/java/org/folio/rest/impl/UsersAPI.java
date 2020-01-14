@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -14,14 +15,18 @@ import java.util.function.Function;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.z3950.zing.cql.CQLParseException;
@@ -32,7 +37,6 @@ import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
-import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserdataCollection;
@@ -66,7 +70,22 @@ public class UsersAPI implements Users {
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private final Messages messages = Messages.getInstance();
+  public static final String USER_ID_FIELD = "'id'";
+  public static final String USER_NAME_FIELD = "'username'";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
+
+  public static final int STREAM_THRESHOLD = 200;
+  private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+  private static final String JSON_USERS_HEADER = "{\n" +
+      "  \"users\": [";
+  private static final String JSON_USERS_FOOTER = "],\n" +
+      "  \"totalRecords\": %d,\n" +
+      "  \"resultInfo\": {\n" +
+      "    \"totalRecords\": %d,\n" +
+      "    \"facets\": [],\n" +
+      "    \"diagnostics\": []\n" +
+      "  }\n" +
+      "}";
 
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -136,10 +155,10 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-      UsersGetOrder order, int offset, int limit, List<String> facets,
-      String lang, Map <String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+       UsersGetOrder order, int offset, int limit, List<String> facets,
+       String lang, RoutingContext routingContext, Map <String, String> okapiHeaders,
+       Handler<AsyncResult<Response>> asyncResultHandler,
+       Context vertxContext) {
 
     logger.debug("Getting users");
     try {
@@ -150,6 +169,33 @@ public class UsersAPI implements Users {
       String tableName = getTableName(query);
       String[] fieldList = {"*"};
       logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
+
+      if (limit >= STREAM_THRESHOLD) {
+        logger.debug("Getting users as a stream ...");
+        HttpServerResponse response = routingContext.response().putHeader("content-type", "application/json")
+            .setChunked(true).write(JSON_USERS_HEADER);
+        final int[] cnt = { 0 };
+        PgUtil.postgresClient(vertxContext, okapiHeaders).streamGet(tableName, new User(), "*", cql, true, null,
+            user -> {
+              if (cnt[0]++ > 0) {
+                response.write(",");
+              }
+              try {
+                response.write(JSON_MAPPER.writeValueAsString(user), "UTF-8");
+              } catch (JsonProcessingException e) {
+                throw new UncheckedIOException(e);
+              }
+            }, reply -> {
+              if (reply.succeeded()) {
+                response.write(String.format(JSON_USERS_FOOTER, cnt[0], cnt[0]));
+              } else {
+                response.setStatusCode(500).setStatusMessage(reply.cause().getMessage());
+              }
+              response.end();
+              response.close();
+            });
+        return;
+      }
 
       PgUtil.postgresClient(vertxContext, okapiHeaders)
           .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
@@ -183,6 +229,7 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void postUsers(String lang, User entity,
+                        RoutingContext routingContext,
                         Map<String, String> okapiHeaders,
                         Handler<AsyncResult<Response>> asyncResultHandler,
                         Context vertxContext) {
@@ -237,19 +284,28 @@ public class UsersAPI implements Users {
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
     PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
-      if (isDuplicateIdErrorOnPost(reply)) {
-        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(ValidationHelper
-            .createValidationErrorMessage("id", entity.getId(), "User with this id already exists"))));
+      if (isDuplicateIdError(reply)) {
+        asyncResultHandler.handle(
+          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+            ValidationHelper.createValidationErrorMessage(
+              "id", entity.getId(),
+              "User with this id already exists"))));
         return;
       }
-      if (isDuplicateUsernameErrorOnPost(reply)) {
-        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(ValidationHelper
-            .createValidationErrorMessage("username", entity.getUsername(), "User with this username already exists"))));
+      if (isDuplicateUsernameError(reply)) {
+        asyncResultHandler.handle(
+          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+            ValidationHelper.createValidationErrorMessage(
+              "username", entity.getUsername(),
+              "User with this username already exists"))));
         return;
       }
-      if (isDuplicateBarcodeErrorOnPost(reply)) {
-        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond422WithApplicationJson(ValidationHelper
-            .createValidationErrorMessage("barcode", entity.getBarcode(), "This barcode has already been taken"))));
+      if (isDuplicateBarcodeError(reply)) {
+        asyncResultHandler.handle(
+          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+            ValidationHelper.createValidationErrorMessage(
+              "barcode", entity.getBarcode(),
+              "This barcode has already been taken"))));
         return;
       }
       logger.debug("Save successful");
@@ -257,40 +313,27 @@ public class UsersAPI implements Users {
     });
   }
 
-  private boolean isDuplicateUsernameErrorOnPut(AsyncResult<Response> reply) {
-    return reply.succeeded()
-      && reply.result().getStatus() == 400
-      && reply.result().getEntity().toString().contains("username")
-      && reply.result().getEntity().toString().contains("already exists");
+  private boolean isDuplicateIdError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, ".*id.*already exists.*");
   }
 
-  private boolean isDuplicateBarcodeErrorOnPut(AsyncResult<Response> reply) {
-    return reply.succeeded()
-      && reply.result().getStatus() == 400
-      && reply.result().getEntity().toString().contains("barcode")
-      && reply.result().getEntity().toString().contains("already exists");
+  private boolean isDuplicateUsernameError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, ".*username.*already exists.*");
   }
 
-  private boolean isDuplicateIdErrorOnPost(AsyncResult<Response> reply) {
-    return error422MessageContains(reply, "id value already exists in table users");
+  private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, ".*barcode.*already exists.*");
   }
 
-  private boolean isDuplicateUsernameErrorOnPost(AsyncResult<Response> reply) {
-    return error422MessageContains(reply, "username") &&
-      error422MessageContains(reply, "already exists");
+  private boolean isDesiredError(AsyncResult<Response> reply, String errMsg) {
+    if (reply.succeeded()) {
+      if (reply.result().getStatus() == 400) {
+        return reply.result().getEntity().toString().matches(errMsg);
   }
-
-  private boolean isDuplicateBarcodeErrorOnPost(AsyncResult<Response> reply) {
-    return error422MessageContains(reply, "barcode") &&
-      error422MessageContains(reply, "already exists");
+      if (reply.result().getStatus() == 422) {
+        String msg = ((Errors)reply.result().getEntity()).getErrors().iterator().next().getMessage();
+        return msg.matches(errMsg);
   }
-
-  private boolean error422MessageContains(AsyncResult<Response> reply, String message) {
-    if (reply.succeeded() && reply.result().getStatus() == 422) {
-      List<Error> errors = ((Errors) reply.result().getEntity()).getErrors();
-      return !errors.isEmpty() &&
-        errors.get(0).getMessage() != null &&
-        errors.get(0).getMessage().contains(message);
     }
     return false;
   }
@@ -371,14 +414,14 @@ public class UsersAPI implements Users {
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
     PgUtil.put(TABLE_NAME_USERS, entity, entity.getId(), okapiHeaders, vertxContext, PutUsersByUserIdResponse.class, reply -> {
-      if (isDuplicateUsernameErrorOnPut(reply)) {
+      if (isDuplicateUsernameError(reply)) {
         asyncResultHandler.handle(
           succeededFuture(PutUsersByUserIdResponse
             .respond400WithTextPlain(
               "User with this username already exists")));
         return;
       }
-      if (isDuplicateBarcodeErrorOnPut(reply)) {
+      if (isDuplicateBarcodeError(reply)) {
         asyncResultHandler.handle(
           succeededFuture(PutUsersByUserIdResponse
             .respond400WithTextPlain(
