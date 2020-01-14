@@ -166,12 +166,10 @@ public class GroupIT {
     String url6 = url + urlEncode("active=true sortBy username", "UTF-8");
     //non existant group - should be 0 results
     String url7 = url + urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
-    //query by tag, should get one record
-    String url8 = url + urlEncode("tags=foo");
 
-    String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7, url8};
+    String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7};
 
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 8; i++) {
       String cqlURL = urls[i];
       CompletableFuture<Response> cf = send(cqlURL, GET, null, HTTPResponseHandlers.json());
 
@@ -181,7 +179,6 @@ public class GroupIT {
         + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
       //requests should usually have 3 or 4 results
       switch (i) {
-        case 8:
         case 5:
           context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
           break;
