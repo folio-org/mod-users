@@ -1,11 +1,6 @@
 package org.folio.moduserstest;
 
 import static io.vertx.core.json.Json.encode;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-
 import static org.folio.moduserstest.RestITSupport.assertStatus;
 import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
@@ -15,8 +10,13 @@ import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 import static org.folio.util.StringUtil.urlEncode;
+import static org.junit.Assert.fail;
 
+import io.vertx.ext.web.client.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,7 +40,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.ext.web.client.HttpResponse;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -1129,7 +1129,7 @@ public class RestVerticleIT {
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
 
-    HashMap<String, String> ah = new HashMap<>();
+    Map<String, String> ah = new HashMap<>();
     ah.put("X-Okapi-Token", FAKE_TOKEN);
 
     Future<String> f1 = post(endpoint, encode(ob), ah)

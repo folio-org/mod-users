@@ -1,14 +1,6 @@
 package org.folio.rest.utils;
 
 
-import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
@@ -17,7 +9,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
