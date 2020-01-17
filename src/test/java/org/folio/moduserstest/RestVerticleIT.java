@@ -63,7 +63,6 @@ import org.junit.runners.MethodSorters;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.impl.UsersAPI;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -1933,9 +1932,6 @@ public class RestVerticleIT {
       .compose(v -> getUsersByCQL(context, "id==x", DEFAULT_LIMIT) /* empty result */)
       .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
       .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
-      .compose(v -> getUsersByCQL(context, "id==x", UsersAPI.STREAM_THRESHOLD) /* empty result */)
-      .compose(v -> getUsersByCQL(context, "id==\"\"", UsersAPI.STREAM_THRESHOLD, "bobcircle", "joeblock"))
-      .compose(v -> getUsersByCQL(context, jSearch, UsersAPI.STREAM_THRESHOLD, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))

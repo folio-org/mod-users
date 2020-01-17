@@ -2,7 +2,6 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.succeededFuture;
 
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -45,16 +44,12 @@ import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
@@ -74,19 +69,6 @@ public class UsersAPI implements Users {
   public static final String USER_ID_FIELD = "'id'";
   public static final String USER_NAME_FIELD = "'username'";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
-
-  public static final int STREAM_THRESHOLD = 200;
-  private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-  private static final String JSON_USERS_HEADER = "{\n" +
-      "  \"users\": [";
-  private static final String JSON_USERS_FOOTER = "],\n" +
-      "  \"totalRecords\": %d,\n" +
-      "  \"resultInfo\": {\n" +
-      "    \"totalRecords\": %d,\n" +
-      "    \"facets\": [],\n" +
-      "    \"diagnostics\": []\n" +
-      "  }\n" +
-      "}";
 
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -170,33 +152,6 @@ public class UsersAPI implements Users {
       String tableName = getTableName(query);
       String[] fieldList = {"*"};
       logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
-
-      if (limit >= STREAM_THRESHOLD) {
-        logger.debug("Getting users as a stream ...");
-        HttpServerResponse response = routingContext.response().putHeader("content-type", "application/json")
-            .setChunked(true).write(JSON_USERS_HEADER);
-        final int[] cnt = { 0 };
-        PgUtil.postgresClient(vertxContext, okapiHeaders).streamGet(tableName, new User(), "*", cql, true, null,
-            user -> {
-              if (cnt[0]++ > 0) {
-                response.write(",");
-              }
-              try {
-                response.write(JSON_MAPPER.writeValueAsString(user), "UTF-8");
-              } catch (JsonProcessingException e) {
-                throw new UncheckedIOException(e);
-              }
-            }, reply -> {
-              if (reply.succeeded()) {
-                response.write(String.format(JSON_USERS_FOOTER, cnt[0], cnt[0]));
-              } else {
-                response.setStatusCode(500).setStatusMessage(reply.cause().getMessage());
-              }
-              response.end();
-              response.close();
-            });
-        return;
-      }
 
       PgUtil.postgresClient(vertxContext, okapiHeaders)
           .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
