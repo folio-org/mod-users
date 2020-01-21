@@ -118,7 +118,7 @@ public class ProxiesForAPI implements Proxiesfor {
     PgUtil.put(PROXY_FOR_TABLE, entity, id, okapiHeaders, vertxContext, PutProxiesforByIdResponse.class, asyncResultHandler);
   }
 
-  private Future<Boolean> userAndProxyUserComboExists(
+  Future<Boolean> userAndProxyUserComboExists(
     String userId,
     String proxyUserId,
     PostgresClient postgresClient) {
