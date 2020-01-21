@@ -490,7 +490,7 @@ public class UsersAPI implements Users {
     entity.setUsername(username);
   }
 
-  private Future<Boolean> checkAddressTypeValid(
+  Future<Boolean> checkAddressTypeValid(
       String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
 
     Promise<Boolean> promise = Promise.promise();
@@ -524,7 +524,7 @@ public class UsersAPI implements Users {
     return promise.future();
   }
 
-  private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
+  Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
     Promise<Boolean> promise = Promise.promise();
     List<Future> futureList = new ArrayList<>();
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
@@ -540,19 +540,15 @@ public class UsersAPI implements Users {
     compositeFuture.setHandler(res -> {
       if (res.failed()) {
         promise.fail(res.cause());
-      } else {
-        boolean bad = false;
-        for (Future<Boolean> f : futureList) {
-          if (Boolean.FALSE.equals(f.result())) {
-            promise.complete(false);
-            bad = true;
-            break;
-          }
-        }
-        if (!bad) {
-          promise.complete(true);
+        return;
+      }
+      for (Future<Boolean> f : futureList) {
+        if (Boolean.FALSE.equals(f.result())) {
+          promise.complete(false);
+          return;
         }
       }
+      promise.complete(true);
     });
     return promise.future();
   }
