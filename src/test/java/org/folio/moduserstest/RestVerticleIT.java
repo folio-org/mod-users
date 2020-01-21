@@ -52,7 +52,6 @@ import org.junit.runners.MethodSorters;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.impl.UsersAPI;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
@@ -106,32 +105,32 @@ public class RestVerticleIT {
       .setWorker(true);
 
     RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
-        // remove existing schema from previous tests
-        tenantClient.deleteTenant(delete -> {
-          switch (delete.statusCode()) {
+      // remove existing schema from previous tests
+      tenantClient.deleteTenant(delete -> {
+        switch (delete.statusCode()) {
           case 204: break;  // existing schema has been deleted
           case 400: break;  // schema does not exist
           default:
             RestITSupport.fail(context, "deleteTenant", delete);
             return;
-          }
-          try {
-            TenantAttributes ta = new TenantAttributes();
-            ta.setModuleTo("mod-users-1.0.0");
-            List<Parameter> parameters = new LinkedList<>();
-            parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-            parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-            ta.setParameters(parameters);
-            tenantClient.postTenant(ta, post -> {
-              if (post.statusCode() != 201) {
-                RestITSupport.fail(context, "postTenant", post);
-              }
-              async.complete();
-            });
-          } catch (Exception e) {
-            context.fail(e);
-          }
-        });
+        }
+        try {
+          TenantAttributes ta = new TenantAttributes();
+          ta.setModuleTo("mod-users-1.0.0");
+          List<Parameter> parameters = new LinkedList<>();
+          parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+          parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+          ta.setParameters(parameters);
+          tenantClient.postTenant(ta, post -> {
+            if (post.statusCode() != 201) {
+              RestITSupport.fail(context, "postTenant", post);
+            }
+            async.complete();
+          });
+        } catch (Exception e) {
+          context.fail(e);
+        }
+      });
     }));
   }
 
@@ -344,9 +343,9 @@ public class RestVerticleIT {
           }
         });
       }).putHeader("X-Okapi-Tenant", "diku").putHeader("content-type", "application/json").putHeader("accept",
-          "application/json").exceptionHandler(e -> {
-            future.fail(e);
-          }).end();
+        "application/json").exceptionHandler(e -> {
+        future.fail(e);
+      }).end();
     } catch (Exception e) {
       future.fail(e);
     }
@@ -413,13 +412,13 @@ public class RestVerticleIT {
     log.info("Changing a user without id in metadata\n");
 
     JsonObject user = new JsonObject()
-        .put("username", "bobcircle")
-        .put("id", bobCircleId)
-        .put("active", false)
-        // metadata with createdDate but without createdByUserId
-        // https://issues.folio.org/browse/RMB-459
-        // https://issues.folio.org/browse/UIU-1069
-        .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
+      .put("username", "bobcircle")
+      .put("id", bobCircleId)
+      .put("active", false)
+      // metadata with createdDate but without createdByUserId
+      // https://issues.folio.org/browse/RMB-459
+      // https://issues.folio.org/browse/UIU-1069
+      .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
 
     Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
 
@@ -859,8 +858,8 @@ public class RestVerticleIT {
     JsonObject user1 = new JsonObject()
       .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
-        .put("username", "name_for_sale")
-        .put("id", UUID.randomUUID().toString());
+      .put("username", "name_for_sale")
+      .put("id", UUID.randomUUID().toString());
 
     Future<Void> f1 = post("/users", encode(user1))
       .map(response -> {
@@ -1125,7 +1124,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
-    String endpoint, boolean checkMeta) {
+                                                  String endpoint, boolean checkMeta) {
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
 
@@ -1207,9 +1206,6 @@ public class RestVerticleIT {
       .compose(v -> getUsersByCQL(context, "id==x", DEFAULT_LIMIT) /* empty result */)
       .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
       .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
-      .compose(v -> getUsersByCQL(context, "id==x", UsersAPI.STREAM_THRESHOLD) /* empty result */)
-      .compose(v -> getUsersByCQL(context, "id==\"\"", UsersAPI.STREAM_THRESHOLD, "bobcircle", "joeblock"))
-      .compose(v -> getUsersByCQL(context, jSearch, UsersAPI.STREAM_THRESHOLD, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
