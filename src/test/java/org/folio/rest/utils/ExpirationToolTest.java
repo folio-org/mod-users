@@ -53,7 +53,7 @@ public class ExpirationToolTest {
   }
 
   @Test
-  void expirationForTenantCanHandlePostgresClientFailure(Vertx vertx, VertxTestContext context) {
+  void expirationForTenantCanHandleException(Vertx vertx, VertxTestContext context) {
     PostgresClient postgresClient = mock(PostgresClient.class);
     doThrow(new RuntimeException("pg"))
       .when(postgresClient).get(anyString(), any(Class.class), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any());
@@ -61,6 +61,21 @@ public class ExpirationToolTest {
     Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, vertx.getOrCreateContext(), "someTenant");
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause().getMessage(), is("pg"));
+      context.completeNow();
+    })));
+  }
+
+  @Test
+  void expirationForTenantCanHandlePostgresClientFailure(Vertx vertx, VertxTestContext context) {
+    PostgresClient postgresClient = mock(PostgresClient.class);
+    ExpirationTool.postgresClient = (v,t) -> postgresClient;
+    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, vertx.getOrCreateContext(), "someTenant");
+    ArgumentCaptor<Handler<AsyncResult<Results<User>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
+    verify(postgresClient)
+      .get(anyString(), any(), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), handlerCaptor.capture());
+    handlerCaptor.getValue().handle(Future.failedFuture("Database shut down for holidays"));
+    future.onComplete(context.failing(e -> context.verify(() -> {
+      assertThat(future.cause().getMessage(), is("Database shut down for holidays"));
       context.completeNow();
     })));
   }
