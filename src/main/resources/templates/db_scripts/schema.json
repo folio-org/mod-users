@@ -20,7 +20,7 @@
     },
     {
       "tableName" : "users",
-      "fromModuleVersion" : "14.3",
+      "fromModuleVersion" : "mod-users-16.0.1",
       "withMetadata" : true,
       "foreignKeys": [
         {
@@ -32,6 +32,10 @@
         {
           "fieldName" : "username",
           "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "id",
+          "tOps" : "DELETE"
         },
         {
           "fieldName" : "barcode",
@@ -59,6 +63,12 @@
         }
       ],
       "ginIndex": [
+        {
+          "fieldName": "id",
+          "tOps": "DELETE",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
         {
           "fieldName": "username",
           "tOps": "ADD",

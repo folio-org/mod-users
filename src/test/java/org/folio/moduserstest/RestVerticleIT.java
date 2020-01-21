@@ -1,6 +1,11 @@
 package org.folio.moduserstest;
 
 import static io.vertx.core.json.Json.encode;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+
 import static org.folio.moduserstest.RestITSupport.assertStatus;
 import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
@@ -10,13 +15,8 @@ import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
 import static org.folio.util.StringUtil.urlEncode;
-import static org.junit.Assert.fail;
 
-import io.vertx.ext.web.client.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,7 +32,6 @@ import java.util.concurrent.CompletableFuture;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -40,6 +39,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.HttpResponse;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -317,39 +317,24 @@ public class RestVerticleIT {
   private Future<Void> getUsersByCQL(TestContext context, String cql, int limit, String... expectedUsernames) {
     log.info("Query users via CQL\n");
 
-    Future<Void> future = Future.future();
-    HttpClient client = RestITSupport.vertx().createHttpClient();
-    try {
-      client.get(RestITSupport.port(), "localhost", "/users?query=" + urlEncode(cql) + "&limit=" + limit, res -> {
-        assertStatus(context, res, 200);
-        res.bodyHandler(buf -> {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            int totalRecords = resultObject.getInteger("totalRecords");
-            JsonArray userList = resultObject.getJsonArray("users");
-            if (userList.size() != totalRecords) {
-              future.fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
-              return;
-            }
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql) + "&limit=" + limit);
 
-            List<String> usernames = new ArrayList<>();
-            for (int i = 0; i < userList.size(); i++) {
-              usernames.add(userList.getJsonObject(i).getString("username"));
-            }
-            assertThat(usernames, containsInAnyOrder(expectedUsernames));
-            future.complete();
-          } catch (Exception e) {
-            future.fail(e);
-          }
-        });
-      }).putHeader("X-Okapi-Tenant", "diku").putHeader("content-type", "application/json").putHeader("accept",
-        "application/json").exceptionHandler(e -> {
-        future.fail(e);
-      }).end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+    return future.map(json -> {
+
+      int totalRecords = json.getInteger("totalRecords");
+      JsonArray userList = json.getJsonArray("users");
+      if (userList.size() != totalRecords) {
+        fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
+      }
+
+      List<String> usernames = new ArrayList<>();
+      for (int i = 0; i < userList.size(); i++) {
+        usernames.add(userList.getJsonObject(i).getString("username"));
+      }
+      assertThat(usernames, containsInAnyOrder(expectedUsernames));
+
+      return null;
+    });
   }
 
   private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {

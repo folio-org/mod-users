@@ -29,6 +29,9 @@ import junit.framework.AssertionFailedError;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.tools.utils.VertxUtils;
 
+/**
+ * For new tests consider using RestAssured instead of legacy RestITSupport.
+ */
 class RestITSupport {
 
   static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
