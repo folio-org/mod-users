@@ -48,6 +48,10 @@
           "tOps" : "ADD"
         },
         {
+          "fieldName" : "username",
+          "tOps" : "DELETE"
+        },
+        {
           "fieldName" : "personal.firstName",
           "tOps" : "ADD"
         },
