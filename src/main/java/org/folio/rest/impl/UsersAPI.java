@@ -66,8 +66,6 @@ public class UsersAPI implements Users {
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private final Messages messages = Messages.getInstance();
-  public static final String USER_ID_FIELD = "'id'";
-  public static final String USER_NAME_FIELD = "'username'";
   private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
   /**
@@ -234,8 +232,8 @@ public class UsersAPI implements Users {
       });
   }
 
-  private void saveUser(User entity, Map<String, String> okapiHeaders,
-                        Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  private void saveUser(User entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
@@ -285,11 +283,11 @@ public class UsersAPI implements Users {
     if (reply.succeeded()) {
       if (reply.result().getStatus() == 400) {
         return reply.result().getEntity().toString().matches(errMsg);
-      }
+  }
       if (reply.result().getStatus() == 422) {
         String msg = ((Errors)reply.result().getEntity()).getErrors().iterator().next().getMessage();
         return msg.matches(errMsg);
-      }
+  }
     }
     return false;
   }
@@ -492,10 +490,10 @@ public class UsersAPI implements Users {
     entity.setUsername(username);
   }
 
-  private Future<Boolean> checkAddressTypeValid(
+  Future<Boolean> checkAddressTypeValid(
       String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
 
-    Promise<Boolean> future = Promise.promise();
+    Promise<Boolean> promise = Promise.promise();
     Criterion criterion = new Criterion(
           new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
                   setJSONB(false).setOperation("=").setVal(addressTypeId));
@@ -506,36 +504,32 @@ public class UsersAPI implements Users {
             if (reply.failed()) {
               String message = reply.cause().getLocalizedMessage();
               logger.error(message, reply.cause());
-              future.fail(reply.cause());
+              promise.fail(reply.cause());
             } else {
               List<AddressType> addressTypeList = reply.result().getResults();
-              if (addressTypeList.isEmpty()) {
-                future.complete(false);
-              } else {
-                future.complete(true);
-              }
+              promise.complete(!addressTypeList.isEmpty());
             }
           } catch (Exception e) {
             String message = e.getLocalizedMessage();
             logger.error(message, e);
-            future.fail(e);
+            promise.fail(e);
           }
         });
       } catch (Exception e) {
         String message = e.getLocalizedMessage();
         logger.error(message, e);
-        future.fail(e);
+        promise.fail(e);
       }
     });
-    return future.future();
+    return promise.future();
   }
 
-  private Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
-    Promise<Boolean> future = Promise.promise();
+  Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
+    Promise<Boolean> promise = Promise.promise();
     List<Future> futureList = new ArrayList<>();
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
-      future.complete(true);
-      return future.future();
+      promise.complete(true);
+      return promise.future();
     }
     for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
@@ -545,22 +539,18 @@ public class UsersAPI implements Users {
     CompositeFuture compositeFuture = CompositeFuture.all(futureList);
     compositeFuture.setHandler(res -> {
       if (res.failed()) {
-        future.fail(res.cause());
-      } else {
-        boolean bad = false;
-        for (Future<Boolean> f : futureList) {
-          if (Boolean.FALSE.equals(f.result())) {
-            future.complete(false);
-            bad = true;
-            break;
-          }
-        }
-        if (!bad) {
-          future.complete(true);
+        promise.fail(res.cause());
+        return;
+      }
+      for (Future<Boolean> f : futureList) {
+        if (Boolean.FALSE.equals(f.result())) {
+          promise.complete(false);
+          return;
         }
       }
+      promise.complete(true);
     });
-    return future.future();
+    return promise.future();
   }
 
   private Map<String, Object> getCustomFields(User entity) {

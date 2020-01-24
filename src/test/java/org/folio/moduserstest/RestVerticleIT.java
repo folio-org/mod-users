@@ -1,48 +1,37 @@
 package org.folio.moduserstest;
 
-import static io.vertx.core.http.HttpMethod.DELETE;
-import static io.vertx.core.http.HttpMethod.GET;
-import static io.vertx.core.http.HttpMethod.POST;
-import static io.vertx.core.http.HttpMethod.PUT;
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_CREATED;
-import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static io.vertx.core.json.Json.encode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
-import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
+import static org.folio.moduserstest.RestITSupport.assertStatus;
+import static org.folio.moduserstest.RestITSupport.delete;
+import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
+import static org.folio.moduserstest.RestITSupport.get;
+import static org.folio.moduserstest.RestITSupport.getJson;
+import static org.folio.moduserstest.RestITSupport.post;
+import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
+import static org.folio.moduserstest.RestITSupport.put;
+import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -50,7 +39,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import junit.framework.AssertionFailedError;
+import io.vertx.ext.web.client.HttpResponse;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -63,60 +52,22 @@ import org.junit.runners.MethodSorters;
 
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.parser.JsonPathParser;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.tools.utils.VertxUtils;
-import org.folio.rest.utils.ExpirationTool;
-import org.folio.util.StringUtil;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RestVerticleIT {
 
-  private static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
-  private static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
-  private static final String HTTP_LOCALHOST = "http://localhost:";
   private static final Logger log = LoggerFactory.getLogger(RestVerticleIT.class);
-
-  private final String userUrl = HTTP_LOCALHOST + port + "/users";
-  private final String groupUrl = HTTP_LOCALHOST + port + "/groups";
-  private final String customFieldsPath = "/custom-fields";
-
-  private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
-  private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
-
-  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
-    "\"name\": \"Department\", " +
-    "\"visible\": true, " +
-    "\"required\": true, " +
-    "\"helpText\": \"Provide a department\", " +
-    "\"entityType\": \"user\", " +
-    "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": { \"maxSize\": 150 }}";
-  private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
-    "\"name\": \"Department updated\", " +
-    "\"visible\": false, " +
-    "\"required\": true, " +
-    "\"helpText\": \"Provide a department\", " +
-    "\"entityType\": \"user\", " +
-    "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": {   \"maxSize\": 250 }}";
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static final String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
-  private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
-  private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
-  private static final String notExistingCustomField = "notExistingCustomField";
 
   private static final String FAKE_TOKEN = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
   private static final int DEFAULT_LIMIT = 10;
@@ -134,105 +85,59 @@ public class RestVerticleIT {
     .put("proxyUserId", UUID.randomUUID().toString())
     .put("status", "Active")
     .put("expirationDate",
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date()))
+      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date()))
     .put("requestForSponsor", "Yes")
     .put("notificationsTo", "Proxy")
     .put("accrueTo", "Sponsor");
 
-  private static Vertx vertx;
-  private static Context vertxContext;
-  static int port;
-
-  private String groupID1;
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
-  private static void fail(TestContext context, HttpClientResponse response) {
-    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
-    // remove the element with this fail method from the stacktrace
-    fail(context, null, response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
-  private static void fail(TestContext context, String message, HttpClientResponse response) {
-    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
-    // remove the element with this fail method from the stacktrace
-    fail(context, message, response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
-  private static void fail(TestContext context, String message, HttpClientResponse response,
-      StackTraceElement [] stacktrace) {
-    Async async = context.async();
-    response.bodyHandler(body -> {
-      Throwable t = new AssertionFailedError((message == null ? "" : message + ": ")
-          + response.statusCode() + " " + response.statusMessage() + " " + body.toString());
-      // t contains the stacktrace of bodyHandler but does not contain the method that
-      // called this fail method. Therefore exchange the stacktrace:
-      t.setStackTrace(stacktrace);
-      context.fail(t);
-      async.complete();
-    });
-  }
-
-  /**
-   * Fail the context if response does not have the provided status.
-   */
-  private static void assertStatus(TestContext context, HttpClientResponse response, int status) {
-    if (response.statusCode() == status) {
-      return;
-    }
-    StackTraceElement [] stacktrace = new Throwable().getStackTrace();
-    // remove the element with this assertStatus method from the stacktrace
-    fail(context, "Expected status " + status + " but got",
-        response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
   @BeforeClass
-  public static void setup(TestContext context) throws SQLException {
-    vertx = VertxUtils.getVertxWithExceptionHandler();
-    vertxContext = vertx.getOrCreateContext();
+  public static void setup(TestContext context) {
+    RestITSupport.setUp();
 
     Async async = context.async();
-    port = NetworkUtils.nextFreePort();
-    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + Integer.toString(port), "diku", FAKE_TOKEN);
+    TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + RestITSupport.port(), "diku", FAKE_TOKEN);
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", port))
+      .setConfig(new JsonObject().put("http.port", RestITSupport.port()))
       .setWorker(true);
 
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
-        // remove existing schema from previous tests
-        tenantClient.deleteTenant(delete -> {
-          switch (delete.statusCode()) {
+    RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
+      // remove existing schema from previous tests
+      tenantClient.deleteTenant(delete -> {
+        switch (delete.statusCode()) {
           case 204: break;  // existing schema has been deleted
           case 400: break;  // schema does not exist
           default:
-            fail(context, "deleteTenant", delete);
+            RestITSupport.fail(context, "deleteTenant", delete);
             return;
-          }
-          try {
-            TenantAttributes ta = new TenantAttributes();
-            ta.setModuleTo("mod-users-1.0.0");
-            List<Parameter> parameters = new LinkedList<>();
-            parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-            parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-            ta.setParameters(parameters);
-            tenantClient.postTenant(ta, post -> {
-              if (post.statusCode() != 201) {
-                fail(context, "postTenant", post);
-              }
-              async.complete();
-            });
-          } catch (Exception e) {
-            context.fail(e);
-          }
-        });
+        }
+        try {
+          TenantAttributes ta = new TenantAttributes();
+          ta.setModuleTo("mod-users-1.0.0");
+          List<Parameter> parameters = new LinkedList<>();
+          parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+          parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+          ta.setParameters(parameters);
+          tenantClient.postTenant(ta, post -> {
+            if (post.statusCode() != 201) {
+              RestITSupport.fail(context, "postTenant", post);
+            }
+            async.complete();
+          });
+        } catch (Exception e) {
+          context.fail(e);
+        }
+      });
     }));
   }
 
   @AfterClass
   public static void tearDown() {
     CompletableFuture<Void> future = new CompletableFuture<>();
-    vertx.close(res -> {
+    RestITSupport.vertx().close(res -> {
       PostgresClient.stopEmbeddedPostgres();
       future.complete(null);
     });
@@ -241,28 +146,19 @@ public class RestVerticleIT {
 
   private Future<Void> getEmptyUsers(TestContext context) {
     log.info("Getting an empty user set\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 200);
-      res.bodyHandler(buf -> {
-        JsonObject userCollectionObject = buf.toJsonObject();
-        if (userCollectionObject.getJsonArray("users").size() == 0
-          && userCollectionObject.getInteger("totalRecords") == 00) {
-          future.complete();
-        } else {
-          future.fail("Invalid return JSON: " + buf.toString());
-        }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+
+    Future<HttpResponse<Buffer>> future = get("/users");
+
+    return future.map(response -> {
+      assertStatus(context, response, 200);
+
+      JsonObject userCollectionObject = response.bodyAsJsonObject();
+      if (userCollectionObject.getJsonArray("users").size() != 0
+        || userCollectionObject.getInteger("totalRecords") != 0) {
+        fail("Invalid return JSON: " + response.bodyAsString());
+      }
+      return null;
+    });
   }
 
   private static void addTags(JsonObject u) {
@@ -274,543 +170,286 @@ public class RestVerticleIT {
     u.put("tags", tagobj);
   }
 
-  private static void addCustomFields(JsonObject u) {
-    JsonObject customFields = new JsonObject();
-    customFields.put("department_1", "Math");
-    u.put("customFields", customFields);
-  }
-
-  private Future<Void> postUser(TestContext context, boolean withUserName) {
+  private Future<Void> postUser(boolean withUserName) {
     log.info("Creating a new user\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("id", joeBlockId)
       .put("active", true);
     if (withUserName) {
-      userObject.put("username", "joeblock");
+      user.put("username", "joeblock");
     }
-    addTags(userObject);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      if (res.statusCode() >= 200 && res.statusCode() < 300) {
-        future.complete();
-      } else {
-        future.fail("Got status code: " + res.statusCode());
-      }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
-  }
+    addTags(user);
 
-  private Future<Void> postUserWithCustomFields(TestContext context) {
-    log.info("Creating a new user\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("username", "johnRectangle");
-    addCustomFields(userObject);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      if (res.statusCode() >= 200 && res.statusCode() < 300) {
-        future.complete();
-      } else {
-        future.fail("Got status code: " + res.statusCode());
-      }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+    return postWithOkStatus(joeBlockId, "/users", user.encode());
   }
 
   private Future<Void> deleteNonExistingUser(TestContext context) {
     log.info("Deleting non-existing user\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.delete(port, "localhost", "/users/85936906-4737-4da7-b0fb-e8da080b97d8", res -> {
-      assertStatus(context, res, 404);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("accept", "*/*")
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+
+    Future<HttpResponse<Buffer>> future = delete("/users/85936906-4737-4da7-b0fb-e8da080b97d8");
+
+    return future.map(response -> {
+      assertStatus(context, response, 404);
+      return null;
+    });
   }
 
   private Future<Void> deleteUser(TestContext context, String userId) {
     log.info("Deleting existing user\n");
-    Future<Void> future = Future.future();
-    deleteWithNoContentStatus(context, future, "/users/" + userId);
-    return future;
+    return deleteWithNoContentStatus(context, "/users/" + userId);
   }
 
   private Future<Void> postUserWithNumericName(TestContext context) {
     log.info("Creating a user with a numeric name\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "777777")
       .put("id", user777777Id)
       .put("active", true);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> getUser(TestContext context) {
     log.info("Retrieving a user\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users/" + joeBlockId, res -> {
-      if (res.statusCode() == 200) {
-        res.bodyHandler(buf -> {
-          JsonObject userObject = buf.toJsonObject();
-          if (userObject.getString("username").equals("joeblock")) {
-            JsonObject tags = userObject.getJsonObject("tags");
 
-            if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
-              future.fail("Bad value for tag list. " + buf.toString());
-            }
-            else {
-              DateFormat gmtFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
-              Date createdDate = null;
-              try {
-                //createdDate = DatatypeConverter.parseDateTime(userObject.getString("createdDate")).getTime();
-                createdDate = new DateTime(userObject.getString("createdDate")).toDate();
-              } catch (Exception e) {
-                future.fail(e);
-                return;
-              }
-              Date now = new Date();
-              if (createdDate.after(now)) {
-                future.fail(new AssertionError("Bad value for createdDate"));
-                return;
-              }
-              future.complete();
-            }
-          } else {
-            future.fail("Unable to read proper data from JSON return value: " + buf.toString());
-          }
-        });
-      } else {
-        future.fail("Bad response: " + res.statusCode());
-      }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
-  }
+    Future<JsonObject> future = getJson(context, "/users/" + joeBlockId);
 
-  private Future<Void> getUserWithCustomFields(TestContext context) {
-    log.info("Retrieving a user with custom fields\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users/" + johnRectangleId, res -> {
-      if (res.statusCode() == 200) {
-        res.bodyHandler(buf -> {
-          JsonObject userObject = buf.toJsonObject();
-          JsonObject customFields = userObject.getJsonObject("customFields");
-          if (customFields == null || !customFields.encode().equals("{\"department_1\":\"Math\"}")) {
-            future.fail("Bad value for customFields. " + buf.toString());
-          }else{
-            future.complete();
+    return future.map(user -> {
+      if (user.getString("username").equals("joeblock")) {
+        JsonObject tags = user.getJsonObject("tags");
+
+        if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
+          fail("Bad value for tag list");
+        }
+        else {
+          Date createdDate = null;
+          try {
+            createdDate = new DateTime(user.getString("createdDate")).toDate();
+          } catch (Exception e) {
+            fail(e.getMessage());
           }
-        });
+          Date now = new Date();
+          if (createdDate.after(now)) {
+            fail("Bad value for createdDate");
+          }
+        }
       } else {
-        future.fail("Bad response: " + res.statusCode());
+        fail("Unable to read proper data from JSON return value: " + encode(user));
       }
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+      return null;
+    });
+
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
     log.info("Getting user via CQL, by username\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      client.get(port, "localhost", "/users?query=" + StringUtil.urlEncode("username==joeblock"), res -> {
-        assertStatus(context, res, 200);
-        res.bodyHandler(buf -> {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            int totalRecords = resultObject.getInteger("totalRecords");
-            if (totalRecords != 1) {
-              future.fail("Expected 1 record, got " + totalRecords);
-              return;
-            }
-            JsonArray userList = resultObject.getJsonArray("users");
-            JsonObject userObject = userList.getJsonObject(0);
-            if (userObject.getString("username").equals("joeblock")) {
-              future.complete();
-            } else {
-              future.fail("Unable to read proper data from JSON return value: " + buf.toString());
-            }
-          } catch (Exception e) {
-            future.fail(e);
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode("username==joeblock"));
+
+    return future.map(users -> {
+      int totalRecords = users.getInteger("totalRecords");
+      if (totalRecords != 1) {
+        fail("Expected 1 record, got " + totalRecords);
+      }
+
+      JsonArray userList = users.getJsonArray("users");
+      JsonObject user = userList.getJsonObject(0);
+      if (!user.getString("username").equals("joeblock")) {
+        fail("Unable to read proper data from JSON return value: " + encode(users));
+      }
+
+      return null;
+    });
   }
 
   private Future<Void> getUserByCqlById(TestContext context) {
     log.info("Getting user via CQL, by user id\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      client.get(port, "localhost", "/users?query=" + urlEncode("(id==" + joeBlockId + ")"), res -> {
-        assertStatus(context, res, 200);
-        res.bodyHandler(buf -> {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            int totalRecords = resultObject.getInteger("totalRecords");
-            assertThat(totalRecords, is(1));
-            JsonArray userList = resultObject.getJsonArray("users");
-            JsonObject userObject = userList.getJsonObject(0);
-            assertThat("username of " + buf, userObject.getString("username"), is("joeblock"));
-            future.complete();
-          } catch (Exception e) {
-            future.fail(e);
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode("(id==" + joeBlockId + ")"));
+
+    return future.map(users -> {
+      int totalRecords = users.getInteger("totalRecords");
+      assertThat(totalRecords, is(1));
+
+      JsonArray userList = users.getJsonArray("users");
+      JsonObject user = userList.getJsonObject(0);
+      assertThat("username of " + encode(user), user.getString("username"), is("joeblock"));
+
+      return null;
+    });
   }
 
   private Future<Void> getUserByInvalidCQL(TestContext context) {
     log.info("Getting user via invalid CQL\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      // empty CQL query triggers parse exception
-      client.get(port, "localhost", "/users?query=", res -> {
-        assertStatus(context, res, 400);
-        future.complete();
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+
+    // empty CQL query triggers parse exception
+    Future<HttpResponse<Buffer>> future = get("/users?query=");
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> postAnotherUser(TestContext context) {
     log.info("Creating another user\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "bobcircle")
       .put("id", bobCircleId)
       .put("active", true);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res,  201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response,  201);
+      return null;
+    });
   }
 
   private Future<Void> getUsersByCQL(TestContext context, String cql, int limit, String... expectedUsernames) {
     log.info("Query users via CQL\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    try {
-      client.get(port, "localhost", "/users?query=" + urlEncode(cql) + "&limit=" + limit, res -> {
-        assertStatus(context, res, 200);
-        res.bodyHandler(buf -> {
-          try {
-            JsonObject resultObject = buf.toJsonObject();
-            int totalRecords = resultObject.getInteger("totalRecords");
-            JsonArray userList = resultObject.getJsonArray("users");
-            if (userList.size() != totalRecords) {
-              future.fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
-              return;
-            }
-            List<String> usernames = new ArrayList<>();
-            for (int i = 0; i < userList.size(); i++) {
-              usernames.add(userList.getJsonObject(i).getString("username"));
-            }
-            assertThat(usernames, containsInAnyOrder(expectedUsernames));
-            future.complete();
-          } catch (Exception e) {
-            future.fail(e);
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql) + "&limit=" + limit);
+
+    return future.map(json -> {
+
+      int totalRecords = json.getInteger("totalRecords");
+      JsonArray userList = json.getJsonArray("users");
+      if (userList.size() != totalRecords) {
+        fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
+      }
+
+      List<String> usernames = new ArrayList<>();
+      for (int i = 0; i < userList.size(); i++) {
+        usernames.add(userList.getJsonObject(i).getString("username"));
+      }
+      assertThat(usernames, containsInAnyOrder(expectedUsernames));
+
+      return null;
+    });
   }
 
   private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
     log.info("Making a valid user modification\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("id", id)
       .put("active", false);
     if (withUserName) {
-      userObject.put("username", "bobcircle");
+      user.put("username", "bobcircle");
     }
-    addCustomFields(userObject);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + id, res -> {
-      assertStatus(context, res, 204);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    return putWithNoContentStatus(context, id, "/users/" + id, encode(user));
   }
 
   private Future<Void> getGoodUser(TestContext context) {
     log.info("Getting the modified user\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/users/" + bobCircleId, res -> {
-      assertStatus(context, res, 200);
-      res.bodyHandler(buf -> {
-        JsonObject userObject = buf.toJsonObject();
-        if (userObject.getString("username").equals("bobcircle")) {
-          Date createdDate = null;
-          Date updatedDate = null;
-          try {
-            createdDate = new DateTime(userObject.getString("createdDate")).toDate();
-            updatedDate = new DateTime(userObject.getString("updatedDate")).toDate();
-          } catch (Exception e) {
-            future.fail(e);
-            return;
-          }
-          Date now = new Date();
-          if (createdDate.after(now) || updatedDate.after(now) || createdDate.after(updatedDate)) {
-            future.fail(new AssertionError("Bad value for createdDate and/or updatedDate"));
-            return;
-          }
-          future.complete();
-        } else {
-          future.fail("Unable to read proper data from JSON return value: " + buf.toString());
+
+    Future<JsonObject> future = getJson(context, "/users/" + bobCircleId);
+
+    return future.map(user -> {
+      if (user.getString("username").equals("bobcircle")) {
+        Date createdDate = null;
+        Date updatedDate = null;
+        try {
+          createdDate = new DateTime(user.getString("createdDate")).toDate();
+          updatedDate = new DateTime(user.getString("updatedDate")).toDate();
+        } catch (Exception e) {
+          fail(e.getMessage());
         }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+
+        Date now = new Date();
+        if (createdDate.after(now) || updatedDate.after(now) || createdDate.after(updatedDate)) {
+          fail("Bad value for createdDate and/or updatedDate");
+        }
+      } else {
+        fail("Unable to read proper data from JSON return value: " + encode(user));
+      }
+      return null;
+    });
   }
 
   private Future<Void> putUserBadUsername(TestContext context) {
     log.info("Trying to assign an invalid username \n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", bobCircleId)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
-      assertStatus(context, res, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserWithoutIdInMetadata(TestContext context) {
     log.info("Changing a user without id in metadata\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
-        .put("username", "bobcircle")
-        .put("id", bobCircleId)
-        .put("active", false)
-        // metadata with createdDate but without createdByUserId
-        // https://issues.folio.org/browse/RMB-459
-        // https://issues.folio.org/browse/UIU-1069
-        .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + bobCircleId, res -> {
-      assertStatus(context, res, 204);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        context.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
-  }
 
-  private Future<Void> putUserWithNotExistingCustomField(TestContext context) {
-    log.info("Changing a user with not existing custom field");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
-      .put("username", "johnrectangle")
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Rectangle")
-        .put("firstName", "John")
-      )
-      .put("customFields", new JsonObject()
-        .put(notExistingCustomField, "abc")
-      );
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + johnRectangleId, res -> {
-      assertStatus(context, res, 422);
-      res.bodyHandler(err -> {
-        Errors errors = Json.decodeValue(err, Errors.class);
-        Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
-        context.assertEquals("customFields", errorParam.getKey());
-        context.assertEquals(notExistingCustomField, errorParam.getValue());
-        future.complete();
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+    JsonObject user = new JsonObject()
+      .put("username", "bobcircle")
+      .put("id", bobCircleId)
+      .put("active", false)
+      // metadata with createdDate but without createdByUserId
+      // https://issues.folio.org/browse/RMB-459
+      // https://issues.folio.org/browse/UIU-1069
+      .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 204);
+      return null;
+    });
   }
 
   private Future<Void> putUserBadId(TestContext context) {
     log.info("Trying to assign an invalid id \n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "bobcircle")
       .put("id", joeBlockId)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserNotMatchingId(TestContext context) {
     log.info("Trying to Update user id \n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", bobCircleId)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserDuplicatedAddressType(TestContext context) {
     log.info("Attempting to update a user with two of the same address types\n");
-    Future<Void> future = Future.future();
+
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", joeBlockId)
       .put("active", false)
@@ -832,23 +471,19 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> putUserInvalidAddressType(TestContext context) {
     log.info("Attempting to update a user with invalid address types\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "joeblock")
       .put("id", joeBlockId)
       .put("active", false)
@@ -864,229 +499,154 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + joeBlockId, res -> {
-      assertStatus(context, res, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   // https://issues.folio.org/browse/MODUSERS-90
   // https://issues.folio.org/browse/MODUSERS-108
   private Future<Void> putUserWithNumericName(TestContext context) {
     log.info("Changing a user with numeric name\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", "777777")
       .put("id", user777777Id)
       .put("active", false);
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", "/users/" + user777777Id, res -> {
-      assertStatus(context, res, 404);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + user777777Id, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 404);
+      return null;
+    });
   }
 
   private Future<Void> createAddressType(TestContext context) {
     log.info("Creating an address type\n");
-    Future<Void> future = Future.future();
-    JsonObject addressTypeObject = new JsonObject()
+
+    JsonObject addressType = new JsonObject()
       .put("addressType", "sweethome")
       .put("desc", "The patron's primary residence");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/addresstypes", res -> {
-      assertStatus(context, res, 201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(addressTypeObject.encode());
-    return future;
 
+    Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
+
+    return future.map(response -> {
+      assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> createBadAddressType(TestContext context) {
     log.info("Creating a bad address type\n");
-    Future<Void> future = Future.future();
-    JsonObject addressTypeObject = new JsonObject()
+
+    JsonObject addressType = new JsonObject()
       .put("desc", "The patron's summer residence");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/addresstypes", res -> {
-      assertStatus(context, res, 422);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(addressTypeObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
+
+    return future.map(response -> {
+      assertStatus(context, response, 422);
+      return null;
+    });
   }
 
   private Future<Void> getAddressTypeUpdateUser(TestContext context) {
     log.info("Getting the new addresstype, updating a user with it\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/addresstypes?query=addressType=sweethome", res -> {
-      assertStatus(context, res, 200);
-      res.bodyHandler(body -> {
-        JsonObject result = new JsonObject(body.toString());
-        JsonObject addressType = result.getJsonArray("addressTypes").getJsonObject(0);
-        if (!addressType.getString("addressType").equals("sweethome")) {
-          future.fail("addressType is not 'sweethome' in return addresstype");
-        } else {
-          JsonObject userObject = new JsonObject()
-            .put("username", "bobcircle")
-            .put("id", bobCircleId)
-            .put("active", false)
-            .put("personal", new JsonObject()
-              .put("lastName", "Circle")
-              .put("firstName", "Robert")
-              .put("addresses", new JsonArray()
-                .add(new JsonObject()
-                  .put("countryId", "USA")
-                  .put("addressLine1", "123 Somestreet")
-                  .put("city", "Somewheresville")
-                  .put("addressTypeId", addressType.getString("id"))
-                )
-              )
-            );
-          HttpClient putClient = vertx.createHttpClient();
-          putClient.put(port, "localhost", "/users/" + bobCircleId, putRes -> {
-            assertStatus(context, putRes, 204);
-            HttpClient deleteClient = vertx.createHttpClient();
-            deleteClient.delete(port, "localhost", "/addresstypes/"
-              + addressType.getString("id"), deleteRes -> {
-                assertStatus(context, deleteRes, 400);
-                future.complete();
-            })
-              .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-              .exceptionHandler(e -> {
-                future.fail(e);
-              })
-              .end();
-          })
-            .putHeader("X-Okapi-Tenant", "diku")
-            .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-            .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-            .exceptionHandler(e -> {
-              future.fail(e);
-            })
-            .end(userObject.encode());
-        }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
 
+    Future<JsonObject> f1 = getJson(context, "/addresstypes?query=addressType=sweethome")
+      .map(entries -> {
+        JsonObject addressType = entries.getJsonArray("addressTypes").getJsonObject(0);
+
+        if (!addressType.getString("addressType").equals("sweethome")) {
+          fail("addressType is not 'sweethome' in return addresstype");
+        }
+        return addressType;
+      });
+
+    Future<JsonObject> f2 = f1.compose(addressType -> {
+      JsonObject user = new JsonObject()
+        .put("username", "bobcircle")
+        .put("id", bobCircleId)
+        .put("active", false)
+        .put("personal", new JsonObject()
+          .put("lastName", "Circle")
+          .put("firstName", "Robert")
+          .put("addresses", new JsonArray()
+            .add(new JsonObject()
+              .put("countryId", "USA")
+              .put("addressLine1", "123 Somestreet")
+              .put("city", "Somewheresville")
+              .put("addressTypeId", addressType.getString("id"))
+            )
+          )
+        );
+
+      return put("/users/" + bobCircleId, encode(user))
+        .map(response -> {
+          assertStatus(context, response, 204);
+          return addressType;
+        });
+    });
+
+    return f2.compose(addressType -> delete("/addresstypes/" + addressType.getString("id")))
+      .map(response -> {
+        assertStatus(context, response, 400);
+        return null;
+      });
   }
 
   private Future<Void> deleteAddressTypeSQLError(TestContext context) {
     log.info("Deleting address type SQL error\n");
-    Future<Void> future = Future.future();
-    HttpClient deleteClient = vertx.createHttpClient();
-    deleteClient.delete(port, "localhost", "/addresstypes/x%2F", deleteRes -> {
-      assertStatus(context, deleteRes, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+
+    Future<HttpResponse<Buffer>> future = delete("/addresstypes/x%2F");
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> deleteAddressTypeCQLError(TestContext context) {
     log.info("Deleting address type CQL error\n");
-    Future<Void> future = Future.future();
-    HttpClient deleteClient = vertx.createHttpClient();
-    deleteClient.delete(port, "localhost", "/addresstypes/x=", deleteRes -> {
-      assertStatus(context, deleteRes, 500);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+
+    Future<HttpResponse<Buffer>> future = delete("/addresstypes/x=");
+
+    return future.map(response -> {
+      assertStatus(context, response, 500);
+      return null;
+    });
   }
 
   private Future<Void> createAndDeleteAddressType(TestContext context) {
     log.info("Creating and deleting an address type\n");
-    Future<Void> future = Future.future();
-    HttpClient postClient = vertx.createHttpClient();
+
     JsonObject addressTypeObject = new JsonObject()
       .put("addressType", "hardwork")
       .put("desc", "The patron's work address");
-    postClient.post(port, "localhost", "/addresstypes", postRes -> {
-      assertStatus(context, postRes, 201);
-      postRes.bodyHandler(postBody -> {
-        JsonObject newAddressTypeObject = new JsonObject(postBody.toString());
-        HttpClient deleteClient = vertx.createHttpClient();
-        deleteClient.delete(port, "localhost", "/addresstypes/"
-          + newAddressTypeObject.getString("id"), deleteRes -> {
-            assertStatus(context, deleteRes, 204);
-            future.complete();
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
-          .end();
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(addressTypeObject.encode());
 
-    return future;
+    Future<JsonObject> f1 = post("/addresstypes", encode(addressTypeObject))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return response.bodyAsJsonObject();
+      });
+
+    return f1.compose(at -> delete("/addresstypes/" + at.getString("id")))
+      .map(o -> {
+        assertStatus(context, o, 204);
+        return null;
+      });
   }
 
   private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
     log.info("Attempting to create a user with two of the same address types");
-    Future<Void> future = Future.future();
+
     String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "jacktriangle")
       .put("id", jackTriangleId)
       .put("active", true)
@@ -1108,61 +668,20 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
-  }
 
-  private Future<Void> postUserWithNotExistingCustomField(TestContext context) {
-    log.info("Attempting to create a user with not existing custom field");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
-      .put("username", "johnrectangle")
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Rectangle")
-        .put("firstName", "John")
-      )
-      .put("customFields", new JsonObject()
-        .put(notExistingCustomField, "abc")
-      );
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 422);
-      res.bodyHandler(err -> {
-        Errors errors = Json.decodeValue(err, Errors.class);
-        Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
-        context.assertEquals("customFields", errorParam.getKey());
-        context.assertEquals(notExistingCustomField, errorParam.getValue());
-        future.complete();
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> postUserBadAddress(TestContext context) {
     log.info("Trying to create a bad address\n");
-    Future<Void> future = Future.future();
+
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
-    JsonObject userObject = new JsonObject()
+    JsonObject user = new JsonObject()
       .put("username", "annarhombus")
       .put("id", annaRhombusId)
       .put("active", true)
@@ -1178,244 +697,182 @@ public class RestVerticleIT {
           )
         )
       );
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 400);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
   }
 
   private Future<Void> postUserWithDuplicateId(TestContext context) {
     log.info("Attempting to create a user with duplicate id");
-    Future<Void> future = Future.future();
+
     String uuid = UUID.randomUUID().toString();
     JsonObject user1 = new JsonObject().put("id", uuid);
     JsonObject user2 = new JsonObject().put("id", uuid);
-    HttpClient client = vertx.createHttpClient();
+
     // create test user one
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      // fail attempting to create user with duplicate id
-      client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 422);
-        res2.bodyHandler(err -> {
-          JsonObject validationErrorRes = err.toJsonObject();
-          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-          if (validationErrors.isEmpty()) {
-            future.fail("Did not return expected validation errors");
-          } else {
-            String errorMessage = validationErrors.getJsonObject(0).getString("message");
-            context.assertEquals(1, validationErrors.size());
-            context.assertEquals(errorMessage, "User with this id already exists");
-            future.complete();
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(user1.encode());
-    return future;
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    // fail attempting to create user with duplicate id
+    return f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        assertStatus(context, response, 422);
+
+        JsonObject validationErrorRes = response.bodyAsJsonObject();
+        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+
+        if (validationErrors.isEmpty()) {
+          fail("Did not return expected validation errors");
+        } else {
+          String errorMessage = validationErrors.getJsonObject(0).getString("message");
+          context.assertEquals(1, validationErrors.size());
+          context.assertEquals(errorMessage, "User with this id already exists");
+        }
+        return null;
+      });
   }
 
   private Future<Void> postUserWithDuplicateUsername(TestContext context) {
     log.info("Attempting to create a user with duplicate username");
-    Future<Void> future = Future.future();
+
     JsonObject user1 = new JsonObject()
       .put("username", "the_twin")
       .put("id",  UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("username", "the_twin")
       .put("id",  UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
+
     // create test user one
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      // creating a second user with the same username should fail
-      client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 422);
-        res2.bodyHandler(err -> {
-          JsonObject validationErrorRes = err.toJsonObject();
-          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-          if (validationErrors.isEmpty()) {
-            future.fail("Did not return expected validation errors");
-          } else {
-            String errorMessage = validationErrors.getJsonObject(0).getString("message");
-            context.assertEquals(1, validationErrors.size());
-            context.assertEquals(errorMessage, "User with this username already exists");
-            future.complete();
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(user1.encode());
-    return future;
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    // creating a second user with the same username should fail
+    return f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        assertStatus(context, response, 422);
+
+        JsonObject validationErrorRes = response.bodyAsJsonObject();
+        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+
+        if (validationErrors.isEmpty()) {
+          fail("Did not return expected validation errors");
+        } else {
+          String errorMessage = validationErrors.getJsonObject(0).getString("message");
+          context.assertEquals(1, validationErrors.size());
+          context.assertEquals(errorMessage, "User with this username already exists");
+        }
+        return null;
+      });
   }
 
   private Future<Void> putUserWithDuplicateUsername(TestContext context) {
     log.info("Changing a user to username that already exists\n");
-    Future<Void> future = Future.future();
+
     JsonObject user1 = new JsonObject()
       .put("username", "left_shoe")
       .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("username", "right_shoe")
       .put("id", UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 201);
-        // attempt to update user2 changing username to a duplicate
-        user2.put("username", "left_shoe");
-        client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
-          assertStatus(context, res3, 400);
-          res3.bodyHandler(err -> {
-            context.assertEquals("User with this username already exists", err.toString());
-            future.complete();
-          });
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
-          .end(user2.encode());
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(user1.encode());
-    return future;
+
+    // create test user one
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f2.compose(v -> {
+      // attempt to update user2 changing username to a duplicate
+      user2.put("username", "left_shoe");
+
+      return put("/users/" + user2.getString("id"), encode(user2))
+        .map(response -> {
+          assertStatus(context, response, 400);
+
+          context.assertEquals("User with this username already exists", response.bodyAsString());
+
+          return null;
+        });
+    });
   }
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> postTwoUsersWithoutUsername(TestContext context) {
     log.info("Attempting to create two users without username");
-    Future<Void> future = Future.future();
+
     JsonObject user1 = new JsonObject()
       .put("id",  UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("id",  UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      client.post(port, "localhost", "/users", res2 -> {
+
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
         // should succeed, there can be any number of users without username
-        assertStatus(context, res2, 201);
-        future.complete();
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(user1.encode());
-    return future;
+        assertStatus(context, response, 201);
+        return null;
+      });
   }
 
   // https://issues.folio.org/browse/MODUSERS-147
   private Future<Void> putSecondUserWithoutUsername(TestContext context) {
     log.info("Updating second user to have no username");
-    Future<Void> future = Future.future();
+
     JsonObject user1 = new JsonObject()
       .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
-        .put("username", "name_for_sale")
-        .put("id", UUID.randomUUID().toString());
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 201);
-        user2.remove("username");  // try to PUT with username removed
-        client.put(port, "localhost", "/users/" + user2.getString("id"), res3 -> {
-          assertStatus(context, res3, 204);
-          future.complete();
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
-          .end(user2.encode());
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end(user2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(user1.encode());
-    return future;
+      .put("username", "name_for_sale")
+      .put("id", UUID.randomUUID().toString());
+
+    Future<Void> f1 = post("/users", encode(user1))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f2.compose(v -> {
+      user2.remove("username");  // try to PUT with username removed
+
+      return put("/users/" + user2.getString("id"), encode(user2))
+        .map(response -> {
+          assertStatus(context, response, 204);
+          return null;
+        });
+    });
   }
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> postUserWithDuplicateBarcode(TestContext context) {
     log.info("Attempting to create a user with duplicate barcode");
-    Future<Void> future = Future.future();
+
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_one")
       .put("id",  UUID.randomUUID().toString())
@@ -1434,48 +891,36 @@ public class RestVerticleIT {
         .put("lastName", "Two")
         .put("firstName", "Test")
       );
-    HttpClient client = vertx.createHttpClient();
-    // create test user one
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
+
+    Future<Void> f1 = post("/users", encode(userObject1))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f1.compose(v -> post("/users", encode(userObject2)))
       // fail attempting to create user with duplicate barcode
-      client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 422);
-        res2.bodyHandler(err -> {
-          JsonObject validationErrorRes = err.toJsonObject();
-          JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-          if (validationErrors.isEmpty()) {
-            future.fail("Did not return expected validation errors");
-          } else {
-            String errorMessage = validationErrors.getJsonObject(0).getString("message");
-            assertThat(1, is(validationErrors.size()));
-            assertThat(errorMessage, is("This barcode has already been taken"));
-            future.complete();
-          }
-        });
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end(userObject2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject1.encode());
-    return future;
+      .map(response -> {
+        assertStatus(context, response, 422);
+
+        JsonObject validationErrorRes = response.bodyAsJsonObject();
+        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
+        if (validationErrors.isEmpty()) {
+          fail("Did not return expected validation errors");
+        } else {
+          String errorMessage = validationErrors.getJsonObject(0).getString("message");
+          assertThat(1, is(validationErrors.size()));
+          assertThat(errorMessage, is("This barcode has already been taken"));
+        }
+
+        return null;
+      });
   }
 
   // https://issues.folio.org/browse/MODUSERS-118
   private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
     log.info("Changing a user to barcode that already exists\n");
-    Future<Void> future = Future.future();
+
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_three")
       .put("id", UUID.randomUUID().toString())
@@ -1495,413 +940,233 @@ public class RestVerticleIT {
         .put("lastName", "Four")
         .put("firstName", "Test")
       );
-    HttpClient client = vertx.createHttpClient();
+
     // create test user one
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      // create test user two
-      client.post(port, "localhost", "/users", res2 -> {
-        assertStatus(context, res2, 201);
-        // fail attempting to update user changing barcode to a duplicate
-        userObject2.put("barcode", "304276530498752");
-        client.put(port, "localhost", "/users/" + testUserFourId, res3 -> {
-          assertStatus(context, res3, 400);
-          res3.bodyHandler(err -> {
-            String errorMessage = err.toString();
-            assertThat(errorMessage, is("This barcode has already been taken"));
-            future.complete();
-          });
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
-          .end(userObject2.encode());
-      })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end(userObject2.encode());
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject1.encode());
-    return future;
+    Future<Void> f1 = post("/users", encode(userObject1))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    // create test user two
+    Future<Void> f2 = f1.compose(v -> post("/users", encode(userObject2)))
+      .map(response -> {
+        assertStatus(context, response, 201);
+        return null;
+      });
+
+    return f2.compose(v -> {
+      // fail attempting to update user changing barcode to a duplicate
+      userObject2.put("barcode", "304276530498752");
+
+      return put("/users/" + testUserFourId, encode(userObject2))
+        .map(response -> {
+          assertStatus(context, response, 400);
+
+          String errorMessage = response.bodyAsString();
+          assertThat(errorMessage, is("This barcode has already been taken"));
+
+          return null;
+        });
+    });
   }
 
   private Future<Void> createProxyfor(TestContext context) {
     log.info("Creating a new proxyfor entry\n");
-    Future<Void> future = Future.future();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(proxyObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> createProxyforWithSameUserId(TestContext context) {
     log.info("Trying to create a proxyfor with an existing userid\n");
-    Future<Void> future = Future.future();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "5b0a9a0b-6eb6-447c-bc31-9c99940a29c5");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(proxyObject.encode());
 
-    return future;
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
     log.info("Trying to create a proxyfor with an existing proxy userid\n");
-    Future<Void> future = Future.future();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(proxyObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      assertStatus(context, response, 201);
+      return null;
+    });
   }
 
   private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
     log.info("Trying to create a proxyfor entry with the same id and proxy user id\n");
-    Future<Void> future = Future.future();
+
     JsonObject proxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 422);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(proxyObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
+
+    return future.map(response -> {
+      assertStatus(context, response, 422);
+      return null;
+    });
   }
 
   private Future<Void> getProxyforCollection(TestContext context) {
     log.info("Getting proxyfor entries\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/proxiesfor", res -> {
-      assertStatus(context, res, 200);
-      res.bodyHandler(body -> {
-        JsonObject resultJson = body.toJsonObject();
-        JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-        if (proxyForArray.size() == 3) {
-          future.complete();
-        } else {
-          future.fail("Expected 3 entries, found " + proxyForArray.size());
-        }
-      });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+
+    Future<JsonObject> future = getJson(context, "/proxiesfor");
+
+    return future.map(proxies -> {
+      JsonArray proxyForArray = proxies.getJsonArray("proxiesFor");
+      if (proxyForArray.size() != 3) {
+        fail("Expected 3 entries, found " + proxyForArray.size());
+      }
+      return null;
+    });
   }
 
   private Future<Void> findAndGetProxyfor(TestContext context) {
     log.info("Find and retrieve a particular proxyfor entry\n");
-    Future<Void> future = Future.future();
-    try {
-      HttpClient client = vertx.createHttpClient();
-      log.info("Making CQL request\n");
-      client.get(port, "localhost",
-        "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
-        res -> {
-          assertStatus(context, res, 200);
-          res.bodyHandler(body -> {
-            try {
-              JsonObject resultJson = body.toJsonObject();
-              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-              if (proxyForArray.size() != 1) {
-                future.fail("Expected 1 entry, found " + proxyForArray.size());
-                return;
-              }
-              JsonObject proxyForObject = proxyForArray.getJsonObject(0);
-              String proxyForId = proxyForObject.getString("id");
-              log.info("Making get-by-id request\n");
-              client.get(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                assertStatus(context, res2, 200);
-                future.complete();
-              })
-                .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .exceptionHandler(e -> {
-                  future.fail(e);
-                })
-                .end();
-            } catch (Exception e) {
-              future.fail(e);
-            }
-          });
-        })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+
+    log.info("Making CQL request\n");
+    Future<String> proxyId = getProxyId(context,
+      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+
+    log.info("Making get-by-id request\n");
+
+    return proxyId.compose(id -> get("/proxiesfor/" + id))
+      .map(response -> {
+        assertStatus(context, response, 200);
+        return null;
+      });
   }
 
   private Future<Void> findAndUpdateProxyfor(TestContext context) {
     log.info("Find and update a particular proxyfor entry\n");
-    Future<Void> future = Future.future();
+
+    log.info("Making CQL request\n");
+    Future<String> proxyId = getProxyId(context,
+      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+
     JsonObject modifiedProxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
       .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-    try {
-      HttpClient client = vertx.createHttpClient();
-      log.info("Making CQL request\n");
-      client.get(port, "localhost",
-        "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
-        res -> {
-          assertStatus(context, res, 200);
-          res.bodyHandler(body -> {
-            try {
-              JsonObject resultJson = body.toJsonObject();
-              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-              if (proxyForArray.size() != 1) {
-                future.fail("Expected 1 entry, found " + proxyForArray.size());
-                return;
-              }
-              JsonObject proxyForObject = proxyForArray.getJsonObject(0);
-              String proxyForId = proxyForObject.getString("id");
-              log.info("Making put-by-id request\n");
-              client.put(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                assertStatus(context, res2, 204);
-                future.complete();
-              })
-                .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-                .exceptionHandler(e -> {
-                  future.fail(e);
-                })
-                .end(modifiedProxyObject.encode());
-            } catch (Exception e) {
-              future.fail(e);
-            }
-          });
-        })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+
+    log.info("Making put-by-id request\n");
+    return proxyId.compose(id -> put("/proxiesfor/" + id, encode(modifiedProxyObject)))
+      .map(response -> {
+        assertStatus(context, response, 204);
+        return null;
+      });
+  }
+
+  private Future<String> getProxyId(TestContext context, String requestUrl) {
+    Future<JsonObject> resultJson = getJson(context, requestUrl);
+
+    return resultJson.map(result -> {
+      JsonArray proxyForArray = result.getJsonArray("proxiesFor");
+      if (proxyForArray.size() != 1) {
+        fail("Expected 1 entry, found " + proxyForArray.size());
+      }
+
+      JsonObject proxyForObject = proxyForArray.getJsonObject(0);
+      return proxyForObject.getString("id");
+    });
   }
 
   private Future<Void> findAndDeleteProxyfor(TestContext context) {
     log.info("Find and delete a particular proxyfor entry");
-    Future<Void> future = Future.future();
-    try {
-      HttpClient client = vertx.createHttpClient();
-      log.info("Making CQL request\n");
-      client.get(port, "localhost",
-        "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa",
-        res -> {
-          assertStatus(context, res, 200);
-          res.bodyHandler(body -> {
-            try {
-              JsonObject resultJson = body.toJsonObject();
-              JsonArray proxyForArray = resultJson.getJsonArray("proxiesFor");
-              if (proxyForArray.size() != 1) {
-                future.fail("Expected 1 entry, found " + proxyForArray.size());
-                return;
-              }
-              JsonObject proxyForObject = proxyForArray.getJsonObject(0);
-              String proxyForId = proxyForObject.getString("id");
-              log.info("Making delete-by-id request\n");
-              client.delete(port, "localhost", "/proxiesfor/" + proxyForId, res2 -> {
-                assertStatus(context, res2, 204);
-                future.complete();
-              })
-                .putHeader("X-Okapi-Tenant", "diku")
-                .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-                .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-                .exceptionHandler(e -> {
-                  future.fail(e);
-                })
-                .end();
-            } catch (Exception e) {
-              future.fail(e);
-            }
-          });
-        })
-        .putHeader("X-Okapi-Tenant", "diku")
-        .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-        .exceptionHandler(e -> {
-          future.fail(e);
-        })
-        .end();
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
+
+    log.info("Making CQL request\n");
+    Future<String> proxyId = getProxyId(context,
+      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+
+    return proxyId.compose(id -> delete("/proxiesfor/" + id))
+      .map(response -> {
+        assertStatus(context, response, 204);
+        return null;
+      });
   }
 
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
-    String endpoint, boolean checkMeta) {
-    Future<Void> future = Future.future();
+                                                  String endpoint, boolean checkMeta) {
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", endpoint, res -> {
-      assertStatus(context, res, 201);
-      res.bodyHandler(body -> {
-        //Get the object by id
-        String id = body.toJsonObject().getString("id");
-        client.get(port, "localhost", endpoint + "/" + id, res2 -> {
-          assertStatus(context, res2, 200);
-          res2.bodyHandler(body2 -> {
-            if (checkMeta) {
-              DateFormat gmtFormat = new SimpleDateFormat(
-                "yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'");
-              Date createdDate = null;
-              try {
-                JsonObject resultOb = body2.toJsonObject();
-                JsonObject metadata = resultOb.getJsonObject("metadata");
-                if (metadata == null) {
-                  future.fail(String.format("No 'metadata' field in result: %s",
-                    body2.toString()));
-                  return;
-                }
-                createdDate = new DateTime(metadata.getString("createdDate")).toDate();
-              } catch (Exception e) {
-                future.fail(e);
-                return;
-              }
-              Date now = new Date();
-              if (!createdDate.before(now)) {
-                future.fail("metadata createdDate is not correct");
-                return;
-              }
-            }
-            //delete the object by id
-            client.delete(port, "localhost", endpoint + "/" + id, res3 -> {
-              assertStatus(context, res3, 204);
-              future.complete();
-            })
-              .putHeader("X-Okapi-Tenant", "diku")
-              .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-              .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-              .exceptionHandler(e -> {
-                future.fail(e);
-              })
-              .end();
-          });
-        })
-          .putHeader("X-Okapi-Tenant", "diku")
-          .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-          .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-          .exceptionHandler(e -> {
-            future.fail(e);
-          })
-          .end();
 
+    Map<String, String> ah = new HashMap<>();
+    ah.put("X-Okapi-Token", FAKE_TOKEN);
+
+    Future<String> f1 = post(endpoint, encode(ob), ah)
+      .map(response -> {
+        assertStatus(context, response, 201);
+
+        return response.bodyAsJsonObject().getString("id");
       });
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("Content-Type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .putHeader("X-Okapi-Token", FAKE_TOKEN)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(ob.encode());
-    return future;
+
+    //Get the object by id
+    Future<String> f2 = f1.compose(v -> getJson(context, endpoint + "/" + v))
+      .map(response -> {
+        if (checkMeta) {
+          Date createdDate = null;
+          try {
+            JsonObject metadata = response.getJsonObject("metadata");
+            if (metadata == null) {
+              fail(String.format("No 'metadata' field in result: %s",
+                response.toString()));
+            }
+            createdDate = new DateTime(metadata.getString("createdDate")).toDate();
+          } catch (Exception e) {
+            fail(e.getMessage());
+          }
+
+          Date now = new Date();
+          if (!createdDate.before(now)) {
+            fail("metadata createdDate is not correct");
+          }
+        }
+        return response.getString("id");
+      });
+
+    //delete the object by id
+    return f2.compose(id -> deleteWithNoContentStatus(context, endpoint + "/" + id));
   }
 
   private Future<Void> getGroupByInvalidUuid(TestContext context) {
     log.info("Retrieving a group by invalid uuid\n");
-    Future<Void> future = Future.future();
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", "/groups/q", res -> {
-      assertStatus(context, res, 404);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end();
-    return future;
+
+    Future<HttpResponse<Buffer>> future = get("/groups/q");
+
+    return future.map(response -> {
+      assertStatus(context, response, 404);
+      return null;
+    });
   }
 
   @Test
   public void test1Sequential(TestContext context) {
-    /**
-     * The CQL used for searching when a single j has been entered into the
-     * search slot
+    /*
+      The CQL used for searching when a single j has been entered into the
+      search slot
      */
     final String jSearch = "(((username=\"j*\" or personal.firstName=\"j*\" or "
       + "personal.lastName=\"j*\" or personal.email=\"j*\" or barcode=\"j*\" or "
@@ -1910,19 +1175,13 @@ public class RestVerticleIT {
 
     Async async = context.async();
     Future<Void> startFuture;
-    Future<Void> f1 = Future.future();
-    getEmptyUsers(context).setHandler(f1.completer());
-    startFuture = f1
-      .compose(v -> postUser(context, false))
-      .compose(v -> postCustomField(context))
+    startFuture = getEmptyUsers(context)
+      .compose(v -> postUser(false))
       .compose(v -> putUserGood(context, joeBlockId, false))
       .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(context, true))
+      .compose(v -> postUser(true))
       .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(context, true))
-      .compose(v -> postUserWithCustomFields(context))
-      .compose(v -> getUserWithCustomFields(context))
-      .compose(v -> deleteUser(context, johnRectangleId))
+      .compose(v -> postUser(true))
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
@@ -1935,7 +1194,6 @@ public class RestVerticleIT {
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
-      .compose(v -> putUserWithNotExistingCustomField(context))
       .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
       .compose(v -> putUserNotMatchingId(context))
@@ -1955,7 +1213,6 @@ public class RestVerticleIT {
       .compose(v -> postUserWithNumericName(context))
       .compose(v -> postUserWithDuplicateId(context))
       .compose(v -> postUserWithDuplicateUsername(context))
-      .compose(v -> postUserWithNotExistingCustomField(context))
       .compose(v -> postTwoUsersWithoutUsername(context))
       .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))
@@ -1967,7 +1224,6 @@ public class RestVerticleIT {
       .compose(v -> findAndGetProxyfor(context))
       .compose(v -> findAndUpdateProxyfor(context))
       .compose(v -> findAndDeleteProxyfor(context))
-      .compose(v -> deleteCustomField(context))
       .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
       .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
       .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
@@ -1987,473 +1243,6 @@ public class RestVerticleIT {
     });
   }
 
-  @Test
-  public void test2Group(TestContext context) throws Exception {
-
-    /**
-     * add a group
-     */
-    CompletableFuture<Response> addGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, fooGroupData,  new HTTPResponseHandler(addGroupCF));
-    Response addGroupResponse = addGroupCF.get(5, SECONDS);
-    context.assertEquals(addGroupResponse.code, HTTP_CREATED);
-    groupID1 = addGroupResponse.body.getString("id");
-    log.info(addGroupResponse.body
-      + "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-
-    /**
-     * update a group
-     */
-    CompletableFuture<Response> updateGroupCF = new CompletableFuture();
-    String updateGroupURL = groupUrl + "/" + groupID1;
-    send(updateGroupURL, context, PUT, barGroupData, new HTTPNoBodyResponseHandler(updateGroupCF));
-    Response updateGroupResponse = updateGroupCF.get(5, SECONDS);
-    context.assertEquals(updateGroupResponse.code, HTTP_NO_CONTENT);
-    log.info(updateGroupResponse.body
-      + "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
-
-    /**
-     * delete a group
-     */
-    CompletableFuture<Response> deleteCleanCF = new CompletableFuture();
-    String deleteCleanURL = groupUrl + "/" + groupID1;
-    send(deleteCleanURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCleanCF));
-    Response deleteCleanResponse = deleteCleanCF.get(5, SECONDS);
-    context.assertEquals(deleteCleanResponse.code, HTTP_NO_CONTENT);
-    log.info(deleteCleanResponse.body
-      + "\nStatus - " + deleteCleanResponse.code + " at " + System.currentTimeMillis() + " for " + deleteCleanURL);
-
-    /**
-     * re-add a group
-     */
-    CompletableFuture<Response> addNewGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(addNewGroupCF));
-    Response addNewGroupResponse = addNewGroupCF.get(5, SECONDS);
-    context.assertEquals(addNewGroupResponse.code, HTTP_CREATED);
-    groupID1 = addNewGroupResponse.body.getString("id");
-    log.info(addNewGroupResponse.body
-      + "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-
-    /**
-     * add a user
-     */
-    CompletableFuture<Response> addUserCF = new CompletableFuture();
-    String addUserURL = userUrl;
-    send(addUserURL, context, POST, createUser(null, "jhandley", groupID1).encode(),
-      new HTTPResponseHandler(addUserCF));
-    Response addUserResponse = addUserCF.get(5, SECONDS);
-    context.assertEquals(addUserResponse.code, HTTP_CREATED);
-    String userID = addUserResponse.body.getString("id");
-    log.info(addUserResponse.body
-      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add the same user name again
-     */
-    CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(null, "jhandley", groupID1).encode(),
-       new HTTPResponseHandler(addUserCF2));
-    Response addUserResponse2 = addUserCF2.get(5, SECONDS);
-    context.assertEquals(addUserResponse2.code, 422);
-    log.info(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add the same user again with same id
-     */
-    CompletableFuture<Response> addUserCF3 = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(userID, "jhandley", groupID1).encode(),
-       new HTTPResponseHandler(addUserCF3));
-    Response addUserResponse3 = addUserCF3.get(5, SECONDS);
-    context.assertEquals(addUserResponse3.code, 422);
-    log.info(addUserResponse3.body
-      + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add a user again with non existent patron group
-     */
-    CompletableFuture<Response> addUserCF4 = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
-       new HTTPNoBodyResponseHandler(addUserCF4));
-    Response addUserResponse4 = addUserCF4.get(5, SECONDS);
-    context.assertEquals(addUserResponse4.code, HTTP_BAD_REQUEST);
-    log.info(addUserResponse4.body
-      + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * add a user again with invalid uuid
-     */
-    CompletableFuture<Response> addUserCF4a = new CompletableFuture();
-    send(addUserURL, context, POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
-       new HTTPNoBodyResponseHandler(addUserCF4a));
-    Response addUserResponse4a = addUserCF4a.get(5, SECONDS);
-    context.assertEquals(addUserResponse4a.code, HTTP_BAD_REQUEST);
-    log.info(addUserResponse4a.body
-      + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
-
-    /**
-     * update a user again with non existent patron group
-     */
-    CompletableFuture<Response> updateUserCF = new CompletableFuture();
-    send(addUserURL + "/" + userID, context, PUT, createUser(userID, "jhandley2nd",
-      "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), new HTTPNoBodyResponseHandler(updateUserCF));
-    Response updateUserResponse = updateUserCF.get(5, SECONDS);
-    context.assertEquals(updateUserResponse.code, HTTP_BAD_REQUEST);
-    log.info(updateUserResponse.body
-      + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
-
-    /**
-     * update a user again with existent patron group
-     */
-    CompletableFuture<Response> updateUser2CF = new CompletableFuture();
-    send(addUserURL + "/" + userID, context, PUT, createUser(userID, "jhandley2nd", groupID1).encode(),
-      new HTTPNoBodyResponseHandler(updateUser2CF));
-    Response updateUser2Response = updateUser2CF.get(5, SECONDS);
-    context.assertEquals(updateUser2Response.code, HTTP_NO_CONTENT);
-    log.info(updateUser2Response.body
-      + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
-
-    /**
-     * get all users belonging to a specific group
-     */
-    CompletableFuture<Response> getUsersInGroupCF = new CompletableFuture();
-    String getUsersInGroupURL = userUrl + "?query=patronGroup==" + groupID1;
-    send(getUsersInGroupURL, context, GET, null,
-      new HTTPResponseHandler(getUsersInGroupCF));
-    Response getUsersInGroupResponse = getUsersInGroupCF.get(5, SECONDS);
-    context.assertEquals(getUsersInGroupResponse.code, HTTP_OK);
-    log.info(getUsersInGroupResponse.body
-      + "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
-      + getUsersInGroupURL);
-    context.assertTrue(isSizeMatch(getUsersInGroupResponse, 1));
-
-    /**
-     * get all groups in groups table
-     */
-    CompletableFuture<Response> getAllGroupCF = new CompletableFuture();
-    send(groupUrl, context, GET, null, new HTTPResponseHandler(getAllGroupCF));
-    Response getAllGroupResponse = getAllGroupCF.get(5, SECONDS);
-    context.assertEquals(getAllGroupResponse.code, HTTP_OK);
-    log.info(getAllGroupResponse.body
-      + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-    context.assertTrue(isSizeMatch(getAllGroupResponse, 5)); // 4 in reference + 1 in test
-
-    /**
-     * try to get via cql
-     */
-    CompletableFuture<Response> cqlCF = new CompletableFuture();
-    String cqlURL = groupUrl + "?query=group==librarianFOO";
-    send(cqlURL, context, GET, null, new HTTPResponseHandler(cqlCF));
-    Response cqlResponse = cqlCF.get(5, SECONDS);
-    context.assertEquals(cqlResponse.code, HTTP_OK);
-    log.info(cqlResponse.body
-      + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
-    context.assertTrue(isSizeMatch(cqlResponse, 1));
-
-    /**
-     * delete a group - should fail as there is a user associated with the group
-     */
-    CompletableFuture<Response> delete1CF = new CompletableFuture();
-    String delete1URL = groupUrl + "/" + groupID1;
-    send(delete1URL, context, DELETE, null, new HTTPNoBodyResponseHandler(delete1CF));
-    Response delete1Response = delete1CF.get(5, SECONDS);
-    context.assertEquals(delete1Response.code, HTTP_BAD_REQUEST);
-    log.info(delete1Response.body
-      + "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
-
-    /**
-     * delete a nonexistent group - should return 404
-     */
-    CompletableFuture<Response> deleteNEGCF = new CompletableFuture();
-    String deleteNEGURL = groupUrl + "/a492ffd2-b848-48bf-b716-1a645822279e";
-    send(deleteNEGURL, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteNEGCF));
-    Response deleteNEGResponse = deleteNEGCF.get(5, SECONDS);
-    context.assertEquals(deleteNEGResponse.code, HTTP_NOT_FOUND);
-    log.info(deleteNEGResponse.body
-      + "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
-
-    /**
-     * try to add a duplicate group
-     */
-    CompletableFuture<Response> dupCF = new CompletableFuture();
-    send(groupUrl, context, POST, fooGroupData, new HTTPResponseHandler(dupCF));
-    Response dupResponse = dupCF.get(5, SECONDS);
-    context.assertEquals(dupResponse.code, 422);
-    log.info(dupResponse.body
-      + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-
-    /**
-     * get a group
-     */
-    CompletableFuture<Response> getSpecGroupCF = new CompletableFuture();
-    String getSpecGroupURL = groupUrl + "/" + groupID1;
-    send(getSpecGroupURL, context, GET, null,  new HTTPResponseHandler(getSpecGroupCF));
-    Response getSpecGroupResponse = getSpecGroupCF.get(5, SECONDS);
-    context.assertEquals(getSpecGroupResponse.code, HTTP_OK);
-    log.info(getSpecGroupResponse.body
-      + "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
-    context.assertTrue("librarianFOO".equals(getSpecGroupResponse.body.getString("group")));
-
-    /**
-     * get a group bad id
-     */
-    CompletableFuture<Response> getBadIDCF = new CompletableFuture();
-    String getBadIDURL = groupUrl + "/3748ec8d-8dbc-4717-819d-87c839e6905e";
-    send(getBadIDURL, context, GET, null, new HTTPNoBodyResponseHandler(getBadIDCF));
-    Response getBadIDResponse = getBadIDCF.get(5, SECONDS);
-    context.assertEquals(getBadIDResponse.code, HTTP_NOT_FOUND);
-    log.info(getBadIDResponse.body
-      + "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
-
-    /**
-     * delete a group with users should fail
-     */
-    CompletableFuture<Response> deleteCF = new CompletableFuture();
-    String delete = groupUrl + "/" + groupID1;
-    send(delete, context, DELETE, null, new HTTPNoBodyResponseHandler(deleteCF));
-    Response deleteResponse = deleteCF.get(5, SECONDS);
-    context.assertEquals(deleteResponse.code, HTTP_BAD_REQUEST);
-    log.info(deleteResponse.body
-      + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
-
-    /* Create a user with a past-due expiration date */
-    UUID expiredUserId = UUID.randomUUID();
-    {
-      Date now = new Date();
-      Date pastDate = new Date(now.getTime() - (10 * 24 * 60 * 60 * 1000));
-      String dateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(pastDate);
-      JsonObject expiredUserJson = new JsonObject()
-        .put("id", expiredUserId.toString())
-        .put("username", "bmoses")
-        .put("patronGroup", groupID1)
-        .put("active", true)
-        .put("expirationDate", dateString)
-        .put("personal", new JsonObject()
-          .put("lastName", "Brown")
-          .put("firstName", "Moses")
-        );
-      CompletableFuture<Response> addExpiredUserCF = new CompletableFuture();
-      send(addUserURL, context, POST, expiredUserJson.encode(), new HTTPResponseHandler(addExpiredUserCF));
-      Response addExpiredUserResponse = addExpiredUserCF.get(5, SECONDS);
-      log.info(addExpiredUserResponse.body
-        + "\nStatus - " + addExpiredUserResponse.code + " at "
-        + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
-      context.assertEquals(addExpiredUserResponse.code, 201);
-      CompletableFuture<Void> getExpirationCF = new CompletableFuture();
-      ExpirationTool.doExpirationForTenant(vertx, vertxContext, "diku").setHandler(res -> {
-        getExpirationCF.complete(null);
-      });
-      getExpirationCF.get(5, SECONDS);
-      //TimeUnit.SECONDS.sleep(15);
-      CompletableFuture<Response> getExpiredUserCF = new CompletableFuture();
-      send(addUserURL + "/" + expiredUserId.toString(), context, GET, null,
-         new HTTPResponseHandler(getExpiredUserCF));
-      Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
-      context.assertEquals(getExpiredUserResponse.body.getBoolean("active"), false);
-    }
-  }
-
-  @Test
-  public void test3CrossTableQueries(TestContext context) throws Exception {
-    String url = HTTP_LOCALHOST + port + "/users?query=";
-
-    CompletableFuture<Response> postGroupCF = new CompletableFuture();
-    send(groupUrl, context, POST, barGroupData,  new HTTPResponseHandler(postGroupCF));
-    Response postGroupResponse = postGroupCF.get(5, SECONDS);
-    context.assertEquals(postGroupResponse.code, HTTP_CREATED);
-    String barGroupId = postGroupResponse.body.getString("id");
-    context.assertNotNull(barGroupId);
-
-    int inc = 0;
-    CompletableFuture<Response> addUserCF = new CompletableFuture();
-    send(userUrl, context, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-       new HTTPResponseHandler(addUserCF));
-    Response addUserResponse = addUserCF.get(5, SECONDS);
-    context.assertEquals(addUserResponse.code, HTTP_CREATED);
-    log.info(addUserResponse.body
-      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
-    CompletableFuture<Response> addUserCF2 = new CompletableFuture();
-    send(userUrl, context, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-        new HTTPResponseHandler(addUserCF2));
-    Response addUserResponse2 = addUserCF2.get(5, SECONDS);
-    context.assertEquals(addUserResponse2.code, HTTP_CREATED);
-    log.info(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
-    //query on users and sort by groups
-    String url0 = userUrl;
-    String url1 = url + urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
-    //String url1 = userUrl;
-    String url2 = url + urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
-    //query and sort on groups via users endpoint
-    String url3 = url + urlEncode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending");
-    //query on users sort on users and groups
-    String url4 = url + urlEncode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName");
-    //query on users and groups sort by groups
-    String url5 = url + urlEncode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group");
-    //query on users and sort by users
-    String url6 = url + urlEncode("active=true sortBy username", "UTF-8");
-    //non existant group - should be 0 results
-    String url7 = url + urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
-    //query by tag, should get one record
-    String url8 = url + urlEncode("tags=foo");
-
-    CompletableFuture<Response> cqlCF0 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF1 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF2 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF3 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF4 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF5 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF6 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF7 = new CompletableFuture();
-    CompletableFuture<Response> cqlCF8 = new CompletableFuture();
-
-    String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7, url8};
-    CompletableFuture<Response>[] cqlCF = new CompletableFuture[]{cqlCF0, cqlCF1, cqlCF2, cqlCF3, cqlCF4, cqlCF5, cqlCF6, cqlCF7, cqlCF8};
-
-    for (int i = 0; i < 9; i++) {
-      CompletableFuture<Response> cf = cqlCF[i];
-      String cqlURL = urls[i];
-      send(cqlURL, context, GET, null,  new HTTPResponseHandler(cf));
-      Response cqlResponse = cf.get(5, SECONDS);
-      context.assertEquals(cqlResponse.code, HTTP_OK);
-      log.info(cqlResponse.body
-        + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
-      //requests should usually have 3 or 4 results
-      switch (i) {
-        case 8:
-          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
-          break;
-        case 7:
-          context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
-          break;
-        case 6:
-          context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
-          break;
-        case 5:
-          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
-          break;
-        case 1:
-          context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 1);
-          context.assertEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-          break;
-        case 2:
-          context.assertNotEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
-          break;
-        case 4:
-          context.assertTrue(((String) (new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))).startsWith("Triangle"));
-          break;
-        case 0:
-          //Baseline test
-          int totalRecords = cqlResponse.body.getInteger("totalRecords");
-          context.assertTrue(totalRecords > 3, "totalRecords = " + totalRecords + " > 3");
-          break;
-        default:
-          context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
-          break;
-      }
-    }
-  }
-
-  private void send(String url, TestContext context, HttpMethod method, String content, Handler<HttpClientResponse> handler) {
-    HttpClient client = vertx.createHttpClient();
-    HttpClientRequest request;
-    if (content == null) {
-      content = "";
-    }
-    Buffer buffer = Buffer.buffer(content);
-
-    if (method == POST) {
-      request = client.postAbs(url);
-    } else if (method == DELETE) {
-      request = client.deleteAbs(url);
-    } else if (method == GET) {
-      request = client.getAbs(url);
-    } else {
-      request = client.putAbs(url);
-    }
-    request.exceptionHandler(error -> {
-      context.fail(error.getMessage());
-    })
-      .handler(handler);
-    //request.putHeader("Authorization", "diku");
-    request.putHeader("x-okapi-tenant", "diku");
-    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_JSON_DEF);
-    request.putHeader("Accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF);
-    request.putHeader("Content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF);
-    request.end(buffer);
-  }
-
-  class HTTPResponseHandler implements Handler<HttpClientResponse> {
-
-    CompletableFuture<Response> event;
-
-    public HTTPResponseHandler(CompletableFuture<Response> cf) {
-      event = cf;
-    }
-
-    @Override
-    public void handle(HttpClientResponse hcr) {
-      hcr.bodyHandler(bh -> {
-        Response r = new Response();
-        r.code = hcr.statusCode();
-        r.body = bh.toJsonObject();
-        event.complete(r);
-      });
-    }
-  }
-
-  class HTTPNoBodyResponseHandler implements Handler<HttpClientResponse> {
-
-    CompletableFuture<Response> event;
-
-    public HTTPNoBodyResponseHandler(CompletableFuture<Response> cf) {
-      event = cf;
-    }
-
-    @Override
-    public void handle(HttpClientResponse hcr) {
-      Response r = new Response();
-      r.code = hcr.statusCode();
-      event.complete(r);
-    }
-  }
-
-  class Response {
-
-    int code;
-    JsonObject body;
-  }
-
-  private boolean isSizeMatch(Response r, int size) {
-    if (r.body.getInteger("totalRecords") == size) {
-      return true;
-    }
-    return false;
-  }
-
-  private static int userInc = 0;
-
-  private static JsonObject createUser(String id, String name, String pgId) {
-    userInc++;
-    JsonObject user = new JsonObject();
-    if (id != null) {
-      user.put("id", id);
-    } else {
-      id = UUID.randomUUID().toString();
-      user.put("id", id);
-    }
-    user.put("username", name);
-    user.put("patronGroup", pgId);
-    user.put("active", true);
-    user.put("personal", new JsonObject()
-      .put("lastName", "Triangle" + userInc)
-      .put("firstName", "Jack" + userInc)
-    );
-    return user;
-  }
-
   private static String makeFakeJWT(String username, String id, String tenant) {
     JsonObject header = new JsonObject()
       .put("alg", "HS512");
@@ -2471,31 +1260,11 @@ public class RestVerticleIT {
   }
 
   @Test
-  public void test4CustomFields(TestContext context) {
-
-    Async async = context.async();
-    postCustomField(context)
-      .compose(v -> putCustomField(context))
-      .compose(v -> queryCustomField(context)).compose(this::assertCustomFieldValues)
-      .compose(v -> deleteCustomField(context))
-      .setHandler(res -> {
-        if (res.succeeded()) {
-          async.complete();
-        } else {
-          res.cause().printStackTrace();
-          context.fail(res.cause());
-        }
-    });
-  }
-
-  @Test
   public void test5UserName(TestContext context) {
     Async async = context.async();
-    postCustomField(context)
-      .compose(v -> postUserWithWhitespace(context))
+    postUserWithWhitespace(context)
       .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), DEFAULT_LIMIT, "user name"))
       .compose(v -> deleteUser(context, userIdWithWhitespace))
-      .compose(v -> deleteCustomField(context))
       .setHandler(res -> {
         if (res.succeeded()) {
           async.complete();
@@ -2508,133 +1277,18 @@ public class RestVerticleIT {
 
   private Future<Void> postUserWithWhitespace(TestContext context) {
     log.info("Creating a user with a numeric name\n");
-    Future<Void> future = Future.future();
-    JsonObject userObject = new JsonObject()
+
+    JsonObject user = new JsonObject()
       .put("username", " user name ")
       .put("id", userIdWithWhitespace)
       .put("active", true);
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", "/users", res -> {
-      assertStatus(context, res, 201);
-      future.complete();
-    })
-      .putHeader("X-Okapi-Tenant", "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(e -> {
-        future.fail(e);
-      })
-      .end(userObject.encode());
-    return future;
+
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 201);
+      return null;
+    });
   }
 
-  private Future<Void> assertCustomFieldValues(JsonObject result) {
-    Future<Void> future = Future.succeededFuture();
-    int totalRecords = result.getInteger("totalRecords");
-    if (totalRecords != 1) {
-      future.fail("Expected 1 record, got " + totalRecords);
-    }
-    JsonArray customFields = result.getJsonArray("customFields");
-    JsonObject customField = customFields.getJsonObject(0);
-    assertThat(customField.getString("entityType"), is("user"));
-    return future;
-  }
-
-  private Future<Void> deleteCustomField(TestContext context) {
-    log.info("Deleting existing custom field\n");
-    Future<Void> future = Future.future();
-    deleteWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId);
-    return future;
-  }
-
-  private Future<JsonObject> queryCustomField(TestContext context) {
-    String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
-    log.info("Getting custom field via CQL, by entityType\n");
-    Future<JsonObject> future = Future.future();
-    try {
-      getByQuery(context, requestUrl, future);
-    } catch (Exception e) {
-      future.fail(e);
-    }
-    return future;
-  }
-
-  private void getByQuery(TestContext context, String requestUrl, Future<JsonObject> future) {
-    HttpClient client = vertx.createHttpClient();
-    client.get(port, "localhost", requestUrl, res -> {
-      assertStatus(context, res, HTTP_OK);
-      res.bodyHandler(buf -> {
-        try {
-          JsonObject resultObject = buf.toJsonObject();
-            future.complete(resultObject);
-        } catch (Exception e) {
-          future.fail(e);
-        }
-      });
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(future::fail)
-      .end();
-  }
-
-  private Future<Void> postCustomField(TestContext context) {
-    log.info("Creating a new custom field definition\n");
-    Future<Void> future = Future.future();
-    postWithOkStatus(future, customFieldsPath, postCustomField);
-    return future;
-  }
-
-  private Future<Void> putCustomField(TestContext context) {
-    log.info("Update custom field definition\n");
-    Future<Void> future = Future.future();
-    return putWithNoContentStatus(context, future, customFieldsPath + "/" + customFieldId, putCustomField);
-  }
-
-  private void postWithOkStatus(Future<Void> future, String request, String body) {
-    HttpClient client = vertx.createHttpClient();
-    client.post(port, "localhost", request, res -> {
-      if (res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE) {
-        future.complete();
-      } else {
-        future.fail("Got status code: " + res.statusCode());
-      }
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", HTTP_LOCALHOST + port)
-      .putHeader(OKAPI_USERID_HEADER, joeBlockId)
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .exceptionHandler(future::fail)
-      .end(body);
-  }
-
-  private Future<Void> putWithNoContentStatus(TestContext context, Future<Void> future, String request, String body) {
-    HttpClient client = vertx.createHttpClient();
-    client.put(port, "localhost", request, res -> {
-      assertStatus(context, res, HTTP_NO_CONTENT);
-      future.complete();
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", HTTP_LOCALHOST + port)
-      .putHeader(OKAPI_USERID_HEADER, joeBlockId)
-      .putHeader("content-type", SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .exceptionHandler(future::fail)
-      .end(body);
-    return future;
-  }
-
-  private void deleteWithNoContentStatus(TestContext context, Future<Void> future, String request) {
-    HttpClient client = vertx.createHttpClient();
-    client.delete(port, "localhost", request, res -> {
-      assertStatus(context, res, HTTP_NO_CONTENT);
-      future.complete();
-    })
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("accept", "*/*")
-      .exceptionHandler(future::fail)
-      .end();
-  }
 }
