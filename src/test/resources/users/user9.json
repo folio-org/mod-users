@@ -1,0 +1,17 @@
+{
+  "username": "mockuser9",
+  "id": "99999999-9999-4999-9999-999999999999",
+  "active": true,
+  "type": "patron",
+  "meta": {
+    "creation_date": "2016-11-05T0723",
+    "last_login_date": ""
+  },
+  "personal": {
+    "lastName": "Mockerson",
+    "middleName": "M.",
+    "firstName": "Mockey",
+    "email": "mock@biglibrary.org",
+    "phone": "2125551212"
+  }
+}
