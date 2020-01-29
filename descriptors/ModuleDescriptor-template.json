@@ -118,7 +118,7 @@
     },
     {
       "id": "custom-fields",
-      "version": "1.1",
+      "version": "1.2",
       "interfaceType" : "multiple",
       "handlers": [
         {
@@ -140,6 +140,11 @@
           "methods": ["PUT"],
           "pathPattern": "/custom-fields/{id}",
           "permissionsRequired": ["user-settings.custom-fields.item.put"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/custom-fields",
+          "permissionsRequired": ["user-settings.custom-fields.collection.put"]
         },
         {
           "methods": ["DELETE"],
@@ -170,6 +175,11 @@
       "permissionName" : "users.collection.get",
       "displayName" : "users collection get",
       "description" : "Get a collection of user records"
+    },
+    {
+      "permissionName": "user-settings.custom-fields.collection.put",
+      "displayName": "Custom Fields - put collection",
+      "description": "Put Custom Fields collection"
     },
     {
       "permissionName" : "users.item.get",
@@ -340,6 +350,7 @@
       "description": "Entire set of permissions needed to use the user custom fields",
       "subPermissions": [
         "user-settings.custom-fields.collection.get",
+        "user-settings.custom-fields.collection.put",
         "user-settings.custom-fields.item.post",
         "user-settings.custom-fields.item.get",
         "user-settings.custom-fields.item.put",
