@@ -30,7 +30,7 @@ import org.folio.test.util.TestBase;
 @RunWith(VertxUnitRunner.class)
 public class CustomFieldStatisticsTest extends TestBase {
 
-  private static final String STUB_FIELD_ID = "11111111-1111-1111-a111-111111111111";
+  private static final String FAKE_FIELD_ID = "11111111-1111-1111-a111-111111111111";
 
   private static final Header USER8 = new Header(XOkapiHeaders.USER_ID, "88888888-8888-4888-8888-888888888888");
 
@@ -83,8 +83,8 @@ public class CustomFieldStatisticsTest extends TestBase {
   }
 
   @Test
-  public void shouldFailIfFieldNotExist() {
-    getWithStatus(CUSTOM_FIELDS_PATH + "/" + STUB_FIELD_ID + "/stats", SC_NOT_FOUND);
+  public void shouldFailIfFieldDoesntExist() {
+    getWithStatus(CUSTOM_FIELDS_PATH + "/" + FAKE_FIELD_ID + "/stats", SC_NOT_FOUND);
   }
 
 }

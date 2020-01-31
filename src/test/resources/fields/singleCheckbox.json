@@ -1,0 +1,12 @@
+{
+  "name": "Is student",
+  "visible": true,
+  "required": true,
+  "type": "SINGLE_CHECKBOX",
+  "entityType": "user",
+  "helpText": "Check if user is a student",
+  "order": 2,
+  "checkboxField" : {
+    "default" : true
+  }
+}
