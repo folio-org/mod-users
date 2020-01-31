@@ -1,0 +1,8 @@
+{
+  "id": "3d7c52dc-c732-4223-8bf8-e5917801386f",
+  "name": "Maximum number of items charged out",
+  "blockBorrowingsFlag": "false",
+  "blockRenewalsFlag": "false",
+  "blockRequestsFlag": "false",
+  "message": "The maximum number of charged out items has been reached"
+}

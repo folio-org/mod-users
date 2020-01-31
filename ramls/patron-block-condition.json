@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Patron block conditions schema",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "A UUID identifying the condition",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "name": {
+      "type": "string",
+      "description": "The name of the condition"
+    },
+    "blockBorrowingsFlag": {
+      "type": "string",
+      "description": "This flag indicates the block for borrowing"
+    },
+    "blockRenewalsFlag": {
+      "type": "string",
+      "description": "This flag indicates the block for renewals"
+    },
+    "blockRequestsFlag": {
+      "type": "string",
+      "description": "This flag indicates the block for requests"
+    },
+    "message ": {
+      "type": "string",
+      "description": "A message to be displayed"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about creation and changes to patron block conditions, provided by the server (client should not provide)",
+      "$ref": "raml-util/schemas/metadata.schema"
+    }
+  },
+  "required": [
+    "id",
+    "name"
+  ]
+}
