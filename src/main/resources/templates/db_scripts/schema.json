@@ -178,6 +178,10 @@
           "tOps" : "ADD"
         }
       ]
+    },
+    {
+      "tableName" : "patron_blocks_conditions",
+      "withMetadata" : true
     }
   ],
   "views" : [
