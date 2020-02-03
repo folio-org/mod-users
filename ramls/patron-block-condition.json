@@ -12,16 +12,16 @@
       "type": "string",
       "description": "The name of the condition"
     },
-    "blockBorrowingsFlag": {
-      "type": "string",
+    "blockBorrowing": {
+      "type": "boolean",
       "description": "This flag indicates the block for borrowing"
     },
-    "blockRenewalsFlag": {
-      "type": "string",
+    "blockRenewals": {
+      "type": "boolean",
       "description": "This flag indicates the block for renewals"
     },
-    "blockRequestsFlag": {
-      "type": "string",
+    "blockRequests": {
+      "type": "boolean",
       "description": "This flag indicates the block for requests"
     },
     "message ": {

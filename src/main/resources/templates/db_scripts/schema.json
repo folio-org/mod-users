@@ -180,7 +180,7 @@
       ]
     },
     {
-      "tableName" : "patron_blocks_conditions",
+      "tableName" : "patron_block_conditions",
       "withMetadata" : true
     }
   ],

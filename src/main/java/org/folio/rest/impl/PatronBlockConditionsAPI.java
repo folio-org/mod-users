@@ -14,14 +14,14 @@ import io.vertx.core.Handler;
 
 public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
-  private static final String PATRON_BLOCKS_CONDITIONS = "patron_blocks_conditions";
+  private static final String PATRON_BLOCK_CONDITIONS = "patron_block_conditions";
 
   @Override
   public void getPatronBlockConditions(int offset, int limit, String query,
     String lang, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    PgUtil.get(PATRON_BLOCKS_CONDITIONS, PatronBlockCondition.class,
+    PgUtil.get(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class,
       org.folio.rest.jaxrs.model.PatronBlockConditions.class, query, offset, limit,
       okapiHeaders, vertxContext, GetPatronBlockConditionsResponse.class, asyncResultHandler);
   }
@@ -31,7 +31,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    PgUtil.post(PATRON_BLOCKS_CONDITIONS, entity, okapiHeaders, vertxContext,
+    PgUtil.post(PATRON_BLOCK_CONDITIONS, entity, okapiHeaders, vertxContext,
       PostPatronBlockConditionsResponse.class, asyncResultHandler);
   }
 
@@ -41,7 +41,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    PgUtil.put(PATRON_BLOCKS_CONDITIONS, entity, patronBlockConditionId, okapiHeaders,
+    PgUtil.put(PATRON_BLOCK_CONDITIONS, entity, patronBlockConditionId, okapiHeaders,
       vertxContext, PutPatronBlockConditionsByPatronBlockConditionIdResponse.class, asyncResultHandler);
   }
 
@@ -50,7 +50,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     String patronBlockConditionId, String lang, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    PgUtil.getById(PATRON_BLOCKS_CONDITIONS, PatronBlockCondition.class, patronBlockConditionId,
+    PgUtil.getById(PATRON_BLOCK_CONDITIONS, PatronBlockCondition.class, patronBlockConditionId,
       okapiHeaders, vertxContext, GetPatronBlockConditionsByPatronBlockConditionIdResponse.class,
       asyncResultHandler);
   }
@@ -61,7 +61,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    PgUtil.deleteById(PATRON_BLOCKS_CONDITIONS, patronBlockConditionId, okapiHeaders,
+    PgUtil.deleteById(PATRON_BLOCK_CONDITIONS, patronBlockConditionId, okapiHeaders,
       vertxContext, DeletePatronBlockConditionsByPatronBlockConditionIdResponse.class,
       asyncResultHandler);
   }
