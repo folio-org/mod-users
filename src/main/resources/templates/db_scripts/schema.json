@@ -178,6 +178,10 @@
           "tOps" : "ADD"
         }
       ]
+    },
+    {
+      "tableName" : "patron_block_limits",
+      "withMetadata" : true
     }
   ],
   "views" : [
