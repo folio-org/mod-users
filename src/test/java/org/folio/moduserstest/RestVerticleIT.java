@@ -1297,7 +1297,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getPatronBlockConditions(TestContext context) {
-    log.info("Getting patron blocks conditions\n");
+    log.info("Getting patron blocks conditions");
 
     Future<JsonObject> future = getJson(context, "/patron-block-conditions");
 
@@ -1311,7 +1311,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> getPatronBlockCondition(TestContext context, String id) {
-    log.info("Getting patron blocks condition\n");
+    log.info("Getting patron blocks condition");
 
     Future<JsonObject> future = getJson(context, "/patron-block-conditions/"
       + id);
@@ -1326,8 +1326,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> putPatronBlockCondition(TestContext context, String id) {
-    log.info("Trying to update patron block condition \n");
-
+    log.info("Trying to update patron block condition");
 
     JsonObject jsonObject = new JsonObject()
       .put("id", id)
@@ -1343,7 +1342,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> deletePatronBlockCondition(TestContext context, String id) {
-    log.info("Deleting Patron Block Condition \n");
+    log.info("Deleting Patron Block Condition");
 
     Future<HttpResponse<Buffer>> future = delete("/patron-block-conditions/"
       + id);
