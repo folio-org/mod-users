@@ -1330,7 +1330,11 @@ public class RestVerticleIT {
 
     JsonObject jsonObject = new JsonObject()
       .put("id", id)
-      .put("name", "Maximum number of items charged out");
+      .put("name", "Maximum number of items charged out")
+      .put("blockBorrowing", false)
+      .put("blockRenewals", false)
+      .put("blockRequests", false)
+      .put("valueType", "Integer");
 
     Future<HttpResponse<Buffer>> future = put("/patron-block-conditions/"
       + id, encode(jsonObject));

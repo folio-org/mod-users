@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.resource.PatronBlockConditions;
 import org.folio.rest.persist.PgUtil;
@@ -16,6 +17,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
   private static final String PATRON_BLOCK_CONDITIONS = "patron_block_conditions";
 
+  @Validate
   @Override
   public void getPatronBlockConditions(int offset, int limit, String query,
     String lang, Map<String, String> okapiHeaders,
@@ -26,6 +28,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       okapiHeaders, vertxContext, GetPatronBlockConditionsResponse.class, asyncResultHandler);
   }
 
+  @Validate
   @Override
   public void postPatronBlockConditions(String lang, PatronBlockCondition entity,
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
@@ -35,6 +38,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       PostPatronBlockConditionsResponse.class, asyncResultHandler);
   }
 
+  @Validate
   @Override
   public void putPatronBlockConditionsByPatronBlockConditionId(
     String patronBlockConditionId, String lang, PatronBlockCondition entity,
@@ -45,6 +49,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       vertxContext, PutPatronBlockConditionsByPatronBlockConditionIdResponse.class, asyncResultHandler);
   }
 
+  @Validate
   @Override
   public void getPatronBlockConditionsByPatronBlockConditionId(
     String patronBlockConditionId, String lang, Map<String, String> okapiHeaders,
@@ -55,6 +60,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       asyncResultHandler);
   }
 
+  @Validate
   @Override
   public void deletePatronBlockConditionsByPatronBlockConditionId(
     String patronBlockConditionId, String lang, Map<String,

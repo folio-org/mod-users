@@ -6,6 +6,7 @@
       "blockBorrowings": false,
       "blockRenewals": true,
       "blockRequests": false,
+      "valueType": "Integer",
       "message": "The maximum number of charged out items has been reached"
     },
     {
@@ -14,6 +15,7 @@
       "blockBorrowings": true,
       "blockRenewals": true,
       "blockRequests": true,
+      "valueType": "Integer",
       "message": "The maximum number of lost items has been reached"
     },
     {
@@ -22,6 +24,7 @@
       "blockBorrowings": true,
       "blockRenewals": true,
       "blockRequests": true,
+      "valueType": "Integer",
       "message": "The maximum number of overdue items has been reached"
     },
     {
@@ -30,6 +33,7 @@
       "blockBorrowings": false,
       "blockRenewals": false,
       "blockRequests": false,
+      "valueType": "Integer",
       "message": "The maximum number of overdue recalls has been reached"
     },
     {
@@ -38,6 +42,7 @@
       "blockBorrowings": false,
       "blockRenewals": false,
       "blockRequests": false,
+      "valueType": "Double",
       "message": "The maximum outstanding fee/fine balance has been reached"
     },
     {
@@ -46,6 +51,7 @@
       "blockBorrowings": false,
       "blockRenewals": false,
       "blockRequests": false,
+      "valueType": "Integer",
       "message": "The recall overdue by maximum number of days has been reached"
     }
   ],

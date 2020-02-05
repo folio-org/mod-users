@@ -4,5 +4,6 @@
   "blockBorrowing": false,
   "blockRenewals": false,
   "blockRequests": false,
+  "valueType": "Double",
   "message": ""
 }

@@ -24,6 +24,14 @@
       "type": "boolean",
       "description": "This flag indicates the block for requests"
     },
+    "valueType": {
+      "type": "string",
+      "description": "Defines limit type",
+      "enum": [
+        "Integer",
+        "Double"
+      ]
+    },
     "message ": {
       "type": "string",
       "description": "A message to be displayed"
@@ -36,6 +44,10 @@
   },
   "required": [
     "id",
-    "name"
+    "name",
+    "blockBorrowing",
+    "blockRenewals",
+    "blockRequests",
+    "valueType"
   ]
 }

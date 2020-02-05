@@ -4,5 +4,6 @@
   "blockBorrowings": false,
   "blockRenewals": false,
   "blockRequests": false,
+  "valueType": "Integer",
   "message": "The maximum number of charged out items has been reached"
 }
