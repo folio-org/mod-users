@@ -70,7 +70,6 @@ public class RestVerticleIT {
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
 
   private static final String FAKE_TOKEN = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
-  private static final String MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID = "72b67965-5b73-4840-bc0b-be8f3f6e047e";
   private static final int DEFAULT_LIMIT = 10;
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
@@ -1227,11 +1226,7 @@ public class RestVerticleIT {
       .compose(v -> findAndDeleteProxyfor(context))
       .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
       .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
-      .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true))
-      .compose(v -> getPatronBlockConditions(context))
-      .compose(v -> getPatronBlockCondition(context, MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID))
-      .compose(v -> putPatronBlockCondition(context, MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID))
-      .compose(v -> deletePatronBlockCondition(context, MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID));
+      .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
 
     // It hung after 5-12 invocations. MODUSERS-100
     for (int i = 0; i < 25; i++) {
@@ -1292,67 +1287,6 @@ public class RestVerticleIT {
 
     return future.map(response -> {
       assertStatus(context, response, 201);
-      return null;
-    });
-  }
-
-  private Future<Void> getPatronBlockConditions(TestContext context) {
-    log.info("Getting patron blocks conditions");
-
-    Future<JsonObject> future = getJson(context, "/patron-block-conditions");
-
-    return future.map(proxies -> {
-      JsonArray patronBlockConditions = proxies.getJsonArray("patronBlockConditions");
-      if (patronBlockConditions.size() != 6) {
-        fail("Expected 6 entries, found " + patronBlockConditions.size());
-      }
-      return null;
-    });
-  }
-
-  private Future<Void> getPatronBlockCondition(TestContext context, String id) {
-    log.info("Getting patron blocks condition");
-
-    Future<JsonObject> future = getJson(context, "/patron-block-conditions/"
-      + id);
-
-    return future.map(proxies -> {
-      String actualId = proxies.getString("id");
-      if (!id.equals(actualId)) {
-        fail("Expected object was not found, found: " + actualId);
-      }
-      return null;
-    });
-  }
-
-  private Future<Void> putPatronBlockCondition(TestContext context, String id) {
-    log.info("Trying to update patron block condition");
-
-    JsonObject jsonObject = new JsonObject()
-      .put("id", id)
-      .put("name", "Maximum number of items charged out")
-      .put("blockBorrowing", false)
-      .put("blockRenewals", false)
-      .put("blockRequests", false)
-      .put("valueType", "Integer");
-
-    Future<HttpResponse<Buffer>> future = put("/patron-block-conditions/"
-      + id, encode(jsonObject));
-
-    return future.map(response -> {
-      assertStatus(context, response, 204);
-      return null;
-    });
-  }
-
-  private Future<Void> deletePatronBlockCondition(TestContext context, String id) {
-    log.info("Deleting Patron Block Condition");
-
-    Future<HttpResponse<Buffer>> future = delete("/patron-block-conditions/"
-      + id);
-
-    return future.map(response -> {
-      assertStatus(context, response, 204);
       return null;
     });
   }
