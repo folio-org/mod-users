@@ -27,17 +27,17 @@ public class RecordServiceImpl implements RecordService {
 
   @Override
   public Future<CustomFieldStatistic> retrieveStatistic(CustomField field, String tenantId) {
-    logger.info("Retrieving custom field statistic: field = {0}", field);
+    logger.info("Retrieving custom field statistic: field = {}", field);
 
     return repository.retrieveStatisticForField(field, tenantId);
   }
 
   @Override
   public Future<Void> deleteAllValues(CustomField field, String tenantId) {
-    logger.info("Removing custom field values from user records: field = {0}", field);
+    logger.info("Removing custom field values from user records: field = {}", field);
 
     Future<List<User>> related = repository.findUsersByField(field, tenantId)
-      .onSuccess(users -> logger.info("The number of users found with the given field: {0}", users.size()));
+      .onSuccess(users -> logger.info("The number of users found with the given field: {}", users.size()));
 
     return related.compose(users -> removeCustomFieldFromUsers(users, field, tenantId));
   }
@@ -51,7 +51,7 @@ public class RecordServiceImpl implements RecordService {
       updated = updated
         .compose(v -> repository.updateUser(user, tenantId))
         .map(found -> {
-          logger.debug("Field removed from user: refId = {0}, value = {1}, userName = {2}",
+          logger.debug("Field removed from user: refId = {}, value = {}, userName = {}",
             field.getRefId(), removedValue, user.getUsername());
           return null;
         });

@@ -435,6 +435,11 @@
                https://issues.apache.org/jira/browse/SUREFIRE-1588
           -->
           <useSystemClassLoader>false</useSystemClassLoader>
+          <systemPropertyVariables>
+            <vertx.logger-delegate-factory-class-name>
+              io.vertx.core.logging.Log4j2LogDelegateFactory
+            </vertx.logger-delegate-factory-class-name>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
     </plugins>
