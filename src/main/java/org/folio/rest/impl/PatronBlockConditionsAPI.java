@@ -13,7 +13,6 @@ import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.resource.PatronBlockConditions;
 import org.folio.rest.jaxrs.resource.Proxiesfor;
 import org.folio.rest.persist.PgUtil;
-import org.folio.rest.tools.utils.ValidationHelper;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
