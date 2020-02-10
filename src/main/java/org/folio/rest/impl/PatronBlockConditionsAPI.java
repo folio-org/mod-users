@@ -1,6 +1,7 @@
 package org.folio.rest.impl;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 
 import java.util.Map;
 
@@ -95,15 +96,13 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
   private Errors isEntityValid(PatronBlockCondition entity, Handler<AsyncResult<Response>> asyncResultHandler) {
     Errors errors = null;
     if (!isEntityMessageValid(entity)) {
-      errors = ValidationHelper.createValidationErrorMessage(
-        "message", entity.getId(),
-        " Message to be displayed is a required field if one or more blocked actions selected");
+      errors = createValidationErrorMessage("message", entity.getId(),
+        "Message to be displayed is a required field if one or more blocked actions selected");
       asyncResultHandler.handle(Future.succeededFuture(
         Proxiesfor.PostProxiesforResponse.respond422WithApplicationJson(errors)));
     }
     if (!isActionFlagValid(entity)) {
-      errors = ValidationHelper.createValidationErrorMessage(
-        "proxyFor", entity.getId(),
+      errors = createValidationErrorMessage("proxyFor", entity.getId(),
         "One or more blocked actions must be selected for message to be displayed to be used");
       asyncResultHandler.handle(Future.succeededFuture(
         Proxiesfor.PostProxiesforResponse.respond422WithApplicationJson(errors)));
