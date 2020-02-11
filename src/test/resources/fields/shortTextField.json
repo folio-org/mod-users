@@ -6,8 +6,5 @@
   "required": true,
   "entityType": "user",
   "helpText": "Provide a department",
-  "order": 1,
-  "textField": {
-    "maxSize": 100
-  }
+  "order": 1
 }

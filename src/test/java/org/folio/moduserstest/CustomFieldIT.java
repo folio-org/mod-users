@@ -69,8 +69,7 @@ public class CustomFieldIT {
     "\"helpText\": \"Provide a department\", " +
     "\"entityType\": \"user\", " +
     "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": { \"maxSize\": 150 }}";
+    "\"order\": 1 }";
   private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
     "\"name\": \"Department updated\", " +
     "\"visible\": false, " +
@@ -78,8 +77,7 @@ public class CustomFieldIT {
     "\"helpText\": \"Provide a department\", " +
     "\"entityType\": \"user\", " +
     "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": {   \"maxSize\": 250 }}";
+    "\"order\": 1 }";
 
 
   @Rule
