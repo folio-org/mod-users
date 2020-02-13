@@ -4,12 +4,14 @@ import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.test.util.TestUtil.readFile;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
@@ -100,9 +102,13 @@ public class PatronBlockConditionsAPITest extends TestBase {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
       +"/max_number_of_lost_items_no_message.json");
-    postWithStatus(PATRON_BLOCK_CONDITIONS_URL, maxNumberOfLostItems,
+    PatronBlockCondition response = postWithStatus(PATRON_BLOCK_CONDITIONS_URL, maxNumberOfLostItems,
       SC_UNPROCESSABLE_ENTITY, USER_ID)
       .as(PatronBlockCondition.class);
+
+    List<Map<String, Object>> errors =  (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
+    String message = (String) errors.get(0).get("message");
+    assertThat(message, is("Message to be displayed is a required field if one or more blocked actions selected"));
   }
 
   @Test
@@ -111,8 +117,12 @@ public class PatronBlockConditionsAPITest extends TestBase {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
       +"/max_number_of_lost_items_no_message.json");
-    putWithStatus(PATRON_BLOCK_CONDITIONS_URL + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID,
-      maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID);
+    PatronBlockCondition response = putWithStatus(PATRON_BLOCK_CONDITIONS_URL
+        + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID)
+      .as(PatronBlockCondition.class);
+    List<Map<String, Object>> errors =  (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
+    String message = (String) errors.get(0).get("message");
+    assertThat(message, is("Message to be displayed is a required field if one or more blocked actions selected"));
   }
 
   @Test
@@ -121,9 +131,12 @@ public class PatronBlockConditionsAPITest extends TestBase {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
       +"/max_number_of_lost_items_no_flat_set_to_true.json");
-    postWithStatus(PATRON_BLOCK_CONDITIONS_URL, maxNumberOfLostItems,
+    PatronBlockCondition response = postWithStatus(PATRON_BLOCK_CONDITIONS_URL, maxNumberOfLostItems,
       SC_UNPROCESSABLE_ENTITY, USER_ID)
       .as(PatronBlockCondition.class);
+    List<Map<String, Object>> errors =  (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
+    String message = (String) errors.get(0).get("message");
+    assertThat(message, is("One or more blocked actions must be selected for message to be displayed to be used"));
   }
 
   @Test
@@ -132,7 +145,11 @@ public class PatronBlockConditionsAPITest extends TestBase {
 
     String maxNumberOfLostItems = readFile(PATRON_BLOCK_CONDITIONS
       +"/max_number_of_lost_items_no_flat_set_to_true.json");
-    putWithStatus(PATRON_BLOCK_CONDITIONS_URL + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID,
-      maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID);
+    PatronBlockCondition response = putWithStatus(PATRON_BLOCK_CONDITIONS_URL
+        + MAX_NUMBER_OF_LOST_ITEMS_CONDITION_ID, maxNumberOfLostItems, SC_UNPROCESSABLE_ENTITY, USER_ID)
+      .as(PatronBlockCondition.class);
+    List<Map<String, Object>> errors =  (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
+    String message = (String) errors.get(0).get("message");
+    assertThat(message, is("One or more blocked actions must be selected for message to be displayed to be used"));
   }
 }

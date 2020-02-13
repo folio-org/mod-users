@@ -11,12 +11,10 @@ import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.PatronBlockCondition;
 import org.folio.rest.jaxrs.resource.PatronBlockConditions;
-import org.folio.rest.jaxrs.resource.Proxiesfor;
 import org.folio.rest.persist.PgUtil;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 public class PatronBlockConditionsAPI implements PatronBlockConditions {
@@ -40,7 +38,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    Errors errors = isEntityValid(entity, asyncResultHandler);
+    Errors errors = isEntityValid(entity);
     if (errors != null) {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PostPatronBlockConditionsResponse
@@ -58,7 +56,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    Errors errors = isEntityValid(entity, asyncResultHandler);
+    Errors errors = isEntityValid(entity);
     if (errors != null) {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PutPatronBlockConditionsByPatronBlockConditionIdResponse
@@ -92,35 +90,17 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       asyncResultHandler);
   }
 
-  private Errors isEntityValid(PatronBlockCondition entity, Handler<AsyncResult<Response>> asyncResultHandler) {
-    Errors errors = null;
-    if (!isEntityMessageValid(entity)) {
-      errors = createValidationErrorMessage("message", entity.getId(),
+  private Errors isEntityValid(PatronBlockCondition entity) {
+    
+    if (isMessageBlank(entity) && isAnyFlagTrue(entity)) {
+      return createValidationErrorMessage("patron block condition id", entity.getId(),
         "Message to be displayed is a required field if one or more blocked actions selected");
-      asyncResultHandler.handle(Future.succeededFuture(
-        Proxiesfor.PostProxiesforResponse.respond422WithApplicationJson(errors)));
     }
-    if (!isActionFlagValid(entity)) {
-      errors = createValidationErrorMessage("proxyFor", entity.getId(),
+    if (!isMessageBlank(entity) && !isAnyFlagTrue(entity)) {
+      return createValidationErrorMessage("patron block condition id", entity.getId(),
         "One or more blocked actions must be selected for message to be displayed to be used");
-      asyncResultHandler.handle(Future.succeededFuture(
-        Proxiesfor.PostProxiesforResponse.respond422WithApplicationJson(errors)));
     }
-    return errors;
-  }
-
-  private boolean isEntityMessageValid(PatronBlockCondition entity) {
-    if (isAnyFlagTrue(entity)) {
-      return !isMessageBlank(entity);
-    }
-    return true;
-  }
-
-  private boolean isActionFlagValid(PatronBlockCondition entity) {
-    if (!isMessageBlank(entity)) {
-      return isAnyFlagTrue(entity);
-    }
-    return true;
+    return null;
   }
 
   private boolean isMessageBlank(PatronBlockCondition entity) {
