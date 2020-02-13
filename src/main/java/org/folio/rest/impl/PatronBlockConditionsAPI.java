@@ -94,33 +94,19 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
 
   private Errors isEntityValid(PatronBlockCondition entity, Handler<AsyncResult<Response>> asyncResultHandler) {
     Errors errors = null;
-    if (!isEntityMessageValid(entity)) {
+    if (isMessageBlank(entity) && isAnyFlagTrue(entity)) {
       errors = createValidationErrorMessage("message", entity.getId(),
         "Message to be displayed is a required field if one or more blocked actions selected");
       asyncResultHandler.handle(Future.succeededFuture(
         Proxiesfor.PostProxiesforResponse.respond422WithApplicationJson(errors)));
     }
-    if (!isActionFlagValid(entity)) {
+    if (!isMessageBlank(entity) && !isAnyFlagTrue(entity)) {
       errors = createValidationErrorMessage("proxyFor", entity.getId(),
         "One or more blocked actions must be selected for message to be displayed to be used");
       asyncResultHandler.handle(Future.succeededFuture(
         Proxiesfor.PostProxiesforResponse.respond422WithApplicationJson(errors)));
     }
     return errors;
-  }
-
-  private boolean isEntityMessageValid(PatronBlockCondition entity) {
-    if (isAnyFlagTrue(entity)) {
-      return !isMessageBlank(entity);
-    }
-    return true;
-  }
-
-  private boolean isActionFlagValid(PatronBlockCondition entity) {
-    if (!isMessageBlank(entity)) {
-      return isAnyFlagTrue(entity);
-    }
-    return true;
   }
 
   private boolean isMessageBlank(PatronBlockCondition entity) {
