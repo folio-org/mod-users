@@ -91,7 +91,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
   }
 
   private Errors isEntityValid(PatronBlockCondition entity) {
-    
+
     if (isMessageBlank(entity) && isAnyFlagTrue(entity)) {
       return createValidationErrorMessage("patron block condition id", entity.getId(),
         "Message to be displayed is a required field if one or more blocked actions selected");
@@ -104,7 +104,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
   }
 
   private boolean isMessageBlank(PatronBlockCondition entity) {
-    return isBlank(entity.getAdditionalProperties().get("message").toString());
+    return isBlank(entity.getMessage());
   }
 
   private boolean isAnyFlagTrue(PatronBlockCondition entity) {

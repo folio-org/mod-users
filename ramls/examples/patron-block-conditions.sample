@@ -3,7 +3,7 @@
     {
       "id": "3d7c52dc-c732-4223-8bf8-e5917801386f",
       "name": "Maximum number of items charged out",
-      "blockBorrowings": false,
+      "blockBorrowing": false,
       "blockRenewals": true,
       "blockRequests": false,
       "valueType": "Integer",
@@ -12,7 +12,7 @@
     {
       "id": "72b67965-5b73-4840-bc0b-be8f3f6e047e",
       "name": "Maximum number of lost items",
-      "blockBorrowings": true,
+      "blockBorrowing": true,
       "blockRenewals": true,
       "blockRequests": true,
       "valueType": "Integer",
@@ -21,7 +21,7 @@
     {
       "id": "584fbd4f-6a34-4730-a6ca-73a6a6a9d845",
       "name": "Maximum number of overdue items",
-      "blockBorrowings": true,
+      "blockBorrowing": true,
       "blockRenewals": true,
       "blockRequests": true,
       "valueType": "Integer",
@@ -30,7 +30,7 @@
     {
       "id": "e5b45031-a202-4abb-917b-e1df9346fe2c",
       "name": "Maximum number of overdue recalls",
-      "blockBorrowings": false,
+      "blockBorrowing": true,
       "blockRenewals": false,
       "blockRequests": false,
       "valueType": "Integer",
@@ -39,7 +39,7 @@
     {
       "id": "cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a",
       "name": "Maximum outstanding fee/fine balance",
-      "blockBorrowings": false,
+      "blockBorrowing": true,
       "blockRenewals": false,
       "blockRequests": false,
       "valueType": "Double",
@@ -48,7 +48,7 @@
     {
       "id": "08530ac4-07f2-48e6-9dda-a97bc2bf7053",
       "name": "Recall overdue by maximum number of days",
-      "blockBorrowings": false,
+      "blockBorrowing": true,
       "blockRenewals": false,
       "blockRequests": false,
       "valueType": "Integer",

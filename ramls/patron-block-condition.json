@@ -14,7 +14,7 @@
     },
     "blockBorrowing": {
       "type": "boolean",
-      "description": "This flag indicates the block for borrowing"
+      "description": "This flag indicates the block for borrowings"
     },
     "blockRenewals": {
       "type": "boolean",
@@ -32,7 +32,7 @@
         "Double"
       ]
     },
-    "message ": {
+    "message": {
       "type": "string",
       "description": "A message to be displayed"
     },

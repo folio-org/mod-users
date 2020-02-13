@@ -92,7 +92,7 @@ public class PatronBlockConditionsAPITest extends TestBase {
     assertThat(updatedCondition.getBlockBorrowing(), equalTo(true));
     assertThat(updatedCondition.getBlockRenewals(), equalTo(true));
     assertThat(updatedCondition.getBlockRequests(), equalTo(true));
-    assertThat(updatedCondition.getAdditionalProperties().get("message"),
+    assertThat(updatedCondition.getMessage(),
       equalTo("Maximum number of lost items has been reached"));
   }
 
