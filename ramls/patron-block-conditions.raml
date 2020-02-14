@@ -1,0 +1,48 @@
+#%RAML 1.0
+title: Patron Block Conditions
+version: v0.1
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users Patron Block Conditions API
+    content: Query and manage each condition that can trigger a patron block and the messages that should be displayed when triggered.
+
+types:
+  patron-block-condition: !include patron-block-condition.json
+  patron-block-conditions: !include patron-block-conditions.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  language: !include raml-util/traits/language.raml
+  validate: !include raml-util/traits/validation.raml
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+
+/patron-block-conditions:
+  type:
+    collection:
+      exampleCollection: !include examples/patron-block-conditions.sample
+      exampleItem: !include examples/patron-block-condition.sample
+      schemaCollection: patron-block-conditions
+      schemaItem: patron-block-condition
+  get:
+    is: [
+      pageable,
+      searchable: {description: "searchable using CQL", example: "name=\"undergrad*\""}
+      ]
+    description: Return a list of patron block conditions
+  post:
+    is: [validate]
+    description: Create a patron block condition
+  /{patronBlockConditionId}:
+    type:
+      collection-item:
+        schema: patron-block-condition
+        exampleItem: !include examples/patron-block-condition.sample
+    put:
+      is: [validate]
+      description: Update a patron block condition

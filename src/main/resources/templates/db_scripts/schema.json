@@ -178,6 +178,11 @@
           "tOps" : "ADD"
         }
       ]
+    },
+    {
+      "tableName" : "patron_block_conditions",
+      "fromModuleVersion" : "mod-users-16.0.1",
+      "withMetadata" : true
     }
   ],
   "views" : [
