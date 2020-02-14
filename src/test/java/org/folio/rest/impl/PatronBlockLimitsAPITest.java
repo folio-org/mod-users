@@ -18,13 +18,10 @@ import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.model.PatronBlockLimits;
 import org.folio.test.util.TestBase;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import io.restassured.http.Header;
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
@@ -33,22 +30,42 @@ public class PatronBlockLimitsAPITest extends TestBase {
   private static final String PATRON_BLOCK_LIMITS_URL = "/patron-block-limits/";
   private static final String PATRON_BLOCK_LIMITS = "patron-block-limits";
   private static final Header USER_ID = new Header(XOkapiHeaders.USER_ID, "111111111");
+  private static final String LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID = "1de95200-72e4-4967-bdf8-257fb7559539";
 
   @After
   public void tearDown() {
     PatronBlockLimits response = getWithOk(PATRON_BLOCK_LIMITS_URL)
       .as(PatronBlockLimits.class);
-
     List<PatronBlockLimit> patronBlockLimits = response.getPatronBlockLimits();
-
     if (!patronBlockLimits.isEmpty()) {
-      patronBlockLimits.forEach(entity -> deleteWithNoContent(PATRON_BLOCK_LIMITS_URL + entity.getId()));
+      patronBlockLimits.forEach(entity -> deleteWithNoContent(
+        PATRON_BLOCK_LIMITS_URL + entity.getId()));
     }
   }
 
- @Test
+  @Test
+  public void shouldReturnAllPatronBlockLimits() throws IOException, URISyntaxException {
+    postAllLimits();
+    PatronBlockLimits response = getWithOk(PATRON_BLOCK_LIMITS_URL)
+      .as(PatronBlockLimits.class);
+    assertThat(response.getTotalRecords(), is(6));
+  }
+
+  @Test
+  public void shouldReturnPatronBlockLimitByPatronBlockLimitId() throws IOException, URISyntaxException {
+    postAllLimits();
+    PatronBlockLimit response = getWithOk(PATRON_BLOCK_LIMITS_URL
+      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID)
+      .as(PatronBlockLimit.class);
+
+    assertThat(response.getPatronGroupId(), equalTo("e5b45031-a202-4abb-917b-e1df9346fe2c"));
+    assertThat(response.getConditionId(), equalTo("cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a"));
+    assertThat(response.getLimit(), equalTo(10.4));
+  }
+
+  @Test
   public void cannotCreatePatronBlockLimitWithInvalidIntegerLimit()
-   throws IOException, URISyntaxException {
+    throws IOException, URISyntaxException {
 
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
       + "/limit_max_number_of_lost_items_invalid_limit.json");
@@ -56,8 +73,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       patronBlockLimit, SC_UNPROCESSABLE_ENTITY, USER_ID)
       .as(PatronBlockLimit.class);
 
-    List<Map<String, Object>> errors =  (List<Map<String, Object>>) actualLimit.getAdditionalProperties().get("errors");
-    String message = (String) errors.get(0).get("message");
+    String message = getErrorMessage(actualLimit);
     assertThat(message, is("Must be blank or a number from 0 to 999999"));
   }
 
@@ -71,38 +87,42 @@ public class PatronBlockLimitsAPITest extends TestBase {
       patronBlockLimit, SC_UNPROCESSABLE_ENTITY, USER_ID)
       .as(PatronBlockLimit.class);
 
-    List<Map<String, Object>> errors =  (List<Map<String, Object>>) actualLimit.getAdditionalProperties().get("errors");
-    String message = (String) errors.get(0).get("message");
+    String message = getErrorMessage(actualLimit);
     assertThat(message, is("A maximum balance of 0 will result in all patrons in this group " +
       "being blocked; to skip this limit, leave value set to blank"));
   }
 
   @Test
-  public void canGetAllPatronBlockLimits() throws IOException, URISyntaxException {
-
+  public void shouldUpdatePatronBlockLimit() throws IOException, URISyntaxException {
     postAllLimits();
-    PatronBlockLimits response = getWithOk(PATRON_BLOCK_LIMITS_URL)
-      .as(PatronBlockLimits.class);
-    assertThat(response.getTotalRecords(), is(6));
+    String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
+      + "/limit_max_outstanding_feefine_balance_with_updated_value.json");
+
+    putWithNoContent(PATRON_BLOCK_LIMITS_URL
+      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, patronBlockLimit, USER_ID);
+    PatronBlockLimit response = getWithOk(PATRON_BLOCK_LIMITS_URL
+      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID)
+      .as(PatronBlockLimit.class);
+
+    assertThat(response.getLimit(), equalTo(20.4));
   }
 
   @Test
-  public void putPatronBlockLimitsByPatronBlockLimitId() {
+  public void cannotUpdatePatronBlockLimitWithInvalidLimit() throws IOException, URISyntaxException {
+    postAllLimits();
+    String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
+      + "/limit_max_outstanding_feefine_balance_invalid_limit.json");
 
-  }
+    PatronBlockLimit response = putWithStatus(PATRON_BLOCK_LIMITS_URL
+      + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID, patronBlockLimit, SC_UNPROCESSABLE_ENTITY, USER_ID)
+      .as(PatronBlockLimit.class);
 
-  @Test
-  public void getPatronBlockLimitsByPatronBlockLimitId() {
-
-  }
-
-  @Test
-  public void deletePatronBlockLimitsByPatronBlockLimitId() {
-
+    String message = getErrorMessage(response);
+    assertThat(message, is("A maximum balance of 0 will result in all patrons in this group " +
+      "being blocked; to skip this limit, leave value set to blank"));
   }
 
   private void postAllLimits() throws IOException, URISyntaxException {
-
     List<String> limits = new ArrayList<>();
     limits.add(readFile(PATRON_BLOCK_LIMITS + "/limit_max_number_of_items_charged_out.json"));
     limits.add(readFile(PATRON_BLOCK_LIMITS + "/limit_max_number_of_lost_items.json"));
@@ -113,5 +133,11 @@ public class PatronBlockLimitsAPITest extends TestBase {
 
     limits.forEach(limit -> postWithStatus(PATRON_BLOCK_LIMITS_URL, limit, SC_CREATED, USER_ID)
       .as(PatronBlockLimit.class));
+  }
+
+  private String getErrorMessage(PatronBlockLimit response) {
+    List<Map<String, Object>> errors =
+      (List<Map<String, Object>>) response.getAdditionalProperties().get("errors");
+    return (String) errors.get(0).get("message");
   }
 }

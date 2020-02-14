@@ -28,7 +28,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    PgUtil.get(PATRON_BLOCK_LIMITS, PatronBlockLimits.class,
+    PgUtil.get(PATRON_BLOCK_LIMITS, PatronBlockLimit.class,
       org.folio.rest.jaxrs.model.PatronBlockLimits.class, query, offset, limit,
       okapiHeaders, vertxContext, GetPatronBlockLimitsResponse.class, asyncResultHandler);
   }
@@ -41,7 +41,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     Errors errors = isEntityValid(entity);
     if (errors != null) {
-      asyncResultHandler.handle(succeededFuture(PatronBlockLimits.PostPatronBlockLimitsResponse
+      asyncResultHandler.handle(succeededFuture(PostPatronBlockLimitsResponse
           .respond422WithApplicationJson(errors)));
       return;
     }
@@ -58,9 +58,9 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
     Errors errors = isEntityValid(entity);
     if (errors != null) {
-      asyncResultHandler.handle(succeededFuture(
-        PatronBlockLimits.PutPatronBlockLimitsByPatronBlockLimitIdResponse
+      asyncResultHandler.handle(succeededFuture(PutPatronBlockLimitsByPatronBlockLimitIdResponse
           .respond422WithApplicationJson(errors)));
+      return;
     }
 
     PgUtil.put(PATRON_BLOCK_LIMITS, entity, patronBlockLimitId, okapiHeaders,

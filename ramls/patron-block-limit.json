@@ -5,7 +5,7 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "A UUID identifying the condition",
+      "description": "A UUID identifying the limit",
       "$ref": "raml-util/schemas/uuid.schema"
     },
     "patronGroupId": {

@@ -43,6 +43,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PostPatronBlockConditionsResponse
           .respond422WithApplicationJson(errors)));
+      return;
     }
 
     PgUtil.post(PATRON_BLOCK_CONDITIONS, entity, okapiHeaders, vertxContext,
@@ -61,6 +62,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PutPatronBlockConditionsByPatronBlockConditionIdResponse
           .respond422WithApplicationJson(errors)));
+      return;
     }
 
     PgUtil.put(PATRON_BLOCK_CONDITIONS, entity, patronBlockConditionId, okapiHeaders,
