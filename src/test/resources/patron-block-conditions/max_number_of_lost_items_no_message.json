@@ -1,0 +1,9 @@
+{
+  "id": "72b67965-5b73-4840-bc0b-be8f3f6e047f",
+  "name": "Maximum number of lost items",
+  "blockBorrowing": true,
+  "blockRenewals": true,
+  "blockRequests": true,
+  "valueType": "Integer",
+  "message": ""
+}

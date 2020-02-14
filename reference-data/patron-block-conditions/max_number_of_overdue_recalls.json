@@ -1,0 +1,9 @@
+{
+  "id": "e5b45031-a202-4abb-917b-e1df9346fe2c",
+  "name": "Maximum number of overdue recalls",
+  "blockBorrowing": false,
+  "blockRenewals": false,
+  "blockRequests": false,
+  "valueType": "Integer",
+  "message": ""
+}

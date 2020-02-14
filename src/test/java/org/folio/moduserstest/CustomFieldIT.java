@@ -32,6 +32,7 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -69,8 +70,7 @@ public class CustomFieldIT {
     "\"helpText\": \"Provide a department\", " +
     "\"entityType\": \"user\", " +
     "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": { \"maxSize\": 150 }}";
+    "\"order\": 1 }";
   private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
     "\"name\": \"Department updated\", " +
     "\"visible\": false, " +
@@ -78,8 +78,7 @@ public class CustomFieldIT {
     "\"helpText\": \"Provide a department\", " +
     "\"entityType\": \"user\", " +
     "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1, " +
-    "\"textField\": {   \"maxSize\": 250 }}";
+    "\"order\": 1 }";
 
 
   @Rule
@@ -141,6 +140,7 @@ public class CustomFieldIT {
 
     postUser()
       .compose(v -> postCustomField())
+      .compose(v -> postUserWithInvalidCustomFieldValueLength(context))
       .compose(v -> postUserWithCustomFields())
       .compose(v -> getUserWithCustomFields(context))
       .compose(v -> deleteUser(context, johnRectangleId))
@@ -176,31 +176,49 @@ public class CustomFieldIT {
 
   private Future<Void> postUser() {
     log.info("Creating a new user\n");
-
-    JsonObject user = new JsonObject()
-      .put("id", joeBlockId)
-      .put("active", true)
-      .put("username", "joeblock");
-
+    JsonObject user = getUser(joeBlockId, "joeblock");
     return postWithOkStatus(joeBlockId, "/users", user.encode());
   }
 
   private Future<Void> postUserWithCustomFields() {
     log.info("Creating a new user\n");
-
-    JsonObject user = new JsonObject()
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("username", "johnRectangle");
+    JsonObject user = getUser(johnRectangleId, "johnRectangle");
     addCustomFields(user);
 
     return postWithOkStatus(johnRectangleId, "/users", user.encode());
   }
 
-  private static void addCustomFields(JsonObject u) {
+  private Future<Void> postUserWithInvalidCustomFieldValueLength(TestContext context) {
+    log.info("Creating a new user\n");
+    JsonObject user = getUser(johnRectangleId, "johnRectangle");
+    addInvalidCustomFieldValue(user);
+    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+
+    return future.map(response -> {
+      RestITSupport.assertStatus(context, response, 422);
+      Errors errors = Json.decodeValue(response.body(), Errors.class);
+      context.assertEquals("Maximum length of this text field is 150", errors.getErrors().get(0).getMessage());
+      return null;
+    });
+  }
+
+  private JsonObject getUser(String userId, String userName) {
+    return new JsonObject()
+      .put("id", userId)
+      .put("active", true)
+      .put("username", userName);
+  }
+
+  private static void addCustomFields(JsonObject jsonObject) {
     JsonObject customFields = new JsonObject();
     customFields.put("department_1", "Math");
-    u.put("customFields", customFields);
+    jsonObject.put("customFields", customFields);
+  }
+
+  private static void addInvalidCustomFieldValue(JsonObject jsonObject) {
+    JsonObject customFields = new JsonObject();
+    customFields.put("department_1", RandomStringUtils.randomAlphanumeric(151));
+    jsonObject.put("customFields", customFields);
   }
 
   private Future<Void> getUserWithCustomFields(TestContext context) {

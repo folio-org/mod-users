@@ -53,7 +53,7 @@ shift $((OPTIND -1))
 okapiUrl=${okapiUrl:-http://localhost:9130}
 tenant=${tenant:-demo_tenant}
 dataDirs=${dataDirs:-'.'}
-modEndpoints='groups addresstypes'
+modEndpoints='groups addresstypes patron-block-conditions'
 method=POST
 
 for dir in "${dataDirs[@]}";

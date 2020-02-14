@@ -1290,5 +1290,4 @@ public class RestVerticleIT {
       return null;
     });
   }
-
 }

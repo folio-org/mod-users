@@ -1,0 +1,9 @@
+{
+  "id": "584fbd4f-6a34-4730-a6ca-73a6a6a9d845",
+  "name": "Maximum number of overdue items",
+  "blockBorrowing": false,
+  "blockRenewals": false,
+  "blockRequests": false,
+  "valueType": "Integer",
+  "message": ""
+}
