@@ -60,7 +60,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
 
     assertThat(response.getPatronGroupId(), equalTo("e5b45031-a202-4abb-917b-e1df9346fe2c"));
     assertThat(response.getConditionId(), equalTo("cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a"));
-    assertThat(response.getLimit(), equalTo(10.4));
+    assertThat(response.getValue(), equalTo(10.4));
   }
 
   @Test
@@ -74,7 +74,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       .as(PatronBlockLimit.class);
 
     String message = getErrorMessage(actualLimit);
-    assertThat(message, is("Must be blank or a number from 0 to 999999"));
+    assertThat(message, is("Must be blank or an integer from 0 to 999999"));
   }
 
   @Test
@@ -93,6 +93,20 @@ public class PatronBlockLimitsAPITest extends TestBase {
   }
 
   @Test
+  public void cannotCreatePatronBlockLimitWithDoubleLimitOutOfRange()
+    throws IOException, URISyntaxException {
+
+    String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
+      + "/limit_max_outstanding_feefine_balance_limit_out_of_range.json");
+    PatronBlockLimit actualLimit = postWithStatus(PATRON_BLOCK_LIMITS_URL,
+      patronBlockLimit, SC_UNPROCESSABLE_ENTITY, USER_ID)
+      .as(PatronBlockLimit.class);
+
+    String message = getErrorMessage(actualLimit);
+    assertThat(message, is("Must be blank or a number from 0.01 to 9999.99"));
+  }
+
+  @Test
   public void shouldUpdatePatronBlockLimit() throws IOException, URISyntaxException {
     postAllLimits();
     String patronBlockLimit = readFile(PATRON_BLOCK_LIMITS
@@ -104,7 +118,7 @@ public class PatronBlockLimitsAPITest extends TestBase {
       + LIMIT_MAX_OUTSTANDING_FEEFINE_BALANCE_ID)
       .as(PatronBlockLimit.class);
 
-    assertThat(response.getLimit(), equalTo(20.4));
+    assertThat(response.getValue(), equalTo(20.4));
   }
 
   @Test

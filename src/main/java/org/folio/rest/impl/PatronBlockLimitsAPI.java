@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.tools.utils.ValidationHelper.createValidationErrorMessage;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -13,6 +14,8 @@ import org.folio.rest.jaxrs.model.PatronBlockLimit;
 import org.folio.rest.jaxrs.resource.PatronBlockLimits;
 import org.folio.rest.persist.PgUtil;
 
+import com.google.common.collect.ImmutableList;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
@@ -20,7 +23,10 @@ import io.vertx.core.Handler;
 public class PatronBlockLimitsAPI implements PatronBlockLimits {
 
   private static final String PATRON_BLOCK_LIMITS = "patron_block_limits";
-  private static final String MAX_OUTSTANDING_FEEFINE_BALANCE_ID = "cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a";
+  // IDs come from predefined data (see resources/patron-block-conditions/*)
+  private static final List<String> CONDITIONS_IDS_WITH_DOUBLE_VALUE_TYPE =
+    ImmutableList.of("cf7a0d5f-a327-4ca1-aa9e-dc55ec006b8a");
+  private static final String VALUE_FIELD = "value";
 
   @Validate
   @Override
@@ -90,29 +96,34 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
   }
 
   private Errors isEntityValid(PatronBlockLimit entity) {
-
-    return MAX_OUTSTANDING_FEEFINE_BALANCE_ID.equals(entity.getConditionId())
-      ? validateRangeForDoubleValueType(entity)
-      : validateRangeForIntegerValueType(entity);
-  }
-
-  private Errors validateRangeForDoubleValueType(PatronBlockLimit entity) {
-    Double limit = entity.getLimit();
-    if (limit > 0.1 && limit < 9999.99) {
+    Double limit = entity.getValue();
+    if (limit == null) {
       return null;
     }
-    return createValidationErrorMessage("limit", entity.getLimit().toString(),
-      "A maximum balance of 0 will result in all patrons in this group being blocked; " +
-        "to skip this limit, leave value set to blank");
+    return CONDITIONS_IDS_WITH_DOUBLE_VALUE_TYPE.contains(entity.getConditionId())
+      ? validateRangeForDoubleValueType(limit)
+      : validateRangeForIntegerValueType(limit);
   }
 
-  private Errors validateRangeForIntegerValueType(PatronBlockLimit entity) {
-    Double limit = entity.getLimit();
+  private Errors validateRangeForDoubleValueType(Double limit) {
+    if (limit >= 0.01 && limit <= 9999.99) {
+      return null;
+    }
+    if (limit == 0.00) {
+      return createValidationErrorMessage(VALUE_FIELD, limit.toString(),
+        "A maximum balance of 0 will result in all patrons in this group being blocked; " +
+          "to skip this limit, leave value set to blank");
+    }
+    return createValidationErrorMessage(VALUE_FIELD, limit.toString(),
+      "Must be blank or a number from 0.01 to 9999.99");
+  }
+
+  private Errors validateRangeForIntegerValueType(Double limit) {
     boolean isInt = limit % 1 == 0;
-    if (limit == 0 || (isInt && limit > 0 && limit < 999999)) {
+    if (isInt && limit >= 0 && limit <= 999999) {
       return null;
     }
-    return createValidationErrorMessage("limit", entity.getLimit().toString(),
-      "Must be blank or a number from 0 to 999999");
+    return createValidationErrorMessage(VALUE_FIELD, limit.toString(),
+      "Must be blank or an integer from 0 to 999999");
   }
 }

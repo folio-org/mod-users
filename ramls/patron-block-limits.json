@@ -4,7 +4,7 @@
   "type": "object",
   "properties": {
     "patronBlockLimits": {
-      "description": "List of of available patron block limits",
+      "description": "List of available patron block limits",
       "id": "patronBlockLimits",
       "type": "array",
       "items": {
