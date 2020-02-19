@@ -38,7 +38,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    Errors errors = isEntityValid(entity);
+    Errors errors = validateEntity(entity);
     if (errors != null) {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PostPatronBlockConditionsResponse
@@ -57,7 +57,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    Errors errors = isEntityValid(entity);
+    Errors errors = validateEntity(entity);
     if (errors != null) {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PutPatronBlockConditionsByPatronBlockConditionIdResponse
@@ -92,7 +92,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       asyncResultHandler);
   }
 
-  private Errors isEntityValid(PatronBlockCondition entity) {
+  private Errors validateEntity(PatronBlockCondition entity) {
 
     if (isMessageBlank(entity) && isAnyFlagTrue(entity)) {
       return createValidationErrorMessage("patron block condition id", entity.getId(),

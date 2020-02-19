@@ -45,7 +45,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    Errors errors = isEntityValid(entity);
+    Errors errors = validateEntity(entity);
     if (errors != null) {
       asyncResultHandler.handle(succeededFuture(PostPatronBlockLimitsResponse
           .respond422WithApplicationJson(errors)));
@@ -62,7 +62,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
     String lang, PatronBlockLimit entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    Errors errors = isEntityValid(entity);
+    Errors errors = validateEntity(entity);
     if (errors != null) {
       asyncResultHandler.handle(succeededFuture(PutPatronBlockLimitsByPatronBlockLimitIdResponse
           .respond422WithApplicationJson(errors)));
@@ -95,7 +95,7 @@ public class PatronBlockLimitsAPI implements PatronBlockLimits {
       asyncResultHandler);
   }
 
-  private Errors isEntityValid(PatronBlockLimit entity) {
+  private Errors validateEntity(PatronBlockLimit entity) {
     Double limit = entity.getValue();
     if (limit == null) {
       return null;
