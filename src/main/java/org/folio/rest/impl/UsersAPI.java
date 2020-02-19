@@ -136,38 +136,45 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-      UsersGetOrder order, int offset, int limit, List<String> facets,
-      String lang, RoutingContext routingContext, Map <String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+    UsersGetOrder order, int offset, int limit, List<String> facets,
+    String lang, RoutingContext routingContext, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
 
     logger.debug("Getting users");
-    try {
-      CQLWrapper cql = getCQL(query,limit,offset);
+    // note that orderBy is NOT used
+    String tableName = getTableName(query);
+    // if we have public PgUtil.streamGet that takes CQLWrapper,
+    // then we don't have to make this special case
+    if (tableName.equals(TABLE_NAME_USERS)) {
+      PgUtil.streamGet(tableName, User.class, query, offset, limit, facets,
+        "users", routingContext, okapiHeaders, vertxContext);
+    } else {
+      try {
+        CQLWrapper cql = getCQL(query, limit, offset);
 
-      List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
+        List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
-      String tableName = getTableName(query);
-      String[] fieldList = {"*"};
-      logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
+        String[] fieldList = {"*"};
+        logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
 
-      PgUtil.postgresClient(vertxContext, okapiHeaders)
+        PgUtil.postgresClient(vertxContext, okapiHeaders)
           .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
-        try {
-          if (reply.succeeded()) {
-            UserdataCollection userCollection = new UserdataCollection();
-            List<User> users = reply.result().getResults();
-            userCollection.setUsers(users);
-            userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
-            userCollection.setResultInfo(reply.result().getResultInfo());
-            asyncResultHandler.handle(Future.succeededFuture(
-                GetUsersResponse.respond200WithApplicationJson(userCollection)));
-          } else {
-            handle(query, reply.cause(), asyncResultHandler, lang,
-                GetUsersResponse::respond400WithTextPlain,
-                GetUsersResponse::respond500WithTextPlain);
-          }
-        } catch (Exception e) {
+            try {
+              if (reply.succeeded()) {
+                UserdataCollection userCollection = new UserdataCollection();
+                List<User> users = reply.result().getResults();
+                userCollection.setUsers(users);
+                userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
+                userCollection.setResultInfo(reply.result().getResultInfo());
+                asyncResultHandler.handle(Future.succeededFuture(
+                  GetUsersResponse.respond200WithApplicationJson(userCollection)));
+              } else {
+                handle(query, reply.cause(), asyncResultHandler, lang,
+                  GetUsersResponse::respond400WithTextPlain,
+                  GetUsersResponse::respond500WithTextPlain);
+              }
+            } catch (Exception e) {
           handle(query, e, asyncResultHandler, lang,
               GetUsersResponse::respond400WithTextPlain,
               GetUsersResponse::respond500WithTextPlain);
@@ -177,6 +184,7 @@ public class UsersAPI implements Users {
       handle(query, e, asyncResultHandler, lang,
           GetUsersResponse::respond400WithTextPlain,
           GetUsersResponse::respond500WithTextPlain);
+    }
     }
   }
 
