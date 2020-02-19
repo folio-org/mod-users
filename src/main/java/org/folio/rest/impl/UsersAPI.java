@@ -76,7 +76,7 @@ public class UsersAPI implements Users {
    * @return
    */
   private String getTableName(String cql) {
-    if(cql != null && cql.contains("patronGroup.")){
+    if (cql != null && cql.contains("patronGroup.")){
       return VIEW_NAME_USER_GROUPS_JOIN;
     }
     return TABLE_NAME_USERS;
