@@ -144,47 +144,16 @@ public class UsersAPI implements Users {
     logger.debug("Getting users");
     // note that orderBy is NOT used
     String tableName = getTableName(query);
-    // if we have public PgUtil.streamGet that takes CQLWrapper,
-    // then we don't have to make this special case
-    if (tableName.equals(TABLE_NAME_USERS)) {
-      PgUtil.streamGet(tableName, User.class, query, offset, limit, facets,
-        "users", routingContext, okapiHeaders, vertxContext);
-    } else {
-      try {
-        CQLWrapper cql = getCQL(query, limit, offset);
+    try {
+      CQLWrapper cql = getCQL(query, limit, offset);
 
-        List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
+      List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
-        String[] fieldList = {"*"};
-        logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
-
-        PgUtil.postgresClient(vertxContext, okapiHeaders)
-          .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
-            try {
-              if (reply.succeeded()) {
-                UserdataCollection userCollection = new UserdataCollection();
-                List<User> users = reply.result().getResults();
-                userCollection.setUsers(users);
-                userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
-                userCollection.setResultInfo(reply.result().getResultInfo());
-                asyncResultHandler.handle(Future.succeededFuture(
-                  GetUsersResponse.respond200WithApplicationJson(userCollection)));
-              } else {
-                handle(query, reply.cause(), asyncResultHandler, lang,
-                  GetUsersResponse::respond400WithTextPlain,
-                  GetUsersResponse::respond500WithTextPlain);
-              }
-            } catch (Exception e) {
-          handle(query, e, asyncResultHandler, lang,
-              GetUsersResponse::respond400WithTextPlain,
-              GetUsersResponse::respond500WithTextPlain);
-        }
-      });
-    } catch(Exception e) {
+      PgUtil.streamGet(tableName, User.class, cql, facetList, "users", routingContext, okapiHeaders, vertxContext);
+    } catch (Exception e) {
       handle(query, e, asyncResultHandler, lang,
-          GetUsersResponse::respond400WithTextPlain,
-          GetUsersResponse::respond500WithTextPlain);
-    }
+        GetUsersResponse::respond400WithTextPlain,
+        GetUsersResponse::respond500WithTextPlain);
     }
   }
 
