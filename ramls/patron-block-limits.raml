@@ -1,0 +1,48 @@
+#%RAML 1.0
+title: Patron Block Limits
+version: v0.1
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users Patron Block Limits API
+    content: This documents the API calls that can be made to query and manage patron block limits
+
+types:
+  patron-block-limit: !include patron-block-limit.json
+  patron-block-limits: !include patron-block-limits.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  language: !include raml-util/traits/language.raml
+  validate: !include raml-util/traits/validation.raml
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+
+/patron-block-limits:
+  type:
+    collection:
+      exampleCollection: !include examples/patron-block-limits.sample
+      exampleItem: !include examples/patron-block-limit.sample
+      schemaCollection: patron-block-limits
+      schemaItem: patron-block-limit
+  get:
+    is: [
+      pageable,
+      searchable: {description: "searchable using CQL", example: "name=\"undergrad*\""}
+      ]
+    description: Return a list of patron block limits
+  post:
+    is: [validate]
+    description: Create a patron block limit
+  /{patronBlockLimitId}:
+    type:
+      collection-item:
+        schema: patron-block-limit
+        exampleItem: !include examples/patron-block-limit.sample
+    put:
+      is: [validate]
+      description: Update a patron block limit
