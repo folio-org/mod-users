@@ -148,7 +148,8 @@ public class UsersAPI implements Users {
 
       List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
-      PgUtil.streamGet(tableName, User.class, cql, facetList, "users", routingContext, okapiHeaders, vertxContext);
+      PgUtil.streamGet(tableName, User.class, cql, facetList, TABLE_NAME_USERS,
+        routingContext, okapiHeaders, vertxContext);
     } catch (Exception e) {
       handle(query, e, asyncResultHandler, lang,
         GetUsersResponse::respond400WithTextPlain,
