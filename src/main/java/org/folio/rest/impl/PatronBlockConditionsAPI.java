@@ -38,11 +38,12 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    Errors errors = isEntityValid(entity);
+    Errors errors = validateEntity(entity);
     if (errors != null) {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PostPatronBlockConditionsResponse
           .respond422WithApplicationJson(errors)));
+      return;
     }
 
     PgUtil.post(PATRON_BLOCK_CONDITIONS, entity, okapiHeaders, vertxContext,
@@ -56,11 +57,12 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    Errors errors = isEntityValid(entity);
+    Errors errors = validateEntity(entity);
     if (errors != null) {
       asyncResultHandler.handle(io.vertx.core.Future.succeededFuture(
         PatronBlockConditions.PutPatronBlockConditionsByPatronBlockConditionIdResponse
           .respond422WithApplicationJson(errors)));
+      return;
     }
 
     PgUtil.put(PATRON_BLOCK_CONDITIONS, entity, patronBlockConditionId, okapiHeaders,
@@ -90,7 +92,7 @@ public class PatronBlockConditionsAPI implements PatronBlockConditions {
       asyncResultHandler);
   }
 
-  private Errors isEntityValid(PatronBlockCondition entity) {
+  private Errors validateEntity(PatronBlockCondition entity) {
 
     if (isMessageBlank(entity) && isAnyFlagTrue(entity)) {
       return createValidationErrorMessage("patron block condition id", entity.getId(),
