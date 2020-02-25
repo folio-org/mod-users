@@ -133,6 +133,71 @@ public class GroupIT {
   }
 
   @Test
+  public void deletingGroupDeletesItsPatronBlockLimits(TestContext context) throws Exception {
+    /*
+      create a new patron group
+     */
+    final String newGroupId = "1de95200-72e4-4967-bdf8-257fb7559888";
+
+    JsonObject group = new JsonObject()
+      .put("id", newGroupId)
+      .put("group", "test_group")
+      .put("desc", "group description");
+
+    Response createGroupResponse =
+      send(groupUrl, POST, group.encode(), HTTPResponseHandlers.json()).get(5, SECONDS);
+    context.assertEquals(createGroupResponse.code, HTTP_CREATED);
+
+    /*
+      create 3 patron block limits: 2 for the newly created group, 1 for a different group
+     */
+    checkExistingLimitsByIds(context);
+
+    String limitId1 = "1de95200-72e4-4967-bdf8-000000000001";
+    String limitId2 = "1de95200-72e4-4967-bdf8-000000000002";
+    String limitId3 = "1de95200-72e4-4967-bdf8-000000000003";
+
+    String limitForNewGroup1 = new JsonObject()
+      .put("id", limitId1)
+      .put("patronGroupId", newGroupId)
+      .put("conditionId", "3d7c52dc-c732-4223-8bf8-e5917801386f")
+      .put("value", 10)
+      .encodePrettily();
+
+    String limitForNewGroup2 = new JsonObject()
+      .put("id", limitId2)
+      .put("patronGroupId", newGroupId)
+      .put("conditionId", "72b67965-5b73-4840-bc0b-be8f3f6e047e")
+      .put("value", 11)
+      .encodePrettily();
+
+    String limitForAnotherGroup = new JsonObject()
+      .put("id", limitId3)
+      .put("patronGroupId", "503a81cd-6c26-400f-b620-14c08943697c")
+      .put("conditionId", "72b67965-5b73-4840-bc0b-be8f3f6e047e")
+      .put("value", 12)
+      .encodePrettily();
+
+    CompletableFuture.completedFuture(null)
+      .thenComposeAsync(r -> send(limitsUrl, POST, limitForNewGroup1, HTTPResponseHandlers.json()))
+      .thenComposeAsync(r -> send(limitsUrl, POST, limitForNewGroup2, HTTPResponseHandlers.json()))
+      .thenComposeAsync(r -> send(limitsUrl, POST, limitForAnotherGroup, HTTPResponseHandlers.json()))
+      .get(5, SECONDS);
+
+    checkExistingLimitsByIds(context, limitId1, limitId2, limitId3);
+
+     /*
+      delete the new group, make sure its limits are gone too
+     */
+    String deleteGroupUrl = groupUrl + "/" + newGroupId;
+    Response deleteGroupResponse =
+      send(deleteGroupUrl, DELETE, null, HTTPResponseHandlers.empty()).get(5, SECONDS);
+    context.assertEquals(deleteGroupResponse.code, HTTP_NO_CONTENT);
+
+    checkExistingLimitsByIds(context, limitId3);
+  }
+
+  @Test
   public void test3CrossTableQueries(TestContext context) throws Exception {
     CompletableFuture<Response> postGroupCF = send(groupUrl, POST, barGroupData, HTTPResponseHandlers.json());
     Response postGroupResponse = postGroupCF.get(5, SECONDS);
@@ -458,71 +523,6 @@ public class GroupIT {
       Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
       context.assertEquals(getExpiredUserResponse.body.getBoolean("active"), false);
     }
-  }
-
-  @Test
-  public void deletingGroupDeletesItsPatronBlockLimits(TestContext context) throws Exception {
-    /*
-      create a new patron group
-     */
-    final String newGroupId = "1de95200-72e4-4967-bdf8-257fb7559888";
-
-    JsonObject group = new JsonObject()
-      .put("id", newGroupId)
-      .put("group", "test_group")
-      .put("desc", "group description");
-
-    Response createGroupResponse =
-      send(groupUrl, POST, group.encode(), HTTPResponseHandlers.json()).get(5, SECONDS);
-    context.assertEquals(createGroupResponse.code, HTTP_CREATED);
-
-    /*
-      create 3 patron block limits: 2 for the newly created group, 1 for a different group
-     */
-    checkExistingLimitsByIds(context);
-
-    String limitId1 = "1de95200-72e4-4967-bdf8-000000000001";
-    String limitId2 = "1de95200-72e4-4967-bdf8-000000000002";
-    String limitId3 = "1de95200-72e4-4967-bdf8-000000000003";
-
-    String limitForNewGroup1 = new JsonObject()
-      .put("id", limitId1)
-      .put("patronGroupId", newGroupId)
-      .put("conditionId", "3d7c52dc-c732-4223-8bf8-e5917801386f")
-      .put("value", 10)
-      .encodePrettily();
-
-    String limitForNewGroup2 = new JsonObject()
-      .put("id", limitId2)
-      .put("patronGroupId", newGroupId)
-      .put("conditionId", "72b67965-5b73-4840-bc0b-be8f3f6e047e")
-      .put("value", 11)
-      .encodePrettily();
-
-    String limitForAnotherGroup = new JsonObject()
-      .put("id", limitId3)
-      .put("patronGroupId", "503a81cd-6c26-400f-b620-14c08943697c")
-      .put("conditionId", "72b67965-5b73-4840-bc0b-be8f3f6e047e")
-      .put("value", 12)
-      .encodePrettily();
-
-    CompletableFuture.completedFuture(null)
-      .thenComposeAsync(r -> send(limitsUrl, POST, limitForNewGroup1, HTTPResponseHandlers.json()))
-      .thenComposeAsync(r -> send(limitsUrl, POST, limitForNewGroup2, HTTPResponseHandlers.json()))
-      .thenComposeAsync(r -> send(limitsUrl, POST, limitForAnotherGroup, HTTPResponseHandlers.json()))
-      .get(5, SECONDS);
-
-    checkExistingLimitsByIds(context, limitId1, limitId2, limitId3);
-
-     /*
-      delete the new group, make sure its limits are gone too
-     */
-    String deleteGroupUrl = groupUrl + "/" + newGroupId;
-    Response deleteGroupResponse =
-      send(deleteGroupUrl, DELETE, null, HTTPResponseHandlers.empty()).get(5, SECONDS);
-    context.assertEquals(deleteGroupResponse.code, HTTP_NO_CONTENT);
-
-    checkExistingLimitsByIds(context, limitId3);
   }
 
   private CompletableFuture<Response> send(String url, HttpMethod method, String content,

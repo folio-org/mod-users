@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static io.vertx.core.Future.succeededFuture;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 
 import java.util.Map;
@@ -17,10 +18,7 @@ import org.folio.rest.tools.utils.ValidationHelper;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 /**
  * @author shale
@@ -33,8 +31,6 @@ public class UserGroupAPI implements Groups {
   private static final String PATRON_BLOCK_LIMITS_TABLE = "patron_block_limits";
   public static final String ID_FIELD_NAME = "id";
   public static final String PATRON_GROUP_ID_FIELD = "patronGroupId";
-
-  private final Logger log = LoggerFactory.getLogger(UserGroupAPI.class);
 
   @Validate
   @Override
@@ -56,7 +52,7 @@ public class UserGroupAPI implements Groups {
     PgUtil.post(GROUP_TABLE, entity, okapiHeaders, vertxContext, PostGroupsResponse.class, post -> {
       try {
         if (post.succeeded() && isDuplicate(post.result().getEntity().toString())) {
-          asyncResultHandler.handle(Future.succeededFuture(
+          asyncResultHandler.handle(succeededFuture(
               PostGroupsResponse.respond422WithApplicationJson(
                 ValidationHelper.createValidationErrorMessage(
                   "group", entity.getGroup(), "Group exists"))));
@@ -93,17 +89,11 @@ public class UserGroupAPI implements Groups {
 
           PgUtil.postgresClient(vertxContext, okapiHeaders)
             .delete(PATRON_BLOCK_LIMITS_TABLE, cqlWrapper, reply -> {
-              if (reply.failed()) {
-                String errorMessage = reply.cause().getLocalizedMessage();
-                log.error(errorMessage);
-                asyncResultHandler.handle(Future.succeededFuture(
-                  DeleteGroupsByGroupIdResponse.respond500WithTextPlain(
-                    "Failed to delete patron block limits associated with patron group: "
-                      + errorMessage)));
-              } else {
-                asyncResultHandler.handle(Future.succeededFuture(
-                  DeleteGroupsByGroupIdResponse.respond204()));
-              }});
+              DeleteGroupsByGroupIdResponse response = reply.failed()
+                ? DeleteGroupsByGroupIdResponse.respond500WithTextPlain(reply.cause().getLocalizedMessage())
+                : DeleteGroupsByGroupIdResponse.respond204();
+              asyncResultHandler.handle(succeededFuture(response));
+            });
           return;
         }
         asyncResultHandler.handle(delete);
