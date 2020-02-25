@@ -1,6 +1,5 @@
 package org.folio.rest.impl;
 
-import static io.vertx.core.Future.succeededFuture;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 
 import java.util.Map;
@@ -18,6 +17,7 @@ import org.folio.rest.tools.utils.ValidationHelper;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
 /**
@@ -25,12 +25,9 @@ import io.vertx.core.Handler;
  *
  */
 public class UserGroupAPI implements Groups {
-
   public static final String GROUP_TABLE = "groups";
-  public static final String GROUP_USER_JOIN_TABLE = "groups_users";
+  private static final String PATRON_GROUP_ID_FIELD = "patronGroupId";
   private static final String PATRON_BLOCK_LIMITS_TABLE = "patron_block_limits";
-  public static final String ID_FIELD_NAME = "id";
-  public static final String PATRON_GROUP_ID_FIELD = "patronGroupId";
 
   @Validate
   @Override
@@ -52,7 +49,7 @@ public class UserGroupAPI implements Groups {
     PgUtil.post(GROUP_TABLE, entity, okapiHeaders, vertxContext, PostGroupsResponse.class, post -> {
       try {
         if (post.succeeded() && isDuplicate(post.result().getEntity().toString())) {
-          asyncResultHandler.handle(succeededFuture(
+          asyncResultHandler.handle(Future.succeededFuture(
               PostGroupsResponse.respond422WithApplicationJson(
                 ValidationHelper.createValidationErrorMessage(
                   "group", entity.getGroup(), "Group exists"))));
@@ -92,7 +89,7 @@ public class UserGroupAPI implements Groups {
               DeleteGroupsByGroupIdResponse response = reply.failed()
                 ? DeleteGroupsByGroupIdResponse.respond500WithTextPlain(reply.cause().getLocalizedMessage())
                 : DeleteGroupsByGroupIdResponse.respond204();
-              asyncResultHandler.handle(succeededFuture(response));
+              asyncResultHandler.handle(Future.succeededFuture(response));
             });
           return;
         }
