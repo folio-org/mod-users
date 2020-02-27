@@ -489,9 +489,6 @@ public class GroupIT {
     JsonObject user = new JsonObject();
     if (id != null) {
       user.put("id", id);
-    } else {
-      id = UUID.randomUUID().toString();
-      user.put("id", id);
     }
     user.put("username", name);
     user.put("patronGroup", pgId);
