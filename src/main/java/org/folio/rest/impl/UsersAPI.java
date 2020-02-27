@@ -24,7 +24,6 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserdataCollection;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -76,7 +75,7 @@ public class UsersAPI implements Users {
    * @return
    */
   private String getTableName(String cql) {
-    if(cql != null && cql.contains("patronGroup.")){
+    if (cql != null && cql.contains("patronGroup.")){
       return VIEW_NAME_USER_GROUPS_JOIN;
     }
     return TABLE_NAME_USERS;
@@ -136,47 +135,25 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-      UsersGetOrder order, int offset, int limit, List<String> facets,
-      String lang, RoutingContext routingContext, Map <String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+    UsersGetOrder order, int offset, int limit, List<String> facets,
+    String lang, RoutingContext routingContext, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler,
+    Context vertxContext) {
 
     logger.debug("Getting users");
+    // note that orderBy is NOT used
+    String tableName = getTableName(query);
     try {
-      CQLWrapper cql = getCQL(query,limit,offset);
+      CQLWrapper cql = getCQL(query, limit, offset);
 
       List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
-      String tableName = getTableName(query);
-      String[] fieldList = {"*"};
-      logger.debug("Headers present are: " + okapiHeaders.keySet().toString());
-
-      PgUtil.postgresClient(vertxContext, okapiHeaders)
-          .get(tableName, User.class, fieldList, cql, true, false, facetList, reply -> {
-        try {
-          if (reply.succeeded()) {
-            UserdataCollection userCollection = new UserdataCollection();
-            List<User> users = reply.result().getResults();
-            userCollection.setUsers(users);
-            userCollection.setTotalRecords(reply.result().getResultInfo().getTotalRecords());
-            userCollection.setResultInfo(reply.result().getResultInfo());
-            asyncResultHandler.handle(Future.succeededFuture(
-                GetUsersResponse.respond200WithApplicationJson(userCollection)));
-          } else {
-            handle(query, reply.cause(), asyncResultHandler, lang,
-                GetUsersResponse::respond400WithTextPlain,
-                GetUsersResponse::respond500WithTextPlain);
-          }
-        } catch (Exception e) {
-          handle(query, e, asyncResultHandler, lang,
-              GetUsersResponse::respond400WithTextPlain,
-              GetUsersResponse::respond500WithTextPlain);
-        }
-      });
-    } catch(Exception e) {
+      PgUtil.streamGet(tableName, User.class, cql, facetList, TABLE_NAME_USERS,
+        routingContext, okapiHeaders, vertxContext);
+    } catch (Exception e) {
       handle(query, e, asyncResultHandler, lang,
-          GetUsersResponse::respond400WithTextPlain,
-          GetUsersResponse::respond500WithTextPlain);
+        GetUsersResponse::respond400WithTextPlain,
+        GetUsersResponse::respond500WithTextPlain);
     }
   }
 
