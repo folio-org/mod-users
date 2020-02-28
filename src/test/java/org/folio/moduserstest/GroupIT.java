@@ -81,6 +81,7 @@ public class GroupIT {
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
+
   @BeforeClass
   public static void setup(TestContext context) {
     RestITSupport.setUp();
@@ -522,6 +523,88 @@ public class GroupIT {
         HTTPResponseHandlers.json());
       Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
       context.assertEquals(getExpiredUserResponse.body.getBoolean("active"), false);
+    }
+
+    CompletableFuture<Response> postGroupCF = send(groupUrl, POST, barGroupData, HTTPResponseHandlers.json());
+    Response postGroupResponse = postGroupCF.get(5, SECONDS);
+    context.assertEquals(postGroupResponse.code, HTTP_CREATED);
+    String barGroupId = postGroupResponse.body.getString("id");
+    context.assertNotNull(barGroupId);
+
+    int inc = 0;
+    addUserCF = send(userUrl, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
+      HTTPResponseHandlers.json());
+    addUserResponse = addUserCF.get(5, SECONDS);
+    context.assertEquals(addUserResponse.code, HTTP_CREATED);
+    log.info(addUserResponse.body
+      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl);
+
+    addUserCF2 = send(userUrl, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
+      HTTPResponseHandlers.json());
+    addUserResponse2 = addUserCF2.get(5, SECONDS);
+    context.assertEquals(addUserResponse2.code, HTTP_CREATED);
+    log.info(addUserResponse2.body
+      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
+
+    String url = HTTP_LOCALHOST + RestITSupport.port() + "/users?query=";
+
+    //query on users and sort by groups
+    String url0 = userUrl;
+    String url1 = url + urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
+    //String url1 = userUrl;
+    String url2 = url + urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
+    //query and sort on groups via users endpoint
+    String url3 = url + urlEncode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending");
+    //query on users sort on users and groups
+    String url4 = url + urlEncode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName");
+    //query on users and groups sort by groups
+    String url5 = url + urlEncode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group");
+    //query on users and sort by users
+    String url6 = url + urlEncode("active=true sortBy username", "UTF-8");
+    //non existant group - should be 0 results
+    String url7 = url + urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
+
+    String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7};
+
+    for (int i = 0; i < 8; i++) {
+      cqlURL = urls[i];
+      CompletableFuture<Response> cf = send(cqlURL, GET, null, HTTPResponseHandlers.json());
+
+      cqlResponse = cf.get(5, SECONDS);
+      context.assertEquals(cqlResponse.code, HTTP_OK);
+      log.info(cqlResponse.body
+        + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
+      //requests should usually have 3 or 4 results
+      switch (i) {
+        case 5:
+          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
+          break;
+        case 7:
+          context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
+          break;
+        case 6:
+          context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
+          break;
+        case 1:
+          context.assertEquals(4, cqlResponse.body.getInteger("totalRecords"));
+          context.assertEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+          break;
+        case 2:
+          context.assertEquals(4, cqlResponse.body.getInteger("totalRecords"));
+          context.assertNotEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+          break;
+        case 4:
+          context.assertTrue(((String) (new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))).startsWith("Triangle"));
+          break;
+        case 0:
+          //Baseline test
+          int totalRecords = cqlResponse.body.getInteger("totalRecords");
+          context.assertEquals(4, totalRecords);
+          break;
+        default:
+          context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
+          break;
+      }
     }
   }
 
