@@ -1,4 +1,18 @@
+## 16.1.0 2020-03-11
+
+* `id` no longer required when creating a new user (MODUSERS-187)
+* Removes custom field values when custom field is deleted (MODUSERS-172)
+* Stores patron block conditions (MODUSERS-174, MODUSERS-176)
+* Stores patron block limits (MODUSERS-175, MODUSERS-177, MODUSERS-180)
+* Streams responses to get users (MODUSERS-114, MODUSERS-171, MODUSERS-173)
+* Upgrades to `RAML Module Builder 29.3.0` (MODUSERS-164, MODUSERS-168)
+* Upgrades to `mod-custom-fields 1.3.0` (MODUSERS-179, MODUSERS-183)
+* Provides `custom-fields 1.2`
+* Provides `patron-block-conditions 0.1`
+* Provides `patron-block-limits 0.1`
+
 ## 16.0.0 2019-12-04
+
  * [MODUSERS-118](https://issues.folio.org/browse/MODUSERS-118) Reject duplicate user barcode
  * [MODUSERS-126](https://issues.folio.org/browse/MODUSERS-126) [MODUSERS-131](https://issues.folio.org/browse/MODUSERS-131) [MODUSERS-142](https://issues.folio.org/browse/MODUSERS-142) Upgrade to RMB 25, RMB 26, RMB 27
  * [MODUSERS-138](https://issues.folio.org/browse/MODUSERS-138) POST requests to /users fail - syntax error at or near ")"
