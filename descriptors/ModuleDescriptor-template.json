@@ -168,60 +168,6 @@
           "pathPattern" : "/_/tenant"
         }
       ]
-    },
-    {
-      "id": "patron-block-conditions",
-      "version": "0.1",
-      "handlers": [
-        {
-          "methods": ["GET"],
-          "pathPattern": "/patron-block-conditions",
-          "permissionsRequired": ["patron-block-conditions.collection.get"]
-        }, {
-          "methods": ["GET"],
-          "pathPattern": "patron-block-conditions/{id}",
-          "permissionsRequired": ["patron-block-conditions.item.get"]
-        }, {
-          "methods": ["POST"],
-          "pathPattern": "/patron-block-conditions",
-          "permissionsRequired": ["patron-block-conditions.item.post"]
-        }, {
-          "methods": ["PUT"],
-          "pathPattern": "/patron-block-conditions/{id}",
-          "permissionsRequired": ["patron-block-conditions.item.put"]
-        }, {
-          "methods": ["DELETE"],
-          "pathPattern": "/patron-block-conditions/{id}",
-          "permissionsRequired": ["patron-block-conditions.item.delete"]
-        }
-      ]
-    },
-    {
-      "id": "patron-block-limits",
-      "version": "0.1",
-      "handlers": [
-        {
-          "methods": ["GET"],
-          "pathPattern": "/patron-block-limits",
-          "permissionsRequired": ["patron-block-limits.collection.get"]
-        }, {
-          "methods": ["GET"],
-          "pathPattern": "patron-block-limits/{id}",
-          "permissionsRequired": ["patron-block-limits.item.get"]
-        }, {
-          "methods": ["POST"],
-          "pathPattern": "/patron-block-limits",
-          "permissionsRequired": ["patron-block-limits.item.post"]
-        }, {
-          "methods": ["PUT"],
-          "pathPattern": "/patron-block-limits/{id}",
-          "permissionsRequired": ["patron-block-limits.item.put"]
-        }, {
-          "methods": ["DELETE"],
-          "pathPattern": "/patron-block-limits/{id}",
-          "permissionsRequired": ["patron-block-limits.item.delete"]
-        }
-      ]
     }
   ],
   "permissionSets" : [
@@ -341,56 +287,6 @@
       "description" : "Delete a proxyfor record"
     },
     {
-      "permissionName": "patron-block-conditions.collection.get",
-      "displayName": "Patron block conditions - get patron block condition collection",
-      "description": "Get patron block condition collection"
-    },
-    {
-      "permissionName": "patron-block-conditions.item.get",
-      "displayName": "Patron block conditions - get patron block condition",
-      "description": "Get patron block condition by id"
-    },
-    {
-      "permissionName": "patron-block-conditions.item.post",
-      "displayName": "Patron block conditions - post patron block condition",
-      "description": "Create patron block condition"
-    },
-    {
-      "permissionName": "patron-block-conditions.item.put",
-      "displayName": "Patron block conditions - put patron block condition",
-      "description": "Put patron block condition by id"
-    },
-    {
-      "permissionName": "patron-block-conditions.item.delete",
-      "displayName": "Patron block conditions - delete patron block condition",
-      "description": "Delete patron block condition by id"
-    },
-    {
-      "permissionName": "patron-block-limits.collection.get",
-      "displayName": "Patron block limits - get patron block limit collection",
-      "description": "Get patron block limit collection"
-    },
-    {
-      "permissionName": "patron-block-limits.item.get",
-      "displayName": "Patron block limits - get patron block limit",
-      "description": "Get patron block limit by id"
-    },
-    {
-      "permissionName": "patron-block-limits.item.post",
-      "displayName": "Patron block limits - post patron block limit",
-      "description": "Create patron block limit"
-    },
-    {
-      "permissionName": "patron-block-limits.item.put",
-      "displayName": "Patron block limits - put patron block limit",
-      "description": "Put patron block limit by id"
-    },
-    {
-      "permissionName": "patron-block-limits.item.delete",
-      "displayName": "Patron block limits - delete patron block limit",
-      "description": "Delete patron block limit by id"
-    },
-    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -416,17 +312,7 @@
         "proxiesfor.item.get",
         "proxiesfor.item.post",
         "proxiesfor.item.put",
-        "proxiesfor.item.delete",
-        "patron-block-conditions.collection.get",
-        "patron-block-conditions.item.get",
-        "patron-block-conditions.item.post",
-        "patron-block-conditions.item.put",
-        "patron-block-conditions.item.delete",
-        "patron-block-limits.collection.get",
-        "patron-block-limits.item.get",
-        "patron-block-limits.item.post",
-        "patron-block-limits.item.put",
-        "patron-block-limits.item.delete"
+        "proxiesfor.item.delete"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
