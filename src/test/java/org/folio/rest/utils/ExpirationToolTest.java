@@ -25,10 +25,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.ext.sql.UpdateResult;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Row;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
@@ -109,7 +110,7 @@ public class ExpirationToolTest {
     PostgresClient postgresClient = mock(PostgresClient.class);
     ExpirationTool.postgresClient = (v,t) -> postgresClient;
     Future<Void> future = ExpirationTool.saveUser(vertx, "myTenant", new User());
-    ArgumentCaptor<Handler<AsyncResult<UpdateResult>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
+    ArgumentCaptor<Handler<AsyncResult<RowSet<Row>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
     verify(postgresClient).update(anyString(), any(User.class), any(), handlerCaptor.capture());
     handlerCaptor.getValue().handle(Future.failedFuture("out of punchcards"));
     assertThat(future.cause().getMessage(), is("out of punchcards"));

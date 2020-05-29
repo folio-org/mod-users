@@ -148,7 +148,7 @@ public class CustomFieldIT {
       .compose(v -> postUserWithNotExistingCustomField(context))
       .compose(v -> deleteUser(context, joeBlockId))
       .compose(v -> deleteCustomField(context))
-      .setHandler(testResultHandler(context, async));
+      .onComplete(testResultHandler(context, async));
   }
 
   @Test
@@ -160,7 +160,7 @@ public class CustomFieldIT {
       .compose(v -> queryCustomField(context)).compose(this::assertCustomFieldValues)
       .compose(v -> deleteUser(context, joeBlockId))
       .compose(v -> deleteCustomField(context))
-      .setHandler(testResultHandler(context, async));
+      .onComplete(testResultHandler(context, async));
   }
 
   private Handler<AsyncResult<Void>> testResultHandler(TestContext context, Async async) {

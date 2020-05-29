@@ -1233,7 +1233,7 @@ public class RestVerticleIT {
       startFuture = startFuture.compose(v -> getGroupByInvalidUuid(context));
     }
 
-    startFuture.setHandler(res -> {
+    startFuture.onComplete(res -> {
       if (res.succeeded()) {
         async.complete();
       } else {
@@ -1265,7 +1265,7 @@ public class RestVerticleIT {
     postUserWithWhitespace(context)
       .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), DEFAULT_LIMIT, "user name"))
       .compose(v -> deleteUser(context, userIdWithWhitespace))
-      .setHandler(res -> {
+      .onComplete(res -> {
         if (res.succeeded()) {
           async.complete();
         } else {
