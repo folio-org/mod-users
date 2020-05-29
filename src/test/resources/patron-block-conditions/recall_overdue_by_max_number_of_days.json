@@ -1,9 +1,0 @@
-{
-  "id": "08530ac4-07f2-48e6-9dda-a97bc2bf7053",
-  "name": "Recall overdue by maximum number of days",
-  "blockBorrowing": false,
-  "blockRenewals": false,
-  "blockRequests": false,
-  "valueType": "Integer",
-  "message": ""
-}

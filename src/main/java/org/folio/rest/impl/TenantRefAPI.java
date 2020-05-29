@@ -27,8 +27,6 @@ public class TenantRefAPI extends TenantAPI {
       TenantLoading tl = new TenantLoading();
       tl.withKey("loadReference").withLead("ref-data")
         .withIdContent()
-        .add("patron-block-conditions")
-        .withIdContent()
         .add("groups")
         .withIdContent()
         .add("addresstypes")
