@@ -1,10 +1,6 @@
 package org.folio.moduserstest;
 
 import static io.vertx.core.json.Json.encode;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.post;
@@ -12,13 +8,32 @@ import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import org.apache.commons.lang.RandomStringUtils;
+import org.folio.okapi.common.XOkapiHeaders;
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 import io.restassured.http.Header;
 import io.vertx.core.AsyncResult;
@@ -36,22 +51,6 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
-import org.apache.commons.lang.RandomStringUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-import org.folio.okapi.common.XOkapiHeaders;
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.persist.PostgresClient;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -63,7 +62,7 @@ public class CustomFieldIT {
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String notExistingCustomField = "notExistingCustomField";
 
-  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, makeFakeJWT("mockuser8", joeBlockId, "diku"));
+  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, makeFakeJWT("joeBlock", joeBlockId, "diku"));
 
   private static final String customFieldsPath = "/custom-fields";
 
