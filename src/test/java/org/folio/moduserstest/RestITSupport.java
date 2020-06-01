@@ -169,10 +169,8 @@ class RestITSupport {
       .putHeader(OKAPI_USERID_HEADER, userId)
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF);
-    
-      for(Header h : headers) {
-        req.putHeader(h.getName(), h.getValue());
-      }
+
+      Arrays.stream(headers).forEach(h->req.putHeader(h.getName(), h.getValue()));
 
       req.expect(res ->
         res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE
@@ -211,9 +209,7 @@ class RestITSupport {
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
       .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF);
 
-      for(Header h : headers) {
-        req.putHeader(h.getName(), h.getValue());
-      }
+      Arrays.stream(headers).forEach(h->req.putHeader(h.getName(), h.getValue()));
 
       req.sendBuffer(Buffer.buffer(body), promise);
 
