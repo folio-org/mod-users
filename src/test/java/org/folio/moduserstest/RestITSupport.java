@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
+import io.restassured.http.Header;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -156,15 +157,24 @@ class RestITSupport {
   }
 
   static Future<Void> postWithOkStatus(String userId, String request, String body) {
+    return postWithOkStatus(userId, request, body, new Header[0]);
+  }
+
+  static Future<Void> postWithOkStatus(String userId, String request, String body, Header ...headers) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
 
-    client.post(port, LOCALHOST, request)
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
+    HttpRequest<Buffer> req = client.post(port, LOCALHOST, request);
+       req.putHeader(OKAPI_HEADER_TENANT, "diku")
       .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
       .putHeader(OKAPI_USERID_HEADER, userId)
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .expect(res ->
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF);
+    
+      for(Header h : headers) {
+        req.putHeader(h.getName(), h.getValue());
+      }
+
+      req.expect(res ->
         res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE
               ? ResponsePredicateResult.success()
               : ResponsePredicateResult.failure("Got status code: " + res.statusCode())
@@ -188,15 +198,24 @@ class RestITSupport {
   }
 
   static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body) {
+    return putWithNoContentStatus(context, userId, request, body, new Header[0]);
+  }
+
+  static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body, Header ...headers) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
 
-    client.put(port, LOCALHOST, request)
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
+    HttpRequest<Buffer> req = client.put(port, LOCALHOST, request);
+      req.putHeader(OKAPI_HEADER_TENANT, "diku")
       .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
       .putHeader(OKAPI_USERID_HEADER, userId)
       .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .sendBuffer(Buffer.buffer(body), promise);
+      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF);
+
+      for(Header h : headers) {
+        req.putHeader(h.getName(), h.getValue());
+      }
+
+      req.sendBuffer(Buffer.buffer(body), promise);
 
     return promise.future().map(res -> {
       assertStatus(context, res, HTTP_NO_CONTENT);

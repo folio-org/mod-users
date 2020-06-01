@@ -13,10 +13,14 @@ import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import io.restassured.http.Header;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -41,7 +45,7 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-
+import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Errors;
@@ -58,6 +62,8 @@ public class CustomFieldIT {
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String notExistingCustomField = "notExistingCustomField";
+
+  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, makeFakeJWT("mockuser8", joeBlockId, "diku"));
 
   private static final String customFieldsPath = "/custom-fields";
 
@@ -184,7 +190,7 @@ public class CustomFieldIT {
     log.info("Creating a new user\n");
     JsonObject user = getUser(johnRectangleId, "johnRectangle");
     addCustomFields(user);
-
+   
     return postWithOkStatus(johnRectangleId, "/users", user.encode());
   }
 
@@ -197,7 +203,7 @@ public class CustomFieldIT {
     return future.map(response -> {
       RestITSupport.assertStatus(context, response, 422);
       Errors errors = Json.decodeValue(response.body(), Errors.class);
-      context.assertEquals("Maximum length of this text field is 150", errors.getErrors().get(0).getMessage());
+      context.assertEquals("Maximum length of the value is 150", errors.getErrors().get(0).getMessage());
       return null;
     });
   }
@@ -326,16 +332,32 @@ public class CustomFieldIT {
 
   private Future<Void> postCustomField() {
     log.info("Creating a new custom field definition\n");
-    return postWithOkStatus(joeBlockId, customFieldsPath, postCustomField);
+    return postWithOkStatus(joeBlockId, customFieldsPath, postCustomField, FAKE_TOKEN);
   }
 
   private Future<Void> putCustomField(TestContext context) {
     log.info("Update custom field definition\n");
-    return putWithNoContentStatus(context, joeBlockId, customFieldsPath + "/" + customFieldId, putCustomField);
+    return putWithNoContentStatus(context, joeBlockId, customFieldsPath + "/" + customFieldId, putCustomField, FAKE_TOKEN);
   }
 
   private Future<Void> deleteUser(TestContext context, String userId) {
     log.info("Deleting existing user\n");
     return deleteWithNoContentStatus(context, "/users/" + userId);
+  }
+
+  private static String makeFakeJWT(String username, String id, String tenant) {
+    JsonObject header = new JsonObject()
+      .put("alg", "HS512");
+    JsonObject payload = new JsonObject()
+      .put("sub", username)
+      .put("user_id", id)
+      .put("tenant", tenant);
+    return String.format("%s.%s.%s",
+      Base64.getEncoder().encodeToString(header.encode()
+        .getBytes(StandardCharsets.UTF_8)),
+      Base64.getEncoder().encodeToString(payload.encode()
+        .getBytes(StandardCharsets.UTF_8)),
+      Base64.getEncoder().encodeToString((header.encode() + payload.encode())
+        .getBytes(StandardCharsets.UTF_8)));
   }
 }
