@@ -4,6 +4,11 @@
       "run": "after",
       "snippetPath": "create_custom_fields_table.sql",
       "fromModuleVersion": "mod-users-15.7.0"
+    },
+    {
+      "run": "before",
+      "snippet": "DO $$ BEGIN DROP TABLE patron_block_conditions, patron_block_limits; EXCEPTION WHEN OTHERS THEN END; $$;",
+      "fromModuleVersion": "mod-users-16.2.1"
     }
   ],
   "tables" : [
@@ -178,16 +183,6 @@
           "tOps" : "ADD"
         }
       ]
-    },
-    {
-      "tableName" : "patron_block_conditions",
-      "fromModuleVersion" : "mod-users-16.0.1",
-      "withMetadata" : true
-    },
-    {
-      "tableName" : "patron_block_limits",
-      "fromModuleVersion" : "mod-users-16.0.1",
-      "withMetadata" : true
     }
   ],
   "views" : [
