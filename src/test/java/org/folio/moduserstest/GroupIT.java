@@ -11,7 +11,6 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.defaultString;
-
 import static org.folio.moduserstest.RestITSupport.HTTP_LOCALHOST;
 import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.fail;
@@ -21,18 +20,28 @@ import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.util.StringUtil.urlEncode;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.parser.JsonPathParser;
+import org.folio.rest.utils.ExpirationTool;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -45,22 +54,6 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.parser.JsonPathParser;
-import org.folio.rest.utils.ExpirationTool;
 
 
 @RunWith(VertxUnitRunner.class)
