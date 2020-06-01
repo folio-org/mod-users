@@ -37,7 +37,7 @@ public class CustomFieldStatisticsTest extends TestBase {
 
   private static final String USER_ID =  "88888888-8888-4888-8888-888888888888";
   private static final Header USER8 = new Header(XOkapiHeaders.USER_ID, USER_ID);
-  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, makeFakeJWT("diku_admin", USER_ID, "diku"));
+  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, makeFakeJWT("mockuser8", USER_ID, "diku"));
 
   private static final String USERS_PATH = "users";
   private static final String CUSTOM_FIELDS_PATH = "custom-fields";

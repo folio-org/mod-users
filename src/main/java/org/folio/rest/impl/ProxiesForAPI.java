@@ -67,7 +67,7 @@ public class ProxiesForAPI implements Proxiesfor {
     Context vertxContext) {
     PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     userAndProxyUserComboExists(entity.getUserId(), entity.getProxyUserId(),
-      postgresClient).setHandler(existsRes -> {
+      postgresClient).onComplete(existsRes -> {
         if (existsRes.failed()) {
           String message = logAndSaveError(existsRes.cause());
           asyncResultHandler.handle(Future.succeededFuture(
