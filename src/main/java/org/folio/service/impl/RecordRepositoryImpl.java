@@ -38,7 +38,7 @@ public class RecordRepositoryImpl implements RecordRepository {
 
     pgClient(tenantId).select(String.format(SELECT_USAGE_COUNT, field.getRefId()), count);
 
-    return count.future().map(rs -> statistic(field, rs.rowCount()));
+    return count.future().map(rs -> statistic(field, rs.iterator().next().getInteger(0)));
   }
 
   @Override

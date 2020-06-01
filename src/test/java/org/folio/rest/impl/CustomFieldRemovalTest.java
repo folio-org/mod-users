@@ -2,6 +2,9 @@ package org.folio.rest.impl;
 
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.folio.test.util.TestUtil.mockGetWithBody;
+import static org.folio.test.util.TestUtil.readFile;
+import static org.folio.test.util.TestUtil.toJson;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -10,24 +13,12 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
-import static org.folio.test.util.TestUtil.mockGetWithBody;
-import static org.folio.test.util.TestUtil.readFile;
-import static org.folio.test.util.TestUtil.toJson;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.UUID;
 
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import io.restassured.http.Header;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.CustomField;
@@ -35,6 +26,14 @@ import org.folio.rest.jaxrs.model.CustomFieldCollection;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.TestBase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import io.restassured.http.Header;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class CustomFieldRemovalTest extends TestBase {

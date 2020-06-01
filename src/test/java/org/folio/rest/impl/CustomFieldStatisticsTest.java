@@ -48,19 +48,14 @@ public class CustomFieldStatisticsTest extends TestBase {
   @Before
   public void setUp() throws IOException, URISyntaxException {
     String user8Body = readFile("users/user8.json");
-
-    user8 = postWithStatus(USERS_PATH, user8Body, SC_CREATED, USER8, FAKE_TOKEN).as(User.class);
-
+    user8 = createUser("users/user8.json");
     mockGetWithBody(new EqualToPattern("/" + USERS_PATH + "/" + user8.getId()), user8Body);
-
-    textField = postWithStatus(CUSTOM_FIELDS_PATH, readFile("fields/shortTextField.json"), SC_CREATED, USER8, FAKE_TOKEN)
-      .as(CustomField.class);
+    textField = createField("fields/shortTextField.json");
   }
 
   @After
   public void tearDown() {
     CustomFieldsDBTestUtil.deleteAllCustomFields(vertx);
-
     deleteWithNoContent(USERS_PATH + "/" + user8.getId());
   }
 
@@ -90,6 +85,21 @@ public class CustomFieldStatisticsTest extends TestBase {
   @Test
   public void shouldFailIfFieldDoesntExist() {
     getWithStatus(CUSTOM_FIELDS_PATH + "/" + FAKE_FIELD_ID + "/stats", SC_NOT_FOUND);
+  }
+
+  private User createUser(String pathToJson) throws IOException, URISyntaxException {
+    String body = readFile(pathToJson);
+
+    User user = postWithStatus(USERS_PATH, body, SC_CREATED, USER8).as(User.class);
+
+    mockGetWithBody(new EqualToPattern("/" + USERS_PATH + "/" + user.getId()), body);
+
+    return user;
+  }
+
+  private CustomField createField(String pathToJson) throws IOException, URISyntaxException {
+    return postWithStatus(CUSTOM_FIELDS_PATH, readFile(pathToJson), SC_CREATED, USER8, FAKE_TOKEN)
+      .as(CustomField.class);
   }
 
   private static String makeFakeJWT(String username, String id, String tenant) {
