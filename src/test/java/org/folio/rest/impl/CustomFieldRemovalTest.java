@@ -2,6 +2,9 @@ package org.folio.rest.impl;
 
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.folio.test.util.TestUtil.mockGetWithBody;
+import static org.folio.test.util.TestUtil.readFile;
+import static org.folio.test.util.TestUtil.toJson;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -10,20 +13,12 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
-import static org.folio.test.util.TestUtil.mockGetWithBody;
-import static org.folio.test.util.TestUtil.readFile;
-import static org.folio.test.util.TestUtil.toJson;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import io.restassured.http.Header;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.CustomField;
@@ -31,13 +26,23 @@ import org.folio.rest.jaxrs.model.CustomFieldCollection;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.TestBase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import io.restassured.http.Header;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class CustomFieldRemovalTest extends TestBase {
 
   private static final String FAKE_FIELD_ID = "11111111-1111-1111-a111-111111111111";
 
-  private static final Header USER8 = new Header(XOkapiHeaders.USER_ID, "88888888-8888-4888-8888-888888888888");
+  private static final String USER_ID =  "88888888-8888-4888-8888-888888888888";
+  private static final Header USER8 = new Header(XOkapiHeaders.USER_ID, USER_ID);
+  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, makeFakeJWT("mockuser8", USER_ID, "diku"));
 
   private static final String USERS_PATH = "users";
   private static final String CUSTOM_FIELDS_PATH = "custom-fields";
@@ -144,7 +149,7 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   private CustomField createField(String pathToJson) throws IOException, URISyntaxException {
-    return postWithStatus(CUSTOM_FIELDS_PATH, readFile(pathToJson), SC_CREATED, USER8)
+    return postWithStatus(CUSTOM_FIELDS_PATH, readFile(pathToJson), SC_CREATED, USER8, FAKE_TOKEN)
       .as(CustomField.class);
   }
 
@@ -175,4 +180,21 @@ public class CustomFieldRemovalTest extends TestBase {
     User user = getWithOk("/" + USERS_PATH + "/" + userId).as(User.class);
     assertThat(user.getCustomFields().getAdditionalProperties(), not(hasKey(fieldRefId)));
   }
+
+  private static String makeFakeJWT(String username, String id, String tenant) {
+    JsonObject header = new JsonObject()
+      .put("alg", "HS512");
+    JsonObject payload = new JsonObject()
+      .put("sub", username)
+      .put("user_id", id)
+      .put("tenant", tenant);
+    return String.format("%s.%s.%s",
+      Base64.getEncoder().encodeToString(header.encode()
+        .getBytes(StandardCharsets.UTF_8)),
+      Base64.getEncoder().encodeToString(payload.encode()
+        .getBytes(StandardCharsets.UTF_8)),
+      Base64.getEncoder().encodeToString((header.encode() + payload.encode())
+        .getBytes(StandardCharsets.UTF_8)));
+  }
+  
 }

@@ -514,7 +514,7 @@ public class UsersAPI implements Users {
       futureList.add(addressTypeExistsFuture);
     }
     CompositeFuture compositeFuture = CompositeFuture.all(futureList);
-    compositeFuture.setHandler(res -> {
+    compositeFuture.onComplete(res -> {
       if (res.failed()) {
         promise.fail(res.cause());
         return;

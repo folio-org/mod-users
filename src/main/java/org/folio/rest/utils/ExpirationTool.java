@@ -6,9 +6,10 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,15 +40,15 @@ public final class ExpirationTool {
       String tenantQuery = "select nspname from pg_catalog.pg_namespace where nspname LIKE '%_mod_users';";
       pgClient.select(tenantQuery, reply -> {
         if(reply.succeeded()) {
-          List<JsonObject> obList = reply.result().getRows();
-          for(JsonObject ob : obList) {
-            String nsTenant = ob.getString("nspname");
+          RowSet<Row> rows = reply.result();
+          rows.forEach(row->{
+            String nsTenant = row.getString("nspname");
             String suffix = "_mod_users";
             int suffixLength = nsTenant.length() - suffix.length();
             final String tenant = nsTenant.substring(0, suffixLength);
             logger.info("Calling doExpirationForTenant for tenant " + tenant);
             Future<Integer> expireFuture = doExpirationForTenant(vertx, context, tenant);
-            expireFuture.setHandler(res -> {
+            expireFuture.onComplete(res -> {
               if(res.failed()) {
                 logger.info(String.format("Attempt to expire records for tenant %s failed: %s",
                         tenant, res.cause().getLocalizedMessage()));
@@ -55,7 +56,7 @@ public final class ExpirationTool {
                 logger.info(String.format("Expired %s users", res.result()));
               }
             });
-          }
+          });
         } else {
           logger.info(String.format("TenantQuery '%s' failed: %s", tenantQuery,
                   reply.cause().getLocalizedMessage()));
@@ -93,7 +94,7 @@ public final class ExpirationTool {
           futureList.add(saveFuture);
         }
         CompositeFuture compositeFuture = CompositeFuture.join(futureList);
-        compositeFuture.setHandler(compRes -> {
+        compositeFuture.onComplete(compRes -> {
           int succeededCount = 0;
           for(Future fut : futureList) {
             if(fut.succeeded()) {

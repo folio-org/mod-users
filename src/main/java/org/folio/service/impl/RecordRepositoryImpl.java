@@ -6,8 +6,8 @@ import java.util.List;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.UpdateResult;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFieldStatistic;
@@ -34,11 +34,11 @@ public class RecordRepositoryImpl implements RecordRepository {
 
   @Override
   public Future<CustomFieldStatistic> retrieveStatisticForField(CustomField field, String tenantId) {
-    Promise<ResultSet> count = Promise.promise();
+    Promise<RowSet<Row>> count = Promise.promise();
 
     pgClient(tenantId).select(String.format(SELECT_USAGE_COUNT, field.getRefId()), count);
 
-    return count.future().map(rs -> statistic(field, rs.getResults().get(0).getInteger(0)));
+    return count.future().map(rs -> statistic(field, rs.iterator().next().getInteger(0)));
   }
 
   @Override
@@ -57,11 +57,11 @@ public class RecordRepositoryImpl implements RecordRepository {
   public Future<Boolean> updateUser(User user, String tenantId) {
     user.setUpdatedDate(new Date());
 
-    Promise<UpdateResult> promise = Promise.promise();
+    Promise<RowSet<Row>> promise = Promise.promise();
 
     pgClient(tenantId).update(USERS_TABLE, user, user.getId(), promise);
 
-    return promise.future().map(updateResult -> updateResult.getUpdated() == 1);
+    return promise.future().map(updateResult -> updateResult.size() == 1);
   }
 
   private CustomFieldStatistic statistic(CustomField field, Integer count) {
