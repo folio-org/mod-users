@@ -12,20 +12,19 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang.RandomStringUtils;
-import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.test.util.TokenTestUtil;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -62,7 +61,7 @@ public class CustomFieldIT {
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String notExistingCustomField = "notExistingCustomField";
 
-  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, makeFakeJWT("joeBlock", joeBlockId, "diku"));
+  private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("joeBlock", joeBlockId);
 
   private static final String customFieldsPath = "/custom-fields";
 
@@ -189,7 +188,7 @@ public class CustomFieldIT {
     log.info("Creating a new user\n");
     JsonObject user = getUser(johnRectangleId, "johnRectangle");
     addCustomFields(user);
-   
+
     return postWithOkStatus(johnRectangleId, "/users", user.encode());
   }
 
@@ -344,19 +343,4 @@ public class CustomFieldIT {
     return deleteWithNoContentStatus(context, "/users/" + userId);
   }
 
-  private static String makeFakeJWT(String username, String id, String tenant) {
-    JsonObject header = new JsonObject()
-      .put("alg", "HS512");
-    JsonObject payload = new JsonObject()
-      .put("sub", username)
-      .put("user_id", id)
-      .put("tenant", tenant);
-    return String.format("%s.%s.%s",
-      Base64.getEncoder().encodeToString(header.encode()
-        .getBytes(StandardCharsets.UTF_8)),
-      Base64.getEncoder().encodeToString(payload.encode()
-        .getBytes(StandardCharsets.UTF_8)),
-      Base64.getEncoder().encodeToString((header.encode() + payload.encode())
-        .getBytes(StandardCharsets.UTF_8)));
-  }
 }

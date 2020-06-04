@@ -1,7 +1,5 @@
 package org.folio.moduserstest;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +11,7 @@ import org.folio.rest.impl.UserExpiryImpl;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.test.util.TokenTestUtil;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -29,7 +28,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 @RunWith(VertxUnitRunner.class)
 public class UserExpiryImplTest {
 
-  private static final String FAKE_TOKEN = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
+  private static final String FAKE_TOKEN = TokenTestUtil.generateToken("bubba", UUID.randomUUID().toString());
 
   @BeforeClass
   public static void setup(TestContext context) {
@@ -87,19 +86,4 @@ public class UserExpiryImplTest {
     });
   }
 
-  private static String makeFakeJWT(String username, String id, String tenant) {
-    JsonObject header = new JsonObject()
-      .put("alg", "HS512");
-    JsonObject payload = new JsonObject()
-      .put("sub", username)
-      .put("user_id", id)
-      .put("tenant", tenant);
-    return String.format("%s.%s.%s",
-      Base64.getEncoder().encodeToString(header.encode()
-        .getBytes(StandardCharsets.UTF_8)),
-      Base64.getEncoder().encodeToString(payload.encode()
-        .getBytes(StandardCharsets.UTF_8)),
-      Base64.getEncoder().encodeToString((header.encode() + payload.encode())
-        .getBytes(StandardCharsets.UTF_8)));
-  }
 }

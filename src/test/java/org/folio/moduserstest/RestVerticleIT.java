@@ -17,10 +17,8 @@ import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -55,6 +53,7 @@ import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.test.util.TokenTestUtil;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -69,7 +68,8 @@ public class RestVerticleIT {
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
   private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
 
-  private static final String FAKE_TOKEN = makeFakeJWT("bubba", UUID.randomUUID().toString(), "diku");
+  private static final String FAKE_TOKEN = TokenTestUtil.generateToken("bubba", UUID.randomUUID().toString());
+
   private static final int DEFAULT_LIMIT = 10;
 
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
@@ -1241,22 +1241,6 @@ public class RestVerticleIT {
         context.fail(res.cause());
       }
     });
-  }
-
-  private static String makeFakeJWT(String username, String id, String tenant) {
-    JsonObject header = new JsonObject()
-      .put("alg", "HS512");
-    JsonObject payload = new JsonObject()
-      .put("sub", username)
-      .put("user_id", id)
-      .put("tenant", tenant);
-    return String.format("%s.%s.%s",
-      Base64.getEncoder().encodeToString(header.encode()
-        .getBytes(StandardCharsets.UTF_8)),
-      Base64.getEncoder().encodeToString(payload.encode()
-        .getBytes(StandardCharsets.UTF_8)),
-      Base64.getEncoder().encodeToString((header.encode() + payload.encode())
-        .getBytes(StandardCharsets.UTF_8)));
   }
 
   @Test
