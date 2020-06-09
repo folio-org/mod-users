@@ -1,0 +1,28 @@
+{
+  "name": "favoriteFood",
+  "visible": true,
+  "required": true,
+  "type": "MULTI_SELECT_DROPDOWN",
+  "entityType": "user",
+  "helpText": "Choose your favorite food",
+  "order": 1,
+  "selectField": {
+    "multiSelect": true,
+    "options": {
+      "values": [
+        {
+          "id": "opt_0",
+          "value": "eggs"
+        },
+        {
+          "id": "opt_1",
+          "value": "pizza"
+        },
+        {
+          "id": "opt_2",
+          "value": "potatoes"
+        }
+      ]
+    }
+  }
+}
