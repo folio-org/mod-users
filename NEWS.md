@@ -1,3 +1,12 @@
+## 17.0.0 2020-06-10
+
+* Custom fields can have multiple values (MODUSERS-201)
+* Selectable options for custom fields must be uniquely identified (MODUSERS-201)
+* Provides `custom-fields 2.0`
+* No longer provides `patron-block-conditions`
+* No longer provides `patron-block-limits`
+* Upgrades to RAML Module Builder 30.0.2 (MODUSERS-195)
+
 ## 16.1.0 2020-03-11
 
 * `id` no longer required when creating a new user (MODUSERS-187)
