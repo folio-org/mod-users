@@ -155,6 +155,11 @@
           "methods": ["GET"],
           "pathPattern": "/custom-fields/{id}/stats",
           "permissionsRequired": ["user-settings.custom-fields.item.stats.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/custom-fields/{id}/options/{optId}/stats",
+          "permissionsRequired": ["user-settings.custom-fields.item.option.stats.get"]
         }
       ]
     },
@@ -345,6 +350,11 @@
       "description": "Get Custom Field Statistic"
     },
     {
+      "permissionName": "user-settings.custom-fields.item.option.stats.get",
+      "displayName": "User Custom Fields - get item option usage statistic",
+      "description": "Get Custom Field Option Statistic"
+    },
+    {
       "permissionName": "user-settings.custom-fields.all",
       "displayName": "User Custom Fields module - all permissions",
       "description": "Entire set of permissions needed to use the user custom fields",
@@ -355,7 +365,8 @@
         "user-settings.custom-fields.item.get",
         "user-settings.custom-fields.item.put",
         "user-settings.custom-fields.item.delete",
-        "user-settings.custom-fields.item.stats.get"
+        "user-settings.custom-fields.item.stats.get",
+        "user-settings.custom-fields.item.option.stats.get"
       ],
       "visible": false
     }
