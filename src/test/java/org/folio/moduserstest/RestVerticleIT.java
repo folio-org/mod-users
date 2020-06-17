@@ -3,6 +3,7 @@ package org.folio.moduserstest;
 import static io.vertx.core.json.Json.encode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -71,15 +72,14 @@ public class RestVerticleIT {
   private static final String FAKE_TOKEN = TokenTestUtil.generateToken("bubba", UUID.randomUUID().toString());
 
   private static final int DEFAULT_LIMIT = 10;
-
+  @Rule
+  public Timeout rule = Timeout.seconds(20);
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
     .put("id", UUID.randomUUID().toString());
-
   private JsonObject testGroup = new JsonObject().put("group", "dropouts")
     .put("desc", "Freaks and Geeks")
     .put("id", UUID.randomUUID().toString());
-
   private JsonObject testProxyFor = new JsonObject()
     .put("userId", UUID.randomUUID().toString())
     .put("proxyUserId", UUID.randomUUID().toString())
@@ -89,10 +89,6 @@ public class RestVerticleIT {
     .put("requestForSponsor", "Yes")
     .put("notificationsTo", "Proxy")
     .put("accrueTo", "Sponsor");
-
-
-  @Rule
-  public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) {
@@ -108,8 +104,10 @@ public class RestVerticleIT {
       // remove existing schema from previous tests
       tenantClient.deleteTenant(delete -> {
         switch (delete.statusCode()) {
-          case 204: break;  // existing schema has been deleted
-          case 400: break;  // schema does not exist
+          case 204:
+            break;  // existing schema has been deleted
+          case 400:
+            break;  // schema does not exist
           default:
             RestITSupport.fail(context, "deleteTenant", delete);
             return;
@@ -144,6 +142,114 @@ public class RestVerticleIT {
     future.join();
   }
 
+  private static void addTags(JsonObject u) {
+    JsonArray tagList = new JsonArray();
+    tagList.add("foo-tag");
+    tagList.add("bar-tag");
+    JsonObject tagobj = new JsonObject();
+    tagobj.put("tagList", tagList);
+    u.put("tags", tagobj);
+  }
+
+  @Test
+  public void test1Sequential(TestContext context) {
+    /*
+      The CQL used for searching when a single j has been entered into the
+      search slot
+     */
+    final String jSearch = "(((username=\"j*\" or personal.firstName=\"j*\" or "
+      + "personal.lastName=\"j*\" or personal.email=\"j*\" or barcode=\"j*\" or "
+      + "id=\"j*\" or externalSystemId=\"j*\")) and active=\"true\") "
+      + "sortby personal.lastName personal.firstName";
+
+    Async async = context.async();
+    Future<Void> startFuture;
+    startFuture = getEmptyUsers(context)
+      .compose(v -> postUser(false))
+      .compose(v -> putUserGood(context, joeBlockId, false))
+      .compose(v -> deleteUser(context, joeBlockId))
+      .compose(v -> postUser(true))
+      .compose(v -> deleteUser(context, joeBlockId))
+      .compose(v -> postUser(true))
+      .compose(v -> getUser(context))
+      .compose(v -> getUserByCQL(context))
+      .compose(v -> getUserByCqlById(context))
+      .compose(v -> getUserByInvalidCQL(context))
+      .compose(v -> deleteNonExistingUser(context))
+      .compose(v -> postAnotherUser(context))
+      .compose(v -> getUsersByCQL(context, "id==x", DEFAULT_LIMIT) /* empty result */)
+      .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
+      .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
+      .compose(v -> putUserGood(context, bobCircleId, true))
+      .compose(v -> putUserPreferredFirstName(context))
+      .compose(v -> getUserPreferredFirstName(context))
+      .compose(v -> putUserBadUsername(context))
+      .compose(v -> putUserWithoutIdInMetadata(context))
+      .compose(v -> getGoodUser(context))
+      .compose(v -> putUserBadId(context))
+      .compose(v -> putUserNotMatchingId(context))
+      .compose(v -> putUserDuplicatedAddressType(context))
+      .compose(v -> putUserInvalidAddressType(context))
+      .compose(v -> putUserWithNumericName(context))
+      .compose(v -> putUserWithDuplicateUsername(context))
+      .compose(v -> putUserWithDuplicateBarcode(context))
+      .compose(v -> createAddressType(context))
+      .compose(v -> createBadAddressType(context))
+      .compose(v -> getAddressTypeUpdateUser(context))
+      .compose(v -> createAndDeleteAddressType(context))
+      .compose(v -> deleteAddressTypeSQLError(context))
+      .compose(v -> deleteAddressTypeCQLError(context))
+      .compose(v -> postUserWithDuplicateAddressType(context))
+      .compose(v -> postUserBadAddress(context))
+      .compose(v -> postUserWithNumericName(context))
+      .compose(v -> postUserWithDuplicateId(context))
+      .compose(v -> postUserWithDuplicateUsername(context))
+      .compose(v -> postTwoUsersWithoutUsername(context))
+      .compose(v -> putSecondUserWithoutUsername(context))
+      .compose(v -> postUserWithDuplicateBarcode(context))
+      .compose(v -> createProxyfor(context))
+      .compose(v -> createProxyforWithSameUserId(context))
+      .compose(v -> createProxyforWithSameProxyUserId(context))
+      .compose(v -> failToCreateDuplicateProxyfor(context))
+      .compose(v -> getProxyforCollection(context))
+      .compose(v -> findAndGetProxyfor(context))
+      .compose(v -> findAndUpdateProxyfor(context))
+      .compose(v -> findAndDeleteProxyfor(context))
+      .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
+      .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
+      .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
+
+    // It hung after 5-12 invocations. MODUSERS-100
+    for (int i = 0; i < 25; i++) {
+      startFuture = startFuture.compose(v -> getGroupByInvalidUuid(context));
+    }
+
+    startFuture.onComplete(res -> {
+      if (res.succeeded()) {
+        async.complete();
+      } else {
+        res.cause().printStackTrace();
+        context.fail(res.cause());
+      }
+    });
+  }
+
+  @Test
+  public void test5UserName(TestContext context) {
+    Async async = context.async();
+    postUserWithWhitespace(context)
+      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), DEFAULT_LIMIT, "user name"))
+      .compose(v -> deleteUser(context, userIdWithWhitespace))
+      .onComplete(res -> {
+        if (res.succeeded()) {
+          async.complete();
+        } else {
+          res.cause().printStackTrace();
+          context.fail(res.cause());
+        }
+      });
+  }
+
   private Future<Void> getEmptyUsers(TestContext context) {
     log.info("Getting an empty user set\n");
 
@@ -159,15 +265,6 @@ public class RestVerticleIT {
       }
       return null;
     });
-  }
-
-  private static void addTags(JsonObject u) {
-    JsonArray tagList = new JsonArray();
-    tagList.add("foo-tag");
-    tagList.add("bar-tag");
-    JsonObject tagobj = new JsonObject();
-    tagobj.put("tagList", tagList);
-    u.put("tags", tagobj);
   }
 
   private Future<Void> postUser(boolean withUserName) {
@@ -227,8 +324,7 @@ public class RestVerticleIT {
 
         if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
           fail("Bad value for tag list");
-        }
-        else {
+        } else {
           Date createdDate = null;
           try {
             createdDate = new DateTime(user.getString("createdDate")).toDate();
@@ -309,7 +405,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/users", encode(user));
 
     return future.map(response -> {
-      assertStatus(context, response,  201);
+      assertStatus(context, response, 201);
       return null;
     });
   }
@@ -389,6 +485,38 @@ public class RestVerticleIT {
 
     return future.map(response -> {
       assertStatus(context, response, 400);
+      return null;
+    });
+  }
+
+  private Future<Void> putUserPreferredFirstName(TestContext context) {
+    log.info("Trying to update user with preferred first name \n");
+
+    JsonObject user = new JsonObject()
+      .put("id", bobCircleId)
+      .put("active", false)
+      .put("personal", new JsonObject()
+        .put("preferredFirstName", "Jack")
+      );
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 400);
+      return null;
+    });
+  }
+
+  private Future<Void> getUserPreferredFirstName(TestContext context) {
+    log.info("Trying to get user with preferred first name \n");
+
+    String preferredName = "Jack";
+
+    Future<JsonObject> future = getJson(context, "/users/" + bobCircleId);
+
+    return future.map(user -> {
+      String actualFirstName = user.getJsonObject("personal").getString("preferredFirstName");
+      assertEquals(preferredName, actualFirstName);
       return null;
     });
   }
@@ -744,10 +872,10 @@ public class RestVerticleIT {
 
     JsonObject user1 = new JsonObject()
       .put("username", "the_twin")
-      .put("id",  UUID.randomUUID().toString());
+      .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
       .put("username", "the_twin")
-      .put("id",  UUID.randomUUID().toString());
+      .put("id", UUID.randomUUID().toString());
 
     // create test user one
     Future<Void> f1 = post("/users", encode(user1))
@@ -818,9 +946,9 @@ public class RestVerticleIT {
     log.info("Attempting to create two users without username");
 
     JsonObject user1 = new JsonObject()
-      .put("id",  UUID.randomUUID().toString());
+      .put("id", UUID.randomUUID().toString());
     JsonObject user2 = new JsonObject()
-      .put("id",  UUID.randomUUID().toString());
+      .put("id", UUID.randomUUID().toString());
 
     Future<Void> f1 = post("/users", encode(user1))
       .map(response -> {
@@ -875,7 +1003,7 @@ public class RestVerticleIT {
 
     JsonObject userObject1 = new JsonObject()
       .put("username", "test_one")
-      .put("id",  UUID.randomUUID().toString())
+      .put("id", UUID.randomUUID().toString())
       .put("active", true)
       .put("barcode", "943259854978643")
       .put("personal", new JsonObject()
@@ -884,7 +1012,7 @@ public class RestVerticleIT {
       );
     JsonObject userObject2 = new JsonObject()
       .put("username", "test_two")
-      .put("id",  UUID.randomUUID().toString())
+      .put("id", UUID.randomUUID().toString())
       .put("active", true)
       .put("barcode", "943259854978643")
       .put("personal", new JsonObject()
@@ -1160,103 +1288,6 @@ public class RestVerticleIT {
       assertStatus(context, response, 404);
       return null;
     });
-  }
-
-  @Test
-  public void test1Sequential(TestContext context) {
-    /*
-      The CQL used for searching when a single j has been entered into the
-      search slot
-     */
-    final String jSearch = "(((username=\"j*\" or personal.firstName=\"j*\" or "
-      + "personal.lastName=\"j*\" or personal.email=\"j*\" or barcode=\"j*\" or "
-      + "id=\"j*\" or externalSystemId=\"j*\")) and active=\"true\") "
-      + "sortby personal.lastName personal.firstName";
-
-    Async async = context.async();
-    Future<Void> startFuture;
-    startFuture = getEmptyUsers(context)
-      .compose(v -> postUser(false))
-      .compose(v -> putUserGood(context, joeBlockId, false))
-      .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(true))
-      .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(true))
-      .compose(v -> getUser(context))
-      .compose(v -> getUserByCQL(context))
-      .compose(v -> getUserByCqlById(context))
-      .compose(v -> getUserByInvalidCQL(context))
-      .compose(v -> deleteNonExistingUser(context))
-      .compose(v -> postAnotherUser(context))
-      .compose(v -> getUsersByCQL(context, "id==x", DEFAULT_LIMIT) /* empty result */)
-      .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
-      .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
-      .compose(v -> putUserGood(context, bobCircleId, true))
-      .compose(v -> putUserBadUsername(context))
-      .compose(v -> putUserWithoutIdInMetadata(context))
-      .compose(v -> getGoodUser(context))
-      .compose(v -> putUserBadId(context))
-      .compose(v -> putUserNotMatchingId(context))
-      .compose(v -> putUserDuplicatedAddressType(context))
-      .compose(v -> putUserInvalidAddressType(context))
-      .compose(v -> putUserWithNumericName(context))
-      .compose(v -> putUserWithDuplicateUsername(context))
-      .compose(v -> putUserWithDuplicateBarcode(context))
-      .compose(v -> createAddressType(context))
-      .compose(v -> createBadAddressType(context))
-      .compose(v -> getAddressTypeUpdateUser(context))
-      .compose(v -> createAndDeleteAddressType(context))
-      .compose(v -> deleteAddressTypeSQLError(context))
-      .compose(v -> deleteAddressTypeCQLError(context))
-      .compose(v -> postUserWithDuplicateAddressType(context))
-      .compose(v -> postUserBadAddress(context))
-      .compose(v -> postUserWithNumericName(context))
-      .compose(v -> postUserWithDuplicateId(context))
-      .compose(v -> postUserWithDuplicateUsername(context))
-      .compose(v -> postTwoUsersWithoutUsername(context))
-      .compose(v -> putSecondUserWithoutUsername(context))
-      .compose(v -> postUserWithDuplicateBarcode(context))
-      .compose(v -> createProxyfor(context))
-      .compose(v -> createProxyforWithSameUserId(context))
-      .compose(v -> createProxyforWithSameProxyUserId(context))
-      .compose(v -> failToCreateDuplicateProxyfor(context))
-      .compose(v -> getProxyforCollection(context))
-      .compose(v -> findAndGetProxyfor(context))
-      .compose(v -> findAndUpdateProxyfor(context))
-      .compose(v -> findAndDeleteProxyfor(context))
-      .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
-      .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
-      .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
-
-    // It hung after 5-12 invocations. MODUSERS-100
-    for (int i = 0; i < 25; i++) {
-      startFuture = startFuture.compose(v -> getGroupByInvalidUuid(context));
-    }
-
-    startFuture.onComplete(res -> {
-      if (res.succeeded()) {
-        async.complete();
-      } else {
-        res.cause().printStackTrace();
-        context.fail(res.cause());
-      }
-    });
-  }
-
-  @Test
-  public void test5UserName(TestContext context) {
-    Async async = context.async();
-    postUserWithWhitespace(context)
-      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), DEFAULT_LIMIT, "user name"))
-      .compose(v -> deleteUser(context, userIdWithWhitespace))
-      .onComplete(res -> {
-        if (res.succeeded()) {
-          async.complete();
-        } else {
-          res.cause().printStackTrace();
-          context.fail(res.cause());
-        }
-      });
   }
 
   private Future<Void> postUserWithWhitespace(TestContext context) {
