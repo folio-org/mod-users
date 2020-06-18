@@ -496,13 +496,15 @@ public class RestVerticleIT {
       .put("id", bobCircleId)
       .put("active", false)
       .put("personal", new JsonObject()
+        .put("lastName", "Circle")
+        .put("firstName", "Bob")
         .put("preferredFirstName", "Jack")
       );
 
     Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
 
     return future.map(response -> {
-      assertStatus(context, response, 400);
+      assertStatus(context, response, 204);
       return null;
     });
   }
