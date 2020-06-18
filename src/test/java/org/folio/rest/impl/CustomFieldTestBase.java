@@ -1,0 +1,127 @@
+package org.folio.rest.impl;
+
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+
+import static org.folio.test.util.TestUtil.mockGetWithBody;
+import static org.folio.test.util.TestUtil.readFile;
+import static org.folio.test.util.TestUtil.toJson;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import io.restassured.http.Header;
+import io.vertx.core.json.Json;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+
+import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.CustomFields;
+import org.folio.rest.jaxrs.model.User;
+import org.folio.test.util.TestBase;
+import org.folio.test.util.TokenTestUtil;
+
+public class CustomFieldTestBase extends TestBase {
+
+  protected static final String USER_ID = "88888888-8888-4888-8888-888888888888";
+  protected static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
+
+  private static final String USERS_ENDPOINT = "users";
+  private static final String CUSTOM_FIELDS_ENDPOINT = "custom-fields";
+
+  private static final String USER_JSON_PATH = "users/user8.json";
+  private static final String SHORT_TEXT_FIELD_JSON_PATH = "fields/shortTextField.json";
+  private static final String SINGLE_CHECKBOX_FIELD_JSON_PATH = "fields/singleCheckbox.json";
+  private static final String MULTI_SELECT_FIELD_JSON_PATH = "fields/multiSelectField.json";
+
+  protected User testUser;
+
+  @Before
+  public void setUp() {
+    testUser = createUser(USER_JSON_PATH);
+  }
+
+  @After
+  public void tearDown() {
+    CustomFieldsDBTestUtil.deleteAllCustomFields(vertx);
+    deleteWithNoContent(USERS_ENDPOINT + "/" + testUser.getId());
+  }
+
+  protected String cfEndpoint() {
+    return CUSTOM_FIELDS_ENDPOINT;
+  }
+
+  protected String cfByIdEndpoint(String fieldId) {
+    return String.join("/", cfEndpoint(), fieldId);
+  }
+
+  protected String cfByIdStatsEndpoint(String fieldId) {
+    return String.join("/", cfByIdEndpoint(fieldId), "stats");
+  }
+
+  protected String cfByIdOptIdStatsEndpoint(String fieldId, String optId) {
+    return String.join("/", cfByIdEndpoint(fieldId), "options", optId, "stats");
+  }
+
+  protected CustomField createTextField() {
+    return createField(SHORT_TEXT_FIELD_JSON_PATH);
+  }
+
+  protected CustomField createCheckboxField() {
+    return createField(SINGLE_CHECKBOX_FIELD_JSON_PATH);
+  }
+
+  protected CustomField createSelectableField() {
+    return createField(MULTI_SELECT_FIELD_JSON_PATH);
+  }
+
+  protected void updateField(CustomField field) {
+    putWithStatus(cfByIdEndpoint(field.getId()), Json.encode(field), SC_NO_CONTENT, FAKE_TOKEN);
+  }
+
+  protected void deleteField(String fieldId) {
+    deleteWithNoContent(cfByIdEndpoint(fieldId));
+  }
+
+  protected User createUser(String pathToJson) {
+    String body = readExistedFile(pathToJson);
+
+    User user = postWithStatus(USERS_ENDPOINT, body, SC_CREATED).as(User.class);
+
+    mockGetWithBody(new EqualToPattern("/" + USERS_ENDPOINT + "/" + user.getId()), body);
+
+    return user;
+  }
+
+  protected User getUser(String userId) {
+    return getWithOk("/" + USERS_ENDPOINT + "/" + userId).as(User.class);
+  }
+
+  protected void assignValue(User user, String fieldRefId, Object value) {
+    CustomFields fields = user.getCustomFields();
+    if (fields == null) {
+      fields = new CustomFields();
+    }
+
+    fields.setAdditionalProperty(fieldRefId, value);
+
+    user.setCustomFields(fields);
+
+    putWithNoContent(USERS_ENDPOINT + "/" + user.getId(), toJson(user));
+  }
+
+  private CustomField createField(String pathToJson) {
+    return postWithStatus(cfEndpoint(), readExistedFile(pathToJson), SC_CREATED, FAKE_TOKEN).as(CustomField.class);
+  }
+
+  private String readExistedFile(String pathToJson) {
+    try {
+      return readFile(pathToJson);
+    } catch (IOException | URISyntaxException e) {
+      Assert.fail(e.getMessage());
+      return null;
+    }
+  }
+}

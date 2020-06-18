@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import org.folio.model.RecordUpdate;
 import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.CustomFieldOptionStatistic;
 import org.folio.rest.jaxrs.model.CustomFieldStatistic;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
@@ -32,6 +33,13 @@ public class RecordServiceImpl implements RecordService {
     LOG.info("Retrieving custom field statistic: field = {}", field);
 
     return repository.retrieveStatisticForField(field, tenantId);
+  }
+
+  @Override
+  public Future<CustomFieldOptionStatistic> retrieveOptionStatistic(CustomField field, String optId, String tenantId) {
+    LOG.info("Retrieving custom field option statistic: field = {}, option ID = {}", field, optId);
+
+    return repository.retrieveStatisticForFieldOption(field, optId, tenantId);
   }
 
   @Override

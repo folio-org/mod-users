@@ -1,8 +1,6 @@
 package org.folio.rest.impl;
 
-import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -12,84 +10,43 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
-import static org.folio.test.util.TestUtil.mockGetWithBody;
-import static org.folio.test.util.TestUtil.readFile;
-import static org.folio.test.util.TestUtil.toJson;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
-import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import io.restassured.http.Header;
-import io.vertx.core.json.Json;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.folio.okapi.common.XOkapiHeaders;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFieldCollection;
-import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.test.util.TestBase;
-import org.folio.test.util.TokenTestUtil;
 
 @RunWith(VertxUnitRunner.class)
-public class CustomFieldRemovalTest extends TestBase {
-
-  private static final String FAKE_FIELD_ID = "11111111-1111-1111-a111-111111111111";
-
-  private static final String USER_ID = "88888888-8888-4888-8888-888888888888";
-  private static final Header USER8 = new Header(XOkapiHeaders.USER_ID, USER_ID);
-  private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
-
-  private static final String USERS_PATH = "users";
-  private static final String CUSTOM_FIELDS_PATH = "custom-fields";
-  private static final String SHORT_TEXT_FIELD_JSON_PATH = "fields/shortTextField.json";
-  private static final String SINGLE_CHECKBOX_FIELD_JSON_PATH = "fields/singleCheckbox.json";
-  private static final String MULTI_SELECT_FIELD_JSON_PATH = "fields/multiSelectField.json";
-
-  private User user8;
-
-  @Before
-  public void setUp() throws IOException, URISyntaxException {
-    user8 = createUser("users/user8.json");
-  }
-
-  @After
-  public void tearDown() {
-    CustomFieldsDBTestUtil.deleteAllCustomFields(vertx);
-
-    deleteWithNoContent(USERS_PATH + "/" + user8.getId());
-  }
+public class CustomFieldRemovalTest extends CustomFieldTestBase {
 
   @Test
-  public void shouldRemoveFieldIfNotAssignedToUser() throws IOException, URISyntaxException {
-    CustomField textField = createField(SHORT_TEXT_FIELD_JSON_PATH);
-    deleteWithNoContent(CUSTOM_FIELDS_PATH + "/" + textField.getId());
+  public void shouldRemoveFieldIfNotAssignedToUser() {
+    CustomField textField = createTextField();
+    deleteField(textField.getId());
 
-    CustomFieldCollection cfs = getWithOk(CUSTOM_FIELDS_PATH).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
 
     assertThat(cfs.getCustomFields(), empty());
     assertThat(cfs.getTotalRecords(), equalTo(0));
   }
 
   @Test
-  public void shouldRemoveFieldAndItsValueIfAssignedToUser() throws IOException, URISyntaxException {
+  public void shouldRemoveFieldAndItsValueIfAssignedToUser() {
     // assign a value
-    CustomField textField = createField(SHORT_TEXT_FIELD_JSON_PATH);
-    assignValue(user8, textField.getRefId(), "someValue");
+    CustomField textField = createTextField();
+    assignValue(testUser, textField.getRefId(), "someValue");
 
     // delete the field
-    deleteWithNoContent(CUSTOM_FIELDS_PATH + "/" + textField.getId());
+    deleteField(textField.getId());
 
     //validate there is no field defined
-    CustomFieldCollection cfs = getWithOk(CUSTOM_FIELDS_PATH).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
 
     assertThat(cfs.getCustomFields(), empty());
     assertThat(cfs.getTotalRecords(), equalTo(0));
@@ -99,21 +56,21 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveFieldAndAllValuesIfAssignedToSeveralUsers() throws IOException, URISyntaxException {
-    CustomField textField = createField(SHORT_TEXT_FIELD_JSON_PATH);
+  public void shouldRemoveFieldAndAllValuesIfAssignedToSeveralUsers() {
+    CustomField textField = createTextField();
     User user9 = createUser("users/user9.json");
 
     // assign a value to one user
-    assignValue(user8, textField.getRefId(), "someValue1");
+    assignValue(testUser, textField.getRefId(), "someValue1");
 
     // assign a value to another user
     assignValue(user9, textField.getRefId(), "someValue2");
 
     // delete the field
-    deleteWithNoContent(CUSTOM_FIELDS_PATH + "/" + textField.getId());
+    deleteField(textField.getId());
 
     //validate there is no field defined
-    CustomFieldCollection cfs = getWithOk(CUSTOM_FIELDS_PATH).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
 
     assertThat(cfs.getCustomFields(), empty());
     assertThat(cfs.getTotalRecords(), equalTo(0));
@@ -126,17 +83,17 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveTheSpecificFieldAndItsValueButNotTheOtherField() throws IOException, URISyntaxException {
+  public void shouldRemoveTheSpecificFieldAndItsValueButNotTheOtherField() {
     // assign values
-    CustomField textField = createField(SHORT_TEXT_FIELD_JSON_PATH);
-    CustomField checkbox = createField(SINGLE_CHECKBOX_FIELD_JSON_PATH);
-    assignValue(user8, textField.getRefId(), "someValue1");
-    assignValue(user8, checkbox.getRefId(), Boolean.FALSE);
+    CustomField textField = createTextField();
+    CustomField checkbox = createCheckboxField();
+    assignValue(testUser, textField.getRefId(), "someValue1");
+    assignValue(testUser, checkbox.getRefId(), Boolean.FALSE);
 
     // delete the field
-    deleteWithNoContent(CUSTOM_FIELDS_PATH + "/" + textField.getId());
+    deleteField(textField.getId());
 
-    CustomFieldCollection cfs = getWithOk(CUSTOM_FIELDS_PATH).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
 
     //validate there is one field left
     assertThat(cfs.getCustomFields(), hasSize(1));
@@ -152,14 +109,15 @@ public class CustomFieldRemovalTest extends TestBase {
   @Test
   @SuppressWarnings("squid:S2699")
   public void shouldFailIfFieldDoesntExist() {
-    deleteWithStatus(CUSTOM_FIELDS_PATH + "/" + FAKE_FIELD_ID, SC_NOT_FOUND);
+    String fakeFieldId = "11111111-1111-1111-a111-111111111111";
+    deleteWithStatus(cfByIdEndpoint(fakeFieldId), SC_NOT_FOUND);
   }
 
   @Test
-  public void shouldRemoveOneValueFromOneAssignedWhenOneOptionDeleted() throws IOException, URISyntaxException {
+  public void shouldRemoveOneValueFromOneAssignedWhenOneOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createField(MULTI_SELECT_FIELD_JSON_PATH);
-    assignValue(user8, multiSelectField.getRefId(), "opt_2");
+    CustomField multiSelectField = createSelectableField();
+    assignValue(testUser, multiSelectField.getRefId(), "opt_2");
 
     // update the field. Remove "opt_2" option and no defaults
     multiSelectField.getSelectField().getOptions().getValues().remove(2);
@@ -170,10 +128,10 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueFromTwoAssignedWhenOneOptionDeleted() throws IOException, URISyntaxException {
+  public void shouldRemoveOneValueFromTwoAssignedWhenOneOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createField(MULTI_SELECT_FIELD_JSON_PATH);
-    assignValue(user8, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
+    CustomField multiSelectField = createSelectableField();
+    assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
 
     // update the field. Remove "opt_2" option and no defaults
     List<SelectFieldOption> values = multiSelectField.getSelectField().getOptions().getValues();
@@ -188,10 +146,10 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueFromThreeAssignedWhenOneOptionDeleted() throws IOException, URISyntaxException {
+  public void shouldRemoveOneValueFromThreeAssignedWhenOneOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createField(MULTI_SELECT_FIELD_JSON_PATH);
-    assignValue(user8, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1", "opt_0"));
+    CustomField multiSelectField = createSelectableField();
+    assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1", "opt_0"));
 
     // update the field. Remove "opt_2" option and no defaults
     List<SelectFieldOption> values = multiSelectField.getSelectField().getOptions().getValues();
@@ -207,10 +165,10 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveFieldAndAllValuesFromTwoAssignedWhenTwoOptionDeleted() throws IOException, URISyntaxException {
+  public void shouldRemoveFieldAndAllValuesFromTwoAssignedWhenTwoOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createField(MULTI_SELECT_FIELD_JSON_PATH);
-    assignValue(user8, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
+    CustomField multiSelectField = createSelectableField();
+    assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
 
     // update the field. Remove "opt_1" and "opt_2" options and no defaults
     List<SelectFieldOption> values = multiSelectField.getSelectField().getOptions().getValues();
@@ -223,10 +181,10 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueAndSetOneDefaultFromOneAssignedWhenOneOptionDeleted() throws IOException, URISyntaxException {
+  public void shouldRemoveOneValueAndSetOneDefaultFromOneAssignedWhenOneOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createField(MULTI_SELECT_FIELD_JSON_PATH);
-    assignValue(user8, multiSelectField.getRefId(), "opt_2");
+    CustomField multiSelectField = createSelectableField();
+    assignValue(testUser, multiSelectField.getRefId(), "opt_2");
 
     // update the field. Remove "opt_2" option and set "opt_0" as default
     List<SelectFieldOption> values = multiSelectField.getSelectField().getOptions().getValues();
@@ -243,10 +201,10 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueAndSetTwoDefaultFromOneAssignedWhenOneOptionDeleted() throws IOException, URISyntaxException {
+  public void shouldRemoveOneValueAndSetTwoDefaultFromOneAssignedWhenOneOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createField(MULTI_SELECT_FIELD_JSON_PATH);
-    assignValue(user8, multiSelectField.getRefId(), "opt_2");
+    CustomField multiSelectField = createSelectableField();
+    assignValue(testUser, multiSelectField.getRefId(), "opt_2");
 
     // update the field. Remove "opt_2" option and set "opt_0" as default
     List<SelectFieldOption> values = multiSelectField.getSelectField().getOptions().getValues();
@@ -266,10 +224,10 @@ public class CustomFieldRemovalTest extends TestBase {
   }
 
   @Test
-  public void shouldRemoveTwoValueAndSetTwoDefaultFromTwoAssignedWhenTwoOptionDeleted() throws IOException, URISyntaxException {
+  public void shouldRemoveTwoValueAndSetTwoDefaultFromTwoAssignedWhenTwoOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createField(MULTI_SELECT_FIELD_JSON_PATH);
-    assignValue(user8, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
+    CustomField multiSelectField = createSelectableField();
+    assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
 
     // update the field. Remove "opt_1" and "opt_2" options and set "opt_0" as default
     List<SelectFieldOption> values = multiSelectField.getSelectField().getOptions().getValues();
@@ -286,37 +244,6 @@ public class CustomFieldRemovalTest extends TestBase {
     validateValueAbsent(user, multiSelectField.getRefId(), optionToDelete1.getId());
     validateValueAbsent(user, multiSelectField.getRefId(), optionToDelete2.getId());
     validateValueAssigned(user, multiSelectField.getRefId(), optionToDefault.getId());
-  }
-
-  private CustomField createField(String pathToJson) throws IOException, URISyntaxException {
-    return postWithStatus(CUSTOM_FIELDS_PATH, readFile(pathToJson), SC_CREATED, USER8, FAKE_TOKEN).as(CustomField.class);
-  }
-
-  private void updateField(CustomField field) {
-    putWithStatus(CUSTOM_FIELDS_PATH + "/" + field.getId(), Json.encode(field), SC_NO_CONTENT, FAKE_TOKEN);
-  }
-
-  private User createUser(String pathToJson) throws IOException, URISyntaxException {
-    String body = readFile(pathToJson);
-
-    User user = postWithStatus(USERS_PATH, body, SC_CREATED, USER8).as(User.class);
-
-    mockGetWithBody(new EqualToPattern("/" + USERS_PATH + "/" + user.getId()), body);
-
-    return user;
-  }
-
-  private void assignValue(User user, String fieldRefId, Object value) {
-    CustomFields fields = user.getCustomFields();
-    if (fields == null) {
-      fields = new CustomFields();
-    }
-
-    fields.setAdditionalProperty(fieldRefId, value);
-
-    user.setCustomFields(fields);
-
-    putWithNoContent(USERS_PATH + "/" + user.getId(), toJson(user), USER8);
   }
 
   private void validateFieldAbsent(User user, String fieldRefId) {
@@ -343,9 +270,5 @@ public class CustomFieldRemovalTest extends TestBase {
     } else {
       assertThat(assignedObject, equalTo(value));
     }
-  }
-
-  private User getUser(String userId) {
-    return getWithOk("/" + USERS_PATH + "/" + userId).as(User.class);
   }
 }
