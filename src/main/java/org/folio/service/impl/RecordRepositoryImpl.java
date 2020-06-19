@@ -9,9 +9,11 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 
 import org.folio.model.RecordUpdate;
 import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.CustomFieldOptionStatistic;
 import org.folio.rest.jaxrs.model.CustomFieldStatistic;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.Criteria.Criteria;
@@ -23,10 +25,12 @@ import org.folio.rest.persist.interfaces.Results;
 public class RecordRepositoryImpl implements RecordRepository {
 
   private static final String USERS_TABLE = "users";
+  private static final String NOT_NULL_CONDITION = "IS NOT NULL";
+  private static final String EQUALS_CONDITION = "= $2";
   private static final String SELECT_USAGE_COUNT =
     "SELECT count(*)" +
       "  FROM " + USERS_TABLE +
-      "  WHERE jsonb -> 'customFields' ->> '%s' IS NOT NULL";
+      "  WHERE jsonb -> 'customFields' ->> $1 ";
 
   private final Vertx vertx;
 
@@ -38,9 +42,21 @@ public class RecordRepositoryImpl implements RecordRepository {
   public Future<CustomFieldStatistic> retrieveStatisticForField(CustomField field, String tenantId) {
     Promise<RowSet<Row>> count = Promise.promise();
 
-    pgClient(tenantId).select(String.format(SELECT_USAGE_COUNT, field.getRefId()), count);
+    Tuple params = Tuple.of(field.getRefId());
+    pgClient(tenantId).select(SELECT_USAGE_COUNT + NOT_NULL_CONDITION, params, count);
 
-    return count.future().map(rs -> statistic(field, rs.iterator().next().getInteger(0)));
+    return count.future().map(rs -> fieldStatistic(field, rs.iterator().next().getInteger(0)));
+  }
+
+  @Override
+  public Future<CustomFieldOptionStatistic> retrieveStatisticForFieldOption(CustomField field, String optId,
+                                                                            String tenantId) {
+    Promise<RowSet<Row>> count = Promise.promise();
+
+    Tuple params = Tuple.of(field.getRefId(), optId);
+    pgClient(tenantId).select(SELECT_USAGE_COUNT + EQUALS_CONDITION, params, count);
+
+    return count.future().map(rs -> fieldOptionStatistic(field, optId, rs.iterator().next().getInteger(0)));
   }
 
   @Override
@@ -48,7 +64,7 @@ public class RecordRepositoryImpl implements RecordRepository {
     Criteria criteria = new Criteria()
       .addField("'customFields'")
       .addField("'" + field.getRefId() + "'")
-      .setOperation("IS NOT NULL");
+      .setOperation(NOT_NULL_CONDITION);
 
     Promise<Results<User>> promise = Promise.promise();
 
@@ -80,9 +96,17 @@ public class RecordRepositoryImpl implements RecordRepository {
     return promise.future().map(updateResult -> updateResult.size() == 1);
   }
 
-  private CustomFieldStatistic statistic(CustomField field, Integer count) {
+  private CustomFieldStatistic fieldStatistic(CustomField field, Integer count) {
     return new CustomFieldStatistic()
       .withFieldId(field.getId())
+      .withEntityType(field.getEntityType())
+      .withCount(count);
+  }
+
+  private CustomFieldOptionStatistic fieldOptionStatistic(CustomField field, String optId, Integer count) {
+    return new CustomFieldOptionStatistic()
+      .withOptionId(optId)
+      .withCustomFieldId(field.getId())
       .withEntityType(field.getEntityType())
       .withCount(count);
   }
