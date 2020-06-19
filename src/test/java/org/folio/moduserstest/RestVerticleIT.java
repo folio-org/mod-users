@@ -3,6 +3,7 @@ package org.folio.moduserstest;
 import static io.vertx.core.json.Json.encode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -71,7 +72,6 @@ public class RestVerticleIT {
   private static final String FAKE_TOKEN = TokenTestUtil.generateToken("bubba", UUID.randomUUID().toString());
 
   private static final int DEFAULT_LIMIT = 10;
-
   private JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
     .put("id", UUID.randomUUID().toString());
@@ -389,6 +389,40 @@ public class RestVerticleIT {
 
     return future.map(response -> {
       assertStatus(context, response, 400);
+      return null;
+    });
+  }
+
+  private Future<Void> putUserPreferredFirstName(TestContext context) {
+    log.info("Trying to update user with preferred first name \n");
+
+    JsonObject user = new JsonObject()
+      .put("id", bobCircleId)
+      .put("active", false)
+      .put("personal", new JsonObject()
+        .put("lastName", "Circle")
+        .put("firstName", "Bob")
+        .put("preferredFirstName", "Jack")
+      );
+
+    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
+
+    return future.map(response -> {
+      assertStatus(context, response, 204);
+      return null;
+    });
+  }
+
+  private Future<Void> getUserPreferredFirstName(TestContext context) {
+    log.info("Trying to get user with preferred first name \n");
+
+    String preferredName = "Jack";
+
+    Future<JsonObject> future = getJson(context, "/users/" + bobCircleId);
+
+    return future.map(user -> {
+      String actualFirstName = user.getJsonObject("personal").getString("preferredFirstName");
+      assertEquals(preferredName, actualFirstName);
       return null;
     });
   }
@@ -1192,6 +1226,8 @@ public class RestVerticleIT {
       .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
       .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
+      .compose(v -> putUserPreferredFirstName(context))
+      .compose(v -> getUserPreferredFirstName(context))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
       .compose(v -> getGoodUser(context))
@@ -1275,3 +1311,4 @@ public class RestVerticleIT {
     });
   }
 }
+

@@ -11,6 +11,7 @@
   "personal": {
     "lastName": "Handey",
     "firstName": "Jack",
+    "preferredFirstName": "Jackie",
     "email": "jhandey@biglibrary.org",
     "phone": "2125551212"
   }
