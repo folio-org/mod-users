@@ -1,0 +1,8 @@
+{
+  "id": "b4b5e97a-0a99-4db9-97df-4fdf406ec74d",
+  "type": "departments",
+  "attributes": {
+    "name": "Accounting",
+    "code": "ACC"
+  }
+}

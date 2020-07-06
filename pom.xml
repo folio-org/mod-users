@@ -47,6 +47,11 @@
       <artifactId>vertx-web</artifactId>
       <version>${vertx.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>${jsoup.version}</version>
+    </dependency>
 
     <!-- test dependencies -->
 
@@ -147,6 +152,18 @@
                 <systemProperty>
                   <key>raml_files</key>
                   <value>${ramlfiles_path}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>jsonschema2pojo.config.includeToString</key>
+                  <value>true</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>jsonschema2pojo.config.includeHashcodeAndEquals</key>
+                  <value>true</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>jsonschema2pojo.config.useCommonsLang3</key>
+                  <value>true</value>
                 </systemProperty>
               </systemProperties>
             </configuration>
@@ -481,6 +498,7 @@
     <rest-assured.version>3.3.0</rest-assured.version>
     <folio-service-tools.version>1.5.1</folio-service-tools.version>
     <mod-custom-fields.version>1.4.1-SNAPSHOT</mod-custom-fields.version>
+    <jsoup.version>1.13.1</jsoup.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
   </properties>
 </project>

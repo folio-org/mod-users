@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Department Attributes",
+  "description": "Department attributes object schema",
+  "javaType": "org.folio.rest.jaxrs.model.DepartmentAttributes",
+  "additionalProperties": false,
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "The unique name of this department",
+      "type": "string",
+      "example": "Accounting"
+    },
+    "code": {
+      "description": "The unique code of this department",
+      "type": "string",
+      "example": "ACC"
+    },
+    "usageNumber": {
+      "type": "integer",
+      "description": "Number of records that use the access type",
+      "readonly": true
+    }
+  },
+  "required": [
+    "name",
+    "code"
+  ]
+}

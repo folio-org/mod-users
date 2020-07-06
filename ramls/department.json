@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Department",
+  "description": "Department object schema",
+  "javaType": "org.folio.rest.jaxrs.model.Department",
+  "additionalProperties": false,
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "A UUID identifying this department",
+      "$ref": "raml-util/schemas/uuid.schema",
+      "example": "f973c3b6-85fc-4d35-bda8-f31b568957bf"
+    },
+    "type": {
+      "type": "string",
+      "description": "Type of resource",
+      "enum": [
+        "departments"
+      ],
+      "example": "departments"
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Department object data attributes",
+      "$ref": "departmentAttributes.json"
+    },
+    "metadata": {
+      "description": "Metadata about creation and changes to department records",
+      "$ref": "raml-util/schemas/metadata.schema",
+      "readonly": true
+    }
+  },
+  "required": [
+    "type",
+    "attributes"
+  ]
+}

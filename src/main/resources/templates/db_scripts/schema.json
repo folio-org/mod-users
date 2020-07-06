@@ -6,6 +6,16 @@
       "fromModuleVersion": "mod-users-15.7.0"
     },
     {
+      "run": "after",
+      "snippetPath": "create_departments_view.sql",
+      "fromModuleVersion": "17.1.0"
+    },
+    {
+      "run": "after",
+      "snippetPath": "create_departments_triggers.sql",
+      "fromModuleVersion": "17.1.0"
+    },
+    {
       "run": "before",
       "snippet": "DO $$ BEGIN DROP TABLE patron_block_conditions, patron_block_limits; EXCEPTION WHEN OTHERS THEN END; $$;",
       "fromModuleVersion": "mod-users-16.2.1"
@@ -19,6 +29,21 @@
       "uniqueIndex" : [
         {
           "fieldName" : "group",
+          "tOps" : "ADD"
+        }
+      ]
+    },
+    {
+      "tableName" : "departments",
+      "fromModuleVersion" : "17.1.0",
+      "withMetadata" : true,
+      "uniqueIndex" : [
+        {
+          "fieldName" : "attributes.name",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "attributes.code",
           "tOps" : "ADD"
         }
       ]
