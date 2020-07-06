@@ -2,14 +2,12 @@ CREATE OR REPLACE FUNCTION process_department_assign() RETURNS TRIGGER
 AS $process_department_assign$
   DECLARE
   	dep_id text;
-    fk_counter integer := 0;
   BEGIN
     IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
       FOR dep_id IN (SELECT jsonb_array_elements_text(NEW.jsonb->'departments')) LOOP
         IF ((SELECT COUNT(*) FROM departments WHERE id::text = dep_id) != 1) THEN
           RAISE foreign_key_violation USING DETAIL = format('Key (departments)=(%s) is not present in table "departments".', dep_id);
         END IF;
-        fk_counter := 0;
       END LOOP;
     END IF;
     RETURN NEW;
