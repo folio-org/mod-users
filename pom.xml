@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>17.1.0-SNAPSHOT</version>
+  <version>17.1.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -480,7 +480,7 @@
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>
     <folio-service-tools.version>1.5.1</folio-service-tools.version>
-    <mod-custom-fields.version>1.4.1-SNAPSHOT</mod-custom-fields.version>
+    <mod-custom-fields.version>1.4.1</mod-custom-fields.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
   </properties>
 </project>
