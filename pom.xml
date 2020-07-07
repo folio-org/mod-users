@@ -497,7 +497,7 @@
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>
     <folio-service-tools.version>1.5.1</folio-service-tools.version>
-    <mod-custom-fields.version>1.4.1-SNAPSHOT</mod-custom-fields.version>
+    <mod-custom-fields.version>1.4.1</mod-custom-fields.version>
     <jsoup.version>1.13.1</jsoup.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
   </properties>

@@ -35,7 +35,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.folio.rest.jaxrs.model.Department;
-import org.folio.rest.jaxrs.model.DepartmentAttributes;
 import org.folio.rest.jaxrs.model.DepartmentCollection;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
@@ -74,9 +73,8 @@ public class DepartmentsAPITest extends TestBase {
     Department actual = post(expected);
 
     assertThat(actual.getId(), notNullValue());
-    assertThat(actual.getType(), equalTo(expected.getType()));
-    assertThat(actual.getAttributes().getName(), equalTo(expected.getAttributes().getName()));
-    assertThat(actual.getAttributes().getCode(), equalTo(expected.getAttributes().getCode()));
+    assertThat(actual.getName(), equalTo(expected.getName()));
+    assertThat(actual.getCode(), equalTo(expected.getCode()));
     assertThat(actual.getMetadata(), notNullValue());
   }
 
@@ -92,9 +90,8 @@ public class DepartmentsAPITest extends TestBase {
     Department actual = post(expected);
 
     assertThat(actual.getId(), notNullValue());
-    assertThat(actual.getType(), equalTo(expected.getType()));
-    assertThat(actual.getAttributes().getName(), equalTo(name));
-    assertThat(actual.getAttributes().getCode(), equalTo(code));
+    assertThat(actual.getName(), equalTo(name));
+    assertThat(actual.getCode(), equalTo(code));
     assertThat(actual.getMetadata(), notNullValue());
   }
 
@@ -133,7 +130,7 @@ public class DepartmentsAPITest extends TestBase {
     assertThat(errors.getErrors(), hasSize(2));
     for (Error error : errors.getErrors()) {
       assertThat(error.getMessage(), equalTo("may not be null"));
-      assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("attributes.code"), equalTo("attributes.name")));
+      assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
     }
   }
 
@@ -148,14 +145,13 @@ public class DepartmentsAPITest extends TestBase {
   @Test
   public void shouldUpdateDepartmentOnValidPut() {
     Department department = post(createDepartment(null, "name", "code"));
-    department.getAttributes().setName("name new");
-    department.getAttributes().setName("code new");
+    department.setName("name new");
+    department.setName("code new");
     Department actual = put(department);
 
     assertThat(actual.getId(), notNullValue());
-    assertThat(actual.getType(), equalTo(department.getType()));
-    assertThat(actual.getAttributes().getName(), equalTo(department.getAttributes().getName()));
-    assertThat(actual.getAttributes().getCode(), equalTo(department.getAttributes().getCode()));
+    assertThat(actual.getName(), equalTo(department.getName()));
+    assertThat(actual.getCode(), equalTo(department.getCode()));
     assertThat(actual.getMetadata(), notNullValue());
   }
 
@@ -163,7 +159,7 @@ public class DepartmentsAPITest extends TestBase {
   public void shouldReturn422OnPutWithDuplicateName() {
     Department dep1 = post(createDepartment(null, "name1", "code1"));
     Department dep2 = post(createDepartment(null, "name2", "code2"));
-    dep2.getAttributes().setName(dep1.getAttributes().getName());
+    dep2.setName(dep1.getName());
 
     Errors errors = putWithError(dep2);
     assertThat(errors.getErrors().get(0).getMessage(), containsString("Department with this name already exists"));
@@ -173,7 +169,7 @@ public class DepartmentsAPITest extends TestBase {
   public void shouldReturn422OnPutWithDuplicateCode() {
     Department dep1 = post(createDepartment(null, "name1", "code1"));
     Department dep2 = post(createDepartment(null, "name2", "code2"));
-    dep2.getAttributes().setCode(dep1.getAttributes().getCode());
+    dep2.setCode(dep1.getCode());
 
     Errors errors = putWithError(dep2);
     assertThat(errors.getErrors().get(0).getMessage(), containsString("Department with this code already exists"));
@@ -182,11 +178,11 @@ public class DepartmentsAPITest extends TestBase {
   @Test
   public void shouldReturn422OnPutWithEmptyNameAndCode() {
     Department dep1 = post(createDepartment(null, "name1", "code1"));
-    Errors errors = putWithError(dep1.withAttributes(new DepartmentAttributes()));
+    Errors errors = putWithError(dep1.withCode(null).withName(null));
     assertThat(errors.getErrors(), hasSize(2));
     for (Error error : errors.getErrors()) {
       assertThat(error.getMessage(), equalTo("may not be null"));
-      assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("attributes.code"), equalTo("attributes.name")));
+      assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
     }
   }
 
@@ -210,8 +206,8 @@ public class DepartmentsAPITest extends TestBase {
   public void shouldReturnDepartmentCollectionOnGet() {
     Department dep1 = post(createDepartment(null, "name1", "code1"));
     Department dep2 = post(createDepartment(null, "name2", "code2"));
-    dep1.getAttributes().setUsageNumber(0);
-    dep2.getAttributes().setUsageNumber(0);
+    dep1.setUsageNumber(0);
+    dep2.setUsageNumber(0);
 
     DepartmentCollection actual = getCollection(null);
     assertThat(actual, notNullValue());
@@ -232,10 +228,10 @@ public class DepartmentsAPITest extends TestBase {
   public void shouldReturnDepartmentCollectionOnGetByQuery() {
     Department dep1 = post(createDepartment(null, "name1", "code1"));
     Department dep2 = post(createDepartment(null, "name2", "code2"));
-    dep1.getAttributes().setUsageNumber(0);
-    dep2.getAttributes().setUsageNumber(0);
+    dep1.setUsageNumber(0);
+    dep2.setUsageNumber(0);
 
-    DepartmentCollection actual = getCollection("attributes.code==\"*1*\"");
+    DepartmentCollection actual = getCollection("code==\"*1*\"");
     assertThat(actual, notNullValue());
     assertThat(actual.getDepartments(), hasSize(1));
     assertThat(actual.getTotalRecords(), equalTo(1));
@@ -246,7 +242,7 @@ public class DepartmentsAPITest extends TestBase {
   public void shouldReturnDepartmentCollectionWithUsageNumberOnGet() {
     String id = UUID.randomUUID().toString();
     Department expected = post(createDepartment(id, "name1", "code1"));
-    expected.getAttributes().setUsageNumber(1);
+    expected.setUsageNumber(1);
     assignDepartment(testUser, id);
 
     DepartmentCollection actual = getCollection(null);
@@ -260,7 +256,7 @@ public class DepartmentsAPITest extends TestBase {
   public void shouldReturnDepartmentOnGetById() {
     String id = UUID.randomUUID().toString();
     Department expected = post(createDepartment(id, "name1", "code1"));
-    expected.getAttributes().setUsageNumber(0);
+    expected.setUsageNumber(0);
 
     Department actual = getItem(id);
     assertThat(actual, equalTo(expected));
@@ -272,7 +268,7 @@ public class DepartmentsAPITest extends TestBase {
     Department expected = post(createDepartment(id, "name1", "code1"));
     assignDepartment(testUser, id);
 
-    expected.getAttributes().setUsageNumber(1);
+    expected.setUsageNumber(1);
 
     Department actual = getItem(id);
     assertThat(actual, equalTo(expected));
@@ -337,20 +333,20 @@ public class DepartmentsAPITest extends TestBase {
     return getWithStatus(itemEndpoint(id), code).asString();
   }
 
-  protected Department post(Department department) {
+  private Department post(Department department) {
     return postWithStatus(collectionEndpoint(), toJson(department), SC_CREATED, FAKE_TOKEN).as(Department.class);
   }
 
-  protected Errors postWithError(Department department) {
+  private Errors postWithError(Department department) {
     return postWithStatus(collectionEndpoint(), toJson(department), SC_UNPROCESSABLE_ENTITY, FAKE_TOKEN).as(Errors.class);
   }
 
-  protected Department put(Department department) {
+  private Department put(Department department) {
     putWithNoContent(itemEndpoint(department.getId()), toJson(department), FAKE_TOKEN);
     return getItem(department.getId());
   }
 
-  protected Errors putWithError(Department department) {
+  private Errors putWithError(Department department) {
     return putWithStatus(itemEndpoint(department.getId()), toJson(department), SC_UNPROCESSABLE_ENTITY, FAKE_TOKEN)
       .as(Errors.class);
   }
@@ -359,12 +355,12 @@ public class DepartmentsAPITest extends TestBase {
     return deleteWithStatus(itemEndpoint(id), code).asString();
   }
 
-  protected void assignDepartment(User user, String... departmentIds) {
+  private void assignDepartment(User user, String... departmentIds) {
     user.setDepartments(new HashSet<>(Arrays.asList(departmentIds)));
     putWithNoContent(USERS_ENDPOINT + "/" + user.getId(), toJson(user), FAKE_TOKEN);
   }
 
-  protected String assignDepartmentWithError(User user, String... departmentIds) {
+  private String assignDepartmentWithError(User user, String... departmentIds) {
     user.setDepartments(new HashSet<>(Arrays.asList(departmentIds)));
     return putWithStatus(USERS_ENDPOINT + "/" + user.getId(), toJson(user), SC_BAD_REQUEST, FAKE_TOKEN).asString();
   }
@@ -372,12 +368,8 @@ public class DepartmentsAPITest extends TestBase {
   private Department createDepartment(String id, String name, String code) {
     return new Department()
       .withId(id)
-      .withType(Department.Type.DEPARTMENTS)
-      .withAttributes(
-        new DepartmentAttributes()
-          .withName(name)
-          .withCode(code)
-      );
+      .withName(name)
+      .withCode(code);
   }
 
   private String collectionEndpoint() {

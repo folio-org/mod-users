@@ -20,7 +20,6 @@ import org.jsoup.Jsoup;
 
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Department;
-import org.folio.rest.jaxrs.model.DepartmentAttributes;
 import org.folio.rest.jaxrs.model.DepartmentCollection;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.resource.Departments;
@@ -82,9 +81,8 @@ public class DepartmentsAPI implements Departments {
   }
 
   private Department cleanUp(Department entity) {
-    DepartmentAttributes attributes = entity.getAttributes();
-    attributes.setName(Jsoup.parse(attributes.getName()).text());
-    attributes.setCode(Jsoup.parse(attributes.getCode()).text());
+    entity.setName(Jsoup.parse(entity.getName()).text());
+    entity.setCode(Jsoup.parse(entity.getCode()).text());
     return entity;
   }
 
@@ -97,9 +95,9 @@ public class DepartmentsAPI implements Departments {
       if (isDuplicateField(errorMessage, ID_FIELD)) {
         error = createDuplicateErrorMessage(ID_FIELD, entity.getId());
       } else if (isDuplicateField(errorMessage, NAME_FIELD)) {
-        error = createDuplicateErrorMessage(NAME_FIELD, entity.getAttributes().getName());
+        error = createDuplicateErrorMessage(NAME_FIELD, entity.getName());
       } else if (isDuplicateField(errorMessage, CODE_FIELD)) {
-        error = createDuplicateErrorMessage(CODE_FIELD, entity.getAttributes().getCode());
+        error = createDuplicateErrorMessage(CODE_FIELD, entity.getCode());
       }
     }
     resultHandler.handle(

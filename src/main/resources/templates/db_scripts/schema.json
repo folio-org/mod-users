@@ -39,11 +39,11 @@
       "withMetadata" : true,
       "uniqueIndex" : [
         {
-          "fieldName" : "attributes.name",
+          "fieldName" : "name",
           "tOps" : "ADD"
         },
         {
-          "fieldName" : "attributes.code",
+          "fieldName" : "code",
           "tOps" : "ADD"
         }
       ]
