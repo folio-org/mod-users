@@ -1,3 +1,8 @@
+## 17.1.0 2020-07-07
+* updated mod-custom-fields version to 1.4.1
+* MODUSERS-196 - BE - Preferred name field on user record
+* MODCFIELDS-46 - Custom Field Option: Provide an indication that an option has been saved to a record
+
 ## 17.0.0 2020-06-10
 
 * Custom fields can have multiple values (MODUSERS-201)
