@@ -32,6 +32,15 @@
       "description": "A UUID corresponding to the group the user belongs to",
       "type": "string"
     },
+    "departments": {
+      "description": "A UUIDs corresponding to the departments the user belongs to",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "$ref": "raml-util/schemas/uuid.schema"
+      }
+    },
     "meta": {
       "description": "Deprecated",
       "type": "object"

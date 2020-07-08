@@ -113,6 +113,31 @@
           "methods" : [ "DELETE" ],
           "pathPattern" : "/proxiesfor/{id}",
           "permissionsRequired" : [ "proxiesfor.item.delete" ]
+        },
+        {
+          "methods" : [ "GET" ],
+          "pathPattern" : "/departments",
+          "permissionsRequired" : [ "departments.collection.get" ]
+        },
+        {
+          "methods" : [ "GET" ],
+          "pathPattern" : "/departments/{id}",
+          "permissionsRequired" : [ "departments.item.get" ]
+        },
+        {
+          "methods" : [ "POST" ],
+          "pathPattern" : "/departments",
+          "permissionsRequired" : [ "departments.item.post" ]
+        },
+        {
+          "methods" : [ "PUT" ],
+          "pathPattern" : "/departments/{id}",
+          "permissionsRequired" : [ "departments.item.put" ]
+        },
+        {
+          "methods" : [ "DELETE" ],
+          "pathPattern" : "/departments/{id}",
+          "permissionsRequired" : [ "departments.item.delete" ]
         }
       ]
     },
@@ -292,6 +317,31 @@
       "description" : "Delete a proxyfor record"
     },
     {
+      "permissionName" : "departments.collection.get",
+      "displayName" : "departments collection get",
+      "description" : "Get a list of departments records"
+    },
+    {
+      "permissionName" : "departments.item.get",
+      "displayName" : "departments item get",
+      "description" : "Get a single department record"
+    },
+    {
+      "permissionName" : "departments.item.post",
+      "displayName" : "departments item post",
+      "description" : "Create a new department record"
+    },
+    {
+      "permissionName" : "departments.item.put",
+      "displayName" : "departments item put",
+      "description" : "Edit a department record"
+    },
+    {
+      "permissionName" : "departments.item.delete",
+      "displayName" : "departments.item.delete",
+      "description" : "Delete a department record"
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -317,7 +367,12 @@
         "proxiesfor.item.get",
         "proxiesfor.item.post",
         "proxiesfor.item.put",
-        "proxiesfor.item.delete"
+        "proxiesfor.item.delete",
+        "departments.collection.get",
+        "departments.item.get",
+        "departments.item.post",
+        "departments.item.put",
+        "departments.item.delete"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
