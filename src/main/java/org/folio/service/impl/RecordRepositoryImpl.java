@@ -26,11 +26,11 @@ public class RecordRepositoryImpl implements RecordRepository {
 
   private static final String USERS_TABLE = "users";
   private static final String NOT_NULL_CONDITION = "IS NOT NULL";
-  private static final String EQUALS_CONDITION = "= $2";
+  private static final String EXIST_CONDITION = "? $2";
   private static final String SELECT_USAGE_COUNT =
     "SELECT count(*)" +
       "  FROM " + USERS_TABLE +
-      "  WHERE jsonb -> 'customFields' ->> $1 ";
+      "  WHERE jsonb -> 'customFields' -> $1 ";
 
   private final Vertx vertx;
 
@@ -54,7 +54,7 @@ public class RecordRepositoryImpl implements RecordRepository {
     Promise<RowSet<Row>> count = Promise.promise();
 
     Tuple params = Tuple.of(field.getRefId(), optId);
-    pgClient(tenantId).select(SELECT_USAGE_COUNT + EQUALS_CONDITION, params, count);
+    pgClient(tenantId).select(SELECT_USAGE_COUNT + EXIST_CONDITION, params, count);
 
     return count.future().map(rs -> fieldOptionStatistic(field, optId, rs.iterator().next().getInteger(0)));
   }
