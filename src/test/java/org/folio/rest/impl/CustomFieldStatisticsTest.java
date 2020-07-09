@@ -59,7 +59,7 @@ public class CustomFieldStatisticsTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldReturnFieldOptionUsageIfNoFieldsAssigned() {
+  public void shouldReturnFieldOptionUsageIfFieldAssigned() {
     CustomField selectableField = createSelectableField();
     String optId = selectableField.getSelectField().getOptions().getValues().get(0).getId();
     assignValue(testUser, selectableField.getRefId(), optId);
@@ -68,6 +68,30 @@ public class CustomFieldStatisticsTest extends CustomFieldTestBase {
     CustomFieldOptionStatistic stats = getWithOk(resourcePath).as(CustomFieldOptionStatistic.class);
 
     assertThat(stats.getOptionId(), equalTo(optId));
+    assertThat(stats.getCustomFieldId(), equalTo(selectableField.getId()));
+    assertThat(stats.getEntityType(), equalTo(selectableField.getEntityType()));
+    assertThat(stats.getCount(), equalTo(1));
+  }
+
+  @Test
+  public void shouldReturnFieldOptionUsageIfFieldAssignedWithSeveralValues() {
+    CustomField selectableField = createSelectableField();
+    String optId0 = selectableField.getSelectField().getOptions().getValues().get(0).getId();
+    String optId1 = selectableField.getSelectField().getOptions().getValues().get(1).getId();
+    assignValue(testUser, selectableField.getRefId(), optId0, optId1);
+
+    String resourcePath = cfByIdOptIdStatsEndpoint(selectableField.getId(), optId0);
+    CustomFieldOptionStatistic stats = getWithOk(resourcePath).as(CustomFieldOptionStatistic.class);
+
+    assertThat(stats.getOptionId(), equalTo(optId0));
+    assertThat(stats.getCustomFieldId(), equalTo(selectableField.getId()));
+    assertThat(stats.getEntityType(), equalTo(selectableField.getEntityType()));
+    assertThat(stats.getCount(), equalTo(1));
+
+    resourcePath = cfByIdOptIdStatsEndpoint(selectableField.getId(), optId1);
+    stats = getWithOk(resourcePath).as(CustomFieldOptionStatistic.class);
+
+    assertThat(stats.getOptionId(), equalTo(optId1));
     assertThat(stats.getCustomFieldId(), equalTo(selectableField.getId()));
     assertThat(stats.getEntityType(), equalTo(selectableField.getEntityType()));
     assertThat(stats.getCount(), equalTo(1));

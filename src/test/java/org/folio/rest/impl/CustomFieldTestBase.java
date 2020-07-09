@@ -9,6 +9,7 @@ import static org.folio.test.util.TestUtil.toJson;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
@@ -88,7 +89,7 @@ public class CustomFieldTestBase extends TestBase {
   protected User createUser(String pathToJson) {
     String body = readExistedFile(pathToJson);
 
-    User user = postWithStatus(USERS_ENDPOINT, body, SC_CREATED).as(User.class);
+    User user = postWithStatus(USERS_ENDPOINT, body, SC_CREATED, FAKE_TOKEN).as(User.class);
 
     mockGetWithBody(new EqualToPattern("/" + USERS_ENDPOINT + "/" + user.getId()), body);
 
@@ -99,17 +100,17 @@ public class CustomFieldTestBase extends TestBase {
     return getWithOk("/" + USERS_ENDPOINT + "/" + userId).as(User.class);
   }
 
-  protected void assignValue(User user, String fieldRefId, Object value) {
+  protected void assignValue(User user, String fieldRefId, Object... values) {
     CustomFields fields = user.getCustomFields();
     if (fields == null) {
       fields = new CustomFields();
     }
 
-    fields.setAdditionalProperty(fieldRefId, value);
+    fields.setAdditionalProperty(fieldRefId, values.length == 1 ? values[0] : Arrays.asList(values));
 
     user.setCustomFields(fields);
 
-    putWithNoContent(USERS_ENDPOINT + "/" + user.getId(), toJson(user));
+    putWithNoContent(USERS_ENDPOINT + "/" + user.getId(), toJson(user), FAKE_TOKEN);
   }
 
   private CustomField createField(String pathToJson) {
