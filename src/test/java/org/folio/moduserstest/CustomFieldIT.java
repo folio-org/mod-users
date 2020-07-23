@@ -215,13 +215,13 @@ public class CustomFieldIT {
 
   private static void addCustomFields(JsonObject jsonObject) {
     JsonObject customFields = new JsonObject();
-    customFields.put("department_1", "Math");
+    customFields.put("department", "Math");
     jsonObject.put("customFields", customFields);
   }
 
   private static void addInvalidCustomFieldValue(JsonObject jsonObject) {
     JsonObject customFields = new JsonObject();
-    customFields.put("department_1", RandomStringUtils.randomAlphanumeric(151));
+    customFields.put("department", RandomStringUtils.randomAlphanumeric(151));
     jsonObject.put("customFields", customFields);
   }
 
@@ -233,7 +233,7 @@ public class CustomFieldIT {
     return future.map(user -> {
       JsonObject customFields = user.getJsonObject("customFields");
 
-      if (customFields == null || !customFields.encode().equals("{\"department_1\":\"Math\"}")) {
+      if (customFields == null || !customFields.encode().equals("{\"department\":\"Math\"}")) {
         fail("Bad value for customFields. " + encode(customFields));
       }
 
