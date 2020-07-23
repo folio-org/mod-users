@@ -7,6 +7,16 @@
     },
     {
       "run": "after",
+      "snippetPath": "update-textbox-default-format.sql",
+      "fromModuleVersion": "17.1.0"
+    },
+    {
+      "run": "after",
+      "snippetPath": "migrate-to-new-ref-id-format.sql",
+      "fromModuleVersion": "17.1.0"
+    },
+    {
+      "run": "after",
       "snippetPath": "create_departments_view.sql",
       "fromModuleVersion": "17.1.0"
     },
