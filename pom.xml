@@ -343,13 +343,13 @@
             <configuration>
               <target>
                 <replace token="baseUri: http://github.com/org/folio/mod-users" value="baseUri: http://localhost:{http.port}" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                  <include name="**/*.raml"/>
                 </replace>
                 <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                  <include name="**/*.raml"/>
                 </replace>
                 <replace token="../.." value="../raml-util" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                  <include name="**/*.raml"/>
                 </replace>
               </target>
             </configuration>
@@ -400,7 +400,7 @@
                   </manifestEntries>
                 </transformer>
               </transformers>
-              <artifactSet />
+              <artifactSet/>
               <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
             </configuration>
           </execution>
@@ -493,7 +493,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <raml-module-builder.version>30.1.0</raml-module-builder.version>
     <generate_routing_context>/users</generate_routing_context>
-    <vertx.version>3.9.1</vertx.version>
+    <vertx.version>3.9.2</vertx.version>
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>
     <folio-service-tools.version>1.5.1</folio-service-tools.version>
