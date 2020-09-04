@@ -635,7 +635,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> deleteAddressTypeThatDoesNotExist(TestContext context) {
-    log.info("Deleting address type SQL error\n");
+    log.info("Deleting address type that does not exist\n");
 
     Future<HttpResponse<Buffer>> future = delete("/addresstypes/foo");
 
