@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static io.restassured.RestAssured.given;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 
@@ -94,6 +95,15 @@ public class CustomFieldTestBase extends TestBase {
     mockGetWithBody(new EqualToPattern("/" + USERS_ENDPOINT + "/" + user.getId()), body);
 
     return user;
+  }
+
+  protected void deleteUserIgnore(String userId) {
+    given()
+    .spec(getRequestSpecification())
+    .when()
+    .delete("/" + USERS_ENDPOINT + "/" + userId)
+    .then()
+    .log().ifValidationFails();
   }
 
   protected User getUser(String userId) {

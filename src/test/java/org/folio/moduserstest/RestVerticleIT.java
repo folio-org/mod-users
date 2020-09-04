@@ -634,10 +634,10 @@ public class RestVerticleIT {
       });
   }
 
-  private Future<Void> deleteAddressTypeSQLError(TestContext context) {
+  private Future<Void> deleteAddressTypeThatDoesNotExist(TestContext context) {
     log.info("Deleting address type SQL error\n");
 
-    Future<HttpResponse<Buffer>> future = delete("/addresstypes/x%2F");
+    Future<HttpResponse<Buffer>> future = delete("/addresstypes/foo");
 
     return future.map(response -> {
       assertStatus(context, response, 400);
@@ -1242,7 +1242,7 @@ public class RestVerticleIT {
       .compose(v -> createBadAddressType(context))
       .compose(v -> getAddressTypeUpdateUser(context))
       .compose(v -> createAndDeleteAddressType(context))
-      .compose(v -> deleteAddressTypeSQLError(context))
+      .compose(v -> deleteAddressTypeThatDoesNotExist(context))
       .compose(v -> deleteAddressTypeCQLError(context))
       .compose(v -> postUserWithDuplicateAddressType(context))
       .compose(v -> postUserBadAddress(context))

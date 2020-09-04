@@ -129,7 +129,7 @@ public class DepartmentsAPITest extends TestBase {
     Errors errors = postWithError(dep1);
     assertThat(errors.getErrors(), hasSize(2));
     for (Error error : errors.getErrors()) {
-      assertThat(error.getMessage(), equalTo("may not be null"));
+      assertThat(error.getMessage(), equalTo("must not be null"));
       assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
     }
   }
@@ -181,7 +181,7 @@ public class DepartmentsAPITest extends TestBase {
     Errors errors = putWithError(dep1.withCode(null).withName(null));
     assertThat(errors.getErrors(), hasSize(2));
     for (Error error : errors.getErrors()) {
-      assertThat(error.getMessage(), equalTo("may not be null"));
+      assertThat(error.getMessage(), equalTo("must not be null"));
       assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
     }
   }
