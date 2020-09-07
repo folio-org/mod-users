@@ -16,7 +16,6 @@ import java.util.List;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFieldCollection;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
@@ -58,6 +57,8 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   @Test
   public void shouldRemoveFieldAndAllValuesIfAssignedToSeveralUsers() {
     CustomField textField = createTextField();
+
+    deleteUserIgnore("99999999-9999-4999-9999-999999999999");
     User user9 = createUser("users/user9.json");
 
     // assign a value to one user
