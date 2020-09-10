@@ -107,17 +107,17 @@ public class ExpirationToolTest {
   }
 
   @Test
-  void saveUserCanHandleNullPostgresClient(Vertx vertx) {
+  void disableUserCanHandleNullPostgresClient(Vertx vertx) {
     ExpirationTool.postgresClient = (v,t) -> null;
-    Future<Void> future = ExpirationTool.saveUser(vertx, "myTenant", new User());
+    Future<Void> future = ExpirationTool.disableUser(vertx, "myTenant", new User());
     assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
   }
 
   @Test
-  void saveUserCanHandlePostgresFailure(Vertx vertx) {
+  void disableUserCanHandlePostgresFailure(Vertx vertx) {
     PostgresClient postgresClient = mock(PostgresClient.class);
     ExpirationTool.postgresClient = (v,t) -> postgresClient;
-    Future<Void> future = ExpirationTool.saveUser(vertx, "myTenant", new User());
+    Future<Void> future = ExpirationTool.disableUser(vertx, "myTenant", new User());
     ArgumentCaptor<Handler<AsyncResult<RowSet<Row>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
     verify(postgresClient).update(anyString(), any(User.class), any(), handlerCaptor.capture());
     handlerCaptor.getValue().handle(Future.failedFuture("out of punchcards"));

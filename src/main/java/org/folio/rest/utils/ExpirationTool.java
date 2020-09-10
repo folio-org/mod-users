@@ -33,7 +33,7 @@ public final class ExpirationTool {
   }
 
   public static void doExpiration(Vertx vertx, Context context) {
-    logger.info("Calling doExpiration()");
+    logger.debug("Calling doExpiration()");
     context.runOnContext(v -> {
       //Get a list of tenants
       PostgresClient pgClient = PostgresClient.getInstance(vertx);
@@ -50,7 +50,7 @@ public final class ExpirationTool {
           String suffix = "_mod_users";
           int suffixLength = nsTenant.length() - suffix.length();
           final String tenant = nsTenant.substring(0, suffixLength);
-          logger.info("Calling doExpirationForTenant for tenant " + tenant);
+          logger.debug("Calling doExpirationForTenant for tenant " + tenant);
           Future<Integer> expireFuture = doExpirationForTenant(vertx, tenant);
           expireFuture.onComplete(res -> {
             if (res.failed()) {
@@ -82,16 +82,14 @@ public final class ExpirationTool {
           return;
         }
         if (reply.result().getResults().isEmpty()) {
-          logger.info(String.format("No results found for tenant %s and query %s", tenant, query));
+          logger.debug(String.format("No results found for tenant %s and query %s", tenant, query));
           promise.complete(0);
           return;
         }
         List<User> userList = reply.result().getResults();
         List<Future> futureList = new ArrayList<>();
         for(User user : userList) {
-          user.setActive(Boolean.FALSE);
-          Future<Void> saveFuture = saveUser(vertx, tenant, user);
-          futureList.add(saveFuture);
+          futureList.add(disableUser(vertx, tenant, user));
         }
         CompositeFuture compositeFuture = CompositeFuture.join(futureList);
         compositeFuture.onComplete(compRes -> {
@@ -111,8 +109,9 @@ public final class ExpirationTool {
     return promise.future();
   }
 
-  static Future<Void> saveUser(Vertx vertx, String tenant, User user) {
-    logger.info(String.format("Updating user with id %s for tenant %s", user.getId(), tenant));
+  static Future<Void> disableUser(Vertx vertx, String tenant, User user) {
+    logger.info(String.format("Disabling expired user with id %s for tenant %s", user.getId(), tenant));
+    user.setActive(Boolean.FALSE);
     Promise<Void> promise = Promise.promise();
     try {
       PostgresClient pgClient = postgresClient.apply(vertx, tenant);
