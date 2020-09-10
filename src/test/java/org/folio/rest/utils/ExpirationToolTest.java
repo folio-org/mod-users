@@ -54,7 +54,7 @@ public class ExpirationToolTest {
 
   @Test
   void expirationForNullTenant(Vertx vertx, VertxTestContext context) {
-    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, vertx.getOrCreateContext(), null);
+    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, null);
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
       context.completeNow();
@@ -67,7 +67,7 @@ public class ExpirationToolTest {
     doThrow(new RuntimeException("pg"))
       .when(postgresClient).get(anyString(), any(Class.class), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any());
     ExpirationTool.postgresClient = (v,t) -> postgresClient;
-    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, vertx.getOrCreateContext(), "someTenant");
+    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause().getMessage(), is("pg"));
       context.completeNow();
@@ -78,7 +78,7 @@ public class ExpirationToolTest {
   void expirationForTenantCanHandlePostgresClientFailure(Vertx vertx, VertxTestContext context) {
     PostgresClient postgresClient = mock(PostgresClient.class);
     ExpirationTool.postgresClient = (v,t) -> postgresClient;
-    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, vertx.getOrCreateContext(), "someTenant");
+    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
     ArgumentCaptor<Handler<AsyncResult<Results<User>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
     verify(postgresClient)
       .get(anyString(), any(), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), handlerCaptor.capture());
@@ -93,7 +93,7 @@ public class ExpirationToolTest {
   void noUsersHaveExpired(Vertx vertx, VertxTestContext context) {
     PostgresClient postgresClient = mock(PostgresClient.class);
     ExpirationTool.postgresClient = (v,t) -> postgresClient;
-    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, vertx.getOrCreateContext(), "someTenant");
+    Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
     ArgumentCaptor<Handler<AsyncResult<Results<User>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
     verify(postgresClient)
       .get(anyString(), any(), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), handlerCaptor.capture());

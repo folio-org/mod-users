@@ -357,7 +357,7 @@ public class GroupIT {
         + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
       context.assertEquals(addExpiredUserResponse.code, 201);
       CompletableFuture<Void> getExpirationCF = new CompletableFuture<Void>();
-      ExpirationTool.doExpirationForTenant(RestITSupport.vertx(), RestITSupport.context(), "diku")
+      ExpirationTool.doExpirationForTenant(RestITSupport.vertx(), "diku")
         .onComplete(res -> getExpirationCF.complete(null));
       getExpirationCF.get(5, SECONDS);
       //TimeUnit.SECONDS.sleep(15);
