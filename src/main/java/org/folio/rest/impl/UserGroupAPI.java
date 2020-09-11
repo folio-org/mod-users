@@ -15,12 +15,15 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 /**
  * @author shale
  *
  */
 public class UserGroupAPI implements Groups {
+  private final Logger logger = LoggerFactory.getLogger(UserGroupAPI.class);
   public static final String GROUP_TABLE = "groups";
 
   @Validate
@@ -51,6 +54,7 @@ public class UserGroupAPI implements Groups {
         }
         asyncResultHandler.handle(post);
       } catch (Exception e) {
+        logger.error(e.getMessage(), e);
         ValidationHelper.handleError(e, asyncResultHandler);
       }
     });

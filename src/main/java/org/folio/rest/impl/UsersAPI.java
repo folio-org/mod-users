@@ -109,27 +109,24 @@ public class UsersAPI implements Users {
     }
   }
 
-  private void handle(String message, Throwable e, Handler<AsyncResult<Response>> asyncResultHandler, String lang,
+  private Response response(String message, Throwable e, String lang,
       Function<String,Response> report400, Function<String,Response> report500) {
-    logger.error(message, e);
-
-    Throwable cause = e;
-    do {
-      if (cause instanceof CQLParseException || cause instanceof FieldException) {
-        asyncResultHandler.handle(Future.succeededFuture(report400.apply(
-            "CQL Parsing Error for '" + message + "': " + cause.getMessage())));
-        return;
-      }
-      if (cause instanceof IllegalStateException) {
-        asyncResultHandler.handle(Future.succeededFuture(report400.apply(
-            "CQL Illegal State Error for '" + message + "': " + cause.getMessage())));
-        return;
-      }
-      cause = cause.getCause();
-    } while (cause != null);
-
-    asyncResultHandler.handle(Future.succeededFuture(report500.apply(
-                messages.getMessage(lang, MessageConsts.InternalServerError))));
+    try {
+      Throwable cause = e;
+      do {
+        if (cause instanceof CQLParseException || cause instanceof FieldException) {
+          return report400.apply("CQL Parsing Error for '" + message + "': " + cause.getMessage());
+        }
+        if (cause instanceof IllegalStateException) {
+          return report400.apply("CQL Illegal State Error for '" + message + "': " + cause.getMessage());
+        }
+        cause = cause.getCause();
+      } while (cause != null);
+      return report500.apply(messages.getMessage(lang, MessageConsts.InternalServerError));
+    } catch (Exception e2) {
+      logger.error(e2.getMessage(), e2);
+      return report500.apply(e2.getMessage());
+    }
   }
 
   @Validate
@@ -140,20 +137,21 @@ public class UsersAPI implements Users {
     Handler<AsyncResult<Response>> asyncResultHandler,
     Context vertxContext) {
 
-    logger.debug("Getting users");
-    // note that orderBy is NOT used
-    String tableName = getTableName(query);
     try {
+      logger.debug("Getting users");
+      // note that orderBy is NOT used
+      String tableName = getTableName(query);
       CQLWrapper cql = getCQL(query, limit, offset);
-
       List<FacetField> facetList = FacetManager.convertFacetStrings2FacetFields(facets, "jsonb");
 
       PgUtil.streamGet(tableName, User.class, cql, facetList, TABLE_NAME_USERS,
         routingContext, okapiHeaders, vertxContext);
     } catch (Exception e) {
-      handle(query, e, asyncResultHandler, lang,
+      logger.error(query, e);
+      Response response = response(query, e, lang,
         GetUsersResponse::respond400WithTextPlain,
         GetUsersResponse::respond500WithTextPlain);
+      asyncResultHandler.handle(succeededFuture(response));
     }
   }
 
@@ -164,49 +162,59 @@ public class UsersAPI implements Users {
                         Map<String, String> okapiHeaders,
                         Handler<AsyncResult<Response>> asyncResultHandler,
                         Context vertxContext) {
-    if (checkForDuplicateAddressTypes(entity)) {
-      asyncResultHandler.handle(Future.succeededFuture(
-        PostUsersResponse.respond400WithTextPlain(
-          "Users are limited to one address per addresstype")));
-      return;
-    }
+    try {
+      if (checkForDuplicateAddressTypes(entity)) {
+        asyncResultHandler.handle(Future.succeededFuture(
+          PostUsersResponse.respond400WithTextPlain(
+            "Users are limited to one address per addresstype")));
+        return;
+      }
 
-    if (StringUtils.isNotBlank(entity.getUsername())) {
-      trimWhiteSpaceInUsername(entity);
-    }
+      if (StringUtils.isNotBlank(entity.getUsername())) {
+        trimWhiteSpaceInUsername(entity);
+      }
 
-    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
-    succeededFuture()
-      .compose(o -> {
-        postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
-        return new ValidationServiceImpl(vertxContext)
-          .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
-      })
-      .compose(o -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
-      .compose(result -> {
-        if (Boolean.FALSE.equals(result)) {
-          asyncResultHandler.handle(succeededFuture(
-            PostUsersResponse.respond400WithTextPlain(
-              "You cannot add addresses with non-existant address types")));
-        } else {
-          validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
-                  handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
-        }
-        return Future.succeededFuture();
-      })
-      .otherwise(e -> {
-        if (e instanceof CustomFieldValidationException) {
-          asyncResultHandler.handle(succeededFuture(
-            PostUsersResponse.respond422WithApplicationJson(
-              ((CustomFieldValidationException) e).getErrors())));
-        } else {
-          logger.error(e.getLocalizedMessage(), e);
+      MutableObject<PostgresClient> postgresClient = new MutableObject<>();
+      succeededFuture()
+        .compose(o -> {
+          postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
+          return new ValidationServiceImpl(vertxContext)
+            .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
+        })
+        .compose(o -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
+        .compose(result -> {
+          if (Boolean.FALSE.equals(result)) {
+            asyncResultHandler.handle(succeededFuture(
+              PostUsersResponse.respond400WithTextPlain(
+                "You cannot add addresses with non-existant address types")));
+          } else {
+            validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
+                    handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
+          }
+          return Future.succeededFuture();
+        })
+        .otherwise(e -> {
+          if (e instanceof CustomFieldValidationException) {
+            asyncResultHandler.handle(succeededFuture(
+              PostUsersResponse.respond422WithApplicationJson(
+                ((CustomFieldValidationException) e).getErrors())));
+          } else {
+            logger.error(e.getLocalizedMessage(), e);
+            asyncResultHandler.handle(Future.succeededFuture(
+              PostUsersResponse.respond500WithTextPlain(
+                messages.getMessage(lang, MessageConsts.InternalServerError))));
+          }
+          return null;
+        }).onFailure(e -> {
+          logger.error(e.getMessage(), e);
           asyncResultHandler.handle(Future.succeededFuture(
-            PostUsersResponse.respond500WithTextPlain(
-              messages.getMessage(lang, MessageConsts.InternalServerError))));
-        }
-        return null;
-      });
+            PostUsersResponse.respond500WithTextPlain(e.getMessage())));
+        });
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+      asyncResultHandler.handle(Future.succeededFuture(
+        PostUsersResponse.respond500WithTextPlain(e.getMessage())));
+    }
   }
 
   private void saveUser(User entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
@@ -296,47 +304,57 @@ public class UsersAPI implements Users {
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler,
           Context vertxContext) {
-    Future.succeededFuture()
-      .compose(o -> new ValidationServiceImpl(vertxContext)
-        .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders)))
-      .compose(o -> {
-        if (checkForDuplicateAddressTypes(entity)) {
-          asyncResultHandler.handle(Future.succeededFuture(
-            PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
-          return Future.succeededFuture();
-        }
-        if (!userId.equals(entity.getId())) {
-          asyncResultHandler.handle(Future.succeededFuture(
-            PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
-          return Future.succeededFuture();
-        }
-        PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-
-        return checkAllAddressTypesValid(entity, vertxContext, postgresClient)
-          .compose(result -> {
-            if (Boolean.FALSE.equals(result)) {
-              asyncResultHandler.handle(Future.succeededFuture(
-                PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
-            } else {
-              validatePatronGroup(entity.getPatronGroup(), postgresClient, asyncResultHandler,
-                handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
-            }
+    try {
+      Future.succeededFuture()
+        .compose(o -> new ValidationServiceImpl(vertxContext)
+          .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders)))
+        .compose(o -> {
+          if (checkForDuplicateAddressTypes(entity)) {
+            asyncResultHandler.handle(Future.succeededFuture(
+              PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
             return Future.succeededFuture();
-          });
-      })
-      .otherwise(e -> {
-        logger.debug(e.getLocalizedMessage());
-        if (e instanceof CustomFieldValidationException) {
-          asyncResultHandler.handle(succeededFuture(
-            PostUsersResponse.respond422WithApplicationJson(
-              ((CustomFieldValidationException) e).getErrors())));
-        } else {
+          }
+          if (!userId.equals(entity.getId())) {
+            asyncResultHandler.handle(Future.succeededFuture(
+              PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
+            return Future.succeededFuture();
+          }
+          PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+
+          return checkAllAddressTypesValid(entity, vertxContext, postgresClient)
+            .compose(result -> {
+              if (Boolean.FALSE.equals(result)) {
+                asyncResultHandler.handle(Future.succeededFuture(
+                  PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
+              } else {
+                validatePatronGroup(entity.getPatronGroup(), postgresClient, asyncResultHandler,
+                  handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
+              }
+              return Future.succeededFuture();
+            });
+        })
+        .otherwise(e -> {
+          logger.error(e.getMessage(), e);
+          if (e instanceof CustomFieldValidationException) {
+            asyncResultHandler.handle(succeededFuture(
+              PostUsersResponse.respond422WithApplicationJson(
+                ((CustomFieldValidationException) e).getErrors())));
+          } else {
+            asyncResultHandler.handle(Future.succeededFuture(
+              PutUsersByUserIdResponse.respond500WithTextPlain(
+                messages.getMessage(lang, MessageConsts.InternalServerError))));
+          }
+          return null;
+        }).onFailure(e -> {
+          logger.error(e.getMessage(), e);
           asyncResultHandler.handle(Future.succeededFuture(
-            PutUsersByUserIdResponse.respond500WithTextPlain(
-              messages.getMessage(lang, MessageConsts.InternalServerError))));
-        }
-        return null;
-      });
+              PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
+        });
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+      asyncResultHandler.handle(Future.succeededFuture(
+          PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
+    }
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders,

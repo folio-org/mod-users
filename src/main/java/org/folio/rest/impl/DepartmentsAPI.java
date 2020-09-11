@@ -15,6 +15,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.apache.http.HttpStatus;
 import org.jsoup.Jsoup;
 
@@ -26,6 +28,7 @@ import org.folio.rest.jaxrs.resource.Departments;
 import org.folio.rest.tools.utils.ValidationHelper;
 
 public class DepartmentsAPI implements Departments {
+  private static final Logger logger = LoggerFactory.getLogger(DepartmentsAPI.class);
 
   private static final String DEPARTMENTS_TABLE_NAME = "departments";
   private static final String DEPARTMENTS_VIEW_NAME = "departments_view";
@@ -89,22 +92,27 @@ public class DepartmentsAPI implements Departments {
   private void handleUniqueConstraintViolation(AsyncResult<Response> result, Department entity,
                                                Function<Errors, Response> errorsMapFunction,
                                                Handler<AsyncResult<Response>> resultHandler) {
-    Errors error = null;
-    if (result.succeeded() && result.result().getStatus() == HttpStatus.SC_UNPROCESSABLE_ENTITY) {
-      String errorMessage = ((Errors) result.result().getEntity()).getErrors().iterator().next().getMessage();
-      if (isDuplicateField(errorMessage, ID_FIELD)) {
-        error = createDuplicateErrorMessage(ID_FIELD, entity.getId());
-      } else if (isDuplicateField(errorMessage, NAME_FIELD)) {
-        error = createDuplicateErrorMessage(NAME_FIELD, entity.getName());
-      } else if (isDuplicateField(errorMessage, CODE_FIELD)) {
-        error = createDuplicateErrorMessage(CODE_FIELD, entity.getCode());
+    AsyncResult<Response> finalResult = result;
+    try {
+      Errors error = null;
+      if (result.succeeded() && result.result().getStatus() == HttpStatus.SC_UNPROCESSABLE_ENTITY) {
+        String errorMessage = ((Errors) result.result().getEntity()).getErrors().iterator().next().getMessage();
+        if (isDuplicateField(errorMessage, ID_FIELD)) {
+          error = createDuplicateErrorMessage(ID_FIELD, entity.getId());
+        } else if (isDuplicateField(errorMessage, NAME_FIELD)) {
+          error = createDuplicateErrorMessage(NAME_FIELD, entity.getName());
+        } else if (isDuplicateField(errorMessage, CODE_FIELD)) {
+          error = createDuplicateErrorMessage(CODE_FIELD, entity.getCode());
+        }
       }
+      if (error != null) {
+        finalResult = Future.succeededFuture(errorsMapFunction.apply(error));
+      }
+      resultHandler.handle(finalResult);
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+      resultHandler.handle(finalResult);
     }
-    resultHandler.handle(
-      error != null
-        ? Future.succeededFuture(errorsMapFunction.apply(error))
-        : result
-    );
   }
 
   private Errors createDuplicateErrorMessage(String fieldName, String value) {
