@@ -89,7 +89,7 @@ public class DepartmentsAPI implements Departments {
     return entity;
   }
 
-  private void handleUniqueConstraintViolation(AsyncResult<Response> result, Department entity,
+  static void handleUniqueConstraintViolation(AsyncResult<Response> result, Department entity,
                                                Function<Errors, Response> errorsMapFunction,
                                                Handler<AsyncResult<Response>> resultHandler) {
     AsyncResult<Response> finalResult = result;
@@ -115,12 +115,12 @@ public class DepartmentsAPI implements Departments {
     }
   }
 
-  private Errors createDuplicateErrorMessage(String fieldName, String value) {
+  private static Errors createDuplicateErrorMessage(String fieldName, String value) {
     return ValidationHelper
       .createValidationErrorMessage(fieldName, value, String.format(DUPLICATE_FIELD_MESSAGE, fieldName));
   }
 
-  private boolean isDuplicateField(String errorMessage, String fieldName) {
+  private static boolean isDuplicateField(String errorMessage, String fieldName) {
     return errorMessage != null && errorMessage.matches(".*" + fieldName + ".*already exists.*");
   }
 }

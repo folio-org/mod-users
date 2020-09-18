@@ -64,8 +64,8 @@ public class UsersAPI implements Users {
   public static final String TABLE_NAME_USERS = "users";
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
-  private final Messages messages = Messages.getInstance();
-  private final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
+  private static final Messages messages = Messages.getInstance();
+  private static final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
 
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -109,11 +109,11 @@ public class UsersAPI implements Users {
     }
   }
 
-  private Response response(String message, Throwable e, String lang,
+  static Response response(String message, Throwable e, String lang,
       Function<String,Response> report400, Function<String,Response> report500) {
     try {
       Throwable cause = e;
-      do {
+      while (cause != null) {
         if (cause instanceof CQLParseException || cause instanceof FieldException) {
           return report400.apply("CQL Parsing Error for '" + message + "': " + cause.getMessage());
         }
@@ -121,7 +121,7 @@ public class UsersAPI implements Users {
           return report400.apply("CQL Illegal State Error for '" + message + "': " + cause.getMessage());
         }
         cause = cause.getCause();
-      } while (cause != null);
+      }
       return report500.apply(messages.getMessage(lang, MessageConsts.InternalServerError));
     } catch (Exception e2) {
       logger.error(e2.getMessage(), e2);
@@ -199,7 +199,7 @@ public class UsersAPI implements Users {
               PostUsersResponse.respond422WithApplicationJson(
                 ((CustomFieldValidationException) e).getErrors())));
           } else {
-            logger.error(e.getLocalizedMessage(), e);
+            logger.error(e.getMessage(), e);
             asyncResultHandler.handle(Future.succeededFuture(
               PostUsersResponse.respond500WithTextPlain(
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
@@ -449,7 +449,7 @@ public class UsersAPI implements Users {
     });
   }
 
-  private boolean checkForDuplicateAddressTypes(User user) {
+  private static boolean checkForDuplicateAddressTypes(User user) {
     Map<String, Integer> countMap = new HashMap<>();
     if (user.getPersonal() != null &&
       user.getPersonal().getAddresses() != null) {
@@ -548,7 +548,7 @@ public class UsersAPI implements Users {
     return promise.future();
   }
 
-  private Map<String, Object> getCustomFields(User entity) {
+  private static Map<String, Object> getCustomFields(User entity) {
     if (entity.getCustomFields() == null) {
       return Collections.emptyMap();
     }
