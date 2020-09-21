@@ -41,8 +41,8 @@
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>mod-custom-fields</artifactId>
-      <version>${mod-custom-fields.version}</version>
+      <artifactId>folio-custom-fields</artifactId>
+      <version>${folio-custom-fields.version}</version>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
@@ -501,7 +501,7 @@
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>
     <folio-service-tools.version>1.5.2-SNAPSHOT</folio-service-tools.version>
-    <mod-custom-fields.version>1.4.2-SNAPSHOT</mod-custom-fields.version>
+    <folio-custom-fields.version>1.4.2-SNAPSHOT</folio-custom-fields.version>
     <jsoup.version>1.13.1</jsoup.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
   </properties>
