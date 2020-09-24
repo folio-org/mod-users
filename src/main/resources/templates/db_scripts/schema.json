@@ -18,12 +18,12 @@
     {
       "run": "after",
       "snippetPath": "create_departments_view.sql",
-      "fromModuleVersion": "17.1.0"
+      "fromModuleVersion": "17.2.0"
     },
     {
       "run": "after",
       "snippetPath": "create_departments_triggers.sql",
-      "fromModuleVersion": "17.1.0"
+      "fromModuleVersion": "17.2.0"
     },
     {
       "run": "before",
@@ -45,7 +45,7 @@
     },
     {
       "tableName" : "departments",
-      "fromModuleVersion" : "17.1.0",
+      "fromModuleVersion" : "17.2.0",
       "withMetadata" : true,
       "uniqueIndex" : [
         {
