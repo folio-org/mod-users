@@ -4,6 +4,7 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
@@ -12,7 +13,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 
 import static org.folio.test.util.TestUtil.mockGetWithBody;
 import static org.folio.test.util.TestUtil.readFile;
@@ -129,7 +130,7 @@ public class DepartmentsAPITest extends TestBase {
     Errors errors = postWithError(dep1);
     assertThat(errors.getErrors(), hasSize(2));
     for (Error error : errors.getErrors()) {
-      assertThat(error.getMessage(), equalTo("may not be null"));
+      assertThat(error.getMessage(), equalTo("must not be null"));
       assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
     }
   }
@@ -181,7 +182,7 @@ public class DepartmentsAPITest extends TestBase {
     Errors errors = putWithError(dep1.withCode(null).withName(null));
     assertThat(errors.getErrors(), hasSize(2));
     for (Error error : errors.getErrors()) {
-      assertThat(error.getMessage(), equalTo("may not be null"));
+      assertThat(error.getMessage(), equalTo("must not be null"));
       assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
     }
   }
@@ -319,6 +320,13 @@ public class DepartmentsAPITest extends TestBase {
   public void shouldReturn400OnDeleteByInvalidId() {
     String errors = deleteItemWithError("invalid-id", SC_BAD_REQUEST);
     assertThat(errors, containsString("'departmentId' parameter is incorrect"));
+  }
+
+  @Test
+  public void handleUniqueConstraintViolationWithNullResult() {
+    DepartmentsAPI.handleUniqueConstraintViolation(null, null, null, result -> {
+      assertThat(result, nullValue());
+    });
   }
 
   private DepartmentCollection getCollection(String query) {

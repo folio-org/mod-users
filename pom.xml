@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>17.1.1-SNAPSHOT</version>
+  <version>17.2.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -21,6 +21,18 @@
     </repository>
   </repositories>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>3.9.3</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.folio</groupId>
@@ -29,8 +41,8 @@
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>mod-custom-fields</artifactId>
-      <version>${mod-custom-fields.version}</version>
+      <artifactId>folio-custom-fields</artifactId>
+      <version>${folio-custom-fields.version}</version>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
@@ -40,12 +52,10 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web</artifactId>
-      <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jsoup</groupId>
@@ -76,14 +86,12 @@
     <dependency>
        <groupId>io.vertx</groupId>
        <artifactId>vertx-unit</artifactId>
-       <version>${vertx.version}</version>
        <scope>test</scope>
        <type>jar</type>
     </dependency>
     <dependency>
        <groupId>io.vertx</groupId>
        <artifactId>vertx-junit5</artifactId>
-       <version>${vertx.version}</version>
        <scope>test</scope>
     </dependency>
     <dependency>
@@ -113,7 +121,6 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-client</artifactId>
-      <version>${vertx.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -121,10 +128,9 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
+        <version>3.8.1</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>11</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -188,9 +194,9 @@
       </plugin>
 
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
+        <groupId>com.nickwongdev</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>
-        <version>1.10</version>
+        <version>1.12.6</version>
         <configuration>
           <verbose>true</verbose>
           <showWeaveInfo>false</showWeaveInfo>
@@ -220,12 +226,12 @@
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
-            <version>1.8.9</version>
+            <version>1.9.5</version>
           </dependency>
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjtools</artifactId>
-            <version>1.8.9</version>
+            <version>1.9.5</version>
           </dependency>
         </dependencies>
       </plugin>
@@ -244,7 +250,7 @@
               <resources>
                 <resource>
                   <directory>${ramlfiles_path}</directory>
-                  <filtering>true</filtering>
+                  <filtering>false</filtering>
                 </resource>
               </resources>
             </configuration>
@@ -260,7 +266,7 @@
               <resources>
                 <resource>
                   <directory>${basedir}/reference-data</directory>
-                  <filtering>true</filtering>
+                  <filtering>false</filtering>
                 </resource>
               </resources>
             </configuration>
@@ -402,6 +408,16 @@
               </transformers>
               <artifactSet/>
               <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
+              <filters>
+                <!-- this required to fix module logging -->
+                <!-- There are some errors in runtime and logging settings seems reset -->
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>**/Log4j2Plugins.dat</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
@@ -410,7 +426,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.19.1</version>
+        <version>2.22.2</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
@@ -445,7 +461,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.1</version>
+        <version>2.22.2</version>
         <configuration>
           <!-- TODO: update to version 3.0.0 and remove useSystemClassLoader
                https://issues.folio.org/browse/FOLIO-1609
@@ -459,6 +475,7 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
+
     </plugins>
   </build>
 
@@ -489,15 +506,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <raml-module-builder.version>30.1.0</raml-module-builder.version>
+    <raml-module-builder.version>31.1.0</raml-module-builder.version>
     <generate_routing_context>/users</generate_routing_context>
-    <vertx.version>3.9.1</vertx.version>
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>
-    <folio-service-tools.version>1.5.1</folio-service-tools.version>
-    <mod-custom-fields.version>1.4.2-SNAPSHOT</mod-custom-fields.version>
+    <folio-service-tools.version>1.5.2-SNAPSHOT</folio-service-tools.version>
+    <folio-custom-fields.version>1.4.2-SNAPSHOT</folio-custom-fields.version>
     <jsoup.version>1.13.1</jsoup.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
   </properties>

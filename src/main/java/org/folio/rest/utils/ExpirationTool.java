@@ -33,39 +33,39 @@ public final class ExpirationTool {
   }
 
   public static void doExpiration(Vertx vertx, Context context) {
-    logger.info("Calling doExpiration()");
+    logger.debug("Calling doExpiration()");
     context.runOnContext(v -> {
       //Get a list of tenants
       PostgresClient pgClient = PostgresClient.getInstance(vertx);
-      String tenantQuery = "select nspname from pg_catalog.pg_namespace where nspname LIKE '%_mod_users';";
+      String tenantQuery = "select nspname from pg_catalog.pg_namespace where nspname ~ '^[^_]+_mod_users$';";
       pgClient.select(tenantQuery, reply -> {
-        if(reply.succeeded()) {
-          RowSet<Row> rows = reply.result();
-          rows.forEach(row->{
-            String nsTenant = row.getString("nspname");
-            String suffix = "_mod_users";
-            int suffixLength = nsTenant.length() - suffix.length();
-            final String tenant = nsTenant.substring(0, suffixLength);
-            logger.info("Calling doExpirationForTenant for tenant " + tenant);
-            Future<Integer> expireFuture = doExpirationForTenant(vertx, context, tenant);
-            expireFuture.onComplete(res -> {
-              if(res.failed()) {
-                logger.info(String.format("Attempt to expire records for tenant %s failed: %s",
-                        tenant, res.cause().getLocalizedMessage()));
-              } else {
-                logger.info(String.format("Expired %s users", res.result()));
-              }
-            });
-          });
-        } else {
-          logger.info(String.format("TenantQuery '%s' failed: %s", tenantQuery,
-                  reply.cause().getLocalizedMessage()));
+        if (reply.failed()) {
+          logger.error(String.format("TenantQuery '%s' failed: %s",
+              tenantQuery, reply.cause().getMessage()), reply.cause());
+          return;
         }
+        RowSet<Row> rows = reply.result();
+        rows.forEach(row->{
+          String nsTenant = row.getString("nspname");
+          String suffix = "_mod_users";
+          int suffixLength = nsTenant.length() - suffix.length();
+          final String tenant = nsTenant.substring(0, suffixLength);
+          logger.debug("Calling doExpirationForTenant for tenant " + tenant);
+          Future<Integer> expireFuture = doExpirationForTenant(vertx, tenant);
+          expireFuture.onComplete(res -> {
+            if (res.failed()) {
+              logger.error(String.format("Attempt to expire records for tenant %s failed: %s",
+                      tenant, res.cause().getMessage()), res.cause());
+            } else {
+              logger.info(String.format("Expired %s users for tenant %s", res.result(), tenant));
+            }
+          });
+        });
       });
     });
   }
 
-  public static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
+  public static Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
     Promise<Integer> promise = Promise.promise();
     try {
       String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
@@ -76,22 +76,20 @@ public final class ExpirationTool {
       PostgresClient pgClient = postgresClient.apply(vertx, tenant);
       pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
         if (reply.failed()) {
-          logger.info(String.format("Error executing postgres query: '%s', %s",
-            query, reply.cause().getLocalizedMessage()));
+          logger.error(String.format("Error executing postgres query for tenant %s: '%s', %s",
+            tenant, query, reply.cause().getMessage()), reply.cause());
           promise.fail(reply.cause());
           return;
         }
         if (reply.result().getResults().isEmpty()) {
-          logger.info(String.format("No results found for query %s", query));
+          logger.debug(String.format("No results found for tenant %s and query %s", tenant, query));
           promise.complete(0);
           return;
         }
         List<User> userList = reply.result().getResults();
         List<Future> futureList = new ArrayList<>();
         for(User user : userList) {
-          user.setActive(Boolean.FALSE);
-          Future<Void> saveFuture = saveUser(vertx, tenant, user);
-          futureList.add(saveFuture);
+          futureList.add(disableUser(vertx, tenant, user));
         }
         CompositeFuture compositeFuture = CompositeFuture.join(futureList);
         compositeFuture.onComplete(compRes -> {
@@ -106,13 +104,14 @@ public final class ExpirationTool {
       });
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
-      promise.fail(e);
+      promise.tryFail(e);
     }
     return promise.future();
   }
 
-  static Future<Void> saveUser(Vertx vertx, String tenant, User user) {
-    logger.info(String.format("Updating user with id %s", user.getId()));
+  static Future<Void> disableUser(Vertx vertx, String tenant, User user) {
+    logger.info(String.format("Disabling expired user with id %s for tenant %s", user.getId(), tenant));
+    user.setActive(Boolean.FALSE);
     Promise<Void> promise = Promise.promise();
     try {
       PostgresClient pgClient = postgresClient.apply(vertx, tenant);
@@ -121,8 +120,8 @@ public final class ExpirationTool {
           promise.complete();
           return;
         }
-        logger.info(String.format("Error updating user %s: %s", user.getId(),
-          updateReply.cause().getLocalizedMessage()));
+        logger.error(String.format("Error updating user %s for tenant %s: %s", user.getId(), tenant,
+          updateReply.cause().getMessage()), updateReply.cause());
         promise.fail(updateReply.cause());
       });
     } catch(Exception e) {

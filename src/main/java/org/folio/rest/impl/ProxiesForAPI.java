@@ -76,6 +76,7 @@ public class ProxiesForAPI implements Proxiesfor {
           return;
         }
         if (Boolean.TRUE.equals(existsRes.result())) {
+          logger.error("Proxy relationship already exists: " + entity.getId());
           Errors existsError = ValidationHelper.createValidationErrorMessage(
             "proxyFor", entity.getId(), "Proxy relationship already exists");
           asyncResultHandler.handle(Future.succeededFuture(
