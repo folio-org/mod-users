@@ -47,7 +47,7 @@
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
-      <version>2.9.9</version>
+      <version>2.10.6</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -349,13 +349,13 @@
             <configuration>
               <target>
                 <replace token="baseUri: http://github.com/org/folio/mod-users" value="baseUri: http://localhost:{http.port}" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                  <include name="**/*.raml"/>
                 </replace>
                 <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                  <include name="**/*.raml"/>
                 </replace>
                 <replace token="../.." value="../raml-util" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                  <include name="**/*.raml"/>
                 </replace>
               </target>
             </configuration>
@@ -406,7 +406,7 @@
                   </manifestEntries>
                 </transformer>
               </transformers>
-              <artifactSet />
+              <artifactSet/>
               <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
               <filters>
                 <!-- this required to fix module logging -->
