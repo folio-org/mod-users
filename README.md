@@ -9,6 +9,11 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 Module to provide central user management for FOLIO systems.
 
+## Prerequisites
+
+* Java 11 JDK
+* Maven 3.3.9
+
 ## Additional information
 
 The [raml-module-builder](https://github.com/folio-org/raml-module-builder) framework.
