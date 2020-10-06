@@ -1,4 +1,12 @@
+## 17.2.0 2020-10-06
+
+* Allows users to be assigned to departments (MODUSERS-158)
+* Provides `users 15.2` (MODUSERS-158)
+* Requires JDK 11 (MODUSERS-215)
+* Upgraded to RAML Module Builder 31.1.0 (MODUSERS-214, MODUSERS-220)
+
 ## 17.1.0 2020-07-07
+
 * updated mod-custom-fields version to 1.4.1
 * MODUSERS-196 - BE - Preferred name field on user record
 * MODCFIELDS-46 - Custom Field Option: Provide an indication that an option has been saved to a record
