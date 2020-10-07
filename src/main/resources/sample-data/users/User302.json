@@ -1,0 +1,16 @@
+{
+  "username": "sheldon",
+  "id": "b4cee18d-f862-4ef1-95a5-879fdd619603",
+  "barcode": "789",
+  "active": true,
+  "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+  "departments": [],
+  "proxyFor": [],
+  "personal": {
+    "lastName": "sheldon",
+    "firstName": "bazinga",
+    "email": "sheldon@example.com",
+    "addresses": [],
+    "preferredContactTypeId": "002"
+  }
+}
