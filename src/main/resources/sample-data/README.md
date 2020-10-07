@@ -3,9 +3,11 @@ three users that https://samltest.id/ uses for its
 test IdP and that FOLIO demo/test installations can
 use for Single-Sign-On (SSO) based on
 https://github.com/folio-org/mod-login-saml
+
 Usernames and passwords are
 
-rick psych
-morty panic
+```
+rick    psych
+morty   panic
 sheldon bazinga
-
+```
