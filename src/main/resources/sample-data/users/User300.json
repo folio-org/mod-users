@@ -1,0 +1,17 @@
+{
+  "username": "rick",
+  "id": "2205005b-ca51-4a04-87fd-938eefa8f6de",
+  "barcode": "123",
+  "active": true,
+  "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
+  "departments": [],
+  "proxyFor": [],
+  "personal": {
+    "lastName": "rick",
+    "firstName": "psych",
+    "email": "rick@example.com",
+    "addresses": [],
+    "preferredContactTypeId": "002"
+  },
+  "enrollmentDate": "2020-10-07T04:00:00.000+0000"
+}

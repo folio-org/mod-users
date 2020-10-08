@@ -103,7 +103,7 @@ class UsersAPIIT {
       statusCode(200).
       body("resultInfo.facets[0].facetValues[0].count", is(88)).
       body("resultInfo.facets[0].facetValues[0].value", is("bdc2b6d4-5ceb-4a12-ab46-249b9a68473e")).
-      body("resultInfo.facets[0].facetValues[1].count", is(78)).
+      body("resultInfo.facets[0].facetValues[1].count", is(81)).
       body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
   }
 
