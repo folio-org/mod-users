@@ -1,3 +1,7 @@
+## 17.2.1 2020-10-14
+
+* Upgraded to RAML Module Builder 31.1.2 (MODUSERS-230)
+
 ## 17.2.0 2020-10-06
 
 * Allows users to be assigned to departments (MODUSERS-158)
