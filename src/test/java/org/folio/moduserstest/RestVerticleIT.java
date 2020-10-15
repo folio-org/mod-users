@@ -640,7 +640,7 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = delete("/addresstypes/x%2F");
 
     return future.map(response -> {
-      assertStatus(context, response, 400);
+      assertStatus(context, response, 500);
       return null;
     });
   }
