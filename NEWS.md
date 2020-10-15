@@ -1,3 +1,6 @@
+## 17.1.1 2020-10-15
+* [MODUSERS-226](https://issues.folio.org/browse/MODUSERS-226) Upgrade branch b17.1 (Goldenrod) to RMB 30.2.8 and release
+
 ## 17.1.0 2020-07-07
 * updated mod-custom-fields version to 1.4.1
 * MODUSERS-196 - BE - Preferred name field on user record
