@@ -16,6 +16,10 @@
       "description": "A UUID identifying this group",
       "type": "string"
     },
+    "expirationOffset": {
+      "description": "The standard expiration offset in days of this group",
+      "type": "integer"
+    },
     "metadata": {
       "$ref": "raml-util/schemas/metadata.schema",
       "readonly": true

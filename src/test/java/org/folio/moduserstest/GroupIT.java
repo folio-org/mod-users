@@ -63,7 +63,7 @@ public class GroupIT {
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
 
-  private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\"}";
+  private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\", \"expirationOffset\": 365}";
   private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
   private static final Logger log = LoggerFactory.getLogger(GroupIT.class);
