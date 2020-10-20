@@ -1,6 +1,6 @@
 {
   "group": "librarian",
   "desc": "basic lib group",
-  "expirationOffset": 365,
+  "expirationOffsetInDays": 365,
   "id": "b4b5e97a-0a99-4db9-97df-4fdf406ec74d"
 }

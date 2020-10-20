@@ -16,7 +16,7 @@
       "description": "A UUID identifying this group",
       "type": "string"
     },
-    "expirationOffset": {
+    "expirationOffsetInDays": {
       "description": "The standard expiration offset in days of this group",
       "type": "integer"
     },

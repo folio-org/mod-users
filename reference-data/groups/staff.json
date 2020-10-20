@@ -2,5 +2,5 @@
   "id" : "3684a786-6671-4268-8ed0-9db82ebca60b",
   "group":"staff",
   "desc":"Staff Member",
-  "expirationOffset": 730
+  "expirationOffsetInDays": 730
 }
