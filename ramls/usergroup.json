@@ -17,7 +17,7 @@
       "type": "string"
     },
     "expirationOffsetInDays": {
-      "description": "The standard expiration offset in days of this group",
+      "description": "The default period in days after which a newly created user that belongs to this group will expire",
       "type": "integer"
     },
     "metadata": {
