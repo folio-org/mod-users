@@ -1,5 +1,6 @@
 {
   "id" : "503a81cd-6c26-400f-b620-14c08943697c",
   "group":"faculty",
-  "desc":"Faculty Member"
+  "desc":"Faculty Member",
+  "expirationOffsetInDays": 365
 }
