@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>17.2.2-SNAPSHOT</version>
+  <version>17.2.3-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -26,9 +26,19 @@
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-stack-depchain</artifactId>
-        <version>3.9.3</version>
+        <version>${vertx.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-sql-client</artifactId>
+        <version>${vertx.version}-FOLIO</version>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-pg-client</artifactId>
+        <version>${vertx.version}-FOLIO</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -507,7 +517,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>31.1.2</raml-module-builder.version>
+    <raml-module-builder.version>31.1.5</raml-module-builder.version>
+    <vertx.version>3.9.4</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>

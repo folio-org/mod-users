@@ -1,3 +1,7 @@
+## 17.2.2 2020-11-03
+
+* Upgraded to RAML Module Builder 31.1.5 (MODUSERS-237)
+
 ## 17.2.1 2020-10-14
 
 * Upgraded to RAML Module Builder 31.1.2 (MODUSERS-230)
