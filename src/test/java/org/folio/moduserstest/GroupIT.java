@@ -81,8 +81,7 @@ public class GroupIT {
 
     TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + RestITSupport.port(), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", RestITSupport.port()))
-      .setWorker(true);
+      .setConfig(new JsonObject().put("http.port", RestITSupport.port()));
 
     RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       // remove existing schema from previous tests
