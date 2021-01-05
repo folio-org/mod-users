@@ -15,8 +15,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.http.HttpStatus;
 import org.jsoup.Jsoup;
 
@@ -28,7 +28,7 @@ import org.folio.rest.jaxrs.resource.Departments;
 import org.folio.rest.tools.utils.ValidationHelper;
 
 public class DepartmentsAPI implements Departments {
-  private static final Logger logger = LoggerFactory.getLogger(DepartmentsAPI.class);
+  private static final Logger logger = LogManager.getLogger(DepartmentsAPI.class);
 
   private static final String DEPARTMENTS_TABLE_NAME = "departments";
   private static final String DEPARTMENTS_VIEW_NAME = "departments_view";

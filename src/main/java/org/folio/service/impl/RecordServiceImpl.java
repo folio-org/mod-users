@@ -6,8 +6,8 @@ import java.util.List;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.commons.collections4.CollectionUtils;
 
 import org.folio.model.RecordUpdate;
@@ -20,7 +20,7 @@ import org.folio.service.RecordService;
 
 public class RecordServiceImpl implements RecordService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RecordServiceImpl.class);
+  private static final Logger LOG = LogManager.getLogger(RecordServiceImpl.class);
 
   private final RecordRepository repository;
 

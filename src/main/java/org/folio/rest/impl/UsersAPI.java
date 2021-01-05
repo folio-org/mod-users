@@ -49,8 +49,8 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.web.RoutingContext;
 
 
@@ -65,7 +65,7 @@ public class UsersAPI implements Users {
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private static final Messages messages = Messages.getInstance();
-  private static final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
+  private static final Logger logger = LogManager.getLogger(UsersAPI.class);
 
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the

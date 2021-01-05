@@ -33,8 +33,8 @@ import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -60,7 +60,7 @@ import org.folio.test.util.TokenTestUtil;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RestVerticleIT {
 
-  private static final Logger log = LoggerFactory.getLogger(RestVerticleIT.class);
+  private static final Logger log = LogManager.getLogger(RestVerticleIT.class);
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";

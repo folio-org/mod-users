@@ -15,15 +15,15 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author shale
  *
  */
 public class UserGroupAPI implements Groups {
-  private final Logger logger = LoggerFactory.getLogger(UserGroupAPI.class);
+  private final Logger logger = LogManager.getLogger(UserGroupAPI.class);
   public static final String GROUP_TABLE = "groups";
 
   @Validate

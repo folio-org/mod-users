@@ -44,8 +44,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -55,7 +55,7 @@ import io.vertx.ext.web.client.HttpResponse;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class CustomFieldIT {
 
-  private static final Logger log = LoggerFactory.getLogger(CustomFieldIT.class);
+  private static final Logger log = LogManager.getLogger(CustomFieldIT.class);
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";

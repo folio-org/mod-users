@@ -6,8 +6,8 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import java.text.SimpleDateFormat;
@@ -24,7 +24,7 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 
 public final class ExpirationTool {
-  private static final Logger logger = LoggerFactory.getLogger(ExpirationTool.class);
+  private static final Logger logger = LogManager.getLogger(ExpirationTool.class);
   /** PostgresClient::getInstance, or some other method for unit testing */
   static BiFunction<Vertx, String, PostgresClient> postgresClient = PostgresClient::getInstance;
 
