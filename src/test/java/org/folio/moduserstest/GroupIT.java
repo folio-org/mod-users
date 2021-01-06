@@ -55,7 +55,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
 
-
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GroupIT {
@@ -85,12 +84,12 @@ public class GroupIT {
 
     RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       // remove existing schema from previous tests
-      tenantClient.deleteTenant(delete -> {
-        switch (delete.statusCode()) {
+      tenantClient.deleteTenantByOperationId("diku", delete -> {
+        switch (delete.result().statusCode()) {
           case 204: break;  // existing schema has been deleted
           case 400: break;  // schema does not exist
           default:
-            fail(context, "deleteTenant", delete);
+            fail(context, "deleteTenant", delete.result());
             return;
         }
         try {
@@ -101,8 +100,8 @@ public class GroupIT {
           parameters.add(new Parameter().withKey("loadSample").withValue("false"));
           ta.setParameters(parameters);
           tenantClient.postTenant(ta, post -> {
-            if (post.statusCode() != 201) {
-              fail(context, "postTenant", post);
+            if (post.result().statusCode() != 201) {
+              fail(context, "postTenant", post.result());
             }
             async.complete();
           });
@@ -453,17 +452,17 @@ public class GroupIT {
                                            Function<HttpResponse<Buffer>, Response> handler) {
     Future<HttpResponse<Buffer>> httpResponse;
 
-    switch (method) {
-      case GET:
+    switch (method.name()) {
+      case "GET":
         httpResponse = get(url);
         break;
-      case POST:
+      case "POST":
         httpResponse = post(url, defaultString(content));
         break;
-      case PUT:
+      case "PUT":
         httpResponse = put(url, defaultString(content));
         break;
-      case DELETE:
+      case "DELETE":
         httpResponse = delete(url);
         break;
       default:

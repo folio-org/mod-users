@@ -105,12 +105,12 @@ public class RestVerticleIT {
 
     RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       // remove existing schema from previous tests
-      tenantClient.deleteTenant(delete -> {
-        switch (delete.statusCode()) {
+      tenantClient.deleteTenantByOperationId("", delete -> {
+        switch (delete.result().statusCode()) {
           case 204: break;  // existing schema has been deleted
           case 400: break;  // schema does not exist
           default:
-            RestITSupport.fail(context, "deleteTenant", delete);
+            RestITSupport.fail(context, "deleteTenant", delete.result());
             return;
         }
         try {
@@ -121,8 +121,8 @@ public class RestVerticleIT {
           parameters.add(new Parameter().withKey("loadSample").withValue("false"));
           ta.setParameters(parameters);
           tenantClient.postTenant(ta, post -> {
-            if (post.statusCode() != 201) {
-              RestITSupport.fail(context, "postTenant", post);
+            if (post.result().statusCode() != 201) {
+              RestITSupport.fail(context, "postTenant", post.result());
             }
             async.complete();
           });
