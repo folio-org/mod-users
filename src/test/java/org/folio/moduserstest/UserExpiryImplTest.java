@@ -36,7 +36,7 @@ public class UserExpiryImplTest {
     Async async = context.async();
     TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + RestITSupport.port(), "diku", FAKE_TOKEN);
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", RestITSupport.port()));
+      .setConfig(new JsonObject().put("http.port", String.valueOf(RestITSupport.port())));
     RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       // remove existing schema from previous tests
       tenantClient.deleteTenantByOperationId("diku", delete -> {
