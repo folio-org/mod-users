@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import org.folio.okapi.common.GenericCompositeFuture;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.rest.jaxrs.model.User;
@@ -87,14 +88,14 @@ public final class ExpirationTool {
           return;
         }
         List<User> userList = reply.result().getResults();
-        List<Future> futureList = new ArrayList<>();
+        List<Future<Void>> futureList = new ArrayList<>();
         for(User user : userList) {
           futureList.add(disableUser(vertx, tenant, user));
         }
-        CompositeFuture compositeFuture = CompositeFuture.join(futureList);
+        CompositeFuture compositeFuture = GenericCompositeFuture.join(futureList);
         compositeFuture.onComplete(compRes -> {
           int succeededCount = 0;
-          for(Future fut : futureList) {
+          for(Future<Void> fut : futureList) {
             if(fut.succeeded()) {
               succeededCount++;
             }

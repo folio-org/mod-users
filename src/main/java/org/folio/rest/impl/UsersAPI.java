@@ -41,6 +41,7 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.core.AsyncResult;
@@ -521,22 +522,18 @@ public class UsersAPI implements Users {
 
   Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
     Promise<Boolean> promise = Promise.promise();
-    List<Future> futureList = new ArrayList<>();
+    List<Future<Boolean>> futureList = new ArrayList<>();
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
       promise.complete(true);
       return promise.future();
     }
     for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
-      Future addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
+      Future<Boolean> addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
       futureList.add(addressTypeExistsFuture);
     }
-    CompositeFuture compositeFuture = CompositeFuture.all(futureList);
-    compositeFuture.onComplete(res -> {
-      if (res.failed()) {
-        promise.fail(res.cause());
-        return;
-      }
+    CompositeFuture compositeFuture = GenericCompositeFuture.all(futureList);
+    compositeFuture.onSuccess(res -> {
       for (Future<Boolean> f : futureList) {
         if (Boolean.FALSE.equals(f.result())) {
           promise.complete(false);
@@ -544,6 +541,10 @@ public class UsersAPI implements Users {
         }
       }
       promise.complete(true);
+    })
+    .onFailure(failure -> {
+      promise.fail(failure.getCause());
+      return;
     });
     return promise.future();
   }
