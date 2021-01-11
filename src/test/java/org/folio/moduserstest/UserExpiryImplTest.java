@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.rules.Timeout;
 
-import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -52,8 +51,7 @@ public class UserExpiryImplTest {
     port = NetworkUtils.nextFreePort();
     TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", port))
-      .setWorker(true);
+      .setConfig(new JsonObject().put("http.port", port));
 
     vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       try {
