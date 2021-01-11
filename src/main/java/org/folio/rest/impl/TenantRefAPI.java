@@ -40,7 +40,7 @@ public class TenantRefAPI extends TenantAPI {
             return;
           }
           hndlr.handle(io.vertx.core.Future.succeededFuture(PostTenantResponse
-            .respond201WithApplicationJson(null, null)));
+            .respond204()));
         });
     }, cntxt);
   }

@@ -533,7 +533,11 @@ public class UsersAPI implements Users {
       futureList.add(addressTypeExistsFuture);
     }
     CompositeFuture compositeFuture = GenericCompositeFuture.all(futureList);
-    compositeFuture.onSuccess(res -> {
+    compositeFuture.onComplete(res -> {
+      if (res.failed()) {
+        promise.fail(res.cause());
+        return;
+      }
       for (Future<Boolean> f : futureList) {
         if (Boolean.FALSE.equals(f.result())) {
           promise.complete(false);
@@ -541,10 +545,6 @@ public class UsersAPI implements Users {
         }
       }
       promise.complete(true);
-    })
-    .onFailure(failure -> {
-      promise.fail(failure.getCause());
-      return;
     });
     return promise.future();
   }
