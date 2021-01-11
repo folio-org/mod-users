@@ -39,7 +39,7 @@ public class UserExpiryImplTest {
       .setConfig(new JsonObject().put("http.port", String.valueOf(RestITSupport.port())));
     RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       // remove existing schema from previous tests
-      tenantClient.deleteTenantByOperationId("diku", delete -> {
+      tenantClient.deleteTenant(delete -> {
         switch (delete.result().statusCode()) {
           case 204: break;  // existing schema has been deleted
           case 400: break;  // schema does not exist

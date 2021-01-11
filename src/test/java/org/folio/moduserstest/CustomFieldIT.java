@@ -99,7 +99,7 @@ public class CustomFieldIT {
 
     RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       // remove existing schema from previous tests
-      tenantClient.deleteTenantByOperationId("diku", delete -> {
+      tenantClient.deleteTenant(delete -> {
         HttpResponse<Buffer> response = delete.result();
         switch (response.statusCode()) {
           case 204: break;  // existing schema has been deleted
