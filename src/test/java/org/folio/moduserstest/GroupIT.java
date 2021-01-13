@@ -13,12 +13,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.defaultString;
 import static org.folio.moduserstest.RestITSupport.HTTP_LOCALHOST;
 import static org.folio.moduserstest.RestITSupport.delete;
-import static org.folio.moduserstest.RestITSupport.fail;
 import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.util.StringUtil.urlEncode;
 
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -33,6 +33,7 @@ import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.parser.JsonPathParser;
+import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -45,6 +46,7 @@ import org.junit.runners.MethodSorters;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -69,57 +71,56 @@ public class GroupIT {
 
   private static int userInc = 0;
 
+  private static Vertx vertx;
+  static int port;
+
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
-  public static void setup(TestContext context) {
-    RestITSupport.setUp();
+  public static void setup(TestContext context) throws SQLException {
+    vertx = Vertx.vertx();
+    try {
+      PostgresClient.setIsEmbedded(true);
+      PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+    } catch (Exception e) {
+      e.printStackTrace();
+      context.fail(e);
+      return;
+    }
 
     Async async = context.async();
-
-    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + RestITSupport.port(), "diku", "diku");
+    port = NetworkUtils.nextFreePort();
+    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", RestITSupport.port()));
+      .setConfig(new JsonObject().put("http.port", port));
 
-    RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
-      // remove existing schema from previous tests
-      tenantClient.deleteTenant(delete -> {
-        switch (delete.result().statusCode()) {
-          case 204: break;  // existing schema has been deleted
-          case 400: break;  // schema does not exist
-          default:
-            fail(context, "deleteTenant", delete.result());
-            return;
-        }
-        try {
-          TenantAttributes ta = new TenantAttributes();
-          ta.setModuleTo("mod-users-1.0.0");
-          List<Parameter> parameters = new LinkedList<>();
-          parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-          parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-          ta.setParameters(parameters);
-          tenantClient.postTenant(ta, post -> {
-            if (post.result().statusCode() != 201) {
-              fail(context, "postTenant", post.result());
-            }
-            async.complete();
-          });
-        } catch (Exception e) {
-          context.fail(e);
-        }
-      });
+    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
+      try {
+        TenantAttributes ta = new TenantAttributes();
+        ta.setModuleTo("mod-users-1.0.0");
+        List<Parameter> parameters = new LinkedList<>();
+        parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+        parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+        ta.setParameters(parameters);
+        tenantClient.postTenant(ta, res2 -> {
+          context.assertEquals(res2.result().statusMessage(), "");
+          context.assertEquals(204, res2.result().statusCode(), "postTenant: " + res2.result().statusMessage());
+          async.complete();
+        });
+      } catch (Exception e) {
+        context.fail(e);
+      }
     }));
   }
 
   @AfterClass
-  public static void tearDown() {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    RestITSupport.vertx().close(res -> {
+  public static void teardown(TestContext context) {
+    Async async = context.async();
+    vertx.close(context.asyncAssertSuccess(res -> {
       PostgresClient.stopEmbeddedPostgres();
-      future.complete(null);
-    });
-    future.join();
+      async.complete();
+    }));
   }
 
   @Test

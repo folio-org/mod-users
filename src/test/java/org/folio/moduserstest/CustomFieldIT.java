@@ -12,9 +12,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.folio.rest.RestVerticle;
@@ -23,6 +23,7 @@ import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.test.util.TokenTestUtil;
 
 import org.junit.AfterClass;
@@ -40,6 +41,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -85,57 +87,56 @@ public class CustomFieldIT {
     "\"order\": 1 }";
 
 
+  private static Vertx vertx;
+  static int port;
+
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
-  public static void setup(TestContext context) {
-    RestITSupport.setUp();
+  public static void setup(TestContext context) throws SQLException {
+    vertx = Vertx.vertx();
+    try {
+      PostgresClient.setIsEmbedded(true);
+      PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+    } catch (Exception e) {
+      e.printStackTrace();
+      context.fail(e);
+      return;
+    }
 
     Async async = context.async();
-    TenantClient tenantClient = new TenantClient(RestITSupport.HTTP_LOCALHOST + RestITSupport.port(), "diku", "diku");
+    port = NetworkUtils.nextFreePort();
+    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", RestITSupport.port()));
+      .setConfig(new JsonObject().put("http.port", port));
 
-    RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
-      // remove existing schema from previous tests
-      tenantClient.deleteTenant(delete -> {
-        HttpResponse<Buffer> response = delete.result();
-        switch (response.statusCode()) {
-          case 204: break;  // existing schema has been deleted
-          case 400: break;  // schema does not exist
-          default:
-            RestITSupport.fail(context, "deleteTenant", response);
-            return;
-        }
-        try {
-          TenantAttributes ta = new TenantAttributes();
-          ta.setModuleTo("mod-users-1.0.0");
-          List<Parameter> parameters = new LinkedList<>();
-          parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-          parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-          ta.setParameters(parameters);
-          tenantClient.postTenant(ta, post -> {
-            if (post.result().statusCode() != 201) {
-              RestITSupport.fail(context, "postTenant", post.result());
-            }
-            async.complete();
-          });
-        } catch (Exception e) {
-          context.fail(e);
-        }
-      });
+    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
+      try {
+        TenantAttributes ta = new TenantAttributes();
+        ta.setModuleTo("mod-users-1.0.0");
+        List<Parameter> parameters = new LinkedList<>();
+        parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+        parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+        ta.setParameters(parameters);
+        tenantClient.postTenant(ta, res2 -> {
+          context.assertEquals(res2.result().statusMessage(), "");
+          context.assertEquals(204, res2.result().statusCode(), "postTenant: " + res2.result().statusMessage());
+          async.complete();
+        });
+      } catch (Exception e) {
+        context.fail(e);
+      }
     }));
   }
 
   @AfterClass
-  public static void tearDown() {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    RestITSupport.vertx().close(res -> {
+  public static void teardown(TestContext context) {
+    Async async = context.async();
+    vertx.close(context.asyncAssertSuccess(res -> {
       PostgresClient.stopEmbeddedPostgres();
-      future.complete(null);
-    });
-    future.join();
+      async.complete();
+    }));
   }
 
   @Test
