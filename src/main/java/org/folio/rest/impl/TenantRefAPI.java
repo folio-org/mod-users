@@ -36,34 +36,12 @@ public class TenantRefAPI extends TenantAPI {
 
   private static final Logger log = LogManager.getLogger();
   final String[] refPaths = new String[]{
-    "material-types",
-    "loan-types",
-    "location-units/institutions",
-    "location-units/campuses",
-    "location-units/libraries",
-    "locations",
-    "identifier-types",
-    "contributor-types",
-    "service-points",
-    "instance-relationship-types",
-    "contributor-name-types",
-    "instance-types",
-    "instance-formats",
-    "nature-of-content-terms",
-    "classification-types",
-    "instance-statuses",
-    "statistical-code-types", "statistical-codes",
-    "modes-of-issuance",
-    "alternative-title-types",
-    "electronic-access-relationships",
-    "ill-policies",
-    "holdings-types",
-    "call-number-types",
-    "instance-note-types",
-    "holdings-note-types",
-    "item-note-types",
-    "item-damaged-statuses",
-    "holdings-sources"
+    "users",
+    "groups",
+    "addresstypes",
+    "proxiesfor",
+    "departments",
+    "custom-fields"
   };
 
   List<JsonObject> servicePoints = null;
@@ -139,12 +117,6 @@ public class TenantRefAPI extends TenantAPI {
           tl.withKey(SAMPLE_KEY).withLead(SAMPLE_LEAD);
           tl.withIdContent();
           tl.add("users");
-          if (servicePoints != null) {
-            tl.withFilter(this::servicePointUserFilter)
-                .withPostOnly()
-                .withAcceptStatus(422)
-                .add("users", "service-points-users");
-          }
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
         });
   }
