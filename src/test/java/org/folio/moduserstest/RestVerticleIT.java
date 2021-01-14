@@ -94,7 +94,7 @@ public class RestVerticleIT {
   
   private static Vertx vertx;
   static int port;
-
+  
   @Rule
   public Timeout rule = Timeout.seconds(20);
   
@@ -137,7 +137,7 @@ public class RestVerticleIT {
   @AfterClass
   public static void teardown(TestContext context) {
     Async async = context.async();
-    vertx.close(context.asyncAssertSuccess(res -> {
+      vertx.close(context.asyncAssertSuccess(res -> {
       PostgresClient.stopEmbeddedPostgres();
       async.complete();
     }));

@@ -104,7 +104,6 @@ public class GroupIT {
         parameters.add(new Parameter().withKey("loadSample").withValue("false"));
         ta.setParameters(parameters);
         tenantClient.postTenant(ta, res2 -> {
-          context.assertEquals(res2.result().statusMessage(), "");
           context.assertEquals(201, res2.result().statusCode(), "postTenant: " + res2.result().statusMessage());
           async.complete();
         });
