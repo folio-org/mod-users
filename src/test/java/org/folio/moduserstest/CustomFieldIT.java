@@ -121,7 +121,7 @@ public class CustomFieldIT {
         ta.setParameters(parameters);
         tenantClient.postTenant(ta, res2 -> {
           context.assertEquals(res2.result().statusMessage(), "");
-          context.assertEquals(204, res2.result().statusCode(), "postTenant: " + res2.result().statusMessage());
+          context.assertEquals(201, res2.result().statusCode(), "postTenant: " + res2.result().statusMessage());
           async.complete();
         });
       } catch (Exception e) {

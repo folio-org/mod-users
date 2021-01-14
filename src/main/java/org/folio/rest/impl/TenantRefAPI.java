@@ -49,7 +49,7 @@ public class TenantRefAPI extends TenantAPI {
                            Map<String, String> headers, Context vertxContext) {
     return super.loadData(attributes, tenantId, headers, vertxContext)
         .compose(superRecordsLoaded -> {
-          log.info("executing data population");
+          log.info("loading data to tenant");
           TenantLoading tl = new TenantLoading();
 
           tl.withKey(REFERENCE_KEY).withLead(REFERENCE_LEAD);
