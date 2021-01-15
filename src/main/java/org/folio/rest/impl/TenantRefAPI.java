@@ -18,14 +18,6 @@ public class TenantRefAPI extends TenantAPI {
   private static final String REFERENCE_LEAD = "ref-data";
 
   private static final Logger log = LogManager.getLogger();
-  final String[] refPaths = new String[]{
-    "users",
-    "groups",
-    "addresstypes",
-    "proxiesfor",
-    "departments",
-    "custom-fields"
-  };
 
   @Validate
   @Override
@@ -35,18 +27,14 @@ public class TenantRefAPI extends TenantAPI {
         .compose(superRecordsLoaded -> {
           log.info("loading data to tenant");
           TenantLoading tl = new TenantLoading();
-
           tl.withKey(REFERENCE_KEY).withLead(REFERENCE_LEAD);
           tl.withIdContent();
-          for (String p : refPaths) {
-            tl.add(p);
-          }
           tl.add("groups");
           tl.withIdContent();
           tl.add("addresstypes");
+          tl.add("users");
           tl.withKey(SAMPLE_KEY).withLead(SAMPLE_LEAD);
           tl.withIdContent();
-          tl.add("users");
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
         });
   }

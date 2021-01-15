@@ -26,7 +26,6 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.predicate.ResponsePredicateResult;
 import junit.framework.AssertionFailedError;
 
-import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.tools.utils.VertxUtils;
 
 import org.apache.logging.log4j.LogManager;
@@ -54,11 +53,11 @@ class RestITSupport {
   private RestITSupport() {
   }
 
-  static void setUp() {
+  static void setUp(int verticlePort) {
     vertx = VertxUtils.getVertxWithExceptionHandler();
     context = vertx.getOrCreateContext();
     client = WebClient.create(vertx);
-    port = NetworkUtils.nextFreePort();
+    port = verticlePort;
   }
 
   static Vertx vertx() {

@@ -112,6 +112,7 @@ public class RestVerticleIT {
   
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
+    RestITSupport.setUp(port);
     TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port));
@@ -142,7 +143,7 @@ public class RestVerticleIT {
       async.complete();
     }));
   }
-
+  
   private Future<Void> getEmptyUsers(TestContext context) {
     log.info("Getting an empty user set\n");
 
