@@ -58,7 +58,6 @@ import io.vertx.ext.web.client.HttpResponse;
 public class CustomFieldIT {
 
   private static final Logger log = LogManager.getLogger(CustomFieldIT.class);
-
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String notExistingCustomField = "notExistingCustomField";

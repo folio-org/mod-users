@@ -29,6 +29,9 @@ import junit.framework.AssertionFailedError;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.tools.utils.VertxUtils;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * For new tests consider using RestAssured instead of legacy RestITSupport.
  */
@@ -44,6 +47,8 @@ class RestITSupport {
   private static Context context;
   private static WebClient client;
   private static int port;
+
+  private static final Logger log = LogManager.getLogger(RestITSupport.class);
 
 
   private RestITSupport() {
@@ -138,7 +143,6 @@ class RestITSupport {
 
   static Future<Void> postWithOkStatus(String userId, String request, String body, Header ...headers) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
-
     HttpRequest<Buffer> req = client.post(port, LOCALHOST, request);
        req.putHeader(OKAPI_HEADER_TENANT, "diku")
       .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
