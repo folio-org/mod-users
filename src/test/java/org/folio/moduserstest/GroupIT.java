@@ -80,15 +80,7 @@ public class GroupIT {
   @BeforeClass
   public static void setup(TestContext context) throws SQLException {
     vertx = Vertx.vertx();
-    try {
-      PostgresClient.setIsEmbedded(true);
-      PostgresClient.getInstance(vertx).startEmbeddedPostgres();
-    } catch (Exception e) {
-      e.printStackTrace();
-      context.fail(e);
-      return;
-    }
-
+    
     Async async = context.async();
     port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
