@@ -22,6 +22,10 @@ public class TenantInit {
           promise.complete();
           return;
         }
+        if (res1.result().statusCode() != 201) {
+          promise.fail("tenant POST returned " + res1.result().statusCode());
+          return;
+        }
         JsonObject jsonObject = res1.result().bodyAsJsonObject();
         tenantClient.getTenantByOperationId(jsonObject.getString("id"), 50000, res2 -> {
           if (res2.failed()) {
@@ -33,8 +37,12 @@ public class TenantInit {
             return;
           }
           tenantClient.deleteTenantByOperationId(jsonObject.getString("id"), res3 -> {
+            if (res3.failed()) {
+              promise.fail(res3.cause());
+              return;
+            }
             if (res3.result().statusCode() != 204) {
-              promise.fail("tenant GET returned " + res3.result().statusCode());
+              promise.fail("tenant DELETE returned " + res3.result().statusCode());
               return;
             }
             promise.complete();
