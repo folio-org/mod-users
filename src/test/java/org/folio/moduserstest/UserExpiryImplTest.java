@@ -12,6 +12,7 @@ import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 
+import org.folio.rest.utils.TenantInit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -38,29 +39,21 @@ public class UserExpiryImplTest {
   @BeforeClass
   public static void setup(TestContext context) throws SQLException {
     vertx = Vertx.vertx();
-    
-    Async async = context.async();
+
     port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
     TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", port));
+        .setConfig(new JsonObject().put("http.port", port));
 
     vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
-      try {
-        TenantAttributes ta = new TenantAttributes();
-        ta.setModuleTo("mod-users-1.0.0");
-        List<Parameter> parameters = new LinkedList<>();
-        parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-        parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-        ta.setParameters(parameters);
-        tenantClient.postTenant(ta, res2 -> {
-          context.assertEquals(201, res2.result().statusCode(), "postTenant: " + res2.result().statusMessage());
-          async.complete();
-        });
-      } catch (Exception e) {
-        context.fail(e);
-      }
+      TenantAttributes ta = new TenantAttributes();
+      ta.setModuleTo("mod-users-1.0.0");
+      List<Parameter> parameters = new LinkedList<>();
+      parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+      parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+      ta.setParameters(parameters);
+      TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
     }));
   }
 
