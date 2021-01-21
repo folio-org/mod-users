@@ -1,3 +1,4 @@
+
 package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -21,6 +22,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
 /**
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
  * should be moved here.
@@ -30,6 +34,8 @@ class UsersAPIIT {
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
   static Vertx vertx;
   static String baseUrl;
+
+  private static final Logger log = LogManager.getLogger(UsersAPIIT.class);
 
   @BeforeAll
   static void beforeAll() {
