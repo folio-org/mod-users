@@ -12,7 +12,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -94,7 +93,7 @@ public class CustomFieldIT {
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
-  public static void setup(TestContext context) throws SQLException {
+  public static void setup(TestContext context) {
     vertx = Vertx.vertx();
 
     port = NetworkUtils.nextFreePort();

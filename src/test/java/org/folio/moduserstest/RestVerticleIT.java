@@ -18,7 +18,6 @@ import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -100,7 +99,7 @@ public class RestVerticleIT {
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
-  public static void setup(TestContext context) throws SQLException {
+  public static void setup(TestContext context) {
     vertx = Vertx.vertx();
 
     port = NetworkUtils.nextFreePort();

@@ -2,6 +2,11 @@
 package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.not;
+
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
@@ -97,20 +102,52 @@ class UsersAPIIT {
   }
 
   static void postTenant() {
-    given().body(tenantAttributes()).
+    String id = given().body(tenantAttributes()).
     when().post("/_/tenant").
-    then().statusCode(201);
+    then().statusCode(201).
+    extract().
+    path("id");
+
+    assertEquals(wait(id), true);
   }
+
+  //restassured has no way of doing asynchronous checking for tenant initialization
+  //without introducing more dependencies to support that.  Thus, a custom wait
+  //method to do this is neccessary.
+
+  private static Boolean wait(String id) {
+
+    Boolean clientStatus = false;
+    Integer maxTries = 10;
+    Integer tries = 0;
+    while (clientStatus == false && tries <= maxTries) {
+      try {
+		    Thread.sleep(1000);
+	    } catch (InterruptedException e) {
+		    e.printStackTrace();
+      }
+      clientStatus = given().when().get("/_/tenant/" + id).then().statusCode(200).extract().path("complete");
+      tries++;
+    }
+    if (clientStatus == true) {
+      //if there has been a problem with client initilization, there will be an error property
+      given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
+    }
+
+    return (clientStatus == false) ? false : true;
+  }
+
 
   void facets(int limit) {
     given().
     when().get("/users?limit=" + limit + "&facets=patronGroup:50").
     then().
-      statusCode(200).
+      statusCode(200). 
       body("resultInfo.facets[0].facetValues[0].count", is(88)).
       body("resultInfo.facets[0].facetValues[0].value", is("bdc2b6d4-5ceb-4a12-ab46-249b9a68473e")).
       body("resultInfo.facets[0].facetValues[1].count", is(81)).
       body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
+      
   }
 
   @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
