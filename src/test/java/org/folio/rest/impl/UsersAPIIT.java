@@ -139,6 +139,7 @@ class UsersAPIIT {
 
 
   void facets(int limit) {
+
     given().
     when().get("/users?limit=" + limit + "&facets=patronGroup:50").
     then().
