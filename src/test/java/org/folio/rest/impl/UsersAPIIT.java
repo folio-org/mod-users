@@ -3,7 +3,6 @@ package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 
@@ -108,33 +107,33 @@ class UsersAPIIT {
     extract().
     path("id");
 
-    assertEquals(wait(id), true);
+    waitForTenantInit(id);
   }
 
   //restassured has no way of doing asynchronous checking for tenant initialization
   //without introducing more dependencies to support that.  Thus, a custom wait
   //method to do this is neccessary.
 
-  private static Boolean wait(String id) {
+  private static void waitForTenantInit(String id) {
 
-    Boolean clientStatus = false;
+    Boolean tenantSetupDone = false;
     Integer maxTries = 10;
     Integer tries = 0;
-    while (clientStatus == false && tries <= maxTries) {
+    while (tenantSetupDone == false && tries <= maxTries) {
       try {
 		    Thread.sleep(1000);
 	    } catch (InterruptedException e) {
 		    e.printStackTrace();
       }
-      clientStatus = given().when().get("/_/tenant/" + id).then().statusCode(200).extract().path("complete");
+      tenantSetupDone = given().when().get("/_/tenant/" + id).then().statusCode(200).extract().path("complete");
       tries++;
     }
-    if (clientStatus == true) {
-      //if there has been a problem with client initilization, there will be an error property
-      given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
-    }
+    
+    assertEquals(tenantSetupDone, true);
 
-    return (clientStatus == false) ? false : true;
+    //if something went wrong internally with client setup,
+    //there will be an error attribute in the response body
+    given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
 

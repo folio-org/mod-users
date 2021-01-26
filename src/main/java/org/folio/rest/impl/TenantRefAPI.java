@@ -32,9 +32,9 @@ public class TenantRefAPI extends TenantAPI {
           tl.add("groups");
           tl.withIdContent();
           tl.add("addresstypes");
-          tl.add("users");
           tl.withKey(SAMPLE_KEY).withLead(SAMPLE_LEAD);
           tl.withIdContent();
+          tl.add("users");
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
         });
   }
