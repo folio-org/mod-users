@@ -87,8 +87,7 @@ public class CustomFieldIT {
 
 
   private static Vertx vertx;
-  static int port;
-
+  
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
@@ -96,7 +95,7 @@ public class CustomFieldIT {
   public static void setup(TestContext context) {
     vertx = Vertx.vertx();
 
-    port = NetworkUtils.nextFreePort();
+    Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
     TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()

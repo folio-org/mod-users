@@ -7,7 +7,6 @@ import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 
 public class TenantInit {
-
   private TenantInit() {}
 
   public static Future<Void> init(TenantClient tenantClient, TenantAttributes ta) {

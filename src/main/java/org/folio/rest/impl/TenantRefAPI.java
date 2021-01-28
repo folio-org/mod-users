@@ -12,11 +12,6 @@ import org.folio.rest.tools.utils.TenantLoading;
 
 public class TenantRefAPI extends TenantAPI {
 
-  private static final String SAMPLE_LEAD = "sample-data";
-  private static final String SAMPLE_KEY = "loadSample";
-  private static final String REFERENCE_KEY = "loadReference";
-  private static final String REFERENCE_LEAD = "ref-data";
-
   private static final Logger log = LogManager.getLogger();
 
   @Validate
@@ -26,15 +21,19 @@ public class TenantRefAPI extends TenantAPI {
     return super.loadData(attributes, tenantId, headers, vertxContext)
         .compose(superRecordsLoaded -> {
           log.info("loading data to tenant");
+
           TenantLoading tl = new TenantLoading();
-          tl.withKey(REFERENCE_KEY).withLead(REFERENCE_LEAD);
+
+          tl.withKey("loadReference").withLead("ref-data");
           tl.withIdContent();
           tl.add("groups");
           tl.withIdContent();
           tl.add("addresstypes");
-          tl.withKey(SAMPLE_KEY).withLead(SAMPLE_LEAD);
+
+          tl.withKey("loadSample").withLead("sample-data");
           tl.withIdContent();
           tl.add("users");
+          
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
         });
   }

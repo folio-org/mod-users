@@ -1,4 +1,4 @@
-## 17.3.0 2021-01-05
+## 17.3.0 IN-PROGRESS
 
 * Updated Vert.x to version 4 (MODUSERS-242)
 

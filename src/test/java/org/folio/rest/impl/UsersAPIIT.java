@@ -5,6 +5,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
+import static org.awaitility.Awaitility.await;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -15,6 +16,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.folio.rest.RestVerticle;
@@ -106,34 +108,20 @@ class UsersAPIIT {
     then().statusCode(201).
     extract().
     path("id");
-
-    waitForTenantInit(id);
+    await().until(() -> tenantFinishedLoading(id) == true);
+    //if something went wrong internally with client setup,
+    //there will be an error attribute in the response body
+    given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
   //restassured has no way of doing asynchronous checking for tenant initialization
   //without introducing more dependencies to support that.  Thus, a custom wait
   //method to do this is neccessary.
 
-  private static void waitForTenantInit(String id) {
+  private static Boolean tenantFinishedLoading(String id) {
 
-    Boolean tenantSetupDone = false;
-    Integer maxTries = 10;
-    Integer tries = 0;
-    while (tenantSetupDone == false && tries <= maxTries) {
-      try {
-		    Thread.sleep(1000);
-	    } catch (InterruptedException e) {
-		    e.printStackTrace();
-      }
-      tenantSetupDone = given().when().get("/_/tenant/" + id).then().statusCode(200).extract().path("complete");
-      tries++;
-    }
+    return given().when().get("/_/tenant/" + id).then().statusCode(200).extract().path("complete");
     
-    assertEquals(tenantSetupDone, true);
-
-    //if something went wrong internally with client setup,
-    //there will be an error attribute in the response body
-    given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
 

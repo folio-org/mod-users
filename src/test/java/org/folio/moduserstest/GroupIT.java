@@ -72,7 +72,6 @@ public class GroupIT {
   private static int userInc = 0;
 
   private static Vertx vertx;
-  static int port;
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
@@ -81,7 +80,7 @@ public class GroupIT {
   public static void setup(TestContext context) {
     vertx = Vertx.vertx();
 
-    port = NetworkUtils.nextFreePort();
+    Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
     TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
