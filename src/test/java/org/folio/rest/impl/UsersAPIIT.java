@@ -114,10 +114,6 @@ class UsersAPIIT {
     given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
-  //restassured has no way of doing asynchronous checking for tenant initialization
-  //without introducing more dependencies to support that.  Thus, a custom wait
-  //method to do this is neccessary.
-
   private static Boolean tenantFinishedLoading(String id) {
 
     return given().when().get("/_/tenant/" + id).then().statusCode(200).extract().path("complete");
