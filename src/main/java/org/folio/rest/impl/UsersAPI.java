@@ -39,6 +39,7 @@ import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
+import org.folio.rest.utils.ExpirationTool;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
@@ -355,6 +356,17 @@ public class UsersAPI implements Users {
       asyncResultHandler.handle(Future.succeededFuture(
           PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
     }
+  }
+
+
+  @Override
+  public void postUsersExpireTimer(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+                              Context vertxContext) {
+    ExpirationTool.doExpirationForTenant(vertxContext.owner(), okapiHeaders.get("x-okapi-tenant"))
+        .onSuccess(res -> asyncResultHandler.handle(
+            Future.succeededFuture(PostUsersExpireTimerResponse.respond204())))
+        .onFailure(cause -> asyncResultHandler.handle(
+            Future.succeededFuture(PostUsersExpireTimerResponse.respond500WithTextPlain(cause.getMessage()))));
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders,
