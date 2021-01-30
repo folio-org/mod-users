@@ -198,6 +198,19 @@
           "pathPattern" : "/_/tenant"
         }
       ]
+    },
+    {
+      "id" : "_timer",
+      "version" : "1.0",
+      "interfaceType" : "system",
+      "handlers" : [
+        {
+          "methods" : [ "POST" ],
+          "pathPattern" : "/users/expire/timer",
+          "unit" : "minute",
+          "delay" : "1"
+        }
+      ]
     }
   ],
   "permissionSets" : [
