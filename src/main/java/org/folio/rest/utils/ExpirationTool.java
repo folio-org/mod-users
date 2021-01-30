@@ -32,39 +32,6 @@ public final class ExpirationTool {
     throw new UnsupportedOperationException("Cannot instantiate utility class.");
   }
 
-  public static void doExpiration(Vertx vertx, Context context) {
-    logger.info("Calling doExpiration()");
-    context.runOnContext(v -> {
-      //Get a list of tenants
-      PostgresClient pgClient = PostgresClient.getInstance(vertx);
-      String tenantQuery = "select nspname from pg_catalog.pg_namespace where nspname LIKE '%_mod_users';";
-      pgClient.select(tenantQuery, reply -> {
-        if(reply.succeeded()) {
-          RowSet<Row> rows = reply.result();
-          rows.forEach(row->{
-            String nsTenant = row.getString("nspname");
-            String suffix = "_mod_users";
-            int suffixLength = nsTenant.length() - suffix.length();
-            final String tenant = nsTenant.substring(0, suffixLength);
-            logger.info("Calling doExpirationForTenant for tenant " + tenant);
-            Future<Integer> expireFuture = doExpirationForTenant(vertx, context, tenant);
-            expireFuture.onComplete(res -> {
-              if(res.failed()) {
-                logger.info(String.format("Attempt to expire records for tenant %s failed: %s",
-                        tenant, res.cause().getLocalizedMessage()));
-              } else {
-                logger.info(String.format("Expired %s users", res.result()));
-              }
-            });
-          });
-        } else {
-          logger.info(String.format("TenantQuery '%s' failed: %s", tenantQuery,
-                  reply.cause().getLocalizedMessage()));
-        }
-      });
-    });
-  }
-
   public static Future<Integer> doExpirationForTenant(Vertx vertx, Context context, String tenant) {
     Promise<Integer> promise = Promise.promise();
     try {

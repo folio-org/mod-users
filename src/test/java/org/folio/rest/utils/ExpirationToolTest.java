@@ -45,14 +45,6 @@ public class ExpirationToolTest {
   }
 
   @Test
-  void canDoExpirationForNullUser(Vertx vertx, VertxTestContext context) {
-    PostgresClient postgresClient = mock(PostgresClient.class);
-    ExpirationTool.postgresClient = (v,t) -> postgresClient;
-    ExpirationTool.doExpiration(vertx, vertx.getOrCreateContext());
-    context.completeNow();
-  }
-
-  @Test
   void expirationForNullTenant(Vertx vertx, VertxTestContext context) {
     Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, vertx.getOrCreateContext(), null);
     future.onComplete(context.failing(e -> context.verify(() -> {
