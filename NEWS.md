@@ -1,3 +1,7 @@
+## 17.2.3 2021-01-31
+
+* Fix expiration tool data corruption [MODUSERS-244](https://issues.folio.org/browse/MODUSERS-244)
+
 ## 17.2.2 2020-11-03
 
 * Upgraded to RAML Module Builder 31.1.5 (MODUSERS-237)
