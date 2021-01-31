@@ -1,3 +1,6 @@
+## 17.1.3 2021-01-31
+* [MODUSERS-244](https://issues.folio.org/browse/MODUSERS-244) Expire users with Okapi timer (1 minute). This fixes data corruption
+
 ## 17.1.2 2020-10-23
 * [MODUSERS-235](https://issues.folio.org/browse/MODUSERS-235) Upgrade RMB to 30.2.9 and Vert.x to 3.9.4:
   * [RMB-740](https://issues.folio.org/browse/RMB-740) Use FOLIO fork of vertx-sql-client and vertx-pg-client with
