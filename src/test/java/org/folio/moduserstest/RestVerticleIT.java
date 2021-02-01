@@ -1280,6 +1280,27 @@ public class RestVerticleIT {
       });
   }
 
+  @Test
+  public void testExpiryOK(TestContext context) {
+    Map<String,String> headers = new HashMap<>();
+    headers.put("Accept", "*/*");
+    Future<HttpResponse<Buffer>> future = post("/users/expire/timer", "", headers);
+    future.onComplete(context.asyncAssertSuccess(res -> {
+      context.assertEquals(204, res.statusCode());
+    }));
+  }
+
+  @Test
+  public void testExpiryBadTenant(TestContext context) {
+    Map<String,String> headers = new HashMap<>();
+    headers.put("Accept", "*/*");
+    headers.put("X-Okapi-Tenant", "badTenant");
+    Future<HttpResponse<Buffer>> future = post("/users/expire/timer", "", headers);
+    future.onComplete(context.asyncAssertSuccess(res -> {
+      context.assertEquals(500, res.statusCode());
+    }));
+  }
+
   private Future<Void> postUserWithWhitespace(TestContext context) {
     log.info("Creating a user with a numeric name\n");
 
