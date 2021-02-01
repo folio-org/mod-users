@@ -78,12 +78,7 @@
     </dependency>
 
     <!-- test dependencies -->
-    <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
-      <version>4.0.3</version>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
@@ -521,7 +516,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>32.0.0</raml-module-builder.version>
+    <raml-module-builder.version>32.1.0</raml-module-builder.version>
     <vertx.version>4.0.0</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.5.2</junit.version>

@@ -17,7 +17,8 @@ public class TenantRefAPI extends TenantAPI {
   @Validate
   @Override
   Future<Integer> loadData(TenantAttributes attributes, String tenantId,
-                           Map<String, String> headers, Context vertxContext) {
+    Map<String, String> headers, Context vertxContext) {
+      
     return super.loadData(attributes, tenantId, headers, vertxContext)
         .compose(superRecordsLoaded -> {
           log.info("loading data to tenant");

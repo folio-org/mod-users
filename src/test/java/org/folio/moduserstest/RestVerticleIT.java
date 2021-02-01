@@ -107,6 +107,8 @@ public class RestVerticleIT {
     DeploymentOptions options = new DeploymentOptions()
         .setConfig(new JsonObject().put("http.port", port));
 
+    //module version number doesn't matter to RAML Module Builder,
+    //this is used as a marker for a new activation rather than an upgrade
     vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
       TenantAttributes ta = new TenantAttributes();
       ta.setModuleTo("mod-users-1.0.0");

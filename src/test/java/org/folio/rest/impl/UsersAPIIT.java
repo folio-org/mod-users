@@ -2,10 +2,8 @@
 package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
-import static org.awaitility.Awaitility.await;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -13,16 +11,17 @@ import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -108,18 +107,13 @@ class UsersAPIIT {
     then().statusCode(201).
     extract().
     path("id");
-    await().until(() -> tenantFinishedLoading(id) == true);
+    Boolean complete = given().when().get("/_/tenant/" + id + "?wait=60000")
+    .then().statusCode(200).extract().path("complete");
+    Assert.assertTrue(complete);
     //if something went wrong internally with client setup,
     //there will be an error attribute in the response body
     given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
-
-  private static Boolean tenantFinishedLoading(String id) {
-
-    return given().when().get("/_/tenant/" + id).then().statusCode(200).extract().path("complete");
-    
-  }
-
 
   void facets(int limit) {
 
