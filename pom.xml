@@ -72,6 +72,10 @@
       <artifactId>jsoup</artifactId>
       <version>${jsoup.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-client</artifactId>
+    </dependency>
 
     <!-- test dependencies -->
 
@@ -126,11 +130,6 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>3.2.4</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -210,7 +209,11 @@
         <configuration>
           <verbose>true</verbose>
           <showWeaveInfo>false</showWeaveInfo>
-          <complianceLevel>1.8</complianceLevel>
+          <complianceLevel>11</complianceLevel>
+          <includes>
+            <include>**/impl/*.java</include>
+            <include>**/*.aj</include>
+          </includes>
           <aspectDirectory>src/main/java/org/folio/rest/annotations</aspectDirectory>
           <XaddSerialVersionUID>true</XaddSerialVersionUID>
           <showWeaveInfo>true</showWeaveInfo>
@@ -232,12 +235,12 @@
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
-            <version>1.9.5</version>
+            <version>1.9.6</version>
           </dependency>
           <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjtools</artifactId>
-            <version>1.9.5</version>
+            <version>1.9.6</version>
           </dependency>
         </dependencies>
       </plugin>
@@ -513,12 +516,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>31.1.5</raml-module-builder.version>
-    <vertx.version>3.9.4</vertx.version>
+    <raml-module-builder.version>32.1.0</raml-module-builder.version>
+    <vertx.version>4.0.0</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>
-    <folio-service-tools.version>1.6.0</folio-service-tools.version>
+    <folio-service-tools.version>1.6.1</folio-service-tools.version>
     <folio-custom-fields.version>1.5.0</folio-custom-fields.version>
     <jsoup.version>1.13.1</jsoup.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>

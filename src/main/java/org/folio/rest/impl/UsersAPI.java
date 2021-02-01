@@ -42,6 +42,7 @@ import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.core.AsyncResult;
@@ -50,8 +51,8 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.web.RoutingContext;
 
 
@@ -66,7 +67,7 @@ public class UsersAPI implements Users {
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private static final Messages messages = Messages.getInstance();
-  private static final Logger logger = LoggerFactory.getLogger(UsersAPI.class);
+  private static final Logger logger = LogManager.getLogger(UsersAPI.class);
 
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -533,17 +534,17 @@ public class UsersAPI implements Users {
 
   Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
     Promise<Boolean> promise = Promise.promise();
-    List<Future> futureList = new ArrayList<>();
+    List<Future<Boolean>> futureList = new ArrayList<>();
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
       promise.complete(true);
       return promise.future();
     }
     for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
-      Future addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
+      Future<Boolean> addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
       futureList.add(addressTypeExistsFuture);
     }
-    CompositeFuture compositeFuture = CompositeFuture.all(futureList);
+    CompositeFuture compositeFuture = GenericCompositeFuture.all(futureList);
     compositeFuture.onComplete(res -> {
       if (res.failed()) {
         promise.fail(res.cause());

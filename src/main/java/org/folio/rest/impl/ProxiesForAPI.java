@@ -5,8 +5,8 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class ProxiesForAPI implements Proxiesfor {
   public static final String PROXY_FOR_TABLE = "proxyfor";
   public static final String USERID_FIELD_NAME = "'userId'";
   public static final String PROXY_USERID_FIELD_NAME = "'proxyUserId'";
-  private static final Logger logger = LoggerFactory.getLogger(ProxiesForAPI.class);
+  private static final Logger logger = LogManager.getLogger(ProxiesForAPI.class);
   private boolean suppressErrorResponse = false;
 
   private String getErrorResponse(String response) {

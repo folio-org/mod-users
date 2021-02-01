@@ -1,12 +1,17 @@
+
 package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.not;
+
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -16,10 +21,14 @@ import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
@@ -30,6 +39,8 @@ class UsersAPIIT {
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
   static Vertx vertx;
   static String baseUrl;
+
+  private static final Logger log = LogManager.getLogger(UsersAPIIT.class);
 
   @BeforeAll
   static void beforeAll() {
@@ -91,20 +102,30 @@ class UsersAPIIT {
   }
 
   static void postTenant() {
-    given().body(tenantAttributes()).
+    String id = given().body(tenantAttributes()).
     when().post("/_/tenant").
-    then().statusCode(201);
+    then().statusCode(201).
+    extract().
+    path("id");
+    Boolean complete = given().when().get("/_/tenant/" + id + "?wait=60000")
+    .then().statusCode(200).extract().path("complete");
+    Assert.assertTrue(complete);
+    //if something went wrong internally with client setup,
+    //there will be an error attribute in the response body
+    given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
   void facets(int limit) {
+
     given().
     when().get("/users?limit=" + limit + "&facets=patronGroup:50").
     then().
-      statusCode(200).
+      statusCode(200). 
       body("resultInfo.facets[0].facetValues[0].count", is(88)).
       body("resultInfo.facets[0].facetValues[0].value", is("bdc2b6d4-5ceb-4a12-ab46-249b9a68473e")).
       body("resultInfo.facets[0].facetValues[1].count", is(81)).
       body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
+      
   }
 
   @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722

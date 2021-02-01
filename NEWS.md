@@ -1,3 +1,7 @@
+## 17.3.0 IN-PROGRESS
+
+* Updated Vert.x to version 4 (MODUSERS-242)
+
 ## 17.2.0 2020-10-06
 
 * Allows users to be assigned to departments (MODUSERS-158)

@@ -17,8 +17,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 /**
  *
@@ -30,7 +31,7 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String ADDRESS_TYPE_USER_JOIN_TABLE = "address_users";
   public static final String ID_FIELD_NAME = "id";
   public static final String URL_PREFIX = "/addresstypes";
-  private static final Logger logger = LoggerFactory.getLogger(AddressTypeAPI.class);
+  private static final Logger logger = LogManager.getLogger(AddressTypeAPI.class); 
   private boolean suppressErrorResponse = false;
 
   private String getErrorResponse(String response) {

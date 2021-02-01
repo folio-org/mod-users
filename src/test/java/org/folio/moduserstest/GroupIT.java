@@ -13,7 +13,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.defaultString;
 import static org.folio.moduserstest.RestITSupport.HTTP_LOCALHOST;
 import static org.folio.moduserstest.RestITSupport.delete;
-import static org.folio.moduserstest.RestITSupport.fail;
 import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.put;
@@ -33,7 +32,9 @@ import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.parser.JsonPathParser;
+import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
+import org.folio.rest.utils.TenantInit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -45,16 +46,16 @@ import org.junit.runners.MethodSorters;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
-
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -66,62 +67,43 @@ public class GroupIT {
   private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\", \"expirationOffsetInDays\": 365}";
   private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
 
-  private static final Logger log = LoggerFactory.getLogger(GroupIT.class);
+  private static final Logger log = LogManager.getLogger(GroupIT.class);
 
   private static int userInc = 0;
+
+  private static Vertx vertx;
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) {
-    RestITSupport.setUp();
+    vertx = Vertx.vertx();
 
-    Async async = context.async();
-
-    TenantClient tenantClient = new TenantClient(HTTP_LOCALHOST + RestITSupport.port(), "diku", "diku");
+    Integer port = NetworkUtils.nextFreePort();
+    RestITSupport.setUp(port);
+    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", RestITSupport.port()))
-      .setWorker(true);
+      .setConfig(new JsonObject().put("http.port", port));
 
-    RestITSupport.vertx().deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
-      // remove existing schema from previous tests
-      tenantClient.deleteTenant(delete -> {
-        switch (delete.statusCode()) {
-          case 204: break;  // existing schema has been deleted
-          case 400: break;  // schema does not exist
-          default:
-            fail(context, "deleteTenant", delete);
-            return;
-        }
-        try {
-          TenantAttributes ta = new TenantAttributes();
-          ta.setModuleTo("mod-users-1.0.0");
-          List<Parameter> parameters = new LinkedList<>();
-          parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-          parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-          ta.setParameters(parameters);
-          tenantClient.postTenant(ta, post -> {
-            if (post.statusCode() != 201) {
-              fail(context, "postTenant", post);
-            }
-            async.complete();
-          });
-        } catch (Exception e) {
-          context.fail(e);
-        }
-      });
+    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
+      TenantAttributes ta = new TenantAttributes();
+      ta.setModuleTo("mod-users-1.0.0");
+      List<Parameter> parameters = new LinkedList<>();
+      parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+      parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+      ta.setParameters(parameters);
+      TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
     }));
   }
 
   @AfterClass
-  public static void tearDown() {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    RestITSupport.vertx().close(res -> {
+  public static void teardown(TestContext context) {
+    Async async = context.async();
+    vertx.close(context.asyncAssertSuccess(res -> {
       PostgresClient.stopEmbeddedPostgres();
-      future.complete(null);
-    });
-    future.join();
+      async.complete();
+    }));
   }
 
   @Test
@@ -454,17 +436,17 @@ public class GroupIT {
                                            Function<HttpResponse<Buffer>, Response> handler) {
     Future<HttpResponse<Buffer>> httpResponse;
 
-    switch (method) {
-      case GET:
+    switch (method.name()) {
+      case "GET":
         httpResponse = get(url);
         break;
-      case POST:
+      case "POST":
         httpResponse = post(url, defaultString(content));
         break;
-      case PUT:
+      case "PUT":
         httpResponse = put(url, defaultString(content));
         break;
-      case DELETE:
+      case "DELETE":
         httpResponse = delete(url);
         break;
       default:
