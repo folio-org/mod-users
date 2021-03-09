@@ -1,6 +1,10 @@
-## 17.3.0 IN-PROGRESS
+## 17.3.0 2021-03-09
 
-* Updated Vert.x to version 4 (MODUSERS-242)
+* Groups can define a default period after which a user should expire (MODUSERS-234)
+* Uses a `_timer` interface to periodically expire users every minute (MODUSERS-244)
+* Updates Vert.x to version 4 (MODUSERS-242)
+* Provides `users 15.3`
+* Provides `_tenant 2.0`
 
 ## 17.2.0 2020-10-06
 
