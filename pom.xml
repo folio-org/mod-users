@@ -512,7 +512,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>32.1.0</raml-module-builder.version>
+    <raml-module-builder.version>32.2.0</raml-module-builder.version>
     <vertx.version>4.0.0</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.5.2</junit.version>
