@@ -39,6 +39,8 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
+
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.utils.TenantInit;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -91,15 +93,17 @@ public class RestVerticleIT {
     .put("requestForSponsor", "Yes")
     .put("notificationsTo", "Proxy")
     .put("accrueTo", "Sponsor");
-  
+
   private static Vertx vertx;
-  
+
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) {
     vertx = Vertx.vertx();
+
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
@@ -128,7 +132,7 @@ public class RestVerticleIT {
       async.complete();
     }));
   }
-  
+
   private Future<Void> getEmptyUsers(TestContext context) {
     log.info("Getting an empty user set\n");
 

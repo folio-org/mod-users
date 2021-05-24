@@ -116,6 +116,12 @@
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
+      <artifactId>postgres-testing</artifactId>
+      <version>${raml-module-builder.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
       <artifactId>folio-service-tools-test</artifactId>
       <version>${folio-service-tools.version}</version>
       <scope>test</scope>

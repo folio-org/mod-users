@@ -1,13 +1,16 @@
 package org.folio.moduserstest;
 
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -21,7 +24,6 @@ public class UserGroupAPITest {
   private static Vertx vertx = VertxUtils.getVertxWithExceptionHandler();
   private static Context vertxContext = vertx.getOrCreateContext();
 
-
   public class MyUserGroupAPI extends UserGroupAPI {
     @Override
     protected boolean isDuplicate(String errorMessage) {
@@ -29,14 +31,18 @@ public class UserGroupAPITest {
     }
   }
 
+  @BeforeClass
+  public static void setup() {
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
+  }
+
   @AfterClass
-  public static void tearDown() {
-    CompletableFuture<Void> future = new CompletableFuture<>();
-    vertx.close(res -> {
+  public static void teardown(TestContext context) {
+    Async async = context.async();
+    vertx.close(context.asyncAssertSuccess(res -> {
       PostgresClient.stopEmbeddedPostgres();
-      future.complete(null);
-    });
-    future.join();
+      async.complete();
+    }));
   }
 
   @Test
@@ -45,5 +51,4 @@ public class UserGroupAPITest {
       context.assertTrue(result.getEntity().toString().toLowerCase().contains("internal server error"));
     }), vertxContext);
   }
-
 }

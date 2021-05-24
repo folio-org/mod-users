@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang.RandomStringUtils;
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Errors;
@@ -87,13 +88,15 @@ public class CustomFieldIT {
 
 
   private static Vertx vertx;
-  
+
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) {
     vertx = Vertx.vertx();
+
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);

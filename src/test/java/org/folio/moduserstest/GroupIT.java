@@ -26,6 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Parameter;
@@ -79,6 +80,8 @@ public class GroupIT {
   @BeforeClass
   public static void setup(TestContext context) {
     vertx = Vertx.vertx();
+
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
