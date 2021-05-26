@@ -36,15 +36,6 @@ public class UserGroupAPITest {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
   }
 
-  @AfterClass
-  public static void teardown(TestContext context) {
-    Async async = context.async();
-    vertx.close(context.asyncAssertSuccess(res -> {
-      PostgresClient.stopEmbeddedPostgres();
-      async.complete();
-    }));
-  }
-
   @Test
   public void postException(TestContext context) {
     new MyUserGroupAPI().postGroups("en", new Usergroup(), Collections.emptyMap(), context.asyncAssertSuccess(result -> {

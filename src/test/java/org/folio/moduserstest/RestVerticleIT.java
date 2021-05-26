@@ -124,15 +124,6 @@ public class RestVerticleIT {
     }));
   }
 
-  @AfterClass
-  public static void teardown(TestContext context) {
-    Async async = context.async();
-      vertx.close(context.asyncAssertSuccess(res -> {
-      PostgresClient.stopEmbeddedPostgres();
-      async.complete();
-    }));
-  }
-
   private Future<Void> getEmptyUsers(TestContext context) {
     log.info("Getting an empty user set\n");
 
