@@ -1,3 +1,9 @@
+## 18.0.0 IN-PROGRESS
+
+* `embed_postgres` command line option is no longer supported (MODUSERS-255)
+* Upgrades to RAML Module Builder 33.0.0 (MODUSERS-255)
+* Upgrades to 4.1.0.CR1 (MODUSERS-255)
+
 ## 17.3.0 2021-03-09
 
 * Groups can define a default period after which a user should expire (MODUSERS-234)
