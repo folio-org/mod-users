@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 
+import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.test.util.TestUtil.mockGetWithBody;
 import static org.folio.test.util.TestUtil.readFile;
 import static org.folio.test.util.TestUtil.toJson;
@@ -26,9 +27,9 @@ import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
 
 public class CustomFieldTestBase extends TestBase {
-
   protected static final String USER_ID = "88888888-8888-4888-8888-888888888888";
   protected static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
+  protected static final Header FAKE_USER_ID = new Header(OKAPI_USERID_HEADER, USER_ID);
 
   private static final String USERS_ENDPOINT = "users";
   private static final String CUSTOM_FIELDS_ENDPOINT = "custom-fields";
@@ -80,7 +81,8 @@ public class CustomFieldTestBase extends TestBase {
   }
 
   protected void updateField(CustomField field) {
-    putWithStatus(cfByIdEndpoint(field.getId()), Json.encode(field), SC_NO_CONTENT, FAKE_TOKEN);
+    putWithStatus(cfByIdEndpoint(field.getId()), Json.encode(field),
+      SC_NO_CONTENT, FAKE_TOKEN, FAKE_USER_ID);
   }
 
   protected void deleteField(String fieldId) {
@@ -124,7 +126,8 @@ public class CustomFieldTestBase extends TestBase {
   }
 
   private CustomField createField(String pathToJson) {
-    return postWithStatus(cfEndpoint(), readExistedFile(pathToJson), SC_CREATED, FAKE_TOKEN).as(CustomField.class);
+    return postWithStatus(cfEndpoint(), readExistedFile(pathToJson), SC_CREATED,
+      FAKE_TOKEN, FAKE_USER_ID).as(CustomField.class);
   }
 
   private String readExistedFile(String pathToJson) {

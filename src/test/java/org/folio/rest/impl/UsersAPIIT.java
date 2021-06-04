@@ -17,9 +17,12 @@ import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
@@ -45,6 +48,9 @@ class UsersAPIIT {
   @BeforeAll
   static void beforeAll() {
     vertx = Vertx.vertx();
+
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
+
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.port = NetworkUtils.nextFreePort();
     baseUrl = "http://localhost:" + RestAssured.port;
@@ -120,12 +126,12 @@ class UsersAPIIT {
     given().
     when().get("/users?limit=" + limit + "&facets=patronGroup:50").
     then().
-      statusCode(200). 
+      statusCode(200).
       body("resultInfo.facets[0].facetValues[0].count", is(88)).
       body("resultInfo.facets[0].facetValues[0].value", is("bdc2b6d4-5ceb-4a12-ab46-249b9a68473e")).
       body("resultInfo.facets[0].facetValues[1].count", is(81)).
       body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
-      
+
   }
 
   @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722

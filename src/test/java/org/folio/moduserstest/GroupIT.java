@@ -26,6 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Parameter;
@@ -80,6 +81,8 @@ public class GroupIT {
   public static void setup(TestContext context) {
     vertx = Vertx.vertx();
 
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
+
     Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
     TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
@@ -94,15 +97,6 @@ public class GroupIT {
       parameters.add(new Parameter().withKey("loadSample").withValue("false"));
       ta.setParameters(parameters);
       TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
-    }));
-  }
-
-  @AfterClass
-  public static void teardown(TestContext context) {
-    Async async = context.async();
-    vertx.close(context.asyncAssertSuccess(res -> {
-      PostgresClient.stopEmbeddedPostgres();
-      async.complete();
     }));
   }
 
