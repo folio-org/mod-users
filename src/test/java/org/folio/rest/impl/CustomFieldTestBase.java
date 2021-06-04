@@ -81,7 +81,8 @@ public class CustomFieldTestBase extends TestBase {
   }
 
   protected void updateField(CustomField field) {
-    putWithStatus(cfByIdEndpoint(field.getId()), Json.encode(field), SC_NO_CONTENT, FAKE_TOKEN);
+    putWithStatus(cfByIdEndpoint(field.getId()), Json.encode(field),
+      SC_NO_CONTENT, FAKE_TOKEN, FAKE_USER_ID);
   }
 
   protected void deleteField(String fieldId) {
