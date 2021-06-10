@@ -15,7 +15,8 @@ import static org.junit.Assert.fail;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Errors;
@@ -87,13 +88,15 @@ public class CustomFieldIT {
 
 
   private static Vertx vertx;
-  
+
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) {
     vertx = Vertx.vertx();
+
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
@@ -109,15 +112,6 @@ public class CustomFieldIT {
       parameters.add(new Parameter().withKey("loadSample").withValue("false"));
       ta.setParameters(parameters);
       TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
-    }));
-  }
-
-  @AfterClass
-  public static void teardown(TestContext context) {
-    Async async = context.async();
-    vertx.close(context.asyncAssertSuccess(res -> {
-      PostgresClient.stopEmbeddedPostgres();
-      async.complete();
     }));
   }
 

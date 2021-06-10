@@ -57,7 +57,7 @@ public class ExpirationToolTest {
   void expirationForTenantCanHandleException(Vertx vertx, VertxTestContext context) {
     PostgresClient postgresClient = mock(PostgresClient.class);
     doThrow(new RuntimeException("pg"))
-      .when(postgresClient).get(anyString(), any(Class.class), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any());
+      .when(postgresClient).get(anyString(), any(Class.class), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any(Handler.class));
     ExpirationTool.postgresClient = (v,t) -> postgresClient;
     Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
     future.onComplete(context.failing(e -> context.verify(() -> {

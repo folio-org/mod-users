@@ -17,9 +17,12 @@ import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
+import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
@@ -45,6 +48,9 @@ class UsersAPIIT {
   @BeforeAll
   static void beforeAll() {
     vertx = Vertx.vertx();
+
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
+
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.port = NetworkUtils.nextFreePort();
     baseUrl = "http://localhost:" + RestAssured.port;
