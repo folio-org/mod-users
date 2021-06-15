@@ -162,36 +162,6 @@
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>properties-maven-plugin</artifactId>
-        <version>1.0.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>set-system-properties</goal>
-            </goals>
-            <configuration>
-              <properties>
-                <property>
-                  <name>jsonschema2pojo.config.includeToString</name>
-                  <value>true</value>
-                </property>
-                <property>
-                  <name>jsonschema2pojo.config.includeHashcodeAndEquals</name>
-                  <value>true</value>
-                </property>
-                <property>
-                  <name>jsonschema2pojo.config.useCommonsLang3</name>
-                  <value>true</value>
-                </property>
-              </properties>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
       <plugin>
         <groupId>org.folio</groupId>
         <artifactId>domain-models-maven-plugin</artifactId>
@@ -412,6 +382,18 @@
         </executions>
         <configuration>
           <properties>
+            <property>
+              <name>jsonschema2pojo.config.includeToString</name>
+              <value>true</value>
+            </property>
+            <property>
+              <name>jsonschema2pojo.config.includeHashcodeAndEquals</name>
+              <value>true</value>
+            </property>
+            <property>
+              <name>jsonschema2pojo.config.useCommonsLang3</name>
+              <value>true</value>
+            </property>
             <property>
               <name>log4j.configurationFile</name>
               <value>${project.baseUri}src/main/resources/log4j2.properties</value>
