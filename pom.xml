@@ -545,8 +545,8 @@
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.5.2</junit.version>
     <rest-assured.version>3.3.0</rest-assured.version>
-    <folio-service-tools.version>1.6.2-SNAPSHOT</folio-service-tools.version>
-    <folio-custom-fields.version>1.5.3-SNAPSHOT</folio-custom-fields.version>
+    <folio-service-tools.version>1.7.0</folio-service-tools.version>
+    <folio-custom-fields.version>1.6.0</folio-custom-fields.version>
     <jsoup.version>1.13.1</jsoup.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
   </properties>
