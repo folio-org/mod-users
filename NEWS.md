@@ -1,4 +1,4 @@
-## 18.0.0 IN-PROGRESS
+## 18.0.0 2021-06-16
 
 * `embed_postgres` command line option is no longer supported (MODUSERS-255)
 * Upgrades to RAML Module Builder 33.0.0 (MODUSERS-255)
