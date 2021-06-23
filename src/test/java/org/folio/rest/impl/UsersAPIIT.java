@@ -121,8 +121,28 @@ class UsersAPIIT {
     given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
-  void facets(int limit) {
+  static void userExists(String id) {
+    given().
+    when().get("/users/" + id).
+    then().statusCode(200);
+  }
 
+  static void userDoesntExist(String id) {
+    given().
+    when().get("/users/" + id).
+    then().statusCode(404);
+  }
+
+  static void postUser(String id, String username) {
+    given().
+    when().
+      body(new JsonObject().put("id",  id).put("username", username).encode()).
+      post("/users").
+    then().
+      statusCode(201);
+  }
+
+  void facets(int limit) {
     given().
     when().get("/users?limit=" + limit + "&facets=patronGroup:50").
     then().
@@ -144,5 +164,24 @@ class UsersAPIIT {
   @Test
   void facetsLimit1() {
     facets(1);
+  }
+
+  @Test
+  void delete() {
+    String id1 = "114b14e8-422d-429a-b89e-b55c439b3b21";
+    String id2 = "22531038-08b8-4c71-a72c-9d48f63f3682";
+    String id3 = "13836e0e-4331-4386-a8be-2345eece6de3";
+    postUser(id1, id1);
+    postUser(id2, id2);
+    postUser(id3, id3);
+    given().
+    when().
+      param("query", "username == \"1*\"").
+      delete("/users").
+    then().
+      statusCode(204);
+    userExists(id2);
+    userDoesntExist(id1);
+    userDoesntExist(id3);
   }
 }

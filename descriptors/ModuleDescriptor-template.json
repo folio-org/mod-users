@@ -4,7 +4,7 @@
   "provides": [
     {
       "id": "users",
-      "version": "15.3",
+      "version": "15.4",
       "handlers" : [
         {
           "methods": [ "GET" ],
@@ -38,6 +38,11 @@
           "methods": [ "DELETE" ],
           "pathPattern": "/users/{id}",
           "permissionsRequired": [ "users.item.delete" ]
+        },
+        {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/users",
+          "permissionsRequired": [ "users.collection.delete" ]
         },
         {
           "methods": [ "GET" ],
@@ -221,6 +226,11 @@
       "description" : "Get a collection of user records"
     },
     {
+      "permissionName" : "users.collection.delete",
+      "displayName" : "users collection delete",
+      "description" : "Delete a collection of user records"
+    },
+    {
       "permissionName": "user-settings.custom-fields.collection.put",
       "displayName": "Custom Fields - put collection",
       "description": "Put Custom Fields collection"
@@ -361,6 +371,7 @@
       "description" : "All permissions for the mod-users module",
       "subPermissions" : [
         "users.collection.get",
+        "users.collection.delete",
         "users.item.get",
         "users.read.basic",
         "users.read.restricted",
