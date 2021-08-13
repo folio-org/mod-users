@@ -5,7 +5,7 @@ import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -37,8 +37,8 @@ import org.junit.runner.RunWith;
 
 import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.DepartmentCollection;
-import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.DBTestUtil;
 import org.folio.test.util.TestBase;
@@ -124,15 +124,18 @@ public class DepartmentsAPITest extends TestBase {
     assertThat(errors.getErrors().get(0).getMessage(), containsString("Department with this code already exists"));
   }
 
+  private void assertErrorAboutEmptyNameAndCode(Errors errors) {
+    List<Parameter> parameters = errors.getErrors().stream()
+        .map(error -> error.getParameters().get(0)).collect(Collectors.toList());
+    assertThat(parameters, containsInAnyOrder(
+        new Parameter().withKey("name").withValue("null"),
+        new Parameter().withKey("code").withValue("null") ));
+  }
+
   @Test
   public void shouldReturn422OnPostWithEmptyNameAndCode() {
     Department dep1 = createDepartment(null, null, null);
-    Errors errors = postWithError(dep1);
-    assertThat(errors.getErrors(), hasSize(2));
-    for (Error error : errors.getErrors()) {
-      assertThat(error.getMessage(), equalTo("must not be null"));
-      assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
-    }
+    assertErrorAboutEmptyNameAndCode(postWithError(dep1));
   }
 
   @Test
@@ -179,12 +182,7 @@ public class DepartmentsAPITest extends TestBase {
   @Test
   public void shouldReturn422OnPutWithEmptyNameAndCode() {
     Department dep1 = post(createDepartment(null, "name1", "code1"));
-    Errors errors = putWithError(dep1.withCode(null).withName(null));
-    assertThat(errors.getErrors(), hasSize(2));
-    for (Error error : errors.getErrors()) {
-      assertThat(error.getMessage(), equalTo("must not be null"));
-      assertThat(error.getParameters().get(0).getKey(), anyOf(equalTo("code"), equalTo("name")));
-    }
+    assertErrorAboutEmptyNameAndCode(putWithError(dep1.withCode(null).withName(null)));
   }
 
   @Test
