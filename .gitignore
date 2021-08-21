@@ -1,5 +1,7 @@
 #mvn build
 target/
+pom.xml.releaseBackup
+release.properties
 #vert.x
 .vertx/
 file-uploads/
