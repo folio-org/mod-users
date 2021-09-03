@@ -300,7 +300,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void deleteUsers(String lang, String query, RoutingContext routingContext,
+  public void deleteUsers(String query, RoutingContext routingContext,
           Map<String, String> okapiHeaders,
           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext,

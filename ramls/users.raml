@@ -47,7 +47,6 @@ resourceTypes:
   delete:
     description: Delete a collection of users selected by a CQL query; this doesn't delete proxyFor records that reference them
     is: [
-      language,
       searchable: {description: "CQL query", example: "active==false"}
     ]
     responses:
