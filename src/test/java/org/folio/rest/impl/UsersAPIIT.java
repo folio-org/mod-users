@@ -174,12 +174,7 @@ class UsersAPIIT {
     postUser(id1, id1);
     postUser(id2, id2);
     postUser(id3, id3);
-    given().
-    when().
-      param("query", "username == \"1*\"").
-      delete("/users").
-    then().
-      statusCode(204);
+    deleteUsersByUsername("1*")
     userExists(id2);
     userDoesntExist(id1);
     userDoesntExist(id3);
