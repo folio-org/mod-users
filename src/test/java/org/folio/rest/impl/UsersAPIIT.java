@@ -17,7 +17,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Parameter;
@@ -142,6 +141,15 @@ class UsersAPIIT {
       statusCode(201);
   }
 
+  static void deleteUsersByUsername(String username) {
+    given().
+    when().
+      param("query", "username == \"" + username + "\"").
+      delete("/users").
+    then().
+      statusCode(204);
+  }
+
   void facets(int limit) {
     given().
     when().get("/users?limit=" + limit + "&facets=patronGroup:50").
@@ -174,7 +182,8 @@ class UsersAPIIT {
     postUser(id1, id1);
     postUser(id2, id2);
     postUser(id3, id3);
-    deleteUsersByUsername("1*")
+    deleteUsersByUsername("1*");
+
     userExists(id2);
     userDoesntExist(id1);
     userDoesntExist(id3);
