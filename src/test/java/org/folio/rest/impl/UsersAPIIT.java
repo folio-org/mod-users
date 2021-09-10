@@ -167,7 +167,7 @@ class UsersAPIIT {
   }
 
   @Test
-  void delete() {
+  void deleteMultipleUsersUsingCQL() {
     String id1 = "114b14e8-422d-429a-b89e-b55c439b3b21";
     String id2 = "22531038-08b8-4c71-a72c-9d48f63f3682";
     String id3 = "13836e0e-4331-4386-a8be-2345eece6de3";
