@@ -18,8 +18,6 @@ import io.vertx.core.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.http.HttpStatus;
-import org.jsoup.Jsoup;
-
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.DepartmentCollection;
@@ -51,7 +49,7 @@ public class DepartmentsAPI implements Departments {
   @Override
   public void postDepartments(String lang, Department entity, Map<String, String> okapiHeaders,
                               Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
-    post(DEPARTMENTS_TABLE_NAME, cleanUp(entity), okapiHeaders, vertxContext, PostDepartmentsResponse.class, result ->
+    post(DEPARTMENTS_TABLE_NAME, entity, okapiHeaders, vertxContext, PostDepartmentsResponse.class, result ->
       handleUniqueConstraintViolation(result, entity, PostDepartmentsResponse::respond422WithApplicationJson, resultHandler)
     );
   }
@@ -61,7 +59,7 @@ public class DepartmentsAPI implements Departments {
   public void putDepartmentsByDepartmentId(String departmentId, String lang, Department entity,
                                            Map<String, String> okapiHeaders,
                                            Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
-    put(DEPARTMENTS_TABLE_NAME, cleanUp(entity), departmentId, okapiHeaders, vertxContext,
+    put(DEPARTMENTS_TABLE_NAME, entity, departmentId, okapiHeaders, vertxContext,
       PutDepartmentsByDepartmentIdResponse.class, result -> handleUniqueConstraintViolation(result, entity,
         PutDepartmentsByDepartmentIdResponse::respond422WithApplicationJson, resultHandler)
     );
@@ -81,12 +79,6 @@ public class DepartmentsAPI implements Departments {
                                               Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
     deleteById(DEPARTMENTS_TABLE_NAME, departmentId, okapiHeaders, vertxContext,
       DeleteDepartmentsByDepartmentIdResponse.class, resultHandler);
-  }
-
-  private Department cleanUp(Department entity) {
-    entity.setName(Jsoup.parse(entity.getName()).text());
-    entity.setCode(Jsoup.parse(entity.getCode()).text());
-    return entity;
   }
 
   static void handleUniqueConstraintViolation(AsyncResult<Response> result, Department entity,

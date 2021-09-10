@@ -80,15 +80,14 @@ public class DepartmentsAPITest extends TestBase {
   }
 
   @Test
-  public void shouldSaveAndCleanDepartmentOnPost() {
-    String name = "name";
-    String code = "code";
-    Department expected = createDepartment(null, "<script>\n"
-      + "document.getElementById(\"demo\").innerHTML = \"Hello JavaScript!\";\n"
-      + "</script><b>" + name + "</b>", "<script>\n"
-      + "document.getElementById(\"demo\").innerHTML = \"Bye JavaScript!\";\n"
-      + "</script>" + code);
-    Department actual = post(expected);
+  public void shouldSaveSpecialCharacters() {
+    String name = "<script>\n"
+        + "document.getElementById(\"demo\").innerHTML = \"Hello JavaScript!\";\n"
+        + "</script><b>foo</b>";
+    String code =  "<script>\n"
+        + "document.getElementById(\"demo\").innerHTML = \"Bye JavaScript!\";\n"
+        + "</script>bar&pi;";
+    Department actual = post(createDepartment(null, name, code));
 
     assertThat(actual.getId(), notNullValue());
     assertThat(actual.getName(), equalTo(name));
