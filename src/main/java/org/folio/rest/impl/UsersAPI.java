@@ -188,7 +188,7 @@ public class UsersAPI implements Users {
           if (Boolean.FALSE.equals(result)) {
             asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond400WithTextPlain(
-                "You cannot add addresses with non-existant address types")));
+                "You cannot add addresses with non-existent address types")));
           } else {
             validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
                     handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
