@@ -15,6 +15,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.folio.postgres.testing.PostgresTesterContainer;
@@ -29,9 +30,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
-
 /**
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
  * should be moved here.
@@ -41,8 +39,6 @@ class UsersAPIIT {
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
   static Vertx vertx;
   static String baseUrl;
-
-  private static final Logger log = LogManager.getLogger(UsersAPIIT.class);
 
   @BeforeAll
   static void beforeAll() {
@@ -132,6 +128,9 @@ class UsersAPIIT {
     then().statusCode(404);
   }
 
+  /**
+   * Create a user by calling the POST /users API.
+   */
   static void postUser(String id, String username) {
     given().
     when().
@@ -176,12 +175,13 @@ class UsersAPIIT {
 
   @Test
   void deleteMultipleUsersUsingCQL() {
-    String id1 = "114b14e8-422d-429a-b89e-b55c439b3b21";
-    String id2 = "22531038-08b8-4c71-a72c-9d48f63f3682";
-    String id3 = "13836e0e-4331-4386-a8be-2345eece6de3";
-    postUser(id1, id1);
-    postUser(id2, id2);
-    postUser(id3, id3);
+    String id1 = UUID.randomUUID().toString();
+    String id2 = UUID.randomUUID().toString();
+    String id3 = UUID.randomUUID().toString();
+    postUser(id1, "1234");
+    postUser(id2, "201");
+    postUser(id3, "1999");
+
     deleteUsersByUsername("1*");
 
     userExists(id2);
