@@ -133,10 +133,10 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-    UsersGetOrder order, int offset, int limit, List<String> facets,
-    String lang, RoutingContext routingContext, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      UsersGetOrder order, int offset, int limit, List<String> facets,
+      String lang, RoutingContext routingContext, Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
 
     try {
       logger.debug("Getting users");
@@ -159,10 +159,11 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void postUsers(String lang, User entity,
-                        RoutingContext routingContext,
-                        Map<String, String> okapiHeaders,
-                        Handler<AsyncResult<Response>> asyncResultHandler,
-                        Context vertxContext) {
+      RoutingContext routingContext,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     try {
       if (checkForDuplicateAddressTypes(entity)) {
         asyncResultHandler.handle(Future.succeededFuture(
@@ -187,7 +188,7 @@ public class UsersAPI implements Users {
           if (Boolean.FALSE.equals(result)) {
             asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond400WithTextPlain(
-                "You cannot add addresses with non-existant address types")));
+                "You cannot add addresses with non-existent address types")));
           } else {
             validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
                     handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
@@ -220,6 +221,7 @@ public class UsersAPI implements Users {
 
   private void saveUser(User entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
+
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
@@ -269,11 +271,11 @@ public class UsersAPI implements Users {
     if (reply.succeeded()) {
       if (reply.result().getStatus() == 400) {
         return reply.result().getEntity().toString().matches(errMsg);
-  }
+      }
       if (reply.result().getStatus() == 422) {
         String msg = ((Errors)reply.result().getEntity()).getErrors().iterator().next().getMessage();
         return msg.matches(errMsg);
-  }
+      }
     }
     return false;
   }
@@ -281,9 +283,9 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsersByUserId(String userId, String lang,
-          Map<String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) {
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
     PgUtil.getById(getTableName(null), User.class, userId, okapiHeaders, vertxContext,
       GetUsersByUserIdResponse.class, asyncResultHandler);
   }
@@ -291,9 +293,9 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void deleteUsersByUserId(String userId, String lang,
-          Map<String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) {
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
     PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext,
       DeleteUsersByUserIdResponse.class, asyncResultHandler);
   }
@@ -310,10 +312,11 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void putUsersByUserId(String userId,
-          String lang, User entity,
-          Map<String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler,
-          Context vertxContext) {
+      String lang, User entity,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     try {
       Future.succeededFuture()
         .compose(o -> new ValidationServiceImpl(vertxContext)
@@ -370,7 +373,8 @@ public class UsersAPI implements Users {
 
   @Override
   public void postUsersExpireTimer(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-                              Context vertxContext) {
+      Context vertxContext) {
+
     ExpirationTool.doExpirationForTenant(vertxContext.owner(), okapiHeaders.get("x-okapi-tenant"))
         .onSuccess(res -> asyncResultHandler.handle(
             Future.succeededFuture(PostUsersExpireTimerResponse.respond204())))
@@ -379,7 +383,8 @@ public class UsersAPI implements Users {
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders,
-                          Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
@@ -413,8 +418,9 @@ public class UsersAPI implements Users {
    *                -1 if exception was thrown
    */
   private void checkPatronGroupExists(String patronGroupId,
-                                      PostgresClient postgresClient,
-                                      Handler<AsyncResult<Integer>> handler) {
+      PostgresClient postgresClient,
+      Handler<AsyncResult<Integer>> handler) {
+
     if (patronGroupId == null) {
       //allow null patron groups so that they can be added after a record is created
       handler.handle(io.vertx.core.Future.succeededFuture(1));
@@ -447,9 +453,10 @@ public class UsersAPI implements Users {
    * @param onSuccess handler that will be called on validation success
    */
   private void validatePatronGroup(String patronGroupId,
-                                   PostgresClient postgresClient,
-                                   Handler<AsyncResult<Response>> asyncResultHandler,
-                                   Handler<AsyncResult<Void>> onSuccess) {
+      PostgresClient postgresClient,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Handler<AsyncResult<Void>> onSuccess) {
+
     checkPatronGroupExists(patronGroupId, postgresClient, handler -> {
       int res = handler.result();
       if (res == 0) {

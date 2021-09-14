@@ -30,7 +30,8 @@
     },
     "patronGroup": {
       "description": "A UUID corresponding to the group the user belongs to",
-      "type": "string"
+      "type": "string",
+      "$ref": "raml-util/schemas/uuid.schema"
     },
     "departments": {
       "description": "A UUIDs corresponding to the departments the user belongs to",
@@ -126,7 +127,8 @@
               },
               "addressTypeId": {
                 "description": "A UUID that corresponds with an address type object",
-                "type": "string"
+                "type": "string",
+                "$ref": "raml-util/schemas/uuid.schema"
               },
               "primaryAddress": {
                 "description": "Is this the user's primary address?",
