@@ -48,11 +48,12 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void getProxiesfor(String query,
-    int offset, int limit,
-    String lang,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      int offset, int limit,
+      String lang,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     PgUtil.get(PROXY_FOR_TABLE, ProxiesFor.class, ProxyforCollection.class,
       query, offset, limit, okapiHeaders, vertxContext,
       GetProxiesforResponse.class, asyncResultHandler);
@@ -60,11 +61,12 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void postProxiesfor(
-    String lang,
-    ProxiesFor entity,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      String lang,
+      ProxiesFor entity,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     userAndProxyUserComboExists(entity.getUserId(), entity.getProxyUserId(),
       postgresClient).onComplete(existsRes -> {
@@ -91,38 +93,42 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void getProxiesforById(String id,
-    String lang,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      String lang,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     PgUtil.getById(PROXY_FOR_TABLE, ProxiesFor.class, id, okapiHeaders,
       vertxContext, GetProxiesforByIdResponse.class, asyncResultHandler);
   }
 
   @Override
   public void deleteProxiesforById(String id,
-    String lang,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      String lang,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     PgUtil.deleteById(PROXY_FOR_TABLE, id, okapiHeaders, vertxContext,
       DeleteProxiesforByIdResponse.class, asyncResultHandler);
   }
 
   @Override
   public void putProxiesforById(String id,
-    String lang,
-    ProxiesFor entity,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      String lang,
+      ProxiesFor entity,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     PgUtil.put(PROXY_FOR_TABLE, entity, id, okapiHeaders, vertxContext, PutProxiesforByIdResponse.class, asyncResultHandler);
   }
 
   Future<Boolean> userAndProxyUserComboExists(
-    String userId,
-    String proxyUserId,
-    PostgresClient postgresClient) {
+      String userId,
+      String proxyUserId,
+      PostgresClient postgresClient) {
+
     Promise<Boolean> promise = Promise.promise();
     Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).
       setOperation("=").setVal(userId).setJSONB(true);

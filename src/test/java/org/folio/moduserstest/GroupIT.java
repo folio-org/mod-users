@@ -426,7 +426,8 @@ public class GroupIT {
   }
 
   private CompletableFuture<Response> send(String url, HttpMethod method, String content,
-                                           Function<HttpResponse<Buffer>, Response> handler) {
+      Function<HttpResponse<Buffer>, Response> handler) {
+
     Future<HttpResponse<Buffer>> httpResponse;
 
     switch (method.name()) {

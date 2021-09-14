@@ -31,7 +31,7 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String ADDRESS_TYPE_USER_JOIN_TABLE = "address_users";
   public static final String ID_FIELD_NAME = "id";
   public static final String URL_PREFIX = "/addresstypes";
-  private static final Logger logger = LogManager.getLogger(AddressTypeAPI.class); 
+  private static final Logger logger = LogManager.getLogger(AddressTypeAPI.class);
   private boolean suppressErrorResponse = false;
 
   private String getErrorResponse(String response) {
@@ -44,32 +44,35 @@ public class AddressTypeAPI implements Addresstypes {
   @Validate
   @Override
   public void getAddresstypes(String query, int offset, int limit, String lang,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     PgUtil.get(ADDRESS_TYPE_TABLE, AddressType.class, AddresstypeCollection.class,
       query, offset, limit, okapiHeaders, vertxContext, GetAddresstypesResponse.class, asyncResultHandler);
   }
 
   @Override
   public void postAddresstypes(String lang, AddressType entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      Context vertxContext) {
+
     PgUtil.post(ADDRESS_TYPE_TABLE, entity, okapiHeaders, vertxContext,
       PostAddresstypesResponse.class, asyncResultHandler);
   }
 
   @Override
   public void getAddresstypesByAddresstypeId(String addresstypeId, String lang,
-    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+
     PgUtil.getById(ADDRESS_TYPE_TABLE, AddressType.class, addresstypeId, okapiHeaders,
       vertxContext, GetAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
   }
 
   @Override
   public void deleteAddresstypesByAddresstypeId(String addresstypeId, String lang,
-    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
 
     try {
       //Check to make certain no users' addresses are currently using this type
@@ -112,8 +115,8 @@ public class AddressTypeAPI implements Addresstypes {
 
   @Override
   public void putAddresstypesByAddresstypeId(String addresstypeId, String lang,
-    AddressType entity, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+      AddressType entity, Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.put(ADDRESS_TYPE_TABLE, entity, addresstypeId, okapiHeaders,
       vertxContext, PutAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
