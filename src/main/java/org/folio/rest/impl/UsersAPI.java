@@ -303,8 +303,9 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void deleteUsers(String query, RoutingContext routingContext,
-          Map<String, String> okapiHeaders,
-          Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
     PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext,
         DeleteUsersResponse.class, asyncResultHandler);
   }
