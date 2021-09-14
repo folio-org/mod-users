@@ -15,9 +15,9 @@ import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Parameter;
@@ -30,9 +30,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
-
 /**
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
  * should be moved here.
@@ -42,8 +39,6 @@ class UsersAPIIT {
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
   static Vertx vertx;
   static String baseUrl;
-
-  private static final Logger log = LogManager.getLogger(UsersAPIIT.class);
 
   @BeforeAll
   static void beforeAll() {
@@ -121,8 +116,40 @@ class UsersAPIIT {
     given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
-  void facets(int limit) {
+  static void userExists(String id) {
+    given().
+    when().get("/users/" + id).
+    then().statusCode(200);
+  }
 
+  static void userDoesntExist(String id) {
+    given().
+    when().get("/users/" + id).
+    then().statusCode(404);
+  }
+
+  /**
+   * Create a user by calling the POST /users API.
+   */
+  static void postUser(String id, String username) {
+    given().
+    when().
+      body(new JsonObject().put("id",  id).put("username", username).encode()).
+      post("/users").
+    then().
+      statusCode(201);
+  }
+
+  static void deleteUsersByUsername(String username) {
+    given().
+    when().
+      param("query", "username == \"" + username + "\"").
+      delete("/users").
+    then().
+      statusCode(204);
+  }
+
+  void facets(int limit) {
     given().
     when().get("/users?limit=" + limit + "&facets=patronGroup:50").
     then().
@@ -144,5 +171,21 @@ class UsersAPIIT {
   @Test
   void facetsLimit1() {
     facets(1);
+  }
+
+  @Test
+  void deleteMultipleUsersUsingCQL() {
+    String id1 = UUID.randomUUID().toString();
+    String id2 = UUID.randomUUID().toString();
+    String id3 = UUID.randomUUID().toString();
+    postUser(id1, "1234");
+    postUser(id2, "201");
+    postUser(id3, "1999");
+
+    deleteUsersByUsername("1*");
+
+    userExists(id2);
+    userDoesntExist(id1);
+    userDoesntExist(id3);
   }
 }

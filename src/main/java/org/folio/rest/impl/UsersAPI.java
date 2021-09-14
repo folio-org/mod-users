@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
@@ -299,6 +298,16 @@ public class UsersAPI implements Users {
       Context vertxContext) {
     PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext,
       DeleteUsersByUserIdResponse.class, asyncResultHandler);
+  }
+
+  @Validate
+  @Override
+  public void deleteUsers(String query, RoutingContext routingContext,
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
+    PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext,
+        DeleteUsersResponse.class, asyncResultHandler);
   }
 
   @Validate
