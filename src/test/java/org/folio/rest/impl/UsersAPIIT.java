@@ -116,13 +116,13 @@ class UsersAPIIT {
     given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
-  static void userExists(String id) {
+  void userExists(String id) {
     given().
     when().get("/users/" + id).
     then().statusCode(200);
   }
 
-  static void userDoesntExist(String id) {
+  void userDoesntExist(String id) {
     given().
     when().get("/users/" + id).
     then().statusCode(404);
@@ -131,7 +131,7 @@ class UsersAPIIT {
   /**
    * Create a user by calling the POST /users API.
    */
-  static void postUser(String id, String username) {
+  void postUser(String id, String username) {
     given().
     when().
       body(new JsonObject().put("id",  id).put("username", username).encode()).
@@ -140,7 +140,7 @@ class UsersAPIIT {
       statusCode(201);
   }
 
-  static void deleteUsersByUsername(String username) {
+  void deleteUsersByUsername(String username) {
     given().
     when().
       param("query", "username == \"" + username + "\"").
