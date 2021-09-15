@@ -59,6 +59,34 @@ class UsersAPIIT {
     vertx.close();
   }
 
+  @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
+  @Test
+  void facetsLimit0() {
+    // The UI uses this to show the number per patron group in /settings/users/groups
+    facets(0);
+  }
+
+  @Test
+  void facetsLimit1() {
+    facets(1);
+  }
+
+  @Test
+  void deleteMultipleUsersUsingCQL() {
+    String id1 = UUID.randomUUID().toString();
+    String id2 = UUID.randomUUID().toString();
+    String id3 = UUID.randomUUID().toString();
+    postUser(id1, "1234");
+    postUser(id2, "201");
+    postUser(id3, "1999");
+
+    deleteUsersByUsername("1*");
+
+    userExists(id2);
+    userDoesntExist(id1);
+    userDoesntExist(id3);
+  }
+
   static RequestSpecification given() {
     return RestAssured
         .given()
@@ -159,33 +187,5 @@ class UsersAPIIT {
       body("resultInfo.facets[0].facetValues[1].count", is(81)).
       body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
 
-  }
-
-  @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
-  @Test
-  void facetsLimit0() {
-    // The UI uses this to show the number per patron group in /settings/users/groups
-    facets(0);
-  }
-
-  @Test
-  void facetsLimit1() {
-    facets(1);
-  }
-
-  @Test
-  void deleteMultipleUsersUsingCQL() {
-    String id1 = UUID.randomUUID().toString();
-    String id2 = UUID.randomUUID().toString();
-    String id3 = UUID.randomUUID().toString();
-    postUser(id1, "1234");
-    postUser(id2, "201");
-    postUser(id3, "1999");
-
-    deleteUsersByUsername("1*");
-
-    userExists(id2);
-    userDoesntExist(id1);
-    userDoesntExist(id3);
   }
 }
