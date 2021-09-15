@@ -40,7 +40,8 @@ public class DepartmentsAPI implements Departments {
   @Validate
   @Override
   public void getDepartments(String query, int offset, int limit, String lang, Map<String, String> okapiHeaders,
-                             Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+      Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+
     get(DEPARTMENTS_VIEW_NAME, Department.class, DepartmentCollection.class, query, offset, limit,
       okapiHeaders, vertxContext, GetDepartmentsResponse.class, resultHandler);
   }
@@ -48,7 +49,8 @@ public class DepartmentsAPI implements Departments {
   @Validate
   @Override
   public void postDepartments(String lang, Department entity, Map<String, String> okapiHeaders,
-                              Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+      Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+
     post(DEPARTMENTS_TABLE_NAME, entity, okapiHeaders, vertxContext, PostDepartmentsResponse.class, result ->
       handleUniqueConstraintViolation(result, entity, PostDepartmentsResponse::respond422WithApplicationJson, resultHandler)
     );
@@ -68,7 +70,8 @@ public class DepartmentsAPI implements Departments {
   @Validate
   @Override
   public void getDepartmentsByDepartmentId(String departmentId, String lang, Map<String, String> okapiHeaders,
-                                           Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+      Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+
     getById(DEPARTMENTS_VIEW_NAME, Department.class, departmentId, okapiHeaders, vertxContext,
       GetDepartmentsByDepartmentIdResponse.class, resultHandler);
   }
@@ -76,14 +79,16 @@ public class DepartmentsAPI implements Departments {
   @Validate
   @Override
   public void deleteDepartmentsByDepartmentId(String departmentId, String lang, Map<String, String> okapiHeaders,
-                                              Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+      Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
+
     deleteById(DEPARTMENTS_TABLE_NAME, departmentId, okapiHeaders, vertxContext,
       DeleteDepartmentsByDepartmentIdResponse.class, resultHandler);
   }
 
   static void handleUniqueConstraintViolation(AsyncResult<Response> result, Department entity,
-                                               Function<Errors, Response> errorsMapFunction,
-                                               Handler<AsyncResult<Response>> resultHandler) {
+      Function<Errors, Response> errorsMapFunction,
+      Handler<AsyncResult<Response>> resultHandler) {
+
     AsyncResult<Response> finalResult = result;
     try {
       Errors error = null;

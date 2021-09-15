@@ -112,6 +112,7 @@ public class UsersAPI implements Users {
 
   static Response response(String message, Throwable e, String lang,
       Function<String,Response> report400, Function<String,Response> report500) {
+
     try {
       Throwable cause = e;
       while (cause != null) {
@@ -286,6 +287,7 @@ public class UsersAPI implements Users {
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
+
     PgUtil.getById(getTableName(null), User.class, userId, okapiHeaders, vertxContext,
       GetUsersByUserIdResponse.class, asyncResultHandler);
   }
@@ -296,6 +298,7 @@ public class UsersAPI implements Users {
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
+
     PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext,
       DeleteUsersByUserIdResponse.class, asyncResultHandler);
   }
@@ -306,6 +309,7 @@ public class UsersAPI implements Users {
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
+
     PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext,
         DeleteUsersResponse.class, asyncResultHandler);
   }

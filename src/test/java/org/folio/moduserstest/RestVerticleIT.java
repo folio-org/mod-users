@@ -1123,7 +1123,8 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
-                                                  String endpoint, boolean checkMeta) {
+      String endpoint, boolean checkMeta) {
+
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
 

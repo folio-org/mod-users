@@ -89,7 +89,8 @@ class RestITSupport {
   }
 
   static void fail(TestContext context, String message, HttpResponse<Buffer> response,
-                           StackTraceElement [] stacktrace) {
+      StackTraceElement [] stacktrace) {
+
     Async async = context.async();
 
     Throwable t = new AssertionFailedError((message == null ? "" : message + ": ")
@@ -120,7 +121,8 @@ class RestITSupport {
   }
 
   static Future<HttpResponse<Buffer>> post(String request, String body,
-                                           Map<String, String> additionalHeaders) {
+      Map<String, String> additionalHeaders) {
+
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
 
     HttpRequest<Buffer> req = client.post(port, LOCALHOST, request)
