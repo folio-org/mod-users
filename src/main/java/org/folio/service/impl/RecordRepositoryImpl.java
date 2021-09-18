@@ -50,7 +50,8 @@ public class RecordRepositoryImpl implements RecordRepository {
 
   @Override
   public Future<CustomFieldOptionStatistic> retrieveStatisticForFieldOption(CustomField field, String optId,
-                                                                            String tenantId) {
+      String tenantId) {
+
     Promise<RowSet<Row>> count = Promise.promise();
 
     Tuple params = Tuple.of(field.getRefId(), optId);

@@ -1,6 +1,6 @@
 #%RAML 1.0
 title: Users
-version: v1
+version: v15.4
 baseUri: http://github.com/org/folio/mod-users
 
 documentation:
@@ -44,6 +44,24 @@ resourceTypes:
   post:
     is: [validate]
     description: Create a user
+  delete:
+    description: Delete a collection of users selected by a CQL query; this doesn't delete proxyFor records that reference them
+    is: [
+      searchable: {description: "CQL query", example: "active==false"}
+    ]
+    responses:
+      204:
+        description: "All selected users deleted"
+      400:
+        description: "Bad request"
+        body:
+          text/plain:
+            example: "Invalid CQL syntax"
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"
   /{userId}:
     type:
       collection-item:

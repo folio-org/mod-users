@@ -43,7 +43,6 @@ import io.vertx.ext.web.client.HttpResponse;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.utils.TenantInit;
 import org.joda.time.DateTime;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
@@ -135,7 +134,8 @@ public class RestVerticleIT {
       JsonObject userCollectionObject = response.bodyAsJsonObject();
       if (userCollectionObject.getJsonArray("users").size() != 0
         || userCollectionObject.getInteger("totalRecords") != 0) {
-        fail("Invalid return JSON: " + response.bodyAsString());
+        fail("Expected users array to be empty and totalRecords = 0 but got: "
+            + response.bodyAsString());
       }
       return null;
     });
@@ -1123,7 +1123,8 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
-                                                  String endpoint, boolean checkMeta) {
+      String endpoint, boolean checkMeta) {
+
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
 
