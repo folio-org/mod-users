@@ -1,6 +1,8 @@
-## 18.1.1
+## 18.1.1 2021-10-04
 
 * Update RMB to 33.1.1 and Vert.x to 4.1.4 (MODUSERS-272)
+* Move helper methods to bottom of UsersAPIIT (MODUSERS-267)
+* Build fails with LANG=de\_DE.UTF-8 (MODUSERS-259)
 
 ## 18.1.0 2021-09-28
 
