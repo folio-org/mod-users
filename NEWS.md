@@ -1,3 +1,7 @@
+## 18.1.1
+
+* Update RMB to 33.1.1 and Vert.x to 4.1.4 (MODUSERS-272)
+
 ## 18.1.0 2021-09-28
 
 * Characters in department name and code now properly saved (MODUSERS-260)
