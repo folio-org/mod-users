@@ -1,4 +1,4 @@
-## 18.1.1 2021-10-04
+## 18.1.1
 
 * Update RMB to 33.1.1 and Vert.x to 4.1.4 (MODUSERS-272)
 
