@@ -29,8 +29,8 @@ public class UserGroupAPI implements Groups {
   @Validate
   @Override
   public void getGroups(String query, int offset, int limit,
-    String lang, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+      String lang, Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.get(GROUP_TABLE, Usergroup.class, Usergroups.class, query, offset, limit, okapiHeaders,
       vertxContext, GetGroupsResponse.class, asyncResultHandler);
@@ -39,9 +39,9 @@ public class UserGroupAPI implements Groups {
   @Validate
   @Override
   public void postGroups(String lang, Usergroup entity,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      Map<String, String> okapiHeaders,
+      Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
 
     PgUtil.post(GROUP_TABLE, entity, okapiHeaders, vertxContext, PostGroupsResponse.class, post -> {
       try {
@@ -63,7 +63,7 @@ public class UserGroupAPI implements Groups {
   @Validate
   @Override
   public void getGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.getById(GROUP_TABLE, Usergroup.class, groupId, okapiHeaders, vertxContext,
         GetGroupsByGroupIdResponse.class, asyncResultHandler);
@@ -72,7 +72,7 @@ public class UserGroupAPI implements Groups {
   @Validate
   @Override
   public void deleteGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.deleteById(GROUP_TABLE, groupId, okapiHeaders, vertxContext,
       DeleteGroupsByGroupIdResponse.class, asyncResultHandler);
@@ -81,8 +81,8 @@ public class UserGroupAPI implements Groups {
   @Validate
   @Override
   public void putGroupsByGroupId(String groupId, String lang, Usergroup entity,
-    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-    Context vertxContext) {
+      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+      Context vertxContext) {
 
     PgUtil.put(GROUP_TABLE, entity, groupId, okapiHeaders, vertxContext,
         PutGroupsByGroupIdResponse.class, asyncResultHandler);
