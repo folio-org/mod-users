@@ -1,3 +1,13 @@
+## 18.1.1
+
+* Update RMB to 33.1.1 and Vert.x to 4.1.4 (MODUSERS-272)
+
+## 18.1.0 2021-09-28
+
+* Characters in department name and code now properly saved (MODUSERS-260)
+* Creation of new user with invalid addresstype id now results in 422 error (MODUSERS-262)
+* Added delete by cql endpoint for users (MODUSERS-122)
+
 ## 18.0.0 2021-06-16
 
 * `embed_postgres` command line option is no longer supported (MODUSERS-255)
