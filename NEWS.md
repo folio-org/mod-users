@@ -1,4 +1,4 @@
-## 18.0.1
+## 18.0.1 2021-10-04
 
 * Database memory fix, update RMB to 33.1.1 and Vert.x to 4.1.4 (MODUSERS-272, MODUSERS-273)
 
