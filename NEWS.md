@@ -1,3 +1,7 @@
+## 18.2.0 IN-PROGRESS
+
+* Upgrade to RMB 33.1.3 and Folio Service Tools 1.7.2. (CVE-2021-44228) (MODUSERS-295)
+
 ## 18.1.1 2021-10-04
 
 * Update RMB to 33.1.1 and Vert.x to 4.1.4 (MODUSERS-272)
