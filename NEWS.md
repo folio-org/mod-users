@@ -1,3 +1,19 @@
+## 18.2.0 IN-PROGRESS
+
+* Upgrade to RMB 33.1.3 and Folio Service Tools 1.7.2. (CVE-2021-44228) (MODUSERS-295)
+
+## 18.1.1 2021-10-04
+
+* Update RMB to 33.1.1 and Vert.x to 4.1.4 (MODUSERS-272)
+* Move helper methods to bottom of UsersAPIIT (MODUSERS-267)
+* Build fails with LANG=de\_DE.UTF-8 (MODUSERS-259)
+
+## 18.1.0 2021-09-28
+
+* Characters in department name and code now properly saved (MODUSERS-260)
+* Creation of new user with invalid addresstype id now results in 422 error (MODUSERS-262)
+* Added delete by cql endpoint for users (MODUSERS-122)
+
 ## 18.0.0 2021-06-16
 
 * `embed_postgres` command line option is no longer supported (MODUSERS-255)
