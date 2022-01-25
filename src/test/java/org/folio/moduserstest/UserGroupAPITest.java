@@ -4,12 +4,10 @@ import java.util.Collections;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +36,7 @@ public class UserGroupAPITest {
 
   @Test
   public void postException(TestContext context) {
-    new MyUserGroupAPI().postGroups("en", new Usergroup(), Collections.emptyMap(), context.asyncAssertSuccess(result -> {
+    new MyUserGroupAPI().postGroups(new Usergroup(), Collections.emptyMap(), context.asyncAssertSuccess(result -> {
       context.assertTrue(result.getEntity().toString().toLowerCase().contains("internal server error"));
     }), vertxContext);
   }
