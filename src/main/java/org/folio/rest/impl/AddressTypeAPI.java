@@ -43,7 +43,7 @@ public class AddressTypeAPI implements Addresstypes {
 
   @Validate
   @Override
-  public void getAddresstypes(String query, String totalRecords, int offset, int limit,
+  public void getAddresstypes(String query, int offset, int limit, String lang,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -53,7 +53,7 @@ public class AddressTypeAPI implements Addresstypes {
   }
 
   @Override
-  public void postAddresstypes(AddressType entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+  public void postAddresstypes(String lang, AddressType entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
     PgUtil.post(ADDRESS_TYPE_TABLE, entity, okapiHeaders, vertxContext,
@@ -61,7 +61,7 @@ public class AddressTypeAPI implements Addresstypes {
   }
 
   @Override
-  public void getAddresstypesByAddresstypeId(String addresstypeId,
+  public void getAddresstypesByAddresstypeId(String addresstypeId, String lang,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
@@ -70,7 +70,7 @@ public class AddressTypeAPI implements Addresstypes {
   }
 
   @Override
-  public void deleteAddresstypesByAddresstypeId(String addresstypeId,
+  public void deleteAddresstypesByAddresstypeId(String addresstypeId, String lang,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
@@ -114,7 +114,7 @@ public class AddressTypeAPI implements Addresstypes {
   }
 
   @Override
-  public void putAddresstypesByAddresstypeId(String addresstypeId,
+  public void putAddresstypesByAddresstypeId(String addresstypeId, String lang,
       AddressType entity, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 

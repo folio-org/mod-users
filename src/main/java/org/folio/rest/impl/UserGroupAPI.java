@@ -28,8 +28,8 @@ public class UserGroupAPI implements Groups {
 
   @Validate
   @Override
-  public void getGroups(String query, String totalRecords,
-      int offset, int limit, Map<String, String> okapiHeaders,
+  public void getGroups(String query, int offset, int limit,
+      String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.get(GROUP_TABLE, Usergroup.class, Usergroups.class, query, offset, limit, okapiHeaders,
@@ -38,7 +38,7 @@ public class UserGroupAPI implements Groups {
 
   @Validate
   @Override
-  public void postGroups(Usergroup entity,
+  public void postGroups(String lang, Usergroup entity,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -62,7 +62,7 @@ public class UserGroupAPI implements Groups {
 
   @Validate
   @Override
-  public void getGroupsByGroupId(String groupId, Map<String, String> okapiHeaders,
+  public void getGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.getById(GROUP_TABLE, Usergroup.class, groupId, okapiHeaders, vertxContext,
@@ -71,7 +71,7 @@ public class UserGroupAPI implements Groups {
 
   @Validate
   @Override
-  public void deleteGroupsByGroupId(String groupId, Map<String, String> okapiHeaders,
+  public void deleteGroupsByGroupId(String groupId, String lang, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.deleteById(GROUP_TABLE, groupId, okapiHeaders, vertxContext,
@@ -80,7 +80,7 @@ public class UserGroupAPI implements Groups {
 
   @Validate
   @Override
-  public void putGroupsByGroupId(String groupId, Usergroup entity,
+  public void putGroupsByGroupId(String groupId, String lang, Usergroup entity,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
