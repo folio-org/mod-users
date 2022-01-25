@@ -75,7 +75,7 @@ public class UsersAPITest {
 
   @Test
   void getUsersExceptionInCatch(VertxTestContext vtc) {
-    new UsersAPI().getUsers(null, null, null, null, 0, 0, null, null, null,
+    new UsersAPI().getUsers(null, null, null, 0, 0, null, null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -84,7 +84,7 @@ public class UsersAPITest {
 
   @Test
   void postUsersException(VertxTestContext vtc) {
-    new UsersAPI().postUsers(null, null, null,
+    new UsersAPI().postUsers(null, null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -93,7 +93,7 @@ public class UsersAPITest {
 
   @Test
   void postUsersExceptionInOtherwise(VertxTestContext vtc) {
-    new UsersAPI().postUsers(new User(), null, null,
+    new UsersAPI().postUsers(null, new User(), null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -112,7 +112,7 @@ public class UsersAPITest {
         };
       }
     };
-    new UsersAPI().postUsers(new User(), null, okapiHeaders,
+    new UsersAPI().postUsers(null, new User(), null, okapiHeaders,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -121,7 +121,7 @@ public class UsersAPITest {
 
   @Test
   void putUsersByUserIdException(VertxTestContext vtc) {
-    new UsersAPI().putUsersByUserId(null, null, null,
+    new UsersAPI().putUsersByUserId(null, null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
