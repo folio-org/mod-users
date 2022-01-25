@@ -124,7 +124,7 @@ public class UsersAPI implements Users {
         }
         cause = cause.getCause();
       }
-      return report500.apply(messages.getMessage(lang, MessageConsts.InternalServerError));
+      return report500.apply(messages.getMessage(Messages.DEFAULT_LANGUAGE, MessageConsts.InternalServerError));
     } catch (Exception e2) {
       logger.error(e2.getMessage(), e2);
       return report500.apply(e2.getMessage());
@@ -134,8 +134,8 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsers(String query, String orderBy,
-      UsersGetOrder order, int offset, int limit, List<String> facets,
-      String lang, RoutingContext routingContext, Map<String, String> okapiHeaders,
+      UsersGetOrder order, String totalRecords, int offset, int limit, List<String> facets,
+      RoutingContext routingContext, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
@@ -150,7 +150,8 @@ public class UsersAPI implements Users {
         routingContext, okapiHeaders, vertxContext);
     } catch (Exception e) {
       logger.error(query, e);
-      Response response = response(query, e, lang,
+      Response response = response(query, e,
+        Messages.DEFAULT_LANGUAGE,
         GetUsersResponse::respond400WithTextPlain,
         GetUsersResponse::respond500WithTextPlain);
       asyncResultHandler.handle(succeededFuture(response));
@@ -159,7 +160,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void postUsers(String lang, User entity,
+  public void postUsers(User entity,
       RoutingContext routingContext,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
@@ -205,7 +206,7 @@ public class UsersAPI implements Users {
             logger.error(e.getMessage(), e);
             asyncResultHandler.handle(Future.succeededFuture(
               PostUsersResponse.respond500WithTextPlain(
-                messages.getMessage(lang, MessageConsts.InternalServerError))));
+                messages.getMessage(Messages.DEFAULT_LANGUAGE, MessageConsts.InternalServerError))));
           }
           return null;
         }).onFailure(e -> {
@@ -283,7 +284,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void getUsersByUserId(String userId, String lang,
+  public void getUsersByUserId(String userId,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -294,7 +295,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void deleteUsersByUserId(String userId, String lang,
+  public void deleteUsersByUserId(String userId,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -317,8 +318,7 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void putUsersByUserId(String userId,
-      String lang, User entity,
-      Map<String, String> okapiHeaders,
+      User entity, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
@@ -360,7 +360,7 @@ public class UsersAPI implements Users {
           } else {
             asyncResultHandler.handle(Future.succeededFuture(
               PutUsersByUserIdResponse.respond500WithTextPlain(
-                messages.getMessage(lang, MessageConsts.InternalServerError))));
+                messages.getMessage(Messages.DEFAULT_LANGUAGE, MessageConsts.InternalServerError))));
           }
           return null;
         }).onFailure(e -> {

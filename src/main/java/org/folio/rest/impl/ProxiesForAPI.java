@@ -48,8 +48,8 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void getProxiesfor(String query,
+      String totalRecords,
       int offset, int limit,
-      String lang,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -61,7 +61,6 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void postProxiesfor(
-      String lang,
       ProxiesFor entity,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
@@ -93,7 +92,6 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void getProxiesforById(String id,
-      String lang,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -104,7 +102,6 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void deleteProxiesforById(String id,
-      String lang,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -115,7 +112,6 @@ public class ProxiesForAPI implements Proxiesfor {
 
   @Override
   public void putProxiesforById(String id,
-      String lang,
       ProxiesFor entity,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,

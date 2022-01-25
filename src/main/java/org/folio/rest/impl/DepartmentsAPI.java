@@ -39,7 +39,7 @@ public class DepartmentsAPI implements Departments {
 
   @Validate
   @Override
-  public void getDepartments(String query, int offset, int limit, String lang, Map<String, String> okapiHeaders,
+  public void getDepartments(String query, String totalRecords, int offset, int limit, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
 
     get(DEPARTMENTS_VIEW_NAME, Department.class, DepartmentCollection.class, query, offset, limit,
@@ -48,7 +48,7 @@ public class DepartmentsAPI implements Departments {
 
   @Validate
   @Override
-  public void postDepartments(String lang, Department entity, Map<String, String> okapiHeaders,
+  public void postDepartments(Department entity, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
 
     post(DEPARTMENTS_TABLE_NAME, entity, okapiHeaders, vertxContext, PostDepartmentsResponse.class, result ->
@@ -58,7 +58,7 @@ public class DepartmentsAPI implements Departments {
 
   @Validate
   @Override
-  public void putDepartmentsByDepartmentId(String departmentId, String lang, Department entity,
+  public void putDepartmentsByDepartmentId(String departmentId, Department entity,
                                            Map<String, String> okapiHeaders,
                                            Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
     put(DEPARTMENTS_TABLE_NAME, entity, departmentId, okapiHeaders, vertxContext,
@@ -69,7 +69,7 @@ public class DepartmentsAPI implements Departments {
 
   @Validate
   @Override
-  public void getDepartmentsByDepartmentId(String departmentId, String lang, Map<String, String> okapiHeaders,
+  public void getDepartmentsByDepartmentId(String departmentId, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
 
     getById(DEPARTMENTS_VIEW_NAME, Department.class, departmentId, okapiHeaders, vertxContext,
@@ -78,7 +78,7 @@ public class DepartmentsAPI implements Departments {
 
   @Validate
   @Override
-  public void deleteDepartmentsByDepartmentId(String departmentId, String lang, Map<String, String> okapiHeaders,
+  public void deleteDepartmentsByDepartmentId(String departmentId, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> resultHandler, Context vertxContext) {
 
     deleteById(DEPARTMENTS_TABLE_NAME, departmentId, okapiHeaders, vertxContext,
