@@ -13,11 +13,11 @@
       "type": "string"
     },
     "externalSystemId": {
-      "description": "An ID that corresponds to an external authority",
+      "description": "A unique ID that corresponds to an external authority",
       "type": "string"
     },
     "barcode": {
-      "description": "The library barcode for this user",
+      "description": "The unique library barcode for this user",
       "type": "string"
     },
     "active": {
