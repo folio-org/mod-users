@@ -70,6 +70,10 @@
       ],
       "uniqueIndex" : [
         {
+          "fieldName" : "externalSystemId",
+          "tOps" : "ADD"
+        },
+        {
           "fieldName" : "username",
           "tOps" : "ADD"
         },
@@ -85,7 +89,7 @@
       "index" : [
         {
           "fieldName" : "externalSystemId",
-          "tOps" : "ADD"
+          "tOps" : "DELETE"
         },
         {
           "fieldName" : "username",
