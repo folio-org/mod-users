@@ -3,8 +3,9 @@ package org.folio.moduserstest;
 import static io.vertx.core.json.Json.encode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import static org.folio.moduserstest.RestITSupport.assertStatus;
@@ -19,6 +20,7 @@ import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,7 +44,6 @@ import io.vertx.ext.web.client.HttpResponse;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.utils.TenantInit;
-import org.joda.time.DateTime;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
@@ -202,27 +203,10 @@ public class RestVerticleIT {
     Future<JsonObject> future = getJson(context, "/users/" + joeBlockId);
 
     return future.map(user -> {
-      if (user.getString("username").equals("joeblock")) {
-        JsonObject tags = user.getJsonObject("tags");
-
-        if (tags == null || !tags.encode().equals("{\"tagList\":[\"foo-tag\",\"bar-tag\"]}")) {
-          fail("Bad value for tag list");
-        }
-        else {
-          Date createdDate = null;
-          try {
-            createdDate = new DateTime(user.getString("createdDate")).toDate();
-          } catch (Exception e) {
-            fail(e.getMessage());
-          }
-          Date now = new Date();
-          if (createdDate.after(now)) {
-            fail("Bad value for createdDate");
-          }
-        }
-      } else {
-        fail("Unable to read proper data from JSON return value: " + encode(user));
-      }
+      assertThat(user.getString("username"), is("joeblock"));
+      assertThat(user.getJsonObject("tags"),
+          is(new JsonObject().put("tagList", new JsonArray().add("foo-tag").add("bar-tag"))));
+      assertThat(ZonedDateTime.parse(user.getString("createdDate")), is(lessThanOrEqualTo(ZonedDateTime.now())));
       return null;
     });
 
@@ -336,23 +320,11 @@ public class RestVerticleIT {
     Future<JsonObject> future = getJson(context, "/users/" + bobCircleId);
 
     return future.map(user -> {
-      if (user.getString("username").equals("bobcircle")) {
-        Date createdDate = null;
-        Date updatedDate = null;
-        try {
-          createdDate = new DateTime(user.getString("createdDate")).toDate();
-          updatedDate = new DateTime(user.getString("updatedDate")).toDate();
-        } catch (Exception e) {
-          fail(e.getMessage());
-        }
-
-        Date now = new Date();
-        if (createdDate.after(now) || updatedDate.after(now) || createdDate.after(updatedDate)) {
-          fail("Bad value for createdDate and/or updatedDate");
-        }
-      } else {
-        fail("Unable to read proper data from JSON return value: " + encode(user));
-      }
+      assertThat(user.getString("username"), is("bobcircle"));
+      var createdDate = ZonedDateTime.parse(user.getString("createdDate"));
+      var updatedDate = ZonedDateTime.parse(user.getString("updatedDate"));
+      assertThat(createdDate, is(lessThanOrEqualTo(updatedDate)));
+      assertThat(updatedDate, is(lessThanOrEqualTo(ZonedDateTime.now())));
       return null;
     });
   }
@@ -1142,22 +1114,12 @@ public class RestVerticleIT {
     Future<String> f2 = f1.compose(v -> getJson(context, endpoint + "/" + v))
       .map(response -> {
         if (checkMeta) {
-          Date createdDate = null;
-          try {
-            JsonObject metadata = response.getJsonObject("metadata");
-            if (metadata == null) {
-              fail(String.format("No 'metadata' field in result: %s",
-                response.toString()));
-            }
-            createdDate = new DateTime(metadata.getString("createdDate")).toDate();
-          } catch (Exception e) {
-            fail(e.getMessage());
+          JsonObject metadata = response.getJsonObject("metadata");
+          if (metadata == null) {
+            fail(String.format("No 'metadata' field in result: %s", response.toString()));
           }
-
-          Date now = new Date();
-          if (!createdDate.before(now)) {
-            fail("metadata createdDate is not correct");
-          }
+          var createdDate = ZonedDateTime.parse(metadata.getString("createdDate"));
+          assertThat(createdDate, is(lessThanOrEqualTo(ZonedDateTime.now())));
         }
         return response.getString("id");
       });
