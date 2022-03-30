@@ -16,6 +16,7 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.interfaces.Results;
@@ -89,6 +90,17 @@ public class UsersAPITest {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
         })), null);
+  }
+
+  @Test
+  void removeCustomField(VertxTestContext vtc) {
+    CustomFields customFields = new CustomFields().withAdditionalProperty("test", "");
+    User user = new User().withCustomFields(customFields);
+    new UsersAPI().removeCustomFieldIfEmpty(user);
+    vtc.verify(() -> {
+      assertThat(String.valueOf(user.getCustomFields() != null), true);
+    });
+    vtc.completeNow();
   }
 
   @Test

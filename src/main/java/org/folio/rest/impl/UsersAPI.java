@@ -19,9 +19,10 @@ import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.annotations.Validate;
+import org.folio.rest.jaxrs.model.*;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
-import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
@@ -157,6 +158,12 @@ public class UsersAPI implements Users {
     }
   }
 
+  void removeCustomFieldIfEmpty(User entity) {
+    var customField = entity.getCustomFields().getAdditionalProperties();
+    if (!customField.isEmpty())
+      customField.entrySet().removeIf(obj -> obj.getValue().toString().isEmpty());
+  }
+
   @Validate
   @Override
   public void postUsers(String lang, User entity,
@@ -181,6 +188,7 @@ public class UsersAPI implements Users {
       succeededFuture()
         .compose(o -> {
           postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
+          removeCustomFieldIfEmpty(entity);
           return new ValidationServiceImpl(vertxContext)
             .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
         })
