@@ -157,11 +157,15 @@ public class UsersAPI implements Users {
     }
   }
 
-  void removeCustomFieldIfEmpty(User entity) {
+  private void removeCustomFieldIfEmpty(User entity) {
     var customField = (entity.getCustomFields() != null) ?
       entity.getCustomFields().getAdditionalProperties() : null;
     if (customField != null)
-      customField.entrySet().removeIf(obj -> obj.getValue().toString().isEmpty());
+      customField.entrySet().removeIf(obj -> {
+        if (obj.getValue() instanceof String)
+          return obj.getValue().toString().isEmpty();
+        return false;
+      });
   }
 
   @Validate

@@ -94,12 +94,16 @@ public class UsersAPITest {
   }
 
   @Test
-  void removeCustomField(VertxTestContext vtc) {
+  void postUsersRemoveCustomFieldIfEmptyString(VertxTestContext vtc) {
+    Map<String,String> okapiHeaders = new HashMap<>();
     CustomFields customFields = new CustomFields().withAdditionalProperty("test", "");
     User user = new User().withCustomFields(customFields);
-    new UsersAPI().removeCustomFieldIfEmpty(user);
-    vtc.verify(() -> assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty()));
-    vtc.completeNow();
+    System.out.println(user.getCustomFields());
+    new UsersAPI().postUsers(null, user, null, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty());
+        vtc.completeNow();
+      })), Vertx.vertx().getOrCreateContext());
   }
 
   @Test
