@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -97,9 +98,7 @@ public class UsersAPITest {
     CustomFields customFields = new CustomFields().withAdditionalProperty("test", "");
     User user = new User().withCustomFields(customFields);
     new UsersAPI().removeCustomFieldIfEmpty(user);
-    vtc.verify(() -> {
-      assertThat(String.valueOf(user.getCustomFields() == null), true);
-    });
+    vtc.verify(() -> assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty()));
     vtc.completeNow();
   }
 
