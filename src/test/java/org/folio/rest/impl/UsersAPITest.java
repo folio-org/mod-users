@@ -98,7 +98,7 @@ public class UsersAPITest {
     User user = new User().withCustomFields(customFields);
     new UsersAPI().removeCustomFieldIfEmpty(user);
     vtc.verify(() -> {
-      assertThat(String.valueOf(user.getCustomFields() != null), true);
+      assertThat(String.valueOf(user.getCustomFields() == null), true);
     });
     vtc.completeNow();
   }

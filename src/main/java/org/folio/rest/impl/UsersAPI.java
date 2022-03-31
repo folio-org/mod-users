@@ -159,8 +159,9 @@ public class UsersAPI implements Users {
   }
 
   void removeCustomFieldIfEmpty(User entity) {
-    var customField = entity.getCustomFields().getAdditionalProperties();
-    if (!customField.isEmpty())
+    var customField = (entity.getCustomFields() != null) ?
+      entity.getCustomFields().getAdditionalProperties() : null;
+    if (customField != null)
       customField.entrySet().removeIf(obj -> obj.getValue().toString().isEmpty());
   }
 
@@ -332,8 +333,12 @@ public class UsersAPI implements Users {
 
     try {
       Future.succeededFuture()
-        .compose(o -> new ValidationServiceImpl(vertxContext)
-          .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders)))
+        .compose(o -> {
+          removeCustomFieldIfEmpty(entity);
+          return new ValidationServiceImpl(vertxContext)
+              .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
+          }
+        )
         .compose(o -> {
           if (checkForDuplicateAddressTypes(entity)) {
             asyncResultHandler.handle(Future.succeededFuture(
