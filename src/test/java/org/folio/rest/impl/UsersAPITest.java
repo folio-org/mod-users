@@ -98,7 +98,7 @@ public class UsersAPITest {
     Map<String,String> okapiHeaders = new HashMap<>();
     CustomFields customFields = new CustomFields().withAdditionalProperty("test", "");
     User user = new User().withCustomFields(customFields);
-    System.out.println(user.getCustomFields());
+
     new UsersAPI().postUsers(null, user, null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty());
