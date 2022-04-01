@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -16,6 +17,7 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.interfaces.Results;
@@ -89,6 +91,19 @@ public class UsersAPITest {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
         })), null);
+  }
+
+  @Test
+  void postUsersRemoveCustomFieldIfEmptyString(VertxTestContext vtc) {
+    Map<String,String> okapiHeaders = new HashMap<>();
+    CustomFields customFields = new CustomFields().withAdditionalProperty("test", "");
+    User user = new User().withCustomFields(customFields);
+
+    new UsersAPI().postUsers(null, user, null, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty());
+        vtc.completeNow();
+      })), Vertx.vertx().getOrCreateContext());
   }
 
   @Test

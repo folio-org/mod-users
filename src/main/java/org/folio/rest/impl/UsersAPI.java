@@ -157,6 +157,17 @@ public class UsersAPI implements Users {
     }
   }
 
+  private void removeCustomFieldIfEmpty(User entity) {
+    var customField = (entity.getCustomFields() != null) ?
+      entity.getCustomFields().getAdditionalProperties() : null;
+    if (customField != null)
+      customField.entrySet().removeIf(obj -> {
+        if (obj.getValue() instanceof String)
+          return obj.getValue().toString().isEmpty();
+        return false;
+      });
+  }
+
   @Validate
   @Override
   public void postUsers(String lang, User entity,
@@ -181,6 +192,7 @@ public class UsersAPI implements Users {
       succeededFuture()
         .compose(o -> {
           postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
+          removeCustomFieldIfEmpty(entity);
           return new ValidationServiceImpl(vertxContext)
             .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
         })
@@ -324,8 +336,12 @@ public class UsersAPI implements Users {
 
     try {
       Future.succeededFuture()
-        .compose(o -> new ValidationServiceImpl(vertxContext)
-          .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders)))
+        .compose(o -> {
+          removeCustomFieldIfEmpty(entity);
+          return new ValidationServiceImpl(vertxContext)
+              .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
+          }
+        )
         .compose(o -> {
           if (checkForDuplicateAddressTypes(entity)) {
             asyncResultHandler.handle(Future.succeededFuture(
