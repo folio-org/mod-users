@@ -60,30 +60,8 @@ public class PatronPinAPI implements PatronPin {
   private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(PatronPinAPI.class);
 
-  static Response response(String message, Throwable e, String lang,
-      Function<String,Response> report400, Function<String,Response> report500) {
-
-    try {
-      Throwable cause = e;
-      while (cause != null) {
-        if (cause instanceof CQLParseException || cause instanceof FieldException) {
-          return report400.apply("CQL Parsing Error for '" + message + "': " + cause.getMessage());
-        }
-        if (cause instanceof IllegalStateException) {
-          return report400.apply("CQL Illegal State Error for '" + message + "': " + cause.getMessage());
-        }
-        cause = cause.getCause();
-      }
-      return report500.apply(messages.getMessage(lang, MessageConsts.InternalServerError));
-    } catch (Exception e2) {
-      logger.error(e2.getMessage(), e2);
-      return report500.apply(e2.getMessage());
-    }
-  }
-
-
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.debug("postPatronPin");
+    logger.info("postPatronPin");
 
     // Using SHA-512 algorithm with HMAC, to increase the memory requirement to its maximum, making it most secure pbkdf2 option.
     // SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512") ;
@@ -96,17 +74,17 @@ public class PatronPinAPI implements PatronPin {
     // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
     // byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
 
-    PostPatronPinResponse.respond201();
+    asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
   }
 
   public void deletePatronPin(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.debug("deletePatronPin");
-    DeletePatronPinResponse.respond200();
+    logger.info("deletePatronPin");
+    asyncResultHandler.handle(Future.succeededFuture( DeletePatronPinResponse.respond200()));
   }
 
   public void postPatronPinVerify(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.debug("postPatronPinVerify");
-    PostPatronPinVerifyResponse.respond200();
+    logger.info("postPatronPinVerify");
+    asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
   }
 
 }
