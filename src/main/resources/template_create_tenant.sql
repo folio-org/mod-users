@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS myuniversity_mymodule.proxyfor (
 
 CREATE TABLE IF NOT EXISTS myuniversity_mymodule.userpin (
 	userid UUID PRIMARY KEY DEFAULT gen_random_uuid() REFERENCES users ON DELETE CASCADE,
-	pin VARCHAR(64) NOT NULL
+	jsonb jsonb NOT NULL
 	);
 
 -- left join so that we have all the users even if there is no group associated with them

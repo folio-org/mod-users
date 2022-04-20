@@ -87,6 +87,44 @@ public class PatronPinAPI implements PatronPin {
     asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
   }
 
+
+  private Future<Boolean> checkPinExistsForUser(String userId, Context vertxContext, PostgresClient postgresClient) {
+
+    Promise<Boolean> promise = Promise.promise();
+    promise.complete(true);
+
+    /*
+    Criterion criterion = new Criterion(
+          new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
+                  setJSONB(false).setOperation("=").setVal(addressTypeId));
+    vertxContext.runOnContext(v -> {
+      try {
+        postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true, reply -> {
+          try {
+            if (reply.failed()) {
+              String message = reply.cause().getLocalizedMessage();
+              logger.error(message, reply.cause());
+              promise.fail(reply.cause());
+            } else {
+              List<AddressType> addressTypeList = reply.result().getResults();
+              promise.complete(!addressTypeList.isEmpty());
+            }
+          } catch (Exception e) {
+            String message = e.getLocalizedMessage();
+            logger.error(message, e);
+            promise.fail(e);
+          }
+        });
+      } catch (Exception e) {
+        String message = e.getLocalizedMessage();
+        logger.error(message, e);
+        promise.fail(e);
+      }
+    });
+    */
+    return promise.future();
+  }
+
 }
 
 
