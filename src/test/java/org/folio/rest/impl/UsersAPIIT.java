@@ -87,6 +87,24 @@ class UsersAPIIT {
     userDoesntExist(id3);
   }
 
+  @Test
+  void postPatronPin() {
+    String id1 = UUID.randomUUID().toString();
+    String id2 = UUID.randomUUID().toString();
+    String id3 = UUID.randomUUID().toString();
+    postUser(id1, "apple");
+    postUser(id2, "banana");
+    postUser(id3, "cherry");
+
+    postPatronPinOK(id1, "1468");
+
+    pinIsCorrect(id1, "1468");
+    pinIsIncorrect(id1, "1467");
+    pinIsIncorrect(id2, "1111");
+
+    deletePatronPinOK(id1);
+  }
+
   static RequestSpecification given() {
     return RestAssured
         .given()
@@ -188,4 +206,42 @@ class UsersAPIIT {
       body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
 
   }
+
+  void postPatronPinOK(String id, String pin) {
+    given().
+    when().
+      body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
+      post("/users/patron-pin").
+    then().
+      statusCode(201);
+  }
+
+
+  void deletePatronPinOK(String id) {
+    given().
+    when().
+      body(new JsonObject().put("userId",  id)).
+      delete("/users/patron-pin").
+    then().
+      statusCode(200);
+  }
+
+  void pinIsCorrect(String id, String pin) {
+    given().
+    when().
+      body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
+      post("/users/patron-pin/verify").
+    then().
+      statusCode(200);
+  }
+
+  void pinIsIncorrect(String id, String pin) {
+    given().
+    when().
+      body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
+      post("/users/patron-pin/verify").
+    then().
+      statusCode(422);
+  }
+
 }
