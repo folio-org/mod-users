@@ -1,0 +1,32 @@
+#%RAML 1.0
+title: Users
+version: v1.0
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: patron-pins API
+    content: This documents the API calls that can be made to set and verify patron pins
+
+types:
+  patronpin: !include patronpin.json
+  errors: !include raml-util/schemas/errors.schema
+
+/patron-pin:
+  post:
+    description: Set the PIN for a user
+    responses:
+      201:
+        description: Pin created
+  delete:
+    description: Remove the PIN for a user
+    responses:
+      200: 
+        description: Pin removed
+  /verify:
+    post:
+      description: Verify the pin posted
+      responses:
+        200:
+          description: Pin valid
+        422:
+          description: Pin not valid

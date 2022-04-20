@@ -84,23 +84,3 @@ resourceTypes:
           description: Internal error
           body:
             text/plain:
-  /patron-pin:
-    post:
-      description: Set the PIN for a user
-      responses:
-        201:
-          description: Pin created
-    delete:
-      description: Remove the PIN for a user
-      responses:
-        200: 
-          description: Pin removed
-    /verify:
-      post:
-        description: Verify the pin posted
-        responses:
-          200:
-            description: Pin valid
-          422:
-            description: Pin not valid
-

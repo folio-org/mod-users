@@ -211,7 +211,7 @@ class UsersAPIIT {
     given().
     when().
       body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
-      post("/users/patron-pin").
+      post("/patron-pin").
     then().
       statusCode(201);
   }
@@ -221,7 +221,7 @@ class UsersAPIIT {
     given().
     when().
       body(new JsonObject().put("userId",  id)).
-      delete("/users/patron-pin").
+      delete("/patron-pin").
     then().
       statusCode(200);
   }
@@ -230,7 +230,7 @@ class UsersAPIIT {
     given().
     when().
       body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
-      post("/users/patron-pin/verify").
+      post("/patron-pin/verify").
     then().
       statusCode(200);
   }
@@ -239,7 +239,7 @@ class UsersAPIIT {
     given().
     when().
       body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
-      post("/users/patron-pin/verify").
+      post("/patron-pin/verify").
     then().
       statusCode(422);
   }
