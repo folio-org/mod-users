@@ -14,6 +14,10 @@ types:
 /patron-pin:
   post:
     description: Set the PIN for a user
+    body:
+      application/json:
+        schema: patronpin
+
     responses:
       201:
         description: Pin created
