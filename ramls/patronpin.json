@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Patron PIN Schema",
+  "description": "A Patron UI and Corresponding PIN",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "description": "ID of user",
+      "type": "string"
+    },
+    "pin": {
+      "description": "PIN of user",
+      "type": "string"
+    }
+  }
+}

@@ -25,6 +25,11 @@ CREATE TABLE IF NOT EXISTS myuniversity_mymodule.proxyfor (
 	jsonb jsonb NOT NULL
 	);
 
+CREATE TABLE IF NOT EXISTS myuniversity_mymodule.userpin (
+	userid UUID PRIMARY KEY DEFAULT gen_random_uuid() REFERENCES users ON DELETE CASCADE,
+	pin VARCHAR(64) NOT NULL
+	);
+
 -- left join so that we have all the users even if there is no group associated with them
 CREATE VIEW myuniversity_mymodule.users_groups_view AS select u.id,u.jsonb as jsonb, g.jsonb as group_jsonb from myuniversity_mymodule.users u
 left join myuniversity_mymodule.groups g on u.jsonb->>'patronGroup' = g.jsonb->>'id'; -- order by g.jsonb->>'group' desc;
