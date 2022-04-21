@@ -72,7 +72,7 @@ public class PatronPinAPI implements PatronPin {
     entity.setPin(derived_key);
 
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-    Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity);
+    Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true);
     f.onComplete(  ar -> {
       logger.info("Done saving : "+ar.toString());
     });
@@ -111,45 +111,6 @@ public class PatronPinAPI implements PatronPin {
     });
     
   }
-
-
-  private Future<Boolean> checkPinExistsForUser(String userId, Context vertxContext, PostgresClient postgresClient) {
-
-    Promise<Boolean> promise = Promise.promise();
-    promise.complete(true);
-
-    /*
-    Criterion criterion = new Criterion(
-          new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
-                  setJSONB(false).setOperation("=").setVal(addressTypeId));
-    vertxContext.runOnContext(v -> {
-      try {
-        postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true, reply -> {
-          try {
-            if (reply.failed()) {
-              String message = reply.cause().getLocalizedMessage();
-              logger.error(message, reply.cause());
-              promise.fail(reply.cause());
-            } else {
-              List<AddressType> addressTypeList = reply.result().getResults();
-              promise.complete(!addressTypeList.isEmpty());
-            }
-          } catch (Exception e) {
-            String message = e.getLocalizedMessage();
-            logger.error(message, e);
-            promise.fail(e);
-          }
-        });
-      } catch (Exception e) {
-        String message = e.getLocalizedMessage();
-        logger.error(message, e);
-        promise.fail(e);
-      }
-    });
-    */
-    return promise.future();
-  }
-
 
   private String getDerivation(String input, String salt) {
     String result = null;

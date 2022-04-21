@@ -98,10 +98,15 @@ class UsersAPIIT {
 
     postPatronPinOK(id1, "1468");
     postPatronPinOK(id2, "ThisIsALonger1234PinWithSomeNumbers");
+    postPatronPinOK(id3, "7778");
+    // Update the patron pin for cherry
+    postPatronPinOK(id3, "7777");
 
     pinIsCorrect(id1, "1468");
     pinIsIncorrect(id1, "1467");
     pinIsIncorrect(id2, "1111");
+    pinIsIncorrect(id3, "7778");
+    pinIsCorrect(id3, "7777");
 
     deletePatronPinOK(id1);
   }
