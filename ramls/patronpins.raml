@@ -27,6 +27,9 @@ types:
             example: "Internal server error, contact administrator"
   delete:
     description: Remove the PIN for a user
+    body:
+      application/json:
+        schema: patronpin
     responses:
       200: 
         description: Pin removed

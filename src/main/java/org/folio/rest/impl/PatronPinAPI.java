@@ -80,8 +80,11 @@ public class PatronPinAPI implements PatronPin {
     asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
   }
 
-  public void deletePatronPin(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("deletePatronPin");
+
+    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+    Future f = pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId());
     asyncResultHandler.handle(Future.succeededFuture( DeletePatronPinResponse.respond200()));
   }
 
