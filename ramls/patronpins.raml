@@ -38,6 +38,9 @@ types:
   /verify:
     post:
       description: Verify the pin posted
+      body:
+        application/json:
+          schema: patronpin
       responses:
         200:
           description: Pin valid

@@ -50,6 +50,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import io.vertx.ext.web.RoutingContext;
@@ -67,39 +68,14 @@ public class PatronPinAPI implements PatronPin {
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("postPatronPin "+entity.toString());
 
-    // PgUtil.post(TABLE_NAME_PATRON_PIN, entity, okapiHeaders, vertxContext, PostPatronPinResponse.class, reply -> {
-    //   logger.debug("postPatronPin reply="+reply.toString());
-      // asyncResultHandler.handle(reply);
-    // });
+    String derived_key = getDerivation(entity.getPin(), entity.getId());
+    entity.setPin(derived_key);
 
-
-    // Using SHA-512 algorithm with HMAC, to increase the memory requirement to its maximum, making it most secure pbkdf2 option.
-    try {
-      SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512") ;
-      PBEKeySpec keySpec = new PBEKeySpec(entity.getPin().toCharArray(), // Input character array of password
-                                          entity.getId().getBytes(), // We should add tenant is here also?
-                                          150000, // Iteration count (c)
-                                          64) ; // 256 bits output hashed password
-      // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
-      byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
-      String hashedString = javax.xml.bind.DatatypeConverter.printHexBinary(pbkdfHashedArray);
-      logger.info("Generated as "+hashedString);
-      entity.setPin(hashedString);
-
-      PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-      Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity);
-      f.onComplete(  ar -> {
-        logger.info("Done saving : "+ar.toString());
-      });
-
-    }
-    catch ( java.security.NoSuchAlgorithmException nsae ) {
-      // reactive handler
-      logger.error("Unable to encode pin",nsae);
-    }
-    catch ( java.security.spec.InvalidKeySpecException ikse ) {
-      logger.error("Unable to encode pin",ikse);
-    }
+    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+    Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity);
+    f.onComplete(  ar -> {
+      logger.info("Done saving : "+ar.toString());
+    });
 
     asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
   }
@@ -109,9 +85,31 @@ public class PatronPinAPI implements PatronPin {
     asyncResultHandler.handle(Future.succeededFuture( DeletePatronPinResponse.respond200()));
   }
 
-  public void postPatronPinVerify(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("postPatronPinVerify");
-    asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
+    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+
+    String supplied_pin_derivation = getDerivation(entity.getPin(), entity.getId());
+
+    Future f = pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId());
+    f.onComplete( res -> {
+      io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
+      if (ar.succeeded()) {
+        logger.info("Done get : "+ar.toString()+" compare key with "+supplied_pin_derivation);
+
+        JsonObject jo = (JsonObject) ar.result();
+        if ( jo.getString("pin").equals(supplied_pin_derivation) ) {
+          logger.info("Pins match");
+          asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
+        }
+        else {
+          logger.info("Pins do not match");
+          asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
+        }
+      } else {
+      }
+    });
+    
   }
 
 
@@ -152,6 +150,31 @@ public class PatronPinAPI implements PatronPin {
     return promise.future();
   }
 
+
+  private String getDerivation(String input, String salt) {
+    String result = null;
+    try {
+      SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512") ;
+      PBEKeySpec keySpec = new PBEKeySpec(input.toCharArray(), // Input character array of password
+                                          salt.getBytes(), // We should add tenant is here also?
+                                          150000, // Iteration count (c)
+                                          64) ; // 256 bits output hashed password
+
+      // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
+      byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
+      result = javax.xml.bind.DatatypeConverter.printHexBinary(pbkdfHashedArray);
+      logger.info("Generated as "+result);
+    }
+    catch ( java.security.NoSuchAlgorithmException nsae ) {
+      // reactive handler
+      logger.error("Unable to encode pin",nsae);
+    }
+    catch ( java.security.spec.InvalidKeySpecException ikse ) {
+      logger.error("Unable to encode pin",ikse);
+    }
+
+    return result;
+  }
 }
 
 
