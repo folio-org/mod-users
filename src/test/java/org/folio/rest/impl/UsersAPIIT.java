@@ -97,6 +97,7 @@ class UsersAPIIT {
     postUser(id3, "cherry");
 
     postPatronPinOK(id1, "1468");
+    postPatronPinOK(id2, "ThisIsALonger1234PinWithSomeNumbers");
 
     pinIsCorrect(id1, "1468");
     pinIsIncorrect(id1, "1467");
