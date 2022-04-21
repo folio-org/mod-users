@@ -226,7 +226,7 @@ class UsersAPIIT {
   void deletePatronPinOK(String id) {
     given().
     when().
-      body(new JsonObject().put("id",  id)).
+      body(new JsonObject().put("id",  id).encode()).
       delete("/patron-pin").
     then().
       statusCode(200);
