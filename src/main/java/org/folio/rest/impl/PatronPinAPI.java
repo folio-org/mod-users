@@ -66,10 +66,10 @@ public class PatronPinAPI implements PatronPin {
 
     // DBClient client = new DBClient(vertxContext, okapiHeaders);
 
-    PgUtil.post(TABLE_NAME_PATRON_PIN, entity, okapiHeaders, vertxContext, PostPatronPinResponse.class, reply -> {
-      logger.debug("postPatronPin reply="+reply.toString());
+    // PgUtil.post(TABLE_NAME_PATRON_PIN, entity, okapiHeaders, vertxContext, PostPatronPinResponse.class, reply -> {
+    //   logger.debug("postPatronPin reply="+reply.toString());
       // asyncResultHandler.handle(reply);
-    });
+    // });
 
 
     // Using SHA-512 algorithm with HMAC, to increase the memory requirement to its maximum, making it most secure pbkdf2 option.
@@ -83,7 +83,7 @@ public class PatronPinAPI implements PatronPin {
     // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
     // byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
 
-    // asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
+    asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
   }
 
   public void deletePatronPin(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
