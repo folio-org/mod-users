@@ -17,15 +17,24 @@ types:
     body:
       application/json:
         schema: patronpin
-
     responses:
       201:
         description: Pin created
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"
   delete:
     description: Remove the PIN for a user
     responses:
       200: 
         description: Pin removed
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"
   /verify:
     post:
       description: Verify the pin posted
@@ -34,3 +43,9 @@ types:
           description: Pin valid
         422:
           description: Pin not valid
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"
+

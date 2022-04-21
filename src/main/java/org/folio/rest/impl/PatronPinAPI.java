@@ -59,9 +59,18 @@ public class PatronPinAPI implements PatronPin {
 
   private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(PatronPinAPI.class);
+  public static final String TABLE_NAME_PATRON_PIN = "userpin";
 
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("postPatronPin");
+
+    // DBClient client = new DBClient(vertxContext, okapiHeaders);
+
+    PgUtil.post(TABLE_NAME_PATRON_PIN, entity, okapiHeaders, vertxContext, PostPatronPinResponse.class, reply -> {
+      logger.debug("postPatronPin reply="+reply.toString());
+      // asyncResultHandler.handle(reply);
+    });
+
 
     // Using SHA-512 algorithm with HMAC, to increase the memory requirement to its maximum, making it most secure pbkdf2 option.
     // SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512") ;
@@ -74,7 +83,7 @@ public class PatronPinAPI implements PatronPin {
     // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
     // byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
 
-    asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
+    // asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
   }
 
   public void deletePatronPin(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
