@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS myuniversity_mymodule.proxyfor (
 	jsonb jsonb NOT NULL
 	);
 
-CREATE TABLE IF NOT EXISTS myuniversity_mymodule.userpin (
-	id UUID PRIMARY KEY DEFAULT gen_random_uuid() REFERENCES users ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS myuniversity_mymodule.patronpin (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	jsonb jsonb NOT NULL
 	);
 

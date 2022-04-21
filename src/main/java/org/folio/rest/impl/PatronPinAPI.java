@@ -28,6 +28,8 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PgUtil;
+
+//https://github.com/folio-org/raml-module-builder/blob/10d34b51d42e038d675430da4d94bcdea9558c52/domain-models-runtime/src/main/java/org/folio/rest/persist/PostgresClient.java
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.persist.facets.FacetField;
@@ -59,12 +61,17 @@ public class PatronPinAPI implements PatronPin {
 
   private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(PatronPinAPI.class);
-  public static final String TABLE_NAME_PATRON_PIN = "userpin";
+  public static final String TABLE_NAME_PATRON_PIN = "patronpin";
 
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.info("postPatronPin");
+    logger.info("postPatronPin "+entity.toString());
 
-    // DBClient client = new DBClient(vertxContext, okapiHeaders);
+    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+
+    Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity);
+    f.onComplete(  ar -> {
+      logger.info("Done"+ar.toString());
+    });
 
     // PgUtil.post(TABLE_NAME_PATRON_PIN, entity, okapiHeaders, vertxContext, PostPatronPinResponse.class, reply -> {
     //   logger.debug("postPatronPin reply="+reply.toString());

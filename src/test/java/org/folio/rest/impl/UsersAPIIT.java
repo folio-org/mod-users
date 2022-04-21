@@ -210,7 +210,7 @@ class UsersAPIIT {
   void postPatronPinOK(String id, String pin) {
     given().
     when().
-      body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
+      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
       post("/patron-pin").
     then().
       statusCode(201);
@@ -220,7 +220,7 @@ class UsersAPIIT {
   void deletePatronPinOK(String id) {
     given().
     when().
-      body(new JsonObject().put("userId",  id)).
+      body(new JsonObject().put("id",  id)).
       delete("/patron-pin").
     then().
       statusCode(200);
@@ -229,7 +229,7 @@ class UsersAPIIT {
   void pinIsCorrect(String id, String pin) {
     given().
     when().
-      body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
+      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
       post("/patron-pin/verify").
     then().
       statusCode(200);
@@ -238,7 +238,7 @@ class UsersAPIIT {
   void pinIsIncorrect(String id, String pin) {
     given().
     when().
-      body(new JsonObject().put("userId",  id).put("pin", pin).encode()).
+      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
       post("/patron-pin/verify").
     then().
       statusCode(422);

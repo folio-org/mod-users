@@ -222,6 +222,11 @@
           "tOps" : "ADD"
         }
       ]
+    },
+    {
+      "tableName" : "patronpin",
+      "fromModuleVersion" : "18.3",
+      "withMetadata" : true
     }
   ],
   "views" : [
