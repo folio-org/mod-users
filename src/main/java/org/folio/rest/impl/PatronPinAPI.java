@@ -37,7 +37,7 @@ public class PatronPinAPI implements PatronPin {
     Future<String> f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true);
 
     f.onComplete( res -> {
-      io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
+      io.vertx.core.AsyncResult<String> ar = res;
       if (ar.succeeded()) {
         asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
       }
@@ -52,7 +52,7 @@ public class PatronPinAPI implements PatronPin {
     Future<io.vertx.sqlclient.RowSet<io.vertx.sqlclient.Row>> f = pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId());
 
     f.onComplete( res -> {
-      io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
+      io.vertx.core.AsyncResult<io.vertx.sqlclient.RowSet<io.vertx.sqlclient.Row>> ar = res;
       if (ar.succeeded()) {
         asyncResultHandler.handle(Future.succeededFuture( DeletePatronPinResponse.respond200()));
       }
@@ -70,9 +70,9 @@ public class PatronPinAPI implements PatronPin {
 
     Future<io.vertx.core.json.JsonObject> f = pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId());
     f.onComplete( res -> {
-      io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
+      io.vertx.core.AsyncResult<io.vertx.core.json.JsonObject> ar = res;
       if (ar.succeeded()) {
-        JsonObject jo = (JsonObject) ar.result();
+        JsonObject jo = ar.result();
         if ( jo.getString("pin").equals(supplied_pin_derivation) ) {
           asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
         }
