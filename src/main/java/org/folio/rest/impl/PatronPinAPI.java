@@ -21,10 +21,11 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+import java.util.Map;
+
 
 public class PatronPinAPI implements PatronPin {
 
-  private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(PatronPinAPI.class);
   public static final String TABLE_NAME_PATRON_PIN = "patronpin";
 
