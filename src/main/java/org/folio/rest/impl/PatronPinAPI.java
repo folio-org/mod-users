@@ -30,13 +30,11 @@ public class PatronPinAPI implements PatronPin {
   public static final String TABLE_NAME_PATRON_PIN = "patronpin";
 
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.info(String.format("postPatronPin %s",entity.toString()));
-
     String derivedKey = getDerivation(entity.getPin(), entity.getId());
     entity.setPin(derivedKey);
 
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-    Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true);
+    Future<String> f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true);
 
     f.onComplete( res -> {
       io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
@@ -51,7 +49,8 @@ public class PatronPinAPI implements PatronPin {
 
   public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-    Future f = pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId());
+    Future<io.vertx.sqlclient.RowSet<io.vertx.sqlclient.Row>> f = pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId());
+
     f.onComplete( res -> {
       io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
       if (ar.succeeded()) {
@@ -69,7 +68,7 @@ public class PatronPinAPI implements PatronPin {
 
     String supplied_pin_derivation = getDerivation(entity.getPin(), entity.getId());
 
-    Future f = pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId());
+    Future<io.vertx.core.json.JsonObject> f = pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId());
     f.onComplete( res -> {
       io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
       if (ar.succeeded()) {
