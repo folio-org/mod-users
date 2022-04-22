@@ -194,6 +194,27 @@
       ]
     },
     {
+      "id": "patron-pin",
+      "version": "1.0",
+      "handlers" : [
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/patron-pin",
+          "permissionsRequired": [ "patron-pin.set" ]
+        },
+        {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/patron-pin",
+          "permissionsRequired": [ "patron-pin.delete" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/patron-pin/validate",
+          "permissionsRequired": [ "patron-pin.validate" ]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "2.0",
       "interfaceType" : "system",
