@@ -66,14 +66,14 @@ public class PatronPinAPI implements PatronPin {
   public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-    String supplied_pin_derivation = getDerivation(entity.getPin(), entity.getId());
+    String suppliedPinDerivation = getDerivation(entity.getPin(), entity.getId());
 
     Future<io.vertx.core.json.JsonObject> f = pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId());
     f.onComplete( res -> {
       io.vertx.core.AsyncResult<io.vertx.core.json.JsonObject> ar = res;
       if (ar.succeeded()) {
         JsonObject jo = ar.result();
-        if ( jo.getString("pin").equals(supplied_pin_derivation) ) {
+        if ( jo.getString("pin").equals(suppliedPinDerivation) ) {
           asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
         }
         else {
