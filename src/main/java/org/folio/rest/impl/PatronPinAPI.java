@@ -73,21 +73,24 @@ public class PatronPinAPI implements PatronPin {
 
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true);
-    f.onComplete(  ar -> {
-      logger.info("Done saving : "+ar.toString());
-    });
 
-    asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
+    f.onComplete( res -> {
+      io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
+      if (ar.succeeded()) {
+        asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
+      }
+      else {
+        asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond500WithTextPlain("Failed to set Pin "+ar.toString())));
+      }
+    });
   }
 
   public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.info("deletePatronPin "+entity.toString());
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     Future f = pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId());
     f.onComplete( res -> {
       io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
       if (ar.succeeded()) {
-        logger.info("Done delete : "+ar.toString());
         asyncResultHandler.handle(Future.succeededFuture( DeletePatronPinResponse.respond200()));
       }
       else {
@@ -98,7 +101,6 @@ public class PatronPinAPI implements PatronPin {
   }
 
   public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.info("postPatronPinVerify");
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
     String supplied_pin_derivation = getDerivation(entity.getPin(), entity.getId());
@@ -107,11 +109,8 @@ public class PatronPinAPI implements PatronPin {
     f.onComplete( res -> {
       io.vertx.core.AsyncResult ar = (io.vertx.core.AsyncResult) res;
       if (ar.succeeded()) {
-        logger.info("Done get : "+ar.toString()+" compare key with "+supplied_pin_derivation);
-
         JsonObject jo = (JsonObject) ar.result();
         if ( jo.getString("pin").equals(supplied_pin_derivation) ) {
-          logger.info("Pins match");
           asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
         }
         else {
@@ -119,6 +118,7 @@ public class PatronPinAPI implements PatronPin {
           asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
         }
       } else {
+        asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
       }
     });
     
@@ -136,7 +136,6 @@ public class PatronPinAPI implements PatronPin {
       // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
       byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
       result = javax.xml.bind.DatatypeConverter.printHexBinary(pbkdfHashedArray);
-      logger.info("Generated as "+result);
     }
     catch ( java.security.NoSuchAlgorithmException nsae ) {
       // reactive handler
