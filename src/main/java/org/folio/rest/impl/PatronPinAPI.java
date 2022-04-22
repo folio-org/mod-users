@@ -1,59 +1,22 @@
 package org.folio.rest.impl;
 
-import static io.vertx.core.Future.succeededFuture;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.mutable.MutableObject;
-import org.folio.cql2pgjson.CQL2PgJSON;
-import org.folio.cql2pgjson.exception.CQL2PgJSONException;
-import org.folio.cql2pgjson.exception.FieldException;
-import org.folio.rest.annotations.Validate;
 
 import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.jaxrs.model.Patronpin;
 
-import org.folio.rest.persist.Criteria.Criteria;
-import org.folio.rest.persist.Criteria.Criterion;
-import org.folio.rest.persist.Criteria.Limit;
-import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PgUtil;
 
 //https://github.com/folio-org/raml-module-builder/blob/10d34b51d42e038d675430da4d94bcdea9558c52/domain-models-runtime/src/main/java/org/folio/rest/persist/PostgresClient.java
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.persist.facets.FacetField;
-import org.folio.rest.persist.facets.FacetManager;
-import org.folio.rest.tools.messages.MessageConsts;
-import org.folio.rest.tools.messages.Messages;
-import org.folio.rest.tools.utils.TenantTool;
-import org.folio.rest.tools.utils.ValidationHelper;
-import org.folio.rest.utils.ExpirationTool;
-import org.folio.validate.CustomFieldValidationException;
-import org.folio.validate.ValidationServiceImpl;
-import org.folio.okapi.common.GenericCompositeFuture;
-import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import io.vertx.ext.web.RoutingContext;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -66,10 +29,10 @@ public class PatronPinAPI implements PatronPin {
   public static final String TABLE_NAME_PATRON_PIN = "patronpin";
 
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.info("postPatronPin "+entity.toString());
+    logger.info(String.format("postPatronPin %s",entity.toString()));
 
-    String derived_key = getDerivation(entity.getPin(), entity.getId());
-    entity.setPin(derived_key);
+    String derivedKey = getDerivation(entity.getPin(), entity.getId());
+    entity.setPin(derivedKey);
 
     PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     Future f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true);
