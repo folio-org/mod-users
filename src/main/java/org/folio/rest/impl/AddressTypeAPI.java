@@ -26,11 +26,8 @@ import org.apache.logging.log4j.Logger;
  * @author kurt
  */
 public class AddressTypeAPI implements Addresstypes {
-
   public static final String ADDRESS_TYPE_TABLE = "addresstype";
-  public static final String ADDRESS_TYPE_USER_JOIN_TABLE = "address_users";
   public static final String ID_FIELD_NAME = "id";
-  public static final String URL_PREFIX = "/addresstypes";
   private static final Logger logger = LogManager.getLogger(AddressTypeAPI.class);
 
   @Validate
