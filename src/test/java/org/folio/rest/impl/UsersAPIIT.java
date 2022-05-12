@@ -18,7 +18,6 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
-import org.folio.support.Group;
 import org.folio.support.Personal;
 import org.folio.support.TagList;
 import org.folio.support.User;
@@ -442,38 +441,6 @@ class UsersAPIIT {
     final var activeUsers = usersClient.getUsers("active=true");
 
     assertThat(activeUsers.getTotalRecords(), is(2));
-  }
-
-  @Test
-  void canGetPatronGroupFacetsForUsers() {
-    final var alphaGroup = groupsClient.createGroup(Group.builder()
-      .group("Alpha group")
-      .build());
-
-    var zebraGroup = groupsClient.createGroup(Group.builder()
-      .group("Zebra group")
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("julia")
-      .patronGroup(alphaGroup.getId())
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("alex")
-      .patronGroup(zebraGroup.getId())
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("steven")
-      .patronGroup(zebraGroup.getId())
-      .build());
-
-    final var patronGroupFacets = usersClient.getPatronGroupFacets();
-
-    assertThat(patronGroupFacets.getTotalRecords(), is(3));
-    assertThat(patronGroupFacets.getFacetCount(zebraGroup.getId()), is(2));
-    assertThat(patronGroupFacets.getFacetCount(alphaGroup.getId()), is(1));
   }
 
   @Test

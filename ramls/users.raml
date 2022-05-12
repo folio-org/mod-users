@@ -18,7 +18,6 @@ traits:
   searchable: !include raml-util/traits/searchable.raml
   language: !include raml-util/traits/language.raml
   validate: !include raml-util/traits/validation.raml
-  facets: !include raml-util/traits/facets.raml
 
 resourceTypes:
   collection: !include raml-util/rtypes/collection.raml
@@ -37,8 +36,7 @@ resourceTypes:
     is: [
       searchable: {description: "", example: "active=true sortBy username"},
       orderable: {fieldsList: "field A, field B"},
-      pageable,
-      facets
+      pageable
     ]
     description: Return a list of users
   post:
