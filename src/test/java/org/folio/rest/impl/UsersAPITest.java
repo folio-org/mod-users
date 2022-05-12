@@ -35,7 +35,7 @@ import io.vertx.junit5.VertxTestContext;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
-public class UsersAPITest {
+class UsersAPITest {
   String response(String message, Throwable e) {
     Response response = UsersAPI.response(message, e, /* lang */ null,
         s -> Response.ok("400 " + s).build(),

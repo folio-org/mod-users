@@ -2,7 +2,7 @@ package org.folio.rest.utils;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -33,7 +33,7 @@ import io.vertx.sqlclient.Row;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
-public class ExpirationToolTest {
+class ExpirationToolTest {
   @AfterEach
   void cleanup() {
     ExpirationTool.postgresClient = PostgresClient::getInstance;
@@ -57,7 +57,7 @@ public class ExpirationToolTest {
   void expirationForTenantCanHandleException(Vertx vertx, VertxTestContext context) {
     PostgresClient postgresClient = mock(PostgresClient.class);
     doThrow(new RuntimeException("pg"))
-      .when(postgresClient).get(anyString(), any(Class.class), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any(Handler.class));
+      .when(postgresClient).get(anyString(), any(), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any(Handler.class));
     ExpirationTool.postgresClient = (v,t) -> postgresClient;
     Future<Integer> future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
     future.onComplete(context.failing(e -> context.verify(() -> {
