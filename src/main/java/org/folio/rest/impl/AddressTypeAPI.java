@@ -87,7 +87,7 @@ public class AddressTypeAPI implements Addresstypes {
                 .respond400WithTextPlain(message)));
               return;
             }
-            logger.info("Removing non-associated address type '" + addresstypeId + "'");
+            logger.info("Removing non-associated address type '{}'", addresstypeId);
 
             PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
               vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
