@@ -26,19 +26,10 @@ import org.folio.rest.tools.utils.ValidationHelper;
  * @author kurt
  */
 public class ProxiesForAPI implements Proxiesfor {
-
   public static final String PROXY_FOR_TABLE = "proxyfor";
   public static final String USERID_FIELD_NAME = "'userId'";
   public static final String PROXY_USERID_FIELD_NAME = "'proxyUserId'";
   private static final Logger logger = LogManager.getLogger(ProxiesForAPI.class);
-  private boolean suppressErrorResponse = false;
-
-  private String getErrorResponse(String response) {
-    if (suppressErrorResponse) {
-      return "Internal Server Error: Please contact Admin";
-    }
-    return response;
-  }
 
   private String logAndSaveError(Throwable err) {
     String message = err.getLocalizedMessage();
@@ -74,7 +65,7 @@ public class ProxiesForAPI implements Proxiesfor {
           String message = logAndSaveError(existsRes.cause());
           asyncResultHandler.handle(Future.succeededFuture(
             PostProxiesforResponse.respond500WithTextPlain(
-              getErrorResponse(message))));
+              message)));
           return;
         }
         if (Boolean.TRUE.equals(existsRes.result())) {

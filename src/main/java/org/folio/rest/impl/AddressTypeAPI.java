@@ -32,14 +32,6 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String ID_FIELD_NAME = "id";
   public static final String URL_PREFIX = "/addresstypes";
   private static final Logger logger = LogManager.getLogger(AddressTypeAPI.class);
-  private boolean suppressErrorResponse = false;
-
-  private String getErrorResponse(String response) {
-    if (suppressErrorResponse) {
-      return "Internal Server Error: Please contact Admin";
-    }
-    return response;
-  }
 
   @Validate
   @Override
@@ -88,7 +80,7 @@ public class AddressTypeAPI implements Addresstypes {
             logger.error(message, reply.cause());
             asyncResultHandler.handle(Future.succeededFuture(
               DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                getErrorResponse(message))));
+                message)));
           } else {
             List<User> userList = reply.result().getResults();
             if (! userList.isEmpty()) {
@@ -109,7 +101,7 @@ public class AddressTypeAPI implements Addresstypes {
       logger.error(message, e);
       asyncResultHandler.handle(Future.succeededFuture(
         DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-          getErrorResponse(message))));
+          message)));
     }
   }
 
