@@ -5,30 +5,36 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.support.Address;
+import org.folio.support.Personal;
+import org.folio.support.User;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import lombok.SneakyThrows;
 
 /**
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
@@ -85,6 +91,30 @@ class UsersAPIIT {
     userExists(id2);
     userDoesntExist(id1);
     userDoesntExist(id3);
+  }
+
+  @Test
+  @SneakyThrows
+  void cannotCreateUserWithMultipleAddressesOfSameType() {
+    final var HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
+
+    final var userWithMultipleAddresses = User.builder()
+      .username("julia")
+      .personal(Personal.builder()
+        .lastName("brockhurst")
+        .addresses(List.of(
+          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build(),
+          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build()))
+        .build())
+      .build();
+
+    given()
+      .when()
+      .body(new ObjectMapper().writeValueAsString(userWithMultipleAddresses))
+      .post("/users")
+      .then()
+      .statusCode(400)
+      .body(is("Users are limited to one address per addresstype"));
   }
 
   @Test
