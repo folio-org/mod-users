@@ -1,40 +1,29 @@
 package org.folio.rest.impl;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.User;
 
 class AddressValidator {
   boolean hasMultipleAddressesWithSameType(User user) {
-    Map<String, Integer> countMap = new HashMap<>();
-    if (user.getPersonal() != null &&
-      user.getPersonal().getAddresses() != null) {
-      for (Address address : user.getPersonal().getAddresses()) {
-        String addressTypeId = address.getAddressTypeId();
-        if (addressTypeId != null) {
-          boolean found = false;
-          for (String key : countMap.keySet()) {
-            if (key.equals(addressTypeId)) {
-              Integer count = countMap.get(key);
-              count = count + 1;
-              countMap.put(key, count);
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            countMap.put(addressTypeId, 1);
-          }
-        }
-      }
+    if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
+      return false;
     }
-    for (Integer i : countMap.values()) {
-      if (i > 1) {
-        return true;
-      }
-    }
-    return false;
+
+    return occursMoreThanOnce(byAddressType(user));
+  }
+
+  private boolean occursMoreThanOnce(Map<String, Integer> addressTypes) {
+    return addressTypes.entrySet().stream()
+      .anyMatch(type -> type.getValue() > 1);
+  }
+
+  private Map<String, Integer> byAddressType(User user) {
+    return user.getPersonal().getAddresses()
+      .stream()
+      .collect(Collectors.toMap(Address::getAddressTypeId, addressType -> 1,
+        Integer::sum));
   }
 }

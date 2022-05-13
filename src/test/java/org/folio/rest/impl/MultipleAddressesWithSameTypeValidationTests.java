@@ -9,70 +9,75 @@ import java.util.UUID;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 class MultipleAddressesWithSameTypeValidationTests {
   private final String HOME_ADDRESS_TYPE = UUID.randomUUID().toString();
   private final String CLAIM_ADDRESS_TYPE = UUID.randomUUID().toString();
-
-  private final User user = new User();
   private final AddressValidator validator = new AddressValidator();
 
   @Test
+  void validWhenUserHasNoPersonalInformation() {
+    final var user = new User();
+
+    user.setPersonal(null);
+
+    assertThat(validator.hasMultipleAddressesWithSameType(user), is(false));
+  }
+
+  @Test
+  void validWhenUserHasNullAddresses() {
+    final var user = userWithAddresses(null);
+
+    assertThat(validator.hasMultipleAddressesWithSameType(user), is(false));
+  }
+
+  @Test
+  void validWhenUserHasNoAddresses() {
+    final var user = userWithAddresses(List.of(address(HOME_ADDRESS_TYPE),
+      address(CLAIM_ADDRESS_TYPE)));
+
+    assertThat(validator.hasMultipleAddressesWithSameType(user), is(false));
+  }
+
+  @Test
   void validWhenUserHasAddressesOfDifferentTypes() {
-    final var personal = new Personal();
-
-    personal.setLastName("sanderson");
-
-    final var firstAddress = new Address();
-
-    firstAddress.setAddressTypeId(HOME_ADDRESS_TYPE);
-
-    final var secondAddress = new Address();
-
-    secondAddress.setAddressTypeId(CLAIM_ADDRESS_TYPE);
-
-    personal.setAddresses(List.of(firstAddress, secondAddress));
-
-    user.setPersonal(personal);
+    final var user = userWithAddresses(List.of(address(HOME_ADDRESS_TYPE),
+      address(CLAIM_ADDRESS_TYPE)));
 
     assertThat(validator.hasMultipleAddressesWithSameType(user), is(false));
   }
 
   @Test
   void invalidWhenUserHasTwoAddressesOfSameType() {
-    final var personal = new Personal();
-
-    personal.setLastName("sanderson");
-
-    final var firstAddress = new Address();
-
-    firstAddress.setAddressTypeId(HOME_ADDRESS_TYPE);
-
-    final var secondAddress = new Address();
-
-    secondAddress.setAddressTypeId(HOME_ADDRESS_TYPE);
-
-    personal.setAddresses(List.of(firstAddress, secondAddress));
-
-    user.setPersonal(personal);
+    final User user = userWithAddresses(List.of(address(HOME_ADDRESS_TYPE),
+      address(HOME_ADDRESS_TYPE)));
 
     assertThat(validator.hasMultipleAddressesWithSameType(user), is(true));
   }
 
-  @Test
-  void validWhenUserHasNoAddresses() {
-    final var personal = new Personal();
+  @NotNull
+  private User userWithAddresses(List<Address> addresses) {
+    final var user = new User();
 
-    personal.setLastName("sanderson");
+    final var personalInformation = new Personal();
 
-    user.setPersonal(personal);
+    personalInformation.setLastName("sanderson");
 
-    assertThat(validator.hasMultipleAddressesWithSameType(user), is(false));
+    personalInformation.setAddresses(addresses);
+
+    user.setPersonal(personalInformation);
+
+    return user;
   }
 
-  @Test
-  void validWhenUserHasNoPersonalInformation() {
-    assertThat(validator.hasMultipleAddressesWithSameType(user), is(false));
+  @NotNull
+  private Address address(String addressType) {
+    final var firstAddress = new Address();
+
+    firstAddress.setAddressTypeId(addressType);
+
+    return firstAddress;
   }
 }
