@@ -5,19 +5,22 @@ import static io.vertx.core.Future.succeededFuture;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
@@ -41,7 +44,6 @@ import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.core.AsyncResult;
@@ -50,8 +52,6 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import io.vertx.ext.web.RoutingContext;
 
 
@@ -177,7 +177,9 @@ public class UsersAPI implements Users {
       Context vertxContext) {
 
     try {
-      if (checkForDuplicateAddressTypes(entity)) {
+      final var addressValidator = new AddressValidator();
+
+      if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
         asyncResultHandler.handle(Future.succeededFuture(
           PostUsersResponse.respond400WithTextPlain(
             "Users are limited to one address per addresstype")));
@@ -343,7 +345,9 @@ public class UsersAPI implements Users {
           }
         )
         .compose(o -> {
-          if (checkForDuplicateAddressTypes(entity)) {
+          final var addressValidator = new AddressValidator();
+
+          if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
             asyncResultHandler.handle(Future.succeededFuture(
               PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
             return Future.succeededFuture();
@@ -496,37 +500,6 @@ public class UsersAPI implements Users {
         onSuccess.handle(Future.succeededFuture());
       }
     });
-  }
-
-  private static boolean checkForDuplicateAddressTypes(User user) {
-    Map<String, Integer> countMap = new HashMap<>();
-    if (user.getPersonal() != null &&
-      user.getPersonal().getAddresses() != null) {
-      for(Address address : user.getPersonal().getAddresses()) {
-        String addressTypeId = address.getAddressTypeId();
-        if (addressTypeId != null) {
-          boolean found = false;
-          for(String key : countMap.keySet()) {
-            if (key.equals(addressTypeId)) {
-              Integer count = countMap.get(key);
-              count = count + 1;
-              countMap.put(key, count);
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            countMap.put(addressTypeId, 1);
-          }
-        }
-      }
-    }
-    for(Integer i : countMap.values()) {
-      if (i > 1) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void trimWhiteSpaceInUsername(User entity) {
