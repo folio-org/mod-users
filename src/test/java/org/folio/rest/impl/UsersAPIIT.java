@@ -30,6 +30,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -41,6 +42,8 @@ import lombok.SneakyThrows;
  * should be moved here.
  */
 class UsersAPIIT {
+  static final String HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
+  static final String ClAIM_ADDRESS_TYPE_ID = "b6f4d1c6-0dfa-463c-9534-f49c4f0ae090";
   static final String TENANT = "usersapiit";
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
   static Vertx vertx;
@@ -94,10 +97,24 @@ class UsersAPIIT {
   }
 
   @Test
-  @SneakyThrows
-  void cannotCreateUserWithMultipleAddressesOfSameType() {
-    final var HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
+  void canCreateUser() {
+    final var userToCreate = User.builder()
+      .username("julia")
+      .personal(Personal.builder()
+        .lastName("brockhurst")
+        .addresses(List.of(
+          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build(),
+          Address.builder().addressTypeId(ClAIM_ADDRESS_TYPE_ID).build()))
+        .build())
+      .build();
 
+    createUser(userToCreate)
+      .then()
+      .statusCode(201);
+  }
+
+  @Test
+  void cannotCreateUserWithMultipleAddressesOfSameType() {
     final var userWithMultipleAddresses = User.builder()
       .username("julia")
       .personal(Personal.builder()
@@ -108,10 +125,7 @@ class UsersAPIIT {
         .build())
       .build();
 
-    given()
-      .when()
-      .body(new ObjectMapper().writeValueAsString(userWithMultipleAddresses))
-      .post("/users")
+    createUser(userWithMultipleAddresses)
       .then()
       .statusCode(400)
       .body(is("Users are limited to one address per addresstype"));
@@ -210,6 +224,14 @@ class UsersAPIIT {
     then().statusCode(404);
   }
 
+  @SneakyThrows
+  private Response createUser(User userToCreate) {
+    return given()
+      .when()
+      .body(new ObjectMapper().writeValueAsString(userToCreate))
+      .post("/users");
+  }
+
   /**
    * Create a user by calling the POST /users API.
    */
@@ -279,5 +301,4 @@ class UsersAPIIT {
     then().
       statusCode(422);
   }
-
 }
