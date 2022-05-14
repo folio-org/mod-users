@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -111,7 +112,7 @@ class GroupIT {
 
   @Test
   @SneakyThrows
-  void canAddAGroup() {
+  void canCreateANewGroup() {
     var group = Group.builder()
       .group("New Group")
       .desc("Group description")
@@ -124,6 +125,30 @@ class GroupIT {
     assertThat(createdGroup.getGroup(), is("New Group"));
     assertThat(createdGroup.getDesc(), is("Group description"));
     assertThat(createdGroup.getExpirationOffsetInDays(), is(365));
+  }
+
+  @Test
+  @SneakyThrows
+  void canUpdateAGroup() {
+    var group = Group.builder()
+      .group("New Group")
+      .desc("Group description")
+      .expirationOffsetInDays(365)
+      .build();
+
+    final var createdGroup = createGroup(group);
+
+    updateGroup(Group.builder()
+      .id(createdGroup.getId())
+      .group("A new name")
+      .desc("A new description")
+      .expirationOffsetInDays(365)
+      .build());
+
+    final var updatedGroup = getGroup(createdGroup.getId());
+
+    assertThat(updatedGroup.getGroup(), is("A new name"));
+    assertThat(updatedGroup.getDesc(), is("A new description"));
   }
 
   @Test
@@ -515,6 +540,35 @@ class GroupIT {
       .then()
       .statusCode(HTTP_CREATED)
       .extract().as(Group.class);
+  }
+
+  private Group getGroup(String id) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .contentType(JSON)
+      .accept("application/json, text/plain")
+      .when()
+      .get("/groups/{id}", Map.of("id", id))
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Group.class);
+  }
+
+  @SneakyThrows
+  private void updateGroup(Group group) {
+    given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .contentType(JSON)
+      .accept("application/json, text/plain")
+      .when()
+      .body(new ObjectMapper().writeValueAsString(group))
+      .put("/groups/{id}", Map.of("id", group.getId()))
+      .then()
+      .statusCode(HTTP_NO_CONTENT);
   }
 
   private static class Response {
