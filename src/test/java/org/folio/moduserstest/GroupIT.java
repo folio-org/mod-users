@@ -49,8 +49,7 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
-import org.junit.Ignore;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +57,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.restassured.RestAssured;
-import io.restassured.response.ValidatableResponse;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -73,7 +71,7 @@ import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-public class GroupIT {
+class GroupIT {
   private static int port;
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
@@ -85,8 +83,8 @@ public class GroupIT {
 
   private static int userInc = 0;
 
-  @BeforeAll
-  public static void setup(Vertx vertx, VertxTestContext context) {
+  @BeforeEach
+  public void beforeEach(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     port = NetworkUtils.nextFreePort();
@@ -106,6 +104,7 @@ public class GroupIT {
       parameters.add(new Parameter().withKey("loadReference").withValue("true"));
       parameters.add(new Parameter().withKey("loadSample").withValue("false"));
       ta.setParameters(parameters);
+
       TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
     }));
   }
@@ -114,16 +113,20 @@ public class GroupIT {
   @SneakyThrows
   void canAddAGroup() {
     var group = Group.builder()
-      .group("librarianFOO")
-      .desc("yet another basic lib group")
+      .group("New Group")
+      .desc("Group description")
       .expirationOffsetInDays(365)
       .build();
 
-    createGroup(group);
+    final var createdGroup = createGroup(group);
+
+    assertThat(createdGroup.getId(), is(notNullValue()));
+    assertThat(createdGroup.getGroup(), is("New Group"));
+    assertThat(createdGroup.getDesc(), is("Group description"));
+    assertThat(createdGroup.getExpirationOffsetInDays(), is(365));
   }
 
   @Test
-  @Ignore("being replaced")
   @SneakyThrows
   void test2Group() {
     /*
@@ -499,7 +502,7 @@ public class GroupIT {
   }
 
   @SneakyThrows
-  private ValidatableResponse createGroup(Group group) {
+  private Group createGroup(Group group) {
     return given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
@@ -510,7 +513,8 @@ public class GroupIT {
       .body(new ObjectMapper().writeValueAsString(group))
       .post("/groups")
       .then()
-      .statusCode(HTTP_CREATED);
+      .statusCode(HTTP_CREATED)
+      .extract().as(Group.class);
   }
 
   private static class Response {
