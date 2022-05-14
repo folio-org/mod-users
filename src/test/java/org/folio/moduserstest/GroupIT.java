@@ -19,21 +19,13 @@ import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.put;
-import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -45,14 +37,13 @@ import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.parser.JsonPathParser;
 import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.utils.ExpirationTool;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
 import org.folio.support.Groups;
 import org.folio.support.Personal;
 import org.folio.support.User;
+import org.folio.support.Users;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -77,16 +68,11 @@ import lombok.SneakyThrows;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 class GroupIT {
+  private static final Logger log = LogManager.getLogger(GroupIT.class);
+
   private static int port;
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
-
-  private static final String fooGroupData = "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\", \"expirationOffsetInDays\": 365}";
-  private static final String barGroupData = "{\"group\": \"librarianBAR\",\"desc\": \"and yet another basic lib group\"}";
-
-  private static final Logger log = LogManager.getLogger(GroupIT.class);
-
-  private static int userInc = 0;
 
   @BeforeEach
   public void beforeEach(Vertx vertx, VertxTestContext context) {
@@ -168,7 +154,7 @@ class GroupIT {
   }
 
   @Test
-  void canGetGroups() {
+  void canGetAllGroups() {
     createGroup(Group.builder()
       .group("First new group")
       .desc("First group description")
@@ -196,16 +182,40 @@ class GroupIT {
     assertThat(secondGroup.getDesc(), is("Second group description"));
   }
 
+  //These tests should  be in the integration tests for users not groups
+  //they can be moved when the users integration tests are improved
+  @Test
+  void canFindActiveUsers() {
+    createUser(User.builder()
+      .username("steve")
+      .active(true)
+      .build());
+
+    createUser(User.builder()
+      .username("joanne")
+      .active(false)
+      .build());
+
+    createUser(User.builder()
+      .username("jenna")
+      .active(true)
+      .build());
+
+    final var activeUsers = getUsers("active=true");
+
+    assertThat(activeUsers.getTotalRecords(), is(2));
+  }
+
   @Test
   @SneakyThrows
   void test2Group() {
-    var group = Group.builder()
+    var fooGroup = Group.builder()
       .group("librarianFOO")
       .desc("yet another basic lib group")
       .expirationOffsetInDays(365)
       .build();
 
-    final var createdGroup = createGroup(group);
+    final var createdGroup = createGroup(fooGroup);
 
     final var firstUser = createUser(User.builder()
       .username("jhandley")
@@ -280,19 +290,6 @@ class GroupIT {
       + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + userID);
 
     /*
-      get all users belonging to a specific group
-     */
-    String getUsersInGroupURL = userUrl + "?query=patronGroup==" + createdGroup.getId();
-    CompletableFuture<Response> getUsersInGroupCF = send(getUsersInGroupURL, GET, null,
-      HTTPResponseHandlers.json());
-    Response getUsersInGroupResponse = getUsersInGroupCF.get(5, SECONDS);
-    assertThat(getUsersInGroupResponse.code, is(HTTP_OK));
-    log.info(getUsersInGroupResponse.body
-      + "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
-      + getUsersInGroupURL);
-    assertThat(getUsersInGroupResponse.body.getInteger("totalRecords"), is(1));
-
-    /*
       try to get via cql
      */
     String cqlURL = groupUrl + "?query=group==librarianFOO";
@@ -326,7 +323,8 @@ class GroupIT {
     /*
       try to add a duplicate group
      */
-    CompletableFuture<Response> dupCF = send(groupUrl, POST, fooGroupData, HTTPResponseHandlers.json());
+    CompletableFuture<Response> dupCF = send(groupUrl, POST,
+      "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\", \"expirationOffsetInDays\": 365}", HTTPResponseHandlers.json());
     Response dupResponse = dupCF.get(5, SECONDS);
     assertThat(dupResponse.code, is(422));
     log.info(dupResponse.body
@@ -352,38 +350,6 @@ class GroupIT {
     log.info(deleteResponse.body
       + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
 
-    /* Create a user with a past-due expiration date */
-    UUID expiredUserId = UUID.randomUUID();
-    {
-      Date now = new Date();
-      Date pastDate = new Date(now.getTime() - (10 * 24 * 60 * 60 * 1000));
-      String dateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(pastDate);
-      JsonObject expiredUserJson = new JsonObject()
-        .put("id", expiredUserId.toString())
-        .put("username", "bmoses")
-        .put("patronGroup", createdGroup.getId())
-        .put("active", true)
-        .put("expirationDate", dateString)
-        .put("personal", new JsonObject()
-          .put("lastName", "Brown")
-          .put("firstName", "Moses")
-        );
-      CompletableFuture<Response> addExpiredUserCF = send(userUrl, POST, expiredUserJson.encode(), HTTPResponseHandlers.json());
-      Response addExpiredUserResponse = addExpiredUserCF.get(5, SECONDS);
-      log.info(addExpiredUserResponse.body
-        + "\nStatus - " + addExpiredUserResponse.code + " at "
-        + System.currentTimeMillis() + " for " + userUrl + " (addExpiredUser)");
-      assertThat(addExpiredUserResponse.code, is(201));
-      final var getExpirationCF = new CompletableFuture<Void>();
-      ExpirationTool.doExpirationForTenant(RestITSupport.vertx(), "diku")
-        .onComplete(res -> getExpirationCF.complete(null));
-      getExpirationCF.get(5, SECONDS);
-      CompletableFuture<Response> getExpiredUserCF = send(userUrl + "/" + expiredUserId, GET, null,
-        HTTPResponseHandlers.json());
-      Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
-      assertThat(getExpiredUserResponse.body.getBoolean("active"), is(false));
-    }
-
     var barGroup = createGroup(Group.builder()
       .group("librarianBAR")
       .desc("and yet another basic lib group")
@@ -401,67 +367,23 @@ class GroupIT {
       .personal(Personal.builder().lastName("Triangle").build())
       .patronGroup(barGroup.getId()).build());
 
-    String url = HTTP_LOCALHOST + RestITSupport.port() + "/users?query=";
+    final var usersSortedByGroupDesc = getUsers("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
 
-    //query on users and sort by groups
-    String url1 = url + urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
-    //String url1 = userUrl;
-    String url2 = url + urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
-    //query and sort on groups via users endpoint
-    String url3 = url + urlEncode("patronGroup.group=lib* sortBy patronGroup.group/sort.descending");
-    //query on users sort on users and groups
-    String url4 = url + urlEncode("cql.allrecords=1 sortby patronGroup.group personal.lastName personal.firstName");
-    //query on users and groups sort by groups
-    String url5 = url + urlEncode("username=jhandley2nd and patronGroup.group=lib* sortby patronGroup.group");
-    //query on users and sort by users
-    String url6 = url + urlEncode("active=true sortBy username", "UTF-8");
-    //non existant group - should be 0 results
-    String url7 = url + urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
+    assertThat(usersSortedByGroupDesc.getTotalRecords(), is(3));
+    assertThat(usersSortedByGroupDesc.getUsers().get(0).getUsername(), is("jhandley2nd"));
 
-    String[] urls = new String[]{userUrl, url1, url2, url3, url4, url5, url6, url7};
+    final var usersSortedByGroupAsc = getUsers("cql.allRecords=1 sortBy patronGroup.group/sort.ascending");
 
-    for (int i = 0; i < 8; i++) {
-      cqlURL = urls[i];
-      CompletableFuture<Response> cf = send(cqlURL, GET, null, HTTPResponseHandlers.json());
+    assertThat(usersSortedByGroupAsc.getTotalRecords(), is(3));
+    assertThat(usersSortedByGroupAsc.getUsers().get(0).getUsername(), is("jhandley0"));
 
-      cqlResponse = cf.get(5, SECONDS);
-      assertThat(cqlResponse.code, is(HTTP_OK));
-      log.info(cqlResponse.body
-        + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
-      //requests should usually have 3 or 4 results
-      switch (i) {
-        case 5:
-          assertThat(cqlResponse.body.getInteger("totalRecords"), is(1));
-          break;
-        case 7:
-          assertThat(cqlResponse.body.getInteger("totalRecords"), is(0));
-          break;
-        case 6:
-          assertThat(cqlResponse.body.getInteger("totalRecords"), is(greaterThan(2)));
-          break;
-        case 1:
-          assertThat(cqlResponse.body.getInteger("totalRecords"), is(4));
-          assertThat(cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"), is("jhandley2nd"));
-          break;
-        case 2:
-          assertThat(cqlResponse.body.getInteger("totalRecords"), is(4));
-          assertThat(cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"), is("jhandley0"));
-          break;
-        case 4:
-          assertThat(((String) (new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))), startsWith("Triangle"));
-          break;
-        case 0:
-          //Baseline test
-          int totalRecords = cqlResponse.body.getInteger("totalRecords");
-          assertThat(totalRecords, is(4));
-          break;
-        default:
-          // This mimics the previous range assertion, should be replaced with more specific assertions
-          assertThat(cqlResponse.body.getInteger("totalRecords"), is(greaterThanOrEqualTo(0)));
-          assertThat(cqlResponse.body.getInteger("totalRecords"), is(lessThanOrEqualTo(4)));
-          break;
-      }
-    }
+    final var usersFilteredByGroupName = getUsers("patronGroup.group=librarianFOO sortBy patronGroup.group/sort.descending");
+
+    assertThat(usersFilteredByGroupName.getTotalRecords(), is(1));
+
+    final var usersFilteredByGroupNameThatDoesNotExist = getUsers("patronGroup.group=abc*");
+
+    assertThat(usersFilteredByGroupNameThatDoesNotExist.getTotalRecords(), is(0));
   }
 
   private CompletableFuture<Response> send(String url, HttpMethod method, String content,
@@ -496,7 +418,6 @@ class GroupIT {
   }
 
   private static JsonObject createUser(String id, String name, String pgId) {
-    userInc++;
     JsonObject user = new JsonObject();
     if (id != null) {
       user.put("id", id);
@@ -505,8 +426,8 @@ class GroupIT {
     user.put("patronGroup", pgId);
     user.put("active", true);
     user.put("personal", new JsonObject()
-      .put("lastName", "Triangle" + userInc)
-      .put("firstName", "Jack" + userInc)
+      .put("lastName", "Triangle")
+      .put("firstName", "Jack")
     );
     return user;
   }
@@ -598,6 +519,19 @@ class GroupIT {
       .then()
       .statusCode(HTTP_CREATED)
       .extract().as(User.class);
+  }
+
+  private Users getUsers(String query) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .accept("application/json, text/plain")
+      .when()
+      .get("/users?query=" + query)
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Users.class);
   }
 
   private static class Response {
