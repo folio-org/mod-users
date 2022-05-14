@@ -46,9 +46,13 @@ import org.folio.rest.tools.parser.JsonPathParser;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.rest.utils.TenantInit;
+import org.folio.support.Group;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -63,6 +67,7 @@ import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
+@Timeout(value = 20, unit = SECONDS)
 public class GroupIT {
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
@@ -93,6 +98,23 @@ public class GroupIT {
       ta.setParameters(parameters);
       TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
     }));
+  }
+
+  @Test
+  @SneakyThrows
+  void canAddAGroup() {
+    var group = Group.builder()
+      .group("librarianFOO")
+      .desc("yet another basic lib group")
+      .expirationOffsetInDays(365)
+      .build();
+
+    var addGroupCF = send(groupUrl, POST,
+      new ObjectMapper().writeValueAsString(group), HTTPResponseHandlers.json());
+
+    var addGroupResponse = addGroupCF.get(5, SECONDS);
+
+    assertThat(addGroupResponse.code, is(HTTP_CREATED));
   }
 
   @Test
