@@ -47,12 +47,10 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.rest.utils.TenantInit;
 import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -66,9 +64,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import lombok.SneakyThrows;
 
 @RunWith(VertxUnitRunner.class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GroupIT {
-
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
 
@@ -92,7 +88,7 @@ public class GroupIT {
 
     Integer port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
-    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
+    TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku");
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port));
 
