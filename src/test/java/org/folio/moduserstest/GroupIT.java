@@ -58,6 +58,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.restassured.RestAssured;
+import io.restassured.response.ValidatableResponse;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -111,7 +112,6 @@ class GroupIT {
   }
 
   @Test
-  @SneakyThrows
   void canCreateANewGroup() {
     var group = Group.builder()
       .group("New Group")
@@ -128,7 +128,6 @@ class GroupIT {
   }
 
   @Test
-  @SneakyThrows
   void canUpdateAGroup() {
     var group = Group.builder()
       .group("New Group")
@@ -152,53 +151,35 @@ class GroupIT {
   }
 
   @Test
+  void canDeleteAGroup() {
+    var group = Group.builder()
+      .group("New Group")
+      .desc("Group description")
+      .expirationOffsetInDays(365)
+      .build();
+
+    final var createdGroup = createGroup(group);
+
+    deleteGroup(createdGroup.getId());
+    getGroup(createdGroup.getId(), HTTP_NOT_FOUND);
+  }
+
+  @Test
   @SneakyThrows
   void test2Group() {
-    /*
-      add a group
-     */
-    CompletableFuture<Response> addGroupCF = send(groupUrl, POST, fooGroupData, HTTPResponseHandlers.json());
-    Response addGroupResponse = addGroupCF.get(5, SECONDS);
-    assertThat(addGroupResponse.code, is(HTTP_CREATED));
-    String groupID1 = addGroupResponse.body.getString("id");
-    log.info(addGroupResponse.body
-      + "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
+    var group = Group.builder()
+      .group("librarianFOO")
+      .desc("yet another basic lib group")
+      .expirationOffsetInDays(365)
+      .build();
 
-    /*
-      update a group
-     */
-    String updateGroupURL = groupUrl + "/" + groupID1;
-    CompletableFuture<Response> updateGroupCF = send(updateGroupURL, PUT, barGroupData, HTTPResponseHandlers.empty());
-    Response updateGroupResponse = updateGroupCF.get(5, SECONDS);
-    assertThat(updateGroupResponse.code, is(HTTP_NO_CONTENT));
-    log.info(updateGroupResponse.body
-      + "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
-
-    /*
-      delete a group
-     */
-    String deleteCleanURL = groupUrl + "/" + groupID1;
-    CompletableFuture<Response> deleteCleanCF = send(deleteCleanURL, DELETE, null, HTTPResponseHandlers.empty());
-    Response deleteCleanResponse = deleteCleanCF.get(5, SECONDS);
-    assertThat(deleteCleanResponse.code, is(HTTP_NO_CONTENT));
-    log.info(deleteCleanResponse.body
-      + "\nStatus - " + deleteCleanResponse.code + " at " + System.currentTimeMillis() + " for " + deleteCleanURL);
-
-    /*
-      re-add a group
-     */
-    CompletableFuture<Response> addNewGroupCF = send(groupUrl, POST, fooGroupData, HTTPResponseHandlers.json());
-    Response addNewGroupResponse = addNewGroupCF.get(5, SECONDS);
-    assertThat(addNewGroupResponse.code, is(HTTP_CREATED));
-    groupID1 = addNewGroupResponse.body.getString("id");
-    log.info(addNewGroupResponse.body
-      + "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
+    final var createdGroup = createGroup(group);
 
     /*
       add a user
      */
     String addUserURL = userUrl;
-    CompletableFuture<Response> addUserCF = send(addUserURL, POST, createUser(null, "jhandley", groupID1).encode(),
+    CompletableFuture<Response> addUserCF = send(addUserURL, POST, createUser(null, "jhandley", createdGroup.getId()).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse = addUserCF.get(5, SECONDS);
     assertThat(addUserResponse.code, is(HTTP_CREATED));
@@ -209,7 +190,7 @@ class GroupIT {
     /*
       add the same user name again
      */
-    CompletableFuture<Response> addUserCF2 = send(addUserURL, POST, createUser(null, "jhandley", groupID1).encode(),
+    CompletableFuture<Response> addUserCF2 = send(addUserURL, POST, createUser(null, "jhandley", createdGroup.getId()).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse2 = addUserCF2.get(5, SECONDS);
     assertThat(addUserResponse2.code, is(422));
@@ -219,7 +200,7 @@ class GroupIT {
     /*
       add the same user again with same id
      */
-    CompletableFuture<Response> addUserCF3 = send(addUserURL, POST, createUser(userID, "jhandley", groupID1).encode(),
+    CompletableFuture<Response> addUserCF3 = send(addUserURL, POST, createUser(userID, "jhandley", createdGroup.getId()).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse3 = addUserCF3.get(5, SECONDS);
     assertThat(addUserResponse3.code, is(422));
@@ -261,7 +242,7 @@ class GroupIT {
       update a user again with existent patron group
      */
     CompletableFuture<Response> updateUser2CF = send(addUserURL + "/" + userID, PUT,
-      createUser(userID, "jhandley2nd", groupID1).encode(),
+      createUser(userID, "jhandley2nd", createdGroup.getId()).encode(),
       HTTPResponseHandlers.empty());
     Response updateUser2Response = updateUser2CF.get(5, SECONDS);
     assertThat(updateUser2Response.code, is(HTTP_NO_CONTENT));
@@ -271,7 +252,7 @@ class GroupIT {
     /*
       get all users belonging to a specific group
      */
-    String getUsersInGroupURL = userUrl + "?query=patronGroup==" + groupID1;
+    String getUsersInGroupURL = userUrl + "?query=patronGroup==" + createdGroup.getId();
     CompletableFuture<Response> getUsersInGroupCF = send(getUsersInGroupURL, GET, null,
       HTTPResponseHandlers.json());
     Response getUsersInGroupResponse = getUsersInGroupCF.get(5, SECONDS);
@@ -305,7 +286,7 @@ class GroupIT {
     /*
       delete a group - should fail as there is a user associated with the group
      */
-    String delete1URL = groupUrl + "/" + groupID1;
+    String delete1URL = groupUrl + "/" + createdGroup.getId();
     CompletableFuture<Response> delete1CF = send(delete1URL, DELETE, null, HTTPResponseHandlers.empty());
     Response delete1Response = delete1CF.get(5, SECONDS);
     assertThat(delete1Response.code, is(HTTP_BAD_REQUEST));
@@ -332,17 +313,6 @@ class GroupIT {
       + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
     /*
-      get a group
-     */
-    String getSpecGroupURL = groupUrl + "/" + groupID1;
-    CompletableFuture<Response> getSpecGroupCF = send(getSpecGroupURL, GET, null, HTTPResponseHandlers.json());
-    Response getSpecGroupResponse = getSpecGroupCF.get(5, SECONDS);
-    assertThat(getSpecGroupResponse.code, is(HTTP_OK));
-    log.info(getSpecGroupResponse.body
-      + "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
-    assertThat(getSpecGroupResponse.body.getString("group"), is("librarianFOO"));
-
-    /*
       get a group bad id
      */
     String getBadIDURL = groupUrl + "/3748ec8d-8dbc-4717-819d-87c839e6905e";
@@ -355,7 +325,7 @@ class GroupIT {
     /*
       delete a group with users should fail
      */
-    String delete = groupUrl + "/" + groupID1;
+    String delete = groupUrl + "/" + createdGroup.getId();
     CompletableFuture<Response> deleteCF = send(delete, DELETE, null, HTTPResponseHandlers.empty());
     Response deleteResponse = deleteCF.get(5, SECONDS);
     assertThat(deleteResponse.code, is(HTTP_BAD_REQUEST));
@@ -371,7 +341,7 @@ class GroupIT {
       JsonObject expiredUserJson = new JsonObject()
         .put("id", expiredUserId.toString())
         .put("username", "bmoses")
-        .put("patronGroup", groupID1)
+        .put("patronGroup", createdGroup.getId())
         .put("active", true)
         .put("expirationDate", dateString)
         .put("personal", new JsonObject()
@@ -543,17 +513,20 @@ class GroupIT {
   }
 
   private Group getGroup(String id) {
+    return getGroup(id, HTTP_OK)
+      .extract().as(Group.class);
+  }
+
+  private ValidatableResponse getGroup(String id, int expectedStatusCode) {
     return given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
       .header("X-Okapi-Url", "http://localhost:" + port)
-      .contentType(JSON)
       .accept("application/json, text/plain")
       .when()
       .get("/groups/{id}", Map.of("id", id))
       .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Group.class);
+      .statusCode(expectedStatusCode);
   }
 
   @SneakyThrows
@@ -567,6 +540,18 @@ class GroupIT {
       .when()
       .body(new ObjectMapper().writeValueAsString(group))
       .put("/groups/{id}", Map.of("id", group.getId()))
+      .then()
+      .statusCode(HTTP_NO_CONTENT);
+  }
+
+  private ValidatableResponse deleteGroup(String id) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .accept("application/json, text/plain")
+      .when()
+      .delete("/groups/{id}", Map.of("id", id))
       .then()
       .statusCode(HTTP_NO_CONTENT);
   }
