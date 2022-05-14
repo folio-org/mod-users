@@ -18,6 +18,13 @@ import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.util.StringUtil.urlEncode;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -27,6 +34,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
@@ -51,11 +60,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
+import lombok.SneakyThrows;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -100,13 +108,14 @@ public class GroupIT {
   }
 
   @Test
-  public void test2Group(TestContext context) throws Exception {
+  @SneakyThrows
+  public void test2Group() {
     /*
       add a group
      */
     CompletableFuture<Response> addGroupCF = send(groupUrl, POST, fooGroupData, HTTPResponseHandlers.json());
     Response addGroupResponse = addGroupCF.get(5, SECONDS);
-    context.assertEquals(addGroupResponse.code, HTTP_CREATED);
+    assertThat(addGroupResponse.code, is(HTTP_CREATED));
     String groupID1 = addGroupResponse.body.getString("id");
     log.info(addGroupResponse.body
       + "\nStatus - " + addGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
@@ -117,7 +126,7 @@ public class GroupIT {
     String updateGroupURL = groupUrl + "/" + groupID1;
     CompletableFuture<Response> updateGroupCF = send(updateGroupURL, PUT, barGroupData, HTTPResponseHandlers.empty());
     Response updateGroupResponse = updateGroupCF.get(5, SECONDS);
-    context.assertEquals(updateGroupResponse.code, HTTP_NO_CONTENT);
+    assertThat(updateGroupResponse.code, is(HTTP_NO_CONTENT));
     log.info(updateGroupResponse.body
       + "\nStatus - " + updateGroupResponse.code + " at " + System.currentTimeMillis() + " for " + updateGroupURL);
 
@@ -127,7 +136,7 @@ public class GroupIT {
     String deleteCleanURL = groupUrl + "/" + groupID1;
     CompletableFuture<Response> deleteCleanCF = send(deleteCleanURL, DELETE, null, HTTPResponseHandlers.empty());
     Response deleteCleanResponse = deleteCleanCF.get(5, SECONDS);
-    context.assertEquals(deleteCleanResponse.code, HTTP_NO_CONTENT);
+    assertThat(deleteCleanResponse.code, is(HTTP_NO_CONTENT));
     log.info(deleteCleanResponse.body
       + "\nStatus - " + deleteCleanResponse.code + " at " + System.currentTimeMillis() + " for " + deleteCleanURL);
 
@@ -136,7 +145,7 @@ public class GroupIT {
      */
     CompletableFuture<Response> addNewGroupCF = send(groupUrl, POST, fooGroupData, HTTPResponseHandlers.json());
     Response addNewGroupResponse = addNewGroupCF.get(5, SECONDS);
-    context.assertEquals(addNewGroupResponse.code, HTTP_CREATED);
+    assertThat(addNewGroupResponse.code, is(HTTP_CREATED));
     groupID1 = addNewGroupResponse.body.getString("id");
     log.info(addNewGroupResponse.body
       + "\nStatus - " + addNewGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
@@ -148,7 +157,7 @@ public class GroupIT {
     CompletableFuture<Response> addUserCF = send(addUserURL, POST, createUser(null, "jhandley", groupID1).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse = addUserCF.get(5, SECONDS);
-    context.assertEquals(addUserResponse.code, HTTP_CREATED);
+    assertThat(addUserResponse.code, is(HTTP_CREATED));
     String userID = addUserResponse.body.getString("id");
     log.info(addUserResponse.body
       + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
@@ -159,7 +168,7 @@ public class GroupIT {
     CompletableFuture<Response> addUserCF2 = send(addUserURL, POST, createUser(null, "jhandley", groupID1).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse2 = addUserCF2.get(5, SECONDS);
-    context.assertEquals(addUserResponse2.code, 422);
+    assertThat(addUserResponse2.code, is(422));
     log.info(addUserResponse2.body
       + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
@@ -169,7 +178,7 @@ public class GroupIT {
     CompletableFuture<Response> addUserCF3 = send(addUserURL, POST, createUser(userID, "jhandley", groupID1).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse3 = addUserCF3.get(5, SECONDS);
-    context.assertEquals(addUserResponse3.code, 422);
+    assertThat(addUserResponse3.code, is(422));
     log.info(addUserResponse3.body
       + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
@@ -180,7 +189,7 @@ public class GroupIT {
       createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
       HTTPResponseHandlers.empty());
     Response addUserResponse4 = addUserCF4.get(5, SECONDS);
-    context.assertEquals(addUserResponse4.code, HTTP_BAD_REQUEST);
+    assertThat(addUserResponse4.code, is(HTTP_BAD_REQUEST));
     log.info(addUserResponse4.body
       + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
@@ -190,7 +199,7 @@ public class GroupIT {
     CompletableFuture<Response> addUserCF4a = send(addUserURL, POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
       HTTPResponseHandlers.empty());
     Response addUserResponse4a = addUserCF4a.get(5, SECONDS);
-    context.assertEquals(addUserResponse4a.code, HTTP_UNPROCESSABLE_ENTITY.toInt());
+    assertThat(addUserResponse4a.code, is(HTTP_UNPROCESSABLE_ENTITY.toInt()));
     log.info(addUserResponse4a.body
       + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
 
@@ -200,7 +209,7 @@ public class GroupIT {
     CompletableFuture<Response> updateUserCF = send(addUserURL + "/" + userID, PUT, createUser(userID, "jhandley2nd",
       "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), HTTPResponseHandlers.empty());
     Response updateUserResponse = updateUserCF.get(5, SECONDS);
-    context.assertEquals(updateUserResponse.code, HTTP_BAD_REQUEST);
+    assertThat(updateUserResponse.code, is(HTTP_BAD_REQUEST));
     log.info(updateUserResponse.body
       + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
 
@@ -211,7 +220,7 @@ public class GroupIT {
       createUser(userID, "jhandley2nd", groupID1).encode(),
       HTTPResponseHandlers.empty());
     Response updateUser2Response = updateUser2CF.get(5, SECONDS);
-    context.assertEquals(updateUser2Response.code, HTTP_NO_CONTENT);
+    assertThat(updateUser2Response.code, is(HTTP_NO_CONTENT));
     log.info(updateUser2Response.body
       + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
 
@@ -222,21 +231,21 @@ public class GroupIT {
     CompletableFuture<Response> getUsersInGroupCF = send(getUsersInGroupURL, GET, null,
       HTTPResponseHandlers.json());
     Response getUsersInGroupResponse = getUsersInGroupCF.get(5, SECONDS);
-    context.assertEquals(getUsersInGroupResponse.code, HTTP_OK);
+    assertThat(getUsersInGroupResponse.code, is(HTTP_OK));
     log.info(getUsersInGroupResponse.body
       + "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
       + getUsersInGroupURL);
-    context.assertTrue(isSizeMatch(getUsersInGroupResponse, 1));
+    assertThat(getUsersInGroupResponse.body.getInteger("totalRecords"), is(1));
 
     /*
       get all groups in groups table
      */
     CompletableFuture<Response> getAllGroupCF = send(groupUrl, GET, null, HTTPResponseHandlers.json());
     Response getAllGroupResponse = getAllGroupCF.get(5, SECONDS);
-    context.assertEquals(getAllGroupResponse.code, HTTP_OK);
+    assertThat(getAllGroupResponse.code, is(HTTP_OK));
     log.info(getAllGroupResponse.body
       + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-    context.assertTrue(isSizeMatch(getAllGroupResponse, 5)); // 4 in reference + 1 in test
+    assertThat(getAllGroupResponse.body.getInteger("totalRecords"), is(5)); // 4 in reference + 1 in test
 
     /*
       try to get via cql
@@ -244,10 +253,10 @@ public class GroupIT {
     String cqlURL = groupUrl + "?query=group==librarianFOO";
     CompletableFuture<Response> cqlCF = send(cqlURL, GET, null, HTTPResponseHandlers.json());
     Response cqlResponse = cqlCF.get(5, SECONDS);
-    context.assertEquals(cqlResponse.code, HTTP_OK);
+    assertThat(cqlResponse.code, is(HTTP_OK));
     log.info(cqlResponse.body
       + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
-    context.assertTrue(isSizeMatch(cqlResponse, 1));
+    assertThat(cqlResponse.body.getInteger("totalRecords"), is(1));
 
     /*
       delete a group - should fail as there is a user associated with the group
@@ -255,7 +264,7 @@ public class GroupIT {
     String delete1URL = groupUrl + "/" + groupID1;
     CompletableFuture<Response> delete1CF = send(delete1URL, DELETE, null, HTTPResponseHandlers.empty());
     Response delete1Response = delete1CF.get(5, SECONDS);
-    context.assertEquals(delete1Response.code, HTTP_BAD_REQUEST);
+    assertThat(delete1Response.code, is(HTTP_BAD_REQUEST));
     log.info(delete1Response.body
       + "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
 
@@ -265,7 +274,7 @@ public class GroupIT {
     String deleteNEGURL = groupUrl + "/a492ffd2-b848-48bf-b716-1a645822279e";
     CompletableFuture<Response> deleteNEGCF = send(deleteNEGURL, DELETE, null, HTTPResponseHandlers.empty());
     Response deleteNEGResponse = deleteNEGCF.get(5, SECONDS);
-    context.assertEquals(deleteNEGResponse.code, HTTP_NOT_FOUND);
+    assertThat(deleteNEGResponse.code, is(HTTP_NOT_FOUND));
     log.info(deleteNEGResponse.body
       + "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
 
@@ -274,7 +283,7 @@ public class GroupIT {
      */
     CompletableFuture<Response> dupCF = send(groupUrl, POST, fooGroupData, HTTPResponseHandlers.json());
     Response dupResponse = dupCF.get(5, SECONDS);
-    context.assertEquals(dupResponse.code, 422);
+    assertThat(dupResponse.code, is(422));
     log.info(dupResponse.body
       + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
 
@@ -284,10 +293,10 @@ public class GroupIT {
     String getSpecGroupURL = groupUrl + "/" + groupID1;
     CompletableFuture<Response> getSpecGroupCF = send(getSpecGroupURL, GET, null, HTTPResponseHandlers.json());
     Response getSpecGroupResponse = getSpecGroupCF.get(5, SECONDS);
-    context.assertEquals(getSpecGroupResponse.code, HTTP_OK);
+    assertThat(getSpecGroupResponse.code, is(HTTP_OK));
     log.info(getSpecGroupResponse.body
       + "\nStatus - " + getSpecGroupResponse.code + " at " + System.currentTimeMillis() + " for " + getSpecGroupURL);
-    context.assertTrue("librarianFOO".equals(getSpecGroupResponse.body.getString("group")));
+    assertThat(getSpecGroupResponse.body.getString("group"), is("librarianFOO"));
 
     /*
       get a group bad id
@@ -295,7 +304,7 @@ public class GroupIT {
     String getBadIDURL = groupUrl + "/3748ec8d-8dbc-4717-819d-87c839e6905e";
     CompletableFuture<Response> getBadIDCF = send(getBadIDURL, GET, null, HTTPResponseHandlers.empty());
     Response getBadIDResponse = getBadIDCF.get(5, SECONDS);
-    context.assertEquals(getBadIDResponse.code, HTTP_NOT_FOUND);
+    assertThat(getBadIDResponse.code, is(HTTP_NOT_FOUND));
     log.info(getBadIDResponse.body
       + "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
 
@@ -305,7 +314,7 @@ public class GroupIT {
     String delete = groupUrl + "/" + groupID1;
     CompletableFuture<Response> deleteCF = send(delete, DELETE, null, HTTPResponseHandlers.empty());
     Response deleteResponse = deleteCF.get(5, SECONDS);
-    context.assertEquals(deleteResponse.code, HTTP_BAD_REQUEST);
+    assertThat(deleteResponse.code, is(HTTP_BAD_REQUEST));
     log.info(deleteResponse.body
       + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
 
@@ -330,7 +339,7 @@ public class GroupIT {
       log.info(addExpiredUserResponse.body
         + "\nStatus - " + addExpiredUserResponse.code + " at "
         + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
-      context.assertEquals(addExpiredUserResponse.code, 201);
+      assertThat(addExpiredUserResponse.code, is(201));
       CompletableFuture<Void> getExpirationCF = new CompletableFuture<Void>();
       ExpirationTool.doExpirationForTenant(RestITSupport.vertx(), "diku")
         .onComplete(res -> getExpirationCF.complete(null));
@@ -339,27 +348,27 @@ public class GroupIT {
       CompletableFuture<Response> getExpiredUserCF = send(addUserURL + "/" + expiredUserId.toString(), GET, null,
         HTTPResponseHandlers.json());
       Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
-      context.assertEquals(getExpiredUserResponse.body.getBoolean("active"), false);
+      assertThat(getExpiredUserResponse.body.getBoolean("active"), is(false));
     }
 
     CompletableFuture<Response> postGroupCF = send(groupUrl, POST, barGroupData, HTTPResponseHandlers.json());
     Response postGroupResponse = postGroupCF.get(5, SECONDS);
-    context.assertEquals(postGroupResponse.code, HTTP_CREATED);
+    assertThat(postGroupResponse.code, is(HTTP_CREATED));
     String barGroupId = postGroupResponse.body.getString("id");
-    context.assertNotNull(barGroupId);
+    assertThat(barGroupId, is(notNullValue()));
 
     int inc = 0;
     addUserCF = send(userUrl, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
       HTTPResponseHandlers.json());
     addUserResponse = addUserCF.get(5, SECONDS);
-    context.assertEquals(addUserResponse.code, HTTP_CREATED);
+    assertThat(addUserResponse.code, is(HTTP_CREATED));
     log.info(addUserResponse.body
       + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     addUserCF2 = send(userUrl, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
       HTTPResponseHandlers.json());
     addUserResponse2 = addUserCF2.get(5, SECONDS);
-    context.assertEquals(addUserResponse2.code, HTTP_CREATED);
+    assertThat(addUserResponse2.code, is(HTTP_CREATED));
     log.info(addUserResponse2.body
       + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
@@ -388,38 +397,40 @@ public class GroupIT {
       CompletableFuture<Response> cf = send(cqlURL, GET, null, HTTPResponseHandlers.json());
 
       cqlResponse = cf.get(5, SECONDS);
-      context.assertEquals(cqlResponse.code, HTTP_OK);
+      assertThat(cqlResponse.code, is(HTTP_OK));
       log.info(cqlResponse.body
         + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL + " (url" + (i) + ") : " + cqlResponse.body.toString());
       //requests should usually have 3 or 4 results
       switch (i) {
         case 5:
-          context.assertEquals(1, cqlResponse.body.getInteger("totalRecords"));
+          assertThat(cqlResponse.body.getInteger("totalRecords"), is(1));
           break;
         case 7:
-          context.assertEquals(0, cqlResponse.body.getInteger("totalRecords"));
+          assertThat(cqlResponse.body.getInteger("totalRecords"), is(0));
           break;
         case 6:
-          context.assertTrue(cqlResponse.body.getInteger("totalRecords") > 2);
+          assertThat(cqlResponse.body.getInteger("totalRecords"), is(greaterThan(2)));
           break;
         case 1:
-          context.assertEquals(4, cqlResponse.body.getInteger("totalRecords"));
-          context.assertEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+          assertThat(cqlResponse.body.getInteger("totalRecords"), is(4));
+          assertThat(cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"), is("jhandley2nd"));
           break;
         case 2:
-          context.assertEquals(4, cqlResponse.body.getInteger("totalRecords"));
-          context.assertNotEquals("jhandley2nd", cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"));
+          assertThat(cqlResponse.body.getInteger("totalRecords"), is(4));
+          assertThat(cqlResponse.body.getJsonArray("users").getJsonObject(0).getString("username"), is("jhandley0"));
           break;
         case 4:
-          context.assertTrue(((String) (new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))).startsWith("Triangle"));
+          assertThat(((String) (new JsonPathParser(cqlResponse.body).getValueAt("users[0].personal.lastName"))), startsWith("Triangle"));
           break;
         case 0:
           //Baseline test
           int totalRecords = cqlResponse.body.getInteger("totalRecords");
-          context.assertEquals(4, totalRecords);
+          assertThat(totalRecords, is(4));
           break;
         default:
-          context.assertInRange(2, cqlResponse.body.getInteger("totalRecords"), 2);
+          // This mimics the previous range assertion, should be replaced with more specific assertions
+          assertThat(cqlResponse.body.getInteger("totalRecords"), is(greaterThanOrEqualTo(0)));
+          assertThat(cqlResponse.body.getInteger("totalRecords"), is(lessThanOrEqualTo(4)));
           break;
       }
     }
@@ -472,18 +483,12 @@ public class GroupIT {
     return user;
   }
 
-  private boolean isSizeMatch(Response r, int size) {
-    return r.body.getInteger("totalRecords") == size;
-  }
-
   private static class Response {
-
     int code;
     JsonObject body;
   }
 
   private static class HTTPResponseHandlers {
-
     static Function<HttpResponse<Buffer>, Response> empty() {
       return response -> {
         Response result = new Response();
@@ -501,5 +506,4 @@ public class GroupIT {
       };
     }
   }
-
 }
