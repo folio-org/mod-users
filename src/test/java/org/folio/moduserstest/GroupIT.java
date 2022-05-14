@@ -50,6 +50,9 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
+import org.folio.support.Groups;
+import org.folio.support.Personal;
+import org.folio.support.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -103,7 +106,7 @@ class GroupIT {
       TenantAttributes ta = new TenantAttributes();
       ta.setModuleTo("mod-users-1.0.0");
       List<Parameter> parameters = new LinkedList<>();
-      parameters.add(new Parameter().withKey("loadReference").withValue("true"));
+      parameters.add(new Parameter().withKey("loadReference").withValue("false"));
       parameters.add(new Parameter().withKey("loadSample").withValue("false"));
       ta.setParameters(parameters);
 
@@ -165,6 +168,35 @@ class GroupIT {
   }
 
   @Test
+  void canGetGroups() {
+    createGroup(Group.builder()
+      .group("First new group")
+      .desc("First group description")
+      .expirationOffsetInDays(365)
+      .build());
+
+    createGroup(Group.builder()
+      .group("Second new group")
+      .desc("Second group description")
+      .expirationOffsetInDays(365)
+      .build());
+
+    final var groups = getGroups();
+
+    assertThat(groups.getTotalRecords(), is(2));
+
+    final var firstGroup = groups.getGroupByName("First new group");
+
+    assertThat("[First new group] exists in collection", firstGroup, is(notNullValue()));
+    assertThat(firstGroup.getDesc(), is("First group description"));
+
+    final var secondGroup = groups.getGroupByName("Second new group");
+
+    assertThat("[Second new group] exists in collection", secondGroup, is(notNullValue()));
+    assertThat(secondGroup.getDesc(), is("Second group description"));
+  }
+
+  @Test
   @SneakyThrows
   void test2Group() {
     var group = Group.builder()
@@ -175,79 +207,77 @@ class GroupIT {
 
     final var createdGroup = createGroup(group);
 
-    /*
-      add a user
-     */
-    String addUserURL = userUrl;
-    CompletableFuture<Response> addUserCF = send(addUserURL, POST, createUser(null, "jhandley", createdGroup.getId()).encode(),
-      HTTPResponseHandlers.json());
-    Response addUserResponse = addUserCF.get(5, SECONDS);
-    assertThat(addUserResponse.code, is(HTTP_CREATED));
-    String userID = addUserResponse.body.getString("id");
-    log.info(addUserResponse.body
-      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+    final var firstUser = createUser(User.builder()
+      .username("jhandley")
+      .active(true)
+      .patronGroup(createdGroup.getId()).build());
+
+    final var userID = firstUser.getId();
 
     /*
       add the same user name again
      */
-    CompletableFuture<Response> addUserCF2 = send(addUserURL, POST, createUser(null, "jhandley", createdGroup.getId()).encode(),
+    CompletableFuture<Response> addUserCF2 = send(
+      userUrl, POST, createUser(null, "jhandley", createdGroup.getId()).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse2 = addUserCF2.get(5, SECONDS);
     assertThat(addUserResponse2.code, is(422));
     log.info(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     /*
       add the same user again with same id
      */
-    CompletableFuture<Response> addUserCF3 = send(addUserURL, POST, createUser(userID, "jhandley", createdGroup.getId()).encode(),
+    CompletableFuture<Response> addUserCF3 = send(
+      userUrl, POST, createUser(userID, "jhandley", createdGroup.getId()).encode(),
       HTTPResponseHandlers.json());
     Response addUserResponse3 = addUserCF3.get(5, SECONDS);
     assertThat(addUserResponse3.code, is(422));
     log.info(addUserResponse3.body
-      + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+      + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     /*
       add a user again with non existent patron group
      */
-    CompletableFuture<Response> addUserCF4 = send(addUserURL, POST,
+    CompletableFuture<Response> addUserCF4 = send(userUrl, POST,
       createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
       HTTPResponseHandlers.empty());
     Response addUserResponse4 = addUserCF4.get(5, SECONDS);
     assertThat(addUserResponse4.code, is(HTTP_BAD_REQUEST));
     log.info(addUserResponse4.body
-      + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+      + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     /*
       add a user again with invalid uuid
      */
-    CompletableFuture<Response> addUserCF4a = send(addUserURL, POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
+    CompletableFuture<Response> addUserCF4a = send(
+      userUrl, POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
       HTTPResponseHandlers.empty());
     Response addUserResponse4a = addUserCF4a.get(5, SECONDS);
     assertThat(addUserResponse4a.code, is(HTTP_UNPROCESSABLE_ENTITY.toInt()));
     log.info(addUserResponse4a.body
-      + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + addUserURL);
+      + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     /*
       update a user again with non existent patron group
      */
-    CompletableFuture<Response> updateUserCF = send(addUserURL + "/" + userID, PUT, createUser(userID, "jhandley2nd",
+    CompletableFuture<Response> updateUserCF = send(userUrl + "/" + userID, PUT, createUser(userID, "jhandley2nd",
       "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), HTTPResponseHandlers.empty());
     Response updateUserResponse = updateUserCF.get(5, SECONDS);
     assertThat(updateUserResponse.code, is(HTTP_BAD_REQUEST));
     log.info(updateUserResponse.body
-      + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
+      + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + userID);
 
     /*
       update a user again with existent patron group
      */
-    CompletableFuture<Response> updateUser2CF = send(addUserURL + "/" + userID, PUT,
+    CompletableFuture<Response> updateUser2CF = send(userUrl + "/" + userID, PUT,
       createUser(userID, "jhandley2nd", createdGroup.getId()).encode(),
       HTTPResponseHandlers.empty());
     Response updateUser2Response = updateUser2CF.get(5, SECONDS);
     assertThat(updateUser2Response.code, is(HTTP_NO_CONTENT));
     log.info(updateUser2Response.body
-      + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + addUserURL + "/" + userID);
+      + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + userID);
 
     /*
       get all users belonging to a specific group
@@ -261,16 +291,6 @@ class GroupIT {
       + "\nStatus - " + getUsersInGroupResponse.code + " at " + System.currentTimeMillis() + " for "
       + getUsersInGroupURL);
     assertThat(getUsersInGroupResponse.body.getInteger("totalRecords"), is(1));
-
-    /*
-      get all groups in groups table
-     */
-    CompletableFuture<Response> getAllGroupCF = send(groupUrl, GET, null, HTTPResponseHandlers.json());
-    Response getAllGroupResponse = getAllGroupCF.get(5, SECONDS);
-    assertThat(getAllGroupResponse.code, is(HTTP_OK));
-    log.info(getAllGroupResponse.body
-      + "\nStatus - " + getAllGroupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-    assertThat(getAllGroupResponse.body.getInteger("totalRecords"), is(5)); // 4 in reference + 1 in test
 
     /*
       try to get via cql
@@ -348,47 +368,42 @@ class GroupIT {
           .put("lastName", "Brown")
           .put("firstName", "Moses")
         );
-      CompletableFuture<Response> addExpiredUserCF = send(addUserURL, POST, expiredUserJson.encode(), HTTPResponseHandlers.json());
+      CompletableFuture<Response> addExpiredUserCF = send(userUrl, POST, expiredUserJson.encode(), HTTPResponseHandlers.json());
       Response addExpiredUserResponse = addExpiredUserCF.get(5, SECONDS);
       log.info(addExpiredUserResponse.body
         + "\nStatus - " + addExpiredUserResponse.code + " at "
-        + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
+        + System.currentTimeMillis() + " for " + userUrl + " (addExpiredUser)");
       assertThat(addExpiredUserResponse.code, is(201));
       final var getExpirationCF = new CompletableFuture<Void>();
       ExpirationTool.doExpirationForTenant(RestITSupport.vertx(), "diku")
         .onComplete(res -> getExpirationCF.complete(null));
       getExpirationCF.get(5, SECONDS);
-      CompletableFuture<Response> getExpiredUserCF = send(addUserURL + "/" + expiredUserId, GET, null,
+      CompletableFuture<Response> getExpiredUserCF = send(userUrl + "/" + expiredUserId, GET, null,
         HTTPResponseHandlers.json());
       Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
       assertThat(getExpiredUserResponse.body.getBoolean("active"), is(false));
     }
 
-    CompletableFuture<Response> postGroupCF = send(groupUrl, POST, barGroupData, HTTPResponseHandlers.json());
-    Response postGroupResponse = postGroupCF.get(5, SECONDS);
-    assertThat(postGroupResponse.code, is(HTTP_CREATED));
-    String barGroupId = postGroupResponse.body.getString("id");
-    assertThat(barGroupId, is(notNullValue()));
+    var barGroup = createGroup(Group.builder()
+      .group("librarianBAR")
+      .desc("and yet another basic lib group")
+      .build());
 
-    int inc = 0;
-    addUserCF = send(userUrl, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-      HTTPResponseHandlers.json());
-    addUserResponse = addUserCF.get(5, SECONDS);
-    assertThat(addUserResponse.code, is(HTTP_CREATED));
-    log.info(addUserResponse.body
-      + "\nStatus - " + addUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl);
+     createUser(User.builder()
+      .username("jhandley0")
+      .active(true)
+      .personal(Personal.builder().lastName("Triangle").build())
+      .patronGroup(barGroup.getId()).build());
 
-    addUserCF2 = send(userUrl, POST, createUser(null, "jhandley" + inc++, barGroupId).encode(),
-      HTTPResponseHandlers.json());
-    addUserResponse2 = addUserCF2.get(5, SECONDS);
-    assertThat(addUserResponse2.code, is(HTTP_CREATED));
-    log.info(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
+    createUser(User.builder()
+      .username("jhandley1")
+      .active(true)
+      .personal(Personal.builder().lastName("Triangle").build())
+      .patronGroup(barGroup.getId()).build());
 
     String url = HTTP_LOCALHOST + RestITSupport.port() + "/users?query=";
 
     //query on users and sort by groups
-    String url0 = userUrl;
     String url1 = url + urlEncode("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
     //String url1 = userUrl;
     String url2 = url + urlEncode("cql.allrecords=1 sortBy patronGroup.group/sort.ascending");
@@ -403,7 +418,7 @@ class GroupIT {
     //non existant group - should be 0 results
     String url7 = url + urlEncode("username=jhandley2nd and patronGroup.group=abc* sortby patronGroup.group");
 
-    String[] urls = new String[]{url0, url1, url2, url3, url4, url5, url6, url7};
+    String[] urls = new String[]{userUrl, url1, url2, url3, url4, url5, url6, url7};
 
     for (int i = 0; i < 8; i++) {
       cqlURL = urls[i];
@@ -529,6 +544,19 @@ class GroupIT {
       .statusCode(expectedStatusCode);
   }
 
+  private Groups getGroups() {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .accept("application/json, text/plain")
+      .when()
+      .get("/groups")
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Groups.class);
+  }
+
   @SneakyThrows
   private void updateGroup(Group group) {
     given()
@@ -544,8 +572,8 @@ class GroupIT {
       .statusCode(HTTP_NO_CONTENT);
   }
 
-  private ValidatableResponse deleteGroup(String id) {
-    return given()
+  private void deleteGroup(String id) {
+    given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
       .header("X-Okapi-Url", "http://localhost:" + port)
@@ -554,6 +582,22 @@ class GroupIT {
       .delete("/groups/{id}", Map.of("id", id))
       .then()
       .statusCode(HTTP_NO_CONTENT);
+  }
+
+  @SneakyThrows
+  private User createUser(User userToCreate) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .contentType(JSON)
+      .accept("application/json, text/plain")
+      .when()
+      .body(new ObjectMapper().writeValueAsString(userToCreate))
+      .post("/users")
+      .then()
+      .statusCode(HTTP_CREATED)
+      .extract().as(User.class);
   }
 
   private static class Response {
