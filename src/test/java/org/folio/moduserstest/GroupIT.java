@@ -1,5 +1,7 @@
 package org.folio.moduserstest;
 
+import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
 import static io.vertx.core.http.HttpMethod.DELETE;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
@@ -47,6 +49,7 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -54,6 +57,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.restassured.RestAssured;
+import io.restassured.response.ValidatableResponse;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -69,6 +74,7 @@ import lombok.SneakyThrows;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 public class GroupIT {
+  private static int port;
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
 
@@ -83,8 +89,12 @@ public class GroupIT {
   public static void setup(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
-    final var port = NetworkUtils.nextFreePort();
+    port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
+
+    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+    RestAssured.port = port;
+
     TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", WebClient.create(vertx));
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port));
@@ -109,15 +119,11 @@ public class GroupIT {
       .expirationOffsetInDays(365)
       .build();
 
-    var addGroupCF = send(groupUrl, POST,
-      new ObjectMapper().writeValueAsString(group), HTTPResponseHandlers.json());
-
-    var addGroupResponse = addGroupCF.get(5, SECONDS);
-
-    assertThat(addGroupResponse.code, is(HTTP_CREATED));
+    createGroup(group);
   }
 
   @Test
+  @Ignore("being replaced")
   @SneakyThrows
   void test2Group() {
     /*
@@ -490,6 +496,21 @@ public class GroupIT {
       .put("firstName", "Jack" + userInc)
     );
     return user;
+  }
+
+  @SneakyThrows
+  private ValidatableResponse createGroup(Group group) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .contentType(JSON)
+      .accept("application/json, text/plain")
+      .when()
+      .body(new ObjectMapper().writeValueAsString(group))
+      .post("/groups")
+      .then()
+      .statusCode(HTTP_CREATED);
   }
 
   private static class Response {
