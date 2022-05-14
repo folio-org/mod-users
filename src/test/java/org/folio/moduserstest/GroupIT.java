@@ -46,11 +46,9 @@ import org.folio.rest.tools.parser.JsonPathParser;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.rest.utils.TenantInit;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -58,12 +56,13 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class GroupIT {
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
@@ -75,37 +74,30 @@ public class GroupIT {
 
   private static int userInc = 0;
 
-  private static Vertx vertx;
-
-  @Rule
-  public Timeout rule = Timeout.seconds(20);
-
-  @BeforeClass
-  public static void setup(TestContext context) {
-    vertx = Vertx.vertx();
-
+  @BeforeAll
+  public static void setup(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
-    Integer port = NetworkUtils.nextFreePort();
+    final var port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
-    TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku");
+    TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", WebClient.create(vertx));
     DeploymentOptions options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port));
 
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
+    vertx.deployVerticle(RestVerticle.class.getName(), options, context.succeeding(res -> {
       TenantAttributes ta = new TenantAttributes();
       ta.setModuleTo("mod-users-1.0.0");
       List<Parameter> parameters = new LinkedList<>();
       parameters.add(new Parameter().withKey("loadReference").withValue("true"));
       parameters.add(new Parameter().withKey("loadSample").withValue("false"));
       ta.setParameters(parameters);
-      TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
+      TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
     }));
   }
 
   @Test
   @SneakyThrows
-  public void test2Group() {
+  void test2Group() {
     /*
       add a group
      */
@@ -336,12 +328,11 @@ public class GroupIT {
         + "\nStatus - " + addExpiredUserResponse.code + " at "
         + System.currentTimeMillis() + " for " + addUserURL + " (addExpiredUser)");
       assertThat(addExpiredUserResponse.code, is(201));
-      CompletableFuture<Void> getExpirationCF = new CompletableFuture<Void>();
+      final var getExpirationCF = new CompletableFuture<Void>();
       ExpirationTool.doExpirationForTenant(RestITSupport.vertx(), "diku")
         .onComplete(res -> getExpirationCF.complete(null));
       getExpirationCF.get(5, SECONDS);
-      //TimeUnit.SECONDS.sleep(15);
-      CompletableFuture<Response> getExpiredUserCF = send(addUserURL + "/" + expiredUserId.toString(), GET, null,
+      CompletableFuture<Response> getExpiredUserCF = send(addUserURL + "/" + expiredUserId, GET, null,
         HTTPResponseHandlers.json());
       Response getExpiredUserResponse = getExpiredUserCF.get(5, SECONDS);
       assertThat(getExpiredUserResponse.body.getBoolean("active"), is(false));
