@@ -42,6 +42,7 @@ import org.folio.support.Group;
 import org.folio.support.Groups;
 import org.folio.support.User;
 import org.folio.support.Users;
+import org.folio.support.ValidationErrors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -339,7 +340,40 @@ class GroupIT {
 
     assertThat(activeUsers.getTotalRecords(), is(2));
   }
-  
+
+  @Test
+  void cannotCreateUserWithSameUsernameAsExistingUser() {
+    createUser(User.builder()
+      .username("julia").build());
+
+    final var response = attemptToCreateUser(User.builder()
+      .username("julia").build());
+
+    response.statusCode(is(422));
+
+    final var errors = response.extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("User with this username already exists"));
+  }
+
+  @Test
+  void cannotCreateUserWithSameIdAsExistingUser() {
+    final var existingUser = createUser(User.builder()
+      .username("julia").build());
+
+    final var response = attemptToCreateUser(User.builder()
+      .id(existingUser.getId())
+      .username("steve").build());
+
+    response.statusCode(is(422));
+
+    final var errors = response.extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("User with this id already exists"));
+  }
+
   @Test
   @SneakyThrows
   void test2Group() {
@@ -356,50 +390,27 @@ class GroupIT {
       .active(true)
       .patronGroup(createdGroup.getId()).build());
 
-    final var userID = firstUser.getId();
-
-    /*
-      add the same user name again
-     */
-    CompletableFuture<Response> addUserCF2 = send(
-      userUrl, POST, createUser(null, "jhandley", createdGroup.getId()).encode(),
-      HTTPResponseHandlers.json());
-    Response addUserResponse2 = addUserCF2.get(5, SECONDS);
-    assertThat(addUserResponse2.code, is(422));
-    log.info(addUserResponse2.body
-      + "\nStatus - " + addUserResponse2.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
-    /*
-      add the same user again with same id
-     */
-    CompletableFuture<Response> addUserCF3 = send(
-      userUrl, POST, createUser(userID, "jhandley", createdGroup.getId()).encode(),
-      HTTPResponseHandlers.json());
-    Response addUserResponse3 = addUserCF3.get(5, SECONDS);
-    assertThat(addUserResponse3.code, is(422));
-    log.info(addUserResponse3.body
-      + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
     /*
       update a user again with non existent patron group
      */
-    CompletableFuture<Response> updateUserCF = send(userUrl + "/" + userID, PUT, createUser(userID, "jhandley2nd",
+    CompletableFuture<Response> updateUserCF = send(userUrl + "/" + firstUser.getId(), PUT, createUser(
+      firstUser.getId(),
       "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), HTTPResponseHandlers.empty());
     Response updateUserResponse = updateUserCF.get(5, SECONDS);
     assertThat(updateUserResponse.code, is(HTTP_BAD_REQUEST));
     log.info(updateUserResponse.body
-      + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + userID);
+      + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + firstUser.getId());
 
     /*
       update a user again with existent patron group
      */
-    CompletableFuture<Response> updateUser2CF = send(userUrl + "/" + userID, PUT,
-      createUser(userID, "jhandley2nd", createdGroup.getId()).encode(),
+    CompletableFuture<Response> updateUser2CF = send(userUrl + "/" + firstUser.getId(), PUT,
+      createUser(firstUser.getId(), createdGroup.getId()).encode(),
       HTTPResponseHandlers.empty());
     Response updateUser2Response = updateUser2CF.get(5, SECONDS);
     assertThat(updateUser2Response.code, is(HTTP_NO_CONTENT));
     log.info(updateUser2Response.body
-      + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + userID);
+      + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + firstUser.getId());
 
     /*
       try to get via cql
@@ -455,12 +466,12 @@ class GroupIT {
     return result;
   }
 
-  private static JsonObject createUser(String id, String name, String pgId) {
+  private static JsonObject createUser(String id, String pgId) {
     JsonObject user = new JsonObject();
     if (id != null) {
       user.put("id", id);
     }
-    user.put("username", name);
+    user.put("username", "jhandley2nd");
     user.put("patronGroup", pgId);
     user.put("active", true);
     user.put("personal", new JsonObject()
