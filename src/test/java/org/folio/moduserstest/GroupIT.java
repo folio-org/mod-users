@@ -12,7 +12,6 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.defaultString;
-import static org.folio.HttpStatus.HTTP_UNPROCESSABLE_ENTITY;
 import static org.folio.moduserstest.RestITSupport.HTTP_LOCALHOST;
 import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.get;
@@ -238,6 +237,19 @@ class GroupIT {
     assertThat(secondGroup.getDesc(), is("Second group description"));
   }
 
+  @Test
+  void cannotAssignGroupThatDoesNotExistToUser() {
+    final var unknownGroupId = UUID.randomUUID().toString();
+
+    final var response = attemptToCreateUser(User.builder()
+      .username("julia")
+      .patronGroup(unknownGroupId).build());
+
+    response.statusCode(is(HTTP_BAD_REQUEST));
+    response.body(is(
+      String.format("Cannot add %s. Patron group not found", unknownGroupId)));
+  }
+
   @ParameterizedTest
   @CsvSource({"patronGroup.group/sort.ascending,julia", "patronGroup.group/sort.descending,alex"})
   void canSortUsersByPatronGroupNameAscending(String sortClause,
@@ -367,28 +379,6 @@ class GroupIT {
     assertThat(addUserResponse3.code, is(422));
     log.info(addUserResponse3.body
       + "\nStatus - " + addUserResponse3.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
-    /*
-      add a user again with non existent patron group
-     */
-    CompletableFuture<Response> addUserCF4 = send(userUrl, POST,
-      createUser(null, "jhandley2nd", "10c19698-313b-46fc-8d4b-2d00c6958f5d").encode(),
-      HTTPResponseHandlers.empty());
-    Response addUserResponse4 = addUserCF4.get(5, SECONDS);
-    assertThat(addUserResponse4.code, is(HTTP_BAD_REQUEST));
-    log.info(addUserResponse4.body
-      + "\nStatus - " + addUserResponse4.code + " at " + System.currentTimeMillis() + " for " + userUrl);
-
-    /*
-      add a user again with invalid uuid
-     */
-    CompletableFuture<Response> addUserCF4a = send(
-      userUrl, POST, createUser(null, "jhandley2nd", "invalid-uuid").encode(),
-      HTTPResponseHandlers.empty());
-    Response addUserResponse4a = addUserCF4a.get(5, SECONDS);
-    assertThat(addUserResponse4a.code, is(HTTP_UNPROCESSABLE_ENTITY.toInt()));
-    log.info(addUserResponse4a.body
-      + "\nStatus - " + addUserResponse4a.code + " at " + System.currentTimeMillis() + " for " + userUrl);
 
     /*
       update a user again with non existent patron group
@@ -584,6 +574,20 @@ class GroupIT {
       .then()
       .statusCode(HTTP_CREATED)
       .extract().as(User.class);
+  }
+
+  @SneakyThrows
+  private ValidatableResponse attemptToCreateUser(User userToCreate) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .contentType(JSON)
+      .accept("application/json, text/plain")
+      .when()
+      .body(new ObjectMapper().writeValueAsString(userToCreate))
+      .post("/users")
+      .then();
   }
 
   private Users getUsers(String query) {
