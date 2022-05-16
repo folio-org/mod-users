@@ -206,7 +206,7 @@ class GroupIT {
 
     getGroup(UUID.randomUUID().toString(), HTTP_NOT_FOUND);
   }
-  
+
   @Test
   void canGetAllGroups() {
     createGroup(Group.builder()
