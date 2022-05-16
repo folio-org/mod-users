@@ -2,19 +2,12 @@ package org.folio.moduserstest;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static io.vertx.core.http.HttpMethod.GET;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.commons.lang3.StringUtils.defaultString;
-import static org.folio.moduserstest.RestITSupport.HTTP_LOCALHOST;
-import static org.folio.moduserstest.RestITSupport.delete;
-import static org.folio.moduserstest.RestITSupport.get;
-import static org.folio.moduserstest.RestITSupport.post;
-import static org.folio.moduserstest.RestITSupport.put;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
@@ -23,11 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
@@ -54,12 +43,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -68,11 +53,7 @@ import lombok.SneakyThrows;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 class GroupIT {
-  private static final Logger log = LogManager.getLogger(GroupIT.class);
-
   private static int port;
-  private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
-  private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
 
   @BeforeAll
   public static void beforeAll(Vertx vertx, VertxTestContext context) {
@@ -187,19 +168,6 @@ class GroupIT {
   }
 
   @Test
-  void canGetAGroup() {
-    final var group = createGroup(Group.builder()
-      .group("New group")
-      .desc("Group description")
-      .build());
-
-    final var foundGroup = getGroup(group.getId());
-
-    assertThat(foundGroup.getGroup(), is("New group"));
-    assertThat(foundGroup.getDesc(), is("Group description"));
-  }
-
-  @Test
   void cannotCreateAGroupWithTheSameNameAsExistingGroup() {
     createGroup(Group.builder()
       .group("New group")
@@ -218,14 +186,27 @@ class GroupIT {
   }
 
   @Test
-  void cannotGetAGroupThatDoesNotExist() {
-    createGroup(Group.builder()
+  void canGetAGroup() {
+    final var group = createGroup(Group.builder()
       .group("New group")
       .desc("Group description")
       .build());
 
+    final var foundGroup = getGroup(group.getId());
+
+    assertThat(foundGroup.getGroup(), is("New group"));
+    assertThat(foundGroup.getDesc(), is("Group description"));
+  }
+
+  @Test
+  void cannotGetAGroupThatDoesNotExist() {
+    createGroup(Group.builder()
+      .group("New group")
+      .build());
+
     getGroup(UUID.randomUUID().toString(), HTTP_NOT_FOUND);
   }
+  
   @Test
   void canGetAllGroups() {
     createGroup(Group.builder()
@@ -248,6 +229,28 @@ class GroupIT {
     assertThat(firstGroup.getDesc(), is("First group description"));
 
     final var secondGroup = groups.getGroupByName("Second new group");
+
+    assertThat("[Second new group] exists in collection", secondGroup, is(notNullValue()));
+    assertThat(secondGroup.getDesc(), is("Second group description"));
+  }
+
+  @Test
+  void canFindGroupByName() {
+    createGroup(Group.builder()
+      .group("First new group")
+      .desc("First group description")
+      .build());
+
+    createGroup(Group.builder()
+      .group("Second")
+      .desc("Second group description")
+      .build());
+
+    final var groups = findGroups("group==Second");
+
+    assertThat(groups.getTotalRecords(), is(1));
+
+    final var secondGroup = groups.getGroupByName("Second");
 
     assertThat("[Second new group] exists in collection", secondGroup, is(notNullValue()));
     assertThat(secondGroup.getDesc(), is("Second group description"));
@@ -289,7 +292,6 @@ class GroupIT {
   void cannotAssignGroupThatDoesNotExistToUser() {
     final var group = createGroup(Group.builder()
       .group("First new group")
-      .desc("First group description")
       .build());
 
     final var user = createUser(User.builder()
@@ -431,60 +433,6 @@ class GroupIT {
       is("User with this id already exists"));
   }
 
-  @Test
-  @SneakyThrows
-  void test2Group() {
-    var fooGroup = Group.builder()
-      .group("librarianFOO")
-      .desc("yet another basic lib group")
-      .expirationOffsetInDays(365)
-      .build();
-
-    createGroup(fooGroup);
-
-    /*
-      try to get via cql
-     */
-    String cqlURL = groupUrl + "?query=group==librarianFOO";
-    CompletableFuture<Response> cqlCF = send(cqlURL, GET, null, HTTPResponseHandlers.json());
-    Response cqlResponse = cqlCF.get(5, SECONDS);
-    assertThat(cqlResponse.code, is(HTTP_OK));
-    log.info(cqlResponse.body
-      + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
-    assertThat(cqlResponse.body.getInteger("totalRecords"), is(1));
-  }
-
-  private CompletableFuture<Response> send(String url, HttpMethod method, String content,
-      Function<HttpResponse<Buffer>, Response> handler) {
-
-    Future<HttpResponse<Buffer>> httpResponse;
-
-    switch (method.name()) {
-      case "GET":
-        httpResponse = get(url);
-        break;
-      case "POST":
-        httpResponse = post(url, defaultString(content));
-        break;
-      case "PUT":
-        httpResponse = put(url, defaultString(content));
-        break;
-      case "DELETE":
-        httpResponse = delete(url);
-        break;
-      default:
-        throw new IllegalArgumentException("Illegal method: " + method);
-    }
-
-    CompletableFuture<Response> result = new CompletableFuture<>();
-
-    httpResponse.map(handler)
-      .onSuccess(result::complete)
-      .onFailure(result::completeExceptionally);
-
-    return result;
-  }
-
   @SneakyThrows
   private Group createGroup(Group group) {
     return attemptToCreateGroup(group)
@@ -536,6 +484,20 @@ class GroupIT {
       .extract().as(Groups.class);
   }
 
+  private Groups findGroups(String cqlQuery) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .accept("application/json, text/plain")
+      .when()
+      .queryParam("query", cqlQuery)
+      .get("/groups")
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Groups.class);
+  }
+
   @SneakyThrows
   private void updateGroup(Group group) {
     given()
@@ -581,7 +543,7 @@ class GroupIT {
   }
 
   @SneakyThrows
-  private User createUser(User userToCreate) {
+  private User createUser(User user) {
     return given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
@@ -589,7 +551,7 @@ class GroupIT {
       .contentType(JSON)
       .accept("application/json, text/plain")
       .when()
-      .body(new ObjectMapper().writeValueAsString(userToCreate))
+      .body(new ObjectMapper().writeValueAsString(user))
       .post("/users")
       .then()
       .statusCode(HTTP_CREATED)
@@ -597,7 +559,7 @@ class GroupIT {
   }
 
   @SneakyThrows
-  private ValidatableResponse attemptToCreateUser(User userToCreate) {
+  private ValidatableResponse attemptToCreateUser(User user) {
     return given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
@@ -605,7 +567,7 @@ class GroupIT {
       .contentType(JSON)
       .accept("application/json, text/plain")
       .when()
-      .body(new ObjectMapper().writeValueAsString(userToCreate))
+      .body(new ObjectMapper().writeValueAsString(user))
       .post("/users")
       .then();
   }
@@ -667,21 +629,5 @@ class GroupIT {
       .delete("/users")
       .then()
       .statusCode(204);
-  }
-
-  private static class Response {
-    int code;
-    JsonObject body;
-  }
-
-  private static class HTTPResponseHandlers {
-    static Function<HttpResponse<Buffer>, Response> json() {
-      return response -> {
-        Response result = new Response();
-        result.code = response.statusCode();
-        result.body = response.bodyAsJsonObject();
-        return result;
-      };
-    }
   }
 }
