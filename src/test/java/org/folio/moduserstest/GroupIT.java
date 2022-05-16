@@ -189,6 +189,29 @@ class GroupIT {
   }
 
   @Test
+  void canGetAGroup() {
+    final var group = createGroup(Group.builder()
+      .group("New group")
+      .desc("Group description")
+      .build());
+
+    final var foundGroup = getGroup(group.getId());
+
+    assertThat(foundGroup.getGroup(), is("New group"));
+    assertThat(foundGroup.getDesc(), is("Group description"));
+  }
+
+  @Test
+  void cannotGetAGroupThatDoesNotExist() {
+    createGroup(Group.builder()
+      .group("New group")
+      .desc("Group description")
+      .build());
+
+    getGroup(UUID.randomUUID().toString(), HTTP_NOT_FOUND);
+  }
+
+  @Test
   void canGetAllGroups() {
     createGroup(Group.builder()
       .group("First new group")
@@ -400,6 +423,7 @@ class GroupIT {
     assertThat(cqlResponse.body.getInteger("totalRecords"), is(1));
 
     /*
+
       try to add a duplicate group
      */
     CompletableFuture<Response> dupCF = send(groupUrl, POST,
@@ -408,16 +432,6 @@ class GroupIT {
     assertThat(dupResponse.code, is(422));
     log.info(dupResponse.body
       + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
-
-    /*
-      get a group bad id
-     */
-    String getBadIDURL = groupUrl + "/3748ec8d-8dbc-4717-819d-87c839e6905e";
-    CompletableFuture<Response> getBadIDCF = send(getBadIDURL, GET, null, HTTPResponseHandlers.empty());
-    Response getBadIDResponse = getBadIDCF.get(5, SECONDS);
-    assertThat(getBadIDResponse.code, is(HTTP_NOT_FOUND));
-    log.info(getBadIDResponse.body
-      + "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
   }
 
   private CompletableFuture<Response> send(String url, HttpMethod method, String content,
