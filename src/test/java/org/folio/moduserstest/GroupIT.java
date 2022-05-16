@@ -214,7 +214,46 @@ class GroupIT {
     final var usersSortedByGroup = getUsers("cql.allRecords=1 sortBy " + sortClause);
 
     assertThat(usersSortedByGroup.getTotalRecords(), is(2));
-    assertThat(usersSortedByGroup.getUsers().get(0).getUsername(), is(expectedFirstUsername));
+    assertThat(usersSortedByGroup.getFirstUser().getUsername(), is(expectedFirstUsername));
+  }
+
+  @Test
+  void canFilterUsersByPatronGroup() {
+    final var alphaGroup = createGroup(Group.builder()
+      .group("Alpha group")
+      .build());
+
+    var zebraGroup = createGroup(Group.builder()
+      .group("Zebra group")
+      .build());
+
+    createUser(User.builder()
+      .username("julia")
+      .patronGroup(alphaGroup.getId()).build());
+
+    createUser(User.builder()
+      .username("alex")
+      .patronGroup(zebraGroup.getId()).build());
+
+    final var usersFilteredByGroupName = getUsers("patronGroup.group=alpha");
+
+    assertThat(usersFilteredByGroupName.getTotalRecords(), is(1));
+    assertThat(usersFilteredByGroupName.getFirstUser().getUsername(), is("julia"));
+  }
+
+  @Test
+  void zeroUsersWhenFilteringUsersByPatronGroupThatDoesNotExist() {
+    final var alphaGroup = createGroup(Group.builder()
+      .group("Alpha group")
+      .build());
+
+    createUser(User.builder()
+      .username("julia")
+      .patronGroup(alphaGroup.getId()).build());
+
+    final var usersFilteredByGroupName = getUsers("patronGroup.group=missing");
+
+    assertThat(usersFilteredByGroupName.getTotalRecords(), is(0));
   }
 
   //These tests should  be in the integration tests for users not groups
@@ -384,10 +423,6 @@ class GroupIT {
     assertThat(deleteResponse.code, is(HTTP_BAD_REQUEST));
     log.info(deleteResponse.body
       + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
-
-    final var usersFilteredByGroupName = getUsers("patronGroup.group=librarianFOO sortBy patronGroup.group/sort.descending");
-
-    assertThat(usersFilteredByGroupName.getTotalRecords(), is(1));
 
     final var usersFilteredByGroupNameThatDoesNotExist = getUsers("patronGroup.group=abc*");
 

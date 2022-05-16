@@ -14,4 +14,9 @@ import lombok.extern.jackson.Jacksonized;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Users {
   List<User> users;
-  int totalRecords;}
+  int totalRecords;
+
+  public User getFirstUser() {
+    return getUsers().get(0);
+  }
+}
