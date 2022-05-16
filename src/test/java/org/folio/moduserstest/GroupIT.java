@@ -3,7 +3,6 @@ package org.folio.moduserstest;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static io.vertx.core.http.HttpMethod.GET;
-import static io.vertx.core.http.HttpMethod.PUT;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
@@ -255,10 +254,52 @@ class GroupIT {
   }
 
   @Test
-  void cannotAssignGroupThatDoesNotExistToUser() {
+  void cannotCreateAUserForGroupThatDoesNotExist() {
     final var unknownGroupId = UUID.randomUUID().toString();
 
     final var response = attemptToCreateUser(User.builder()
+      .username("julia")
+      .patronGroup(unknownGroupId).build());
+
+    response.statusCode(is(HTTP_BAD_REQUEST));
+    response.body(is(
+      String.format("Cannot add %s. Patron group not found", unknownGroupId)));
+  }
+
+  @Test
+  void canAssignAGroupToAUser() {
+    final var group = createGroup(Group.builder()
+      .group("First new group")
+      .build());
+
+    final var user = createUser(User.builder()
+      .username("julia").build());
+
+    updateUser(User.builder()
+      .id(user.getId())
+      .username("julia")
+      .patronGroup(group.getId()).build());
+
+    final var updatedUser = getUser(user.getId());
+
+    assertThat(updatedUser.getPatronGroup(), is(group.getId()));
+  }
+
+  @Test
+  void cannotAssignGroupThatDoesNotExistToUser() {
+    final var group = createGroup(Group.builder()
+      .group("First new group")
+      .desc("First group description")
+      .build());
+
+    final var user = createUser(User.builder()
+      .username("julia")
+      .patronGroup(group.getId()).build());
+
+    final var unknownGroupId = UUID.randomUUID().toString();
+
+    final var response = attemptToUpdateUser(User.builder()
+      .id(user.getId())
       .username("julia")
       .patronGroup(unknownGroupId).build());
 
@@ -399,34 +440,7 @@ class GroupIT {
       .expirationOffsetInDays(365)
       .build();
 
-    final var createdGroup = createGroup(fooGroup);
-
-    final var firstUser = createUser(User.builder()
-      .username("jhandley")
-      .active(true)
-      .patronGroup(createdGroup.getId()).build());
-
-    /*
-      update a user again with non existent patron group
-     */
-    CompletableFuture<Response> updateUserCF = send(userUrl + "/" + firstUser.getId(), PUT, createUser(
-      firstUser.getId(),
-      "20c19698-313b-46fc-8d4b-2d00c6958f5d").encode(), HTTPResponseHandlers.empty());
-    Response updateUserResponse = updateUserCF.get(5, SECONDS);
-    assertThat(updateUserResponse.code, is(HTTP_BAD_REQUEST));
-    log.info(updateUserResponse.body
-      + "\nStatus - " + updateUserResponse.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + firstUser.getId());
-
-    /*
-      update a user again with existent patron group
-     */
-    CompletableFuture<Response> updateUser2CF = send(userUrl + "/" + firstUser.getId(), PUT,
-      createUser(firstUser.getId(), createdGroup.getId()).encode(),
-      HTTPResponseHandlers.empty());
-    Response updateUser2Response = updateUser2CF.get(5, SECONDS);
-    assertThat(updateUser2Response.code, is(HTTP_NO_CONTENT));
-    log.info(updateUser2Response.body
-      + "\nStatus - " + updateUser2Response.code + " at " + System.currentTimeMillis() + " for " + userUrl + "/" + firstUser.getId());
+    createGroup(fooGroup);
 
     /*
       try to get via cql
@@ -469,21 +483,6 @@ class GroupIT {
       .onFailure(result::completeExceptionally);
 
     return result;
-  }
-
-  private static JsonObject createUser(String id, String pgId) {
-    JsonObject user = new JsonObject();
-    if (id != null) {
-      user.put("id", id);
-    }
-    user.put("username", "jhandley2nd");
-    user.put("patronGroup", pgId);
-    user.put("active", true);
-    user.put("personal", new JsonObject()
-      .put("lastName", "Triangle")
-      .put("firstName", "Jack")
-    );
-    return user;
   }
 
   @SneakyThrows
@@ -611,6 +610,39 @@ class GroupIT {
       .then();
   }
 
+  private User getUser(String id) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .accept("application/json, text/plain")
+      .when()
+      .get("/users/{id}", Map.of("id", id))
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(User.class);
+  }
+
+  @SneakyThrows
+  private void updateUser(User user) {
+    attemptToUpdateUser(user)
+      .statusCode(HTTP_NO_CONTENT);
+  }
+
+  @SneakyThrows
+  private ValidatableResponse attemptToUpdateUser(User user) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .contentType(JSON)
+      .accept("application/json, text/plain")
+      .when()
+      .body(new ObjectMapper().writeValueAsString(user))
+      .put("/users/{id}", Map.of("id", user.getId()))
+      .then();
+  }
+
   private Users getUsers(String query) {
     return given()
       .header("X-Okapi-Tenant", "diku")
@@ -643,14 +675,6 @@ class GroupIT {
   }
 
   private static class HTTPResponseHandlers {
-    static Function<HttpResponse<Buffer>, Response> empty() {
-      return response -> {
-        Response result = new Response();
-        result.code = response.statusCode();
-        return result;
-      };
-    }
-
     static Function<HttpResponse<Buffer>, Response> json() {
       return response -> {
         Response result = new Response();
