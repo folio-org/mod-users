@@ -3,7 +3,6 @@ package org.folio.moduserstest;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static io.vertx.core.http.HttpMethod.GET;
-import static io.vertx.core.http.HttpMethod.POST;
 import static io.vertx.core.http.HttpMethod.PUT;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
@@ -202,6 +201,24 @@ class GroupIT {
   }
 
   @Test
+  void cannotCreateAGroupWithTheSameNameAsExistingGroup() {
+    createGroup(Group.builder()
+      .group("New group")
+      .build());
+
+    final var response = attemptToCreateGroup(Group.builder()
+      .group("New group")
+      .build());
+
+    response.statusCode(is(422));
+
+    final var errors = response.extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("lower(f_unaccent(jsonb ->> 'group'::text)) value already exists in table groups: new group"));
+  }
+
+  @Test
   void cannotGetAGroupThatDoesNotExist() {
     createGroup(Group.builder()
       .group("New group")
@@ -210,7 +227,6 @@ class GroupIT {
 
     getGroup(UUID.randomUUID().toString(), HTTP_NOT_FOUND);
   }
-
   @Test
   void canGetAllGroups() {
     createGroup(Group.builder()
@@ -422,17 +438,6 @@ class GroupIT {
     log.info(cqlResponse.body
       + "\nStatus - " + cqlResponse.code + " at " + System.currentTimeMillis() + " for " + cqlURL);
     assertThat(cqlResponse.body.getInteger("totalRecords"), is(1));
-
-    /*
-
-      try to add a duplicate group
-     */
-    CompletableFuture<Response> dupCF = send(groupUrl, POST,
-      "{\"group\": \"librarianFOO\",\"desc\": \"yet another basic lib group\", \"expirationOffsetInDays\": 365}", HTTPResponseHandlers.json());
-    Response dupResponse = dupCF.get(5, SECONDS);
-    assertThat(dupResponse.code, is(422));
-    log.info(dupResponse.body
-      + "\nStatus - " + dupResponse.code + " at " + System.currentTimeMillis() + " for " + groupUrl);
   }
 
   private CompletableFuture<Response> send(String url, HttpMethod method, String content,
@@ -483,6 +488,13 @@ class GroupIT {
 
   @SneakyThrows
   private Group createGroup(Group group) {
+    return attemptToCreateGroup(group)
+      .statusCode(HTTP_CREATED)
+      .extract().as(Group.class);
+  }
+
+  @SneakyThrows
+  private ValidatableResponse attemptToCreateGroup(Group group) {
     return given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
@@ -492,9 +504,7 @@ class GroupIT {
       .when()
       .body(new ObjectMapper().writeValueAsString(group))
       .post("/groups")
-      .then()
-      .statusCode(HTTP_CREATED)
-      .extract().as(Group.class);
+      .then();
   }
 
   private Group getGroup(String id) {
