@@ -41,7 +41,6 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
 import org.folio.support.Groups;
-import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.Users;
 import org.junit.jupiter.api.BeforeAll;
@@ -49,6 +48,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -189,6 +190,33 @@ class GroupIT {
     assertThat(secondGroup.getDesc(), is("Second group description"));
   }
 
+  @ParameterizedTest
+  @CsvSource({"patronGroup.group/sort.ascending,julia", "patronGroup.group/sort.descending,alex"})
+  void canSortUsersByPatronGroupNameAscending(String sortClause,
+    String expectedFirstUsername) {
+
+    final var alphaGroup = createGroup(Group.builder()
+      .group("Alpha group")
+      .build());
+
+    var zebraGroup = createGroup(Group.builder()
+      .group("Zebra group")
+      .build());
+
+    createUser(User.builder()
+      .username("julia")
+      .patronGroup(alphaGroup.getId()).build());
+
+    createUser(User.builder()
+      .username("alex")
+      .patronGroup(zebraGroup.getId()).build());
+
+    final var usersSortedByGroup = getUsers("cql.allRecords=1 sortBy " + sortClause);
+
+    assertThat(usersSortedByGroup.getTotalRecords(), is(2));
+    assertThat(usersSortedByGroup.getUsers().get(0).getUsername(), is(expectedFirstUsername));
+  }
+
   //These tests should  be in the integration tests for users not groups
   //they can be moved when the users integration tests are improved
   @Test
@@ -212,7 +240,7 @@ class GroupIT {
 
     assertThat(activeUsers.getTotalRecords(), is(2));
   }
-
+  
   @Test
   @SneakyThrows
   void test2Group() {
@@ -356,33 +384,6 @@ class GroupIT {
     assertThat(deleteResponse.code, is(HTTP_BAD_REQUEST));
     log.info(deleteResponse.body
       + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
-
-    var barGroup = createGroup(Group.builder()
-      .group("librarianBAR")
-      .desc("and yet another basic lib group")
-      .build());
-
-     createUser(User.builder()
-      .username("jhandley0")
-      .active(true)
-      .personal(Personal.builder().lastName("Triangle").build())
-      .patronGroup(barGroup.getId()).build());
-
-    createUser(User.builder()
-      .username("jhandley1")
-      .active(true)
-      .personal(Personal.builder().lastName("Triangle").build())
-      .patronGroup(barGroup.getId()).build());
-
-    final var usersSortedByGroupDesc = getUsers("cql.allRecords=1 sortBy patronGroup.group/sort.descending");
-
-    assertThat(usersSortedByGroupDesc.getTotalRecords(), is(3));
-    assertThat(usersSortedByGroupDesc.getUsers().get(0).getUsername(), is("jhandley2nd"));
-
-    final var usersSortedByGroupAsc = getUsers("cql.allRecords=1 sortBy patronGroup.group/sort.ascending");
-
-    assertThat(usersSortedByGroupAsc.getTotalRecords(), is(3));
-    assertThat(usersSortedByGroupAsc.getUsers().get(0).getUsername(), is("jhandley0"));
 
     final var usersFilteredByGroupName = getUsers("patronGroup.group=librarianFOO sortBy patronGroup.group/sort.descending");
 
