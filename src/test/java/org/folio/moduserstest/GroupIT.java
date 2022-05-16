@@ -2,7 +2,6 @@ package org.folio.moduserstest;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static io.vertx.core.http.HttpMethod.DELETE;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 import static io.vertx.core.http.HttpMethod.PUT;
@@ -26,6 +25,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -149,16 +149,43 @@ class GroupIT {
 
   @Test
   void canDeleteAGroup() {
-    var group = Group.builder()
+    final var group = createGroup(Group.builder()
       .group("New Group")
-      .desc("Group description")
-      .expirationOffsetInDays(365)
-      .build();
+      .build());
 
-    final var createdGroup = createGroup(group);
+    deleteGroup(group.getId());
+    getGroup(group.getId(), HTTP_NOT_FOUND);
+  }
 
-    deleteGroup(createdGroup.getId());
-    getGroup(createdGroup.getId(), HTTP_NOT_FOUND);
+  @Test
+  void cannotDeleteAGroupWithAssociatedUsers() {
+    final var group = createGroup(Group.builder()
+      .group("New Group")
+      .build());
+
+    createUser(User.builder()
+      .username("julia")
+      .patronGroup(group.getId()).build());
+
+    final var response = attemptToDeleteGroup(group.getId());
+
+    response.statusCode(is(HTTP_BAD_REQUEST));
+    response.body(is(
+      String.format("Cannot delete groups.id = %s because id is still referenced from table users.",
+        group.getId())));
+
+    getGroup(group.getId(), HTTP_OK);
+  }
+
+  @Test
+  void cannotDeleteAGroupThatDoesNotExist() {
+    createGroup(Group.builder()
+      .group("New Group")
+      .build());
+
+    final var response = attemptToDeleteGroup(UUID.randomUUID().toString());
+
+    response.statusCode(is(HTTP_NOT_FOUND));
   }
 
   @Test
@@ -166,13 +193,11 @@ class GroupIT {
     createGroup(Group.builder()
       .group("First new group")
       .desc("First group description")
-      .expirationOffsetInDays(365)
       .build());
 
     createGroup(Group.builder()
       .group("Second new group")
       .desc("Second group description")
-      .expirationOffsetInDays(365)
       .build());
 
     final var groups = getAllGroups();
@@ -375,26 +400,6 @@ class GroupIT {
     assertThat(cqlResponse.body.getInteger("totalRecords"), is(1));
 
     /*
-      delete a group - should fail as there is a user associated with the group
-     */
-    String delete1URL = groupUrl + "/" + createdGroup.getId();
-    CompletableFuture<Response> delete1CF = send(delete1URL, DELETE, null, HTTPResponseHandlers.empty());
-    Response delete1Response = delete1CF.get(5, SECONDS);
-    assertThat(delete1Response.code, is(HTTP_BAD_REQUEST));
-    log.info(delete1Response.body
-      + "\nStatus - " + delete1Response.code + " at " + System.currentTimeMillis() + " for " + delete1URL);
-
-    /*
-      delete a nonexistent group - should return 404
-     */
-    String deleteNEGURL = groupUrl + "/a492ffd2-b848-48bf-b716-1a645822279e";
-    CompletableFuture<Response> deleteNEGCF = send(deleteNEGURL, DELETE, null, HTTPResponseHandlers.empty());
-    Response deleteNEGResponse = deleteNEGCF.get(5, SECONDS);
-    assertThat(deleteNEGResponse.code, is(HTTP_NOT_FOUND));
-    log.info(deleteNEGResponse.body
-      + "\nStatus - " + deleteNEGResponse.code + " at " + System.currentTimeMillis() + " for " + deleteNEGURL);
-
-    /*
       try to add a duplicate group
      */
     CompletableFuture<Response> dupCF = send(groupUrl, POST,
@@ -413,20 +418,6 @@ class GroupIT {
     assertThat(getBadIDResponse.code, is(HTTP_NOT_FOUND));
     log.info(getBadIDResponse.body
       + "\nStatus - " + getBadIDResponse.code + " at " + System.currentTimeMillis() + " for " + getBadIDURL);
-
-    /*
-      delete a group with users should fail
-     */
-    String delete = groupUrl + "/" + createdGroup.getId();
-    CompletableFuture<Response> deleteCF = send(delete, DELETE, null, HTTPResponseHandlers.empty());
-    Response deleteResponse = deleteCF.get(5, SECONDS);
-    assertThat(deleteResponse.code, is(HTTP_BAD_REQUEST));
-    log.info(deleteResponse.body
-      + "\nStatus - " + deleteResponse.code + " at " + System.currentTimeMillis() + " for " + delete);
-
-    final var usersFilteredByGroupNameThatDoesNotExist = getUsers("patronGroup.group=abc*");
-
-    assertThat(usersFilteredByGroupNameThatDoesNotExist.getTotalRecords(), is(0));
   }
 
   private CompletableFuture<Response> send(String url, HttpMethod method, String content,
@@ -552,6 +543,17 @@ class GroupIT {
       .delete("/groups/{id}", Map.of("id", id))
       .then()
       .statusCode(HTTP_NO_CONTENT);
+  }
+
+  private ValidatableResponse attemptToDeleteGroup(String id) {
+    return given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .accept("application/json, text/plain")
+      .when()
+      .delete("/groups/{id}", Map.of("id", id))
+      .then();
   }
 
   @SneakyThrows
