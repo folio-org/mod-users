@@ -44,6 +44,7 @@ import org.folio.support.Groups;
 import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.Users;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -74,8 +75,8 @@ class GroupIT {
   private final String userUrl = HTTP_LOCALHOST + RestITSupport.port() + "/users";
   private final String groupUrl = HTTP_LOCALHOST + RestITSupport.port() + "/groups";
 
-  @BeforeEach
-  public void beforeEach(Vertx vertx, VertxTestContext context) {
+  @BeforeAll
+  public static void beforeAll(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     port = NetworkUtils.nextFreePort();
@@ -98,6 +99,12 @@ class GroupIT {
 
       TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
     }));
+  }
+
+  @BeforeEach
+  public void beforeEach() {
+    deleteAllUsers();
+    deleteAllGroups();
   }
 
   @Test
@@ -167,7 +174,7 @@ class GroupIT {
       .expirationOffsetInDays(365)
       .build());
 
-    final var groups = getGroups();
+    final var groups = getAllGroups();
 
     assertThat(groups.getTotalRecords(), is(2));
 
@@ -465,7 +472,7 @@ class GroupIT {
       .statusCode(expectedStatusCode);
   }
 
-  private Groups getGroups() {
+  private Groups getAllGroups() {
     return given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
@@ -491,6 +498,12 @@ class GroupIT {
       .put("/groups/{id}", Map.of("id", group.getId()))
       .then()
       .statusCode(HTTP_NO_CONTENT);
+  }
+
+  void deleteAllGroups() {
+    final var groups = getAllGroups();
+
+    groups.getUsergroups().forEach(group -> deleteGroup(group.getId()));
   }
 
   private void deleteGroup(String id) {
@@ -532,6 +545,19 @@ class GroupIT {
       .then()
       .statusCode(HTTP_OK)
       .extract().as(Users.class);
+  }
+
+  void deleteAllUsers() {
+    given()
+      .header("X-Okapi-Tenant", "diku")
+      .header("X-Okapi-Token", "")
+      .header("X-Okapi-Url", "http://localhost:" + port)
+      .accept("application/json, text/plain")
+      .when()
+      .param("query", "cql.allRecords=1")
+      .delete("/users")
+      .then()
+      .statusCode(204);
   }
 
   private static class Response {
