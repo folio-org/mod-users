@@ -66,12 +66,13 @@ public class UsersClient {
       .extract().as(User.class);
   }
 
-  public Users getUsers(String query) {
+  public Users getUsers(String cqlQuery) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .when()
-      .get("/users?query=" + query)
+      .queryParam("query", cqlQuery)
+      .get("/users")
       .then()
       .statusCode(HTTP_OK)
       .extract().as(Users.class);
@@ -82,7 +83,7 @@ public class UsersClient {
       .config(config)
       .spec(requestSpecification)
       .when()
-      .param("query", "cql.allRecords=1")
+      .queryParam("query", "cql.allRecords=1")
       .delete("/users")
       .then()
       .statusCode(204);
