@@ -1,10 +1,7 @@
 package org.folio.moduserstest;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
@@ -14,7 +11,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
@@ -39,23 +35,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.restassured.RestAssured;
-import io.restassured.response.ValidatableResponse;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 class GroupIT {
-  private static int port;
   private static GroupsClient groupsClient;
   private static UsersClient usersClient;
 
@@ -64,17 +54,18 @@ class GroupIT {
   public static void beforeAll(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
-    port = NetworkUtils.nextFreePort();
+    int port = NetworkUtils.nextFreePort();
 
-    RestAssured.port = port;
-    groupsClient = new GroupsClient(new URI("http://localhost:" + port),
-      new OkapiHeaders("http://localhost:" + port, "diku", "diku"));
+    final var headers = new OkapiHeaders("http://localhost:" + port,
+      "diku", "diku");
 
-    usersClient = new UsersClient(new URI("http://localhost:" + port),
-      new OkapiHeaders("http://localhost:" + port, "diku", "diku"));
+    groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
+    usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
 
-    TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", WebClient.create(vertx));
-    DeploymentOptions options = new DeploymentOptions()
+    final var tenantClient = new TenantClient(headers.getOkapiUrl(),
+      headers.getTenantId(), headers.getToken(), WebClient.create(vertx));
+
+    final var options = new DeploymentOptions()
       .setConfig(new JsonObject().put("http.port", port));
 
     vertx.deployVerticle(RestVerticle.class.getName(), options, context.succeeding(res -> {
@@ -287,7 +278,7 @@ class GroupIT {
     final var user = usersClient.createUser(User.builder()
       .username("julia").build());
 
-    updateUser(User.builder()
+    usersClient.updateUser(User.builder()
       .id(user.getId())
       .username("julia")
       .patronGroup(group.getId()).build());
@@ -309,7 +300,7 @@ class GroupIT {
 
     final var unknownGroupId = UUID.randomUUID().toString();
 
-    final var response = attemptToUpdateUser(User.builder()
+    final var response = usersClient.attemptToUpdateUser(User.builder()
       .id(user.getId())
       .username("julia")
       .patronGroup(unknownGroupId).build());
@@ -440,24 +431,5 @@ class GroupIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
-  }
-
-  private void updateUser(@NonNull User user) {
-    attemptToUpdateUser(user)
-      .statusCode(HTTP_NO_CONTENT);
-  }
-
-  @SneakyThrows
-  private ValidatableResponse attemptToUpdateUser(@NonNull User user) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .contentType(JSON)
-      .accept("application/json, text/plain")
-      .when()
-      .body(new ObjectMapper().writeValueAsString(user))
-      .put("/users/{id}", Map.of("id", user.getId()))
-      .then();
   }
 }

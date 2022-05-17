@@ -3,6 +3,7 @@ package org.folio.support.http;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.net.URI;
@@ -85,5 +86,20 @@ public class UsersClient {
       .delete("/users")
       .then()
       .statusCode(204);
+  }
+  public void updateUser(@NonNull User user) {
+    attemptToUpdateUser(user)
+      .statusCode(HTTP_NO_CONTENT);
+  }
+
+  public ValidatableResponse attemptToUpdateUser(@NonNull User user) {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .contentType(JSON)
+      .when()
+      .body(user)
+      .put("/users/{id}", Map.of("id", user.getId()))
+      .then();
   }
 }
