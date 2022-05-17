@@ -116,7 +116,7 @@ class GroupIT {
 
     final var createdGroup = groupsClient.createGroup(group);
 
-    updateGroup(Group.builder()
+    groupsClient.updateGroup(Group.builder()
       .id(createdGroup.getId())
       .group("A new name")
       .desc("A new description")
@@ -435,21 +435,6 @@ class GroupIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
-  }
-
-  @SneakyThrows
-  private void updateGroup(Group group) {
-    given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .contentType(JSON)
-      .accept("application/json, text/plain")
-      .when()
-      .body(new ObjectMapper().writeValueAsString(group))
-      .put("/groups/{id}", Map.of("id", group.getId()))
-      .then()
-      .statusCode(HTTP_NO_CONTENT);
   }
 
   @SneakyThrows

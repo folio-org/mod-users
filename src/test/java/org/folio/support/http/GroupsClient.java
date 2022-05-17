@@ -109,4 +109,19 @@ public class GroupsClient {
       .statusCode(HTTP_OK)
       .extract().as(Groups.class);
   }
+
+  @SneakyThrows
+  public void updateGroup(@NonNull Group group) {
+    given()
+      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
+      .header("X-Okapi-Token", defaultHeaders.getToken())
+      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
+      .accept("application/json, text/plain")
+      .contentType(JSON)
+      .when()
+      .body(new ObjectMapper().writeValueAsString(group))
+      .put("/groups/{id}", Map.of("id", group.getId()))
+      .then()
+      .statusCode(HTTP_NO_CONTENT);
+  }
 }
