@@ -12,6 +12,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -58,14 +59,14 @@ class GroupIT {
   private static GroupsClient groupsClient;
 
   @BeforeAll
+  @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     port = NetworkUtils.nextFreePort();
 
-    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.port = port;
-    groupsClient = new GroupsClient(
+    groupsClient = new GroupsClient(new URI("http://localhost:" + port),
       new OkapiHeaders("http://localhost:" + port, "diku", "diku"));
 
     TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", WebClient.create(vertx));
