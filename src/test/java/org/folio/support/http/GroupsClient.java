@@ -78,4 +78,35 @@ public class GroupsClient {
 
     groups.getUsergroups().forEach(group -> deleteGroup(group.getId()));
   }
+
+  public Group getGroup(String id) {
+    return attemptToGetGroup(id)
+      .statusCode(HTTP_OK)
+      .extract().as(Group.class);
+  }
+
+  public ValidatableResponse attemptToGetGroup(String id) {
+    return given()
+      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
+      .header("X-Okapi-Token", defaultHeaders.getToken())
+      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
+      .accept("application/json, text/plain")
+      .when()
+      .get("/groups/{id}", Map.of("id", id))
+      .then();
+  }
+
+  public Groups findGroups(String cqlQuery) {
+    return given()
+      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
+      .header("X-Okapi-Token", defaultHeaders.getToken())
+      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
+      .accept("application/json, text/plain")
+      .when()
+      .queryParam("query", cqlQuery)
+      .get("/groups")
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Groups.class);
+  }
 }

@@ -26,7 +26,6 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
-import org.folio.support.Groups;
 import org.folio.support.User;
 import org.folio.support.Users;
 import org.folio.support.ValidationErrors;
@@ -124,7 +123,7 @@ class GroupIT {
       .expirationOffsetInDays(365)
       .build());
 
-    final var updatedGroup = getGroup(createdGroup.getId());
+    final var updatedGroup = groupsClient.getGroup(createdGroup.getId());
 
     assertThat(updatedGroup.getGroup(), is("A new name"));
     assertThat(updatedGroup.getDesc(), is("A new description"));
@@ -137,7 +136,8 @@ class GroupIT {
       .build());
 
     groupsClient.deleteGroup(group.getId());
-    getGroup(group.getId(), HTTP_NOT_FOUND);
+
+    groupsClient.attemptToGetGroup(group.getId()).statusCode(HTTP_NOT_FOUND);
   }
 
   @Test
@@ -157,7 +157,7 @@ class GroupIT {
       String.format("Cannot delete groups.id = %s because id is still referenced from table users.",
         group.getId())));
 
-    getGroup(group.getId(), HTTP_OK);
+    groupsClient.attemptToGetGroup(group.getId()).statusCode(HTTP_OK);
   }
 
   @Test
@@ -196,7 +196,7 @@ class GroupIT {
       .desc("Group description")
       .build());
 
-    final var foundGroup = getGroup(group.getId());
+    final var foundGroup = groupsClient.getGroup(group.getId());
 
     assertThat(foundGroup.getGroup(), is("New group"));
     assertThat(foundGroup.getDesc(), is("Group description"));
@@ -208,7 +208,7 @@ class GroupIT {
       .group("New group")
       .build());
 
-    getGroup(UUID.randomUUID().toString(), HTTP_NOT_FOUND);
+    groupsClient.attemptToGetGroup(UUID.randomUUID().toString()).statusCode(HTTP_NOT_FOUND);
   }
 
   @Test
@@ -250,7 +250,7 @@ class GroupIT {
       .desc("Second group description")
       .build());
 
-    final var groups = findGroups("group==Second");
+    final var groups = groupsClient.findGroups("group==Second");
 
     assertThat(groups.getTotalRecords(), is(1));
 
@@ -435,37 +435,6 @@ class GroupIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
-  }
-
-  private Group getGroup(String id) {
-    return getGroup(id, HTTP_OK)
-      .extract().as(Group.class);
-  }
-
-  private ValidatableResponse getGroup(String id, int expectedStatusCode) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .get("/groups/{id}", Map.of("id", id))
-      .then()
-      .statusCode(expectedStatusCode);
-  }
-
-  private Groups findGroups(String cqlQuery) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .queryParam("query", cqlQuery)
-      .get("/groups")
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Groups.class);
   }
 
   @SneakyThrows
