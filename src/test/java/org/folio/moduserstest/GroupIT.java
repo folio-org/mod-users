@@ -3,7 +3,6 @@ package org.folio.moduserstest;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -51,6 +50,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
@@ -152,7 +152,7 @@ class GroupIT {
       .group("New Group")
       .build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("julia")
       .patronGroup(group.getId()).build());
 
@@ -270,7 +270,7 @@ class GroupIT {
   void cannotCreateAUserForGroupThatDoesNotExist() {
     final var unknownGroupId = UUID.randomUUID().toString();
 
-    final var response = attemptToCreateUser(User.builder()
+    final var response = usersClient.attemptToCreateUser(User.builder()
       .username("julia")
       .patronGroup(unknownGroupId).build());
 
@@ -285,7 +285,7 @@ class GroupIT {
       .group("First new group")
       .build());
 
-    final var user = createUser(User.builder()
+    final var user = usersClient.createUser(User.builder()
       .username("julia").build());
 
     updateUser(User.builder()
@@ -304,7 +304,7 @@ class GroupIT {
       .group("First new group")
       .build());
 
-    final var user = createUser(User.builder()
+    final var user = usersClient.createUser(User.builder()
       .username("julia")
       .patronGroup(group.getId()).build());
 
@@ -333,11 +333,11 @@ class GroupIT {
       .group("Zebra group")
       .build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("julia")
       .patronGroup(alphaGroup.getId()).build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("alex")
       .patronGroup(zebraGroup.getId()).build());
 
@@ -357,11 +357,11 @@ class GroupIT {
       .group("Zebra group")
       .build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("julia")
       .patronGroup(alphaGroup.getId()).build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("alex")
       .patronGroup(zebraGroup.getId()).build());
 
@@ -377,7 +377,7 @@ class GroupIT {
       .group("Alpha group")
       .build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("julia")
       .patronGroup(alphaGroup.getId()).build());
 
@@ -390,17 +390,17 @@ class GroupIT {
   //they can be moved when the users integration tests are improved
   @Test
   void canFindActiveUsers() {
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("steve")
       .active(true)
       .build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("joanne")
       .active(false)
       .build());
 
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("jenna")
       .active(true)
       .build());
@@ -412,10 +412,10 @@ class GroupIT {
 
   @Test
   void cannotCreateUserWithSameUsernameAsExistingUser() {
-    createUser(User.builder()
+    usersClient.createUser(User.builder()
       .username("julia").build());
 
-    final var response = attemptToCreateUser(User.builder()
+    final var response = usersClient.attemptToCreateUser(User.builder()
       .username("julia").build());
 
     response.statusCode(is(422));
@@ -428,10 +428,10 @@ class GroupIT {
 
   @Test
   void cannotCreateUserWithSameIdAsExistingUser() {
-    final var existingUser = createUser(User.builder()
+    final var existingUser = usersClient.createUser(User.builder()
       .username("julia").build());
 
-    final var response = attemptToCreateUser(User.builder()
+    final var response = usersClient.attemptToCreateUser(User.builder()
       .id(existingUser.getId())
       .username("steve").build());
 
@@ -441,36 +441,6 @@ class GroupIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
-  }
-
-  @SneakyThrows
-  private User createUser(User user) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .contentType(JSON)
-      .accept("application/json, text/plain")
-      .when()
-      .body(new ObjectMapper().writeValueAsString(user))
-      .post("/users")
-      .then()
-      .statusCode(HTTP_CREATED)
-      .extract().as(User.class);
-  }
-
-  @SneakyThrows
-  private ValidatableResponse attemptToCreateUser(User user) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .contentType(JSON)
-      .accept("application/json, text/plain")
-      .when()
-      .body(new ObjectMapper().writeValueAsString(user))
-      .post("/users")
-      .then();
   }
 
   private User getUser(String id) {
@@ -487,13 +457,13 @@ class GroupIT {
   }
 
   @SneakyThrows
-  private void updateUser(User user) {
+  private void updateUser(@NonNull User user) {
     attemptToUpdateUser(user)
       .statusCode(HTTP_NO_CONTENT);
   }
 
   @SneakyThrows
-  private ValidatableResponse attemptToUpdateUser(User user) {
+  private ValidatableResponse attemptToUpdateUser(@NonNull User user) {
     return given()
       .header("X-Okapi-Tenant", "diku")
       .header("X-Okapi-Token", "")
