@@ -1,20 +1,47 @@
 package org.folio.support.http;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.http.ContentType.JSON;
+import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.util.Map;
 
+import org.folio.support.Group;
 import org.folio.support.Groups;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.restassured.response.ValidatableResponse;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 
 public class GroupsClient {
   private final OkapiHeaders defaultHeaders;
 
   public GroupsClient(OkapiHeaders defaultHeaders) {
     this.defaultHeaders = defaultHeaders;
+  }
+
+  public Group createGroup(@NonNull Group group) {
+    return attemptToCreateGroup(group)
+      .statusCode(HTTP_CREATED)
+      .extract().as(Group.class);
+  }
+
+  @SneakyThrows
+  public ValidatableResponse attemptToCreateGroup(@NonNull Group group) {
+    return given()
+      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
+      .header("X-Okapi-Token", defaultHeaders.getToken())
+      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
+      .accept("application/json, text/plain")
+      .contentType(JSON)
+      .when()
+      .body(new ObjectMapper().writeValueAsString(group))
+      .post("/groups")
+      .then();
   }
 
   public Groups getAllGroups() {

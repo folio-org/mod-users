@@ -99,7 +99,7 @@ class GroupIT {
       .expirationOffsetInDays(365)
       .build();
 
-    final var createdGroup = createGroup(group);
+    final var createdGroup = groupsClient.createGroup(group);
 
     assertThat(createdGroup.getId(), is(notNullValue()));
     assertThat(createdGroup.getGroup(), is("New Group"));
@@ -115,7 +115,7 @@ class GroupIT {
       .expirationOffsetInDays(365)
       .build();
 
-    final var createdGroup = createGroup(group);
+    final var createdGroup = groupsClient.createGroup(group);
 
     updateGroup(Group.builder()
       .id(createdGroup.getId())
@@ -132,7 +132,7 @@ class GroupIT {
 
   @Test
   void canDeleteAGroup() {
-    final var group = createGroup(Group.builder()
+    final var group = groupsClient.createGroup(Group.builder()
       .group("New Group")
       .build());
 
@@ -142,7 +142,7 @@ class GroupIT {
 
   @Test
   void cannotDeleteAGroupWithAssociatedUsers() {
-    final var group = createGroup(Group.builder()
+    final var group = groupsClient.createGroup(Group.builder()
       .group("New Group")
       .build());
 
@@ -162,7 +162,7 @@ class GroupIT {
 
   @Test
   void cannotDeleteAGroupThatDoesNotExist() {
-    createGroup(Group.builder()
+    groupsClient.createGroup(Group.builder()
       .group("New Group")
       .build());
 
@@ -173,11 +173,11 @@ class GroupIT {
 
   @Test
   void cannotCreateAGroupWithTheSameNameAsExistingGroup() {
-    createGroup(Group.builder()
+    groupsClient.createGroup(Group.builder()
       .group("New group")
       .build());
 
-    final var response = attemptToCreateGroup(Group.builder()
+    final var response = groupsClient.attemptToCreateGroup(Group.builder()
       .group("New group")
       .build());
 
@@ -191,7 +191,7 @@ class GroupIT {
 
   @Test
   void canGetAGroup() {
-    final var group = createGroup(Group.builder()
+    final var group = groupsClient.createGroup(Group.builder()
       .group("New group")
       .desc("Group description")
       .build());
@@ -204,7 +204,7 @@ class GroupIT {
 
   @Test
   void cannotGetAGroupThatDoesNotExist() {
-    createGroup(Group.builder()
+    groupsClient.createGroup(Group.builder()
       .group("New group")
       .build());
 
@@ -213,12 +213,12 @@ class GroupIT {
 
   @Test
   void canGetAllGroups() {
-    createGroup(Group.builder()
+    groupsClient.createGroup(Group.builder()
       .group("First new group")
       .desc("First group description")
       .build());
 
-    createGroup(Group.builder()
+    groupsClient.createGroup(Group.builder()
       .group("Second new group")
       .desc("Second group description")
       .build());
@@ -240,12 +240,12 @@ class GroupIT {
 
   @Test
   void canFindGroupByName() {
-    createGroup(Group.builder()
+    groupsClient.createGroup(Group.builder()
       .group("First new group")
       .desc("First group description")
       .build());
 
-    createGroup(Group.builder()
+    groupsClient.createGroup(Group.builder()
       .group("Second")
       .desc("Second group description")
       .build());
@@ -275,7 +275,7 @@ class GroupIT {
 
   @Test
   void canAssignAGroupToAUser() {
-    final var group = createGroup(Group.builder()
+    final var group = groupsClient.createGroup(Group.builder()
       .group("First new group")
       .build());
 
@@ -294,7 +294,7 @@ class GroupIT {
 
   @Test
   void cannotAssignGroupThatDoesNotExistToUser() {
-    final var group = createGroup(Group.builder()
+    final var group = groupsClient.createGroup(Group.builder()
       .group("First new group")
       .build());
 
@@ -319,11 +319,11 @@ class GroupIT {
   void canSortUsersByPatronGroupNameAscending(String sortClause,
     String expectedFirstUsername) {
 
-    final var alphaGroup = createGroup(Group.builder()
+    final var alphaGroup = groupsClient.createGroup(Group.builder()
       .group("Alpha group")
       .build());
 
-    var zebraGroup = createGroup(Group.builder()
+    var zebraGroup = groupsClient.createGroup(Group.builder()
       .group("Zebra group")
       .build());
 
@@ -343,11 +343,11 @@ class GroupIT {
 
   @Test
   void canFilterUsersByPatronGroup() {
-    final var alphaGroup = createGroup(Group.builder()
+    final var alphaGroup = groupsClient.createGroup(Group.builder()
       .group("Alpha group")
       .build());
 
-    var zebraGroup = createGroup(Group.builder()
+    var zebraGroup = groupsClient.createGroup(Group.builder()
       .group("Zebra group")
       .build());
 
@@ -367,7 +367,7 @@ class GroupIT {
 
   @Test
   void zeroUsersWhenFilteringUsersByPatronGroupThatDoesNotExist() {
-    final var alphaGroup = createGroup(Group.builder()
+    final var alphaGroup = groupsClient.createGroup(Group.builder()
       .group("Alpha group")
       .build());
 
@@ -435,27 +435,6 @@ class GroupIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
-  }
-
-  @SneakyThrows
-  private Group createGroup(Group group) {
-    return attemptToCreateGroup(group)
-      .statusCode(HTTP_CREATED)
-      .extract().as(Group.class);
-  }
-
-  @SneakyThrows
-  private ValidatableResponse attemptToCreateGroup(Group group) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .contentType(JSON)
-      .accept("application/json, text/plain")
-      .when()
-      .body(new ObjectMapper().writeValueAsString(group))
-      .post("/groups")
-      .then();
   }
 
   private Group getGroup(String id) {
