@@ -3,10 +3,13 @@ package org.folio.support.http;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.net.URI;
+import java.util.Map;
 
 import org.folio.support.User;
+import org.folio.support.Users;
 
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.LogConfig;
@@ -49,6 +52,28 @@ public class UsersClient {
       .body(user)
       .post("/users")
       .then();
+  }
+
+  public User getUser(String id) {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .when()
+      .get("/users/{id}", Map.of("id", id))
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(User.class);
+  }
+
+  public Users getUsers(String query) {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .when()
+      .get("/users?query=" + query)
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Users.class);
   }
 
   public void deleteAllUsers() {

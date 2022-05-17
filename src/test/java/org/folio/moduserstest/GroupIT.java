@@ -27,7 +27,6 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
 import org.folio.support.User;
-import org.folio.support.Users;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
@@ -293,7 +292,7 @@ class GroupIT {
       .username("julia")
       .patronGroup(group.getId()).build());
 
-    final var updatedUser = getUser(user.getId());
+    final var updatedUser = usersClient.getUser(user.getId());
 
     assertThat(updatedUser.getPatronGroup(), is(group.getId()));
   }
@@ -341,7 +340,7 @@ class GroupIT {
       .username("alex")
       .patronGroup(zebraGroup.getId()).build());
 
-    final var usersSortedByGroup = getUsers("cql.allRecords=1 sortBy " + sortClause);
+    final var usersSortedByGroup = usersClient.getUsers("cql.allRecords=1 sortBy " + sortClause);
 
     assertThat(usersSortedByGroup.getTotalRecords(), is(2));
     assertThat(usersSortedByGroup.getFirstUser().getUsername(), is(expectedFirstUsername));
@@ -365,7 +364,7 @@ class GroupIT {
       .username("alex")
       .patronGroup(zebraGroup.getId()).build());
 
-    final var usersFilteredByGroupName = getUsers("patronGroup.group=alpha");
+    final var usersFilteredByGroupName = usersClient.getUsers("patronGroup.group=alpha");
 
     assertThat(usersFilteredByGroupName.getTotalRecords(), is(1));
     assertThat(usersFilteredByGroupName.getFirstUser().getUsername(), is("julia"));
@@ -381,7 +380,7 @@ class GroupIT {
       .username("julia")
       .patronGroup(alphaGroup.getId()).build());
 
-    final var usersFilteredByGroupName = getUsers("patronGroup.group=missing");
+    final var usersFilteredByGroupName = usersClient.getUsers("patronGroup.group=missing");
 
     assertThat(usersFilteredByGroupName.getTotalRecords(), is(0));
   }
@@ -405,7 +404,7 @@ class GroupIT {
       .active(true)
       .build());
 
-    final var activeUsers = getUsers("active=true");
+    final var activeUsers = usersClient.getUsers("active=true");
 
     assertThat(activeUsers.getTotalRecords(), is(2));
   }
@@ -443,20 +442,6 @@ class GroupIT {
       is("User with this id already exists"));
   }
 
-  private User getUser(String id) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .get("/users/{id}", Map.of("id", id))
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(User.class);
-  }
-
-  @SneakyThrows
   private void updateUser(@NonNull User user) {
     attemptToUpdateUser(user)
       .statusCode(HTTP_NO_CONTENT);
@@ -474,18 +459,5 @@ class GroupIT {
       .body(new ObjectMapper().writeValueAsString(user))
       .put("/users/{id}", Map.of("id", user.getId()))
       .then();
-  }
-
-  private Users getUsers(String query) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .get("/users?query=" + query)
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Users.class);
   }
 }
