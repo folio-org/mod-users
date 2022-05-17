@@ -13,15 +13,22 @@ import org.folio.support.Groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.ValidatableResponse;
+import io.restassured.specification.RequestSpecification;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
 public class GroupsClient {
-  private final OkapiHeaders defaultHeaders;
+  private final RequestSpecification requestSpecification;
 
   public GroupsClient(OkapiHeaders defaultHeaders) {
-    this.defaultHeaders = defaultHeaders;
+    requestSpecification = new RequestSpecBuilder()
+      .addHeader("X-Okapi-Tenant", defaultHeaders.getTenantId())
+      .addHeader("X-Okapi-Token", defaultHeaders.getToken())
+      .addHeader("X-Okapi-Url", defaultHeaders.getOkapiUrl())
+      .setAccept("application/json, text/plain")
+      .build();
   }
 
   public Group createGroup(@NonNull Group group) {
@@ -33,10 +40,7 @@ public class GroupsClient {
   @SneakyThrows
   public ValidatableResponse attemptToCreateGroup(@NonNull Group group) {
     return given()
-      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .header("X-Okapi-Token", defaultHeaders.getToken())
-      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .accept("application/json, text/plain")
+      .spec(requestSpecification)
       .contentType(JSON)
       .when()
       .body(new ObjectMapper().writeValueAsString(group))
@@ -46,10 +50,7 @@ public class GroupsClient {
 
   public Groups getAllGroups() {
     return given()
-      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .header("X-Okapi-Token", defaultHeaders.getToken())
-      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .accept("application/json, text/plain")
+      .spec(requestSpecification)
       .when()
       .get("/groups")
       .then()
@@ -64,10 +65,7 @@ public class GroupsClient {
 
   public ValidatableResponse attemptToDeleteGroup(String id) {
     return given()
-      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .header("X-Okapi-Token", defaultHeaders.getToken())
-      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .accept("application/json, text/plain")
+      .spec(requestSpecification)
       .when()
       .delete("/groups/{id}", Map.of("id", id))
       .then();
@@ -87,10 +85,7 @@ public class GroupsClient {
 
   public ValidatableResponse attemptToGetGroup(String id) {
     return given()
-      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .header("X-Okapi-Token", defaultHeaders.getToken())
-      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .accept("application/json, text/plain")
+      .spec(requestSpecification)
       .when()
       .get("/groups/{id}", Map.of("id", id))
       .then();
@@ -98,10 +93,7 @@ public class GroupsClient {
 
   public Groups findGroups(String cqlQuery) {
     return given()
-      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .header("X-Okapi-Token", defaultHeaders.getToken())
-      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .accept("application/json, text/plain")
+      .spec(requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
       .get("/groups")
@@ -113,10 +105,7 @@ public class GroupsClient {
   @SneakyThrows
   public void updateGroup(@NonNull Group group) {
     given()
-      .header("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .header("X-Okapi-Token", defaultHeaders.getToken())
-      .header("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .accept("application/json, text/plain")
+      .spec(requestSpecification)
       .contentType(JSON)
       .when()
       .body(new ObjectMapper().writeValueAsString(group))
