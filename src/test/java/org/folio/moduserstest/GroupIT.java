@@ -30,6 +30,8 @@ import org.folio.support.Groups;
 import org.folio.support.User;
 import org.folio.support.Users;
 import org.folio.support.ValidationErrors;
+import org.folio.support.http.GroupsClient;
+import org.folio.support.http.OkapiHeaders;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,16 +56,18 @@ import lombok.SneakyThrows;
 @Timeout(value = 20, unit = SECONDS)
 class GroupIT {
   private static int port;
+  private static GroupsClient groupsClient;
 
   @BeforeAll
   public static void beforeAll(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     port = NetworkUtils.nextFreePort();
-    RestITSupport.setUp(port);
 
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.port = port;
+    groupsClient = new GroupsClient(
+      new OkapiHeaders("http://localhost:" + port, "diku", "diku"));
 
     TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", WebClient.create(vertx));
     DeploymentOptions options = new DeploymentOptions()
@@ -84,7 +88,7 @@ class GroupIT {
   @BeforeEach
   public void beforeEach() {
     deleteAllUsers();
-    deleteAllGroups();
+    groupsClient.deleteAllGroups();
   }
 
   @Test
@@ -132,7 +136,7 @@ class GroupIT {
       .group("New Group")
       .build());
 
-    deleteGroup(group.getId());
+    groupsClient.deleteGroup(group.getId());
     getGroup(group.getId(), HTTP_NOT_FOUND);
   }
 
@@ -146,7 +150,7 @@ class GroupIT {
       .username("julia")
       .patronGroup(group.getId()).build());
 
-    final var response = attemptToDeleteGroup(group.getId());
+    final var response = groupsClient.attemptToDeleteGroup(group.getId());
 
     response.statusCode(is(HTTP_BAD_REQUEST));
     response.body(is(
@@ -162,7 +166,7 @@ class GroupIT {
       .group("New Group")
       .build());
 
-    final var response = attemptToDeleteGroup(UUID.randomUUID().toString());
+    final var response = groupsClient.attemptToDeleteGroup(UUID.randomUUID().toString());
 
     response.statusCode(is(HTTP_NOT_FOUND));
   }
@@ -219,7 +223,7 @@ class GroupIT {
       .desc("Second group description")
       .build());
 
-    final var groups = getAllGroups();
+    final var groups = groupsClient.getAllGroups();
 
     assertThat(groups.getTotalRecords(), is(2));
 
@@ -471,19 +475,6 @@ class GroupIT {
       .statusCode(expectedStatusCode);
   }
 
-  private Groups getAllGroups() {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .get("/groups")
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Groups.class);
-  }
-
   private Groups findGroups(String cqlQuery) {
     return given()
       .header("X-Okapi-Tenant", "diku")
@@ -511,35 +502,6 @@ class GroupIT {
       .put("/groups/{id}", Map.of("id", group.getId()))
       .then()
       .statusCode(HTTP_NO_CONTENT);
-  }
-
-  void deleteAllGroups() {
-    final var groups = getAllGroups();
-
-    groups.getUsergroups().forEach(group -> deleteGroup(group.getId()));
-  }
-
-  private void deleteGroup(String id) {
-    given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .delete("/groups/{id}", Map.of("id", id))
-      .then()
-      .statusCode(HTTP_NO_CONTENT);
-  }
-
-  private ValidatableResponse attemptToDeleteGroup(String id) {
-    return given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .delete("/groups/{id}", Map.of("id", id))
-      .then();
   }
 
   @SneakyThrows
