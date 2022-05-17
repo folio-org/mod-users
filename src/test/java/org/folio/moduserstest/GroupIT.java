@@ -32,6 +32,7 @@ import org.folio.support.Users;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,7 @@ import lombok.SneakyThrows;
 class GroupIT {
   private static int port;
   private static GroupsClient groupsClient;
+  private static UsersClient usersClient;
 
   @BeforeAll
   @SneakyThrows
@@ -67,6 +69,9 @@ class GroupIT {
 
     RestAssured.port = port;
     groupsClient = new GroupsClient(new URI("http://localhost:" + port),
+      new OkapiHeaders("http://localhost:" + port, "diku", "diku"));
+
+    usersClient = new UsersClient(new URI("http://localhost:" + port),
       new OkapiHeaders("http://localhost:" + port, "diku", "diku"));
 
     TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", WebClient.create(vertx));
@@ -87,7 +92,7 @@ class GroupIT {
 
   @BeforeEach
   public void beforeEach() {
-    deleteAllUsers();
+    usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
   }
 
@@ -512,18 +517,5 @@ class GroupIT {
       .then()
       .statusCode(HTTP_OK)
       .extract().as(Users.class);
-  }
-
-  void deleteAllUsers() {
-    given()
-      .header("X-Okapi-Tenant", "diku")
-      .header("X-Okapi-Token", "")
-      .header("X-Okapi-Url", "http://localhost:" + port)
-      .accept("application/json, text/plain")
-      .when()
-      .param("query", "cql.allRecords=1")
-      .delete("/users")
-      .then()
-      .statusCode(204);
   }
 }
