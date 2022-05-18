@@ -6,7 +6,6 @@ import static org.hamcrest.CoreMatchers.is;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
@@ -16,10 +15,10 @@ import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.VertxModule;
 import org.folio.support.http.OkapiHeaders;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.restassured.RestAssured;
@@ -28,25 +27,25 @@ import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
 /**
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
  * should be moved here.
  */
+@ExtendWith(VertxExtension.class)
 class UsersAPIIT {
   static final String HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
   static final String ClAIM_ADDRESS_TYPE_ID = "b6f4d1c6-0dfa-463c-9534-f49c4f0ae090";
   static final String TENANT = "usersapiit";
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
-  static Vertx vertx;
   static String baseUrl;
 
   @BeforeAll
   @SneakyThrows
-  static void beforeAll() {
-    vertx = Vertx.vertx();
-
+  static void beforeAll(Vertx vertx, VertxTestContext context) {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
@@ -62,15 +61,9 @@ class UsersAPIIT {
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
-      .compose(res -> module.enableModule(headers, true, true))
-      .toCompletionStage()
-      .toCompletableFuture()
-      .get(30, TimeUnit.SECONDS);
-  }
-
-  @AfterAll
-  static void afterAll() {
-    vertx.close();
+      .onComplete(context.succeeding(res -> module.enableModule(headers,
+          true, true)
+        .onComplete(context.succeedingThenComplete())));
   }
 
   @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722

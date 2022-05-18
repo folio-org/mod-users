@@ -56,8 +56,8 @@ class GroupIT {
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
-      .onComplete(context.succeeding(res -> module.enableModule(headers, false,
-          false)
+      .onComplete(context.succeeding(res -> module.enableModule(headers,
+          false, false)
         .onComplete(context.succeedingThenComplete())));
   }
 
