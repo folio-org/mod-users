@@ -82,6 +82,21 @@ public class UsersClient {
       .extract().as(Users.class);
   }
 
+  public Users getPatronGroupFacets() {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .when()
+      // Limit must be 1 as request fails with limit 0
+      // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
+      .queryParam("limit", 1)
+      .queryParam("facets", "patronGroup:50")
+      .get("/users")
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Users.class);
+  }
+
   public void deleteUsers(String cqlQuery) {
     given()
       .config(config)

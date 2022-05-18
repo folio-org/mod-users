@@ -14,13 +14,15 @@ import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.Address;
+import org.folio.support.Group;
 import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.VertxModule;
+import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -45,6 +47,7 @@ class UsersAPIIT {
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
   static String baseUrl;
   private static UsersClient usersClient;
+  private static GroupsClient groupsClient;
 
   @BeforeAll
   @SneakyThrows
@@ -62,25 +65,49 @@ class UsersAPIIT {
       TENANT, TOKEN);
 
     usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
+    groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
 
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
       .onComplete(context.succeeding(res -> module.enableModule(headers,
-          true, true)
+          true, false)
         .onComplete(context.succeedingThenComplete())));
   }
 
-  @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
-  @Test
-  void facetsLimit0() {
-    // The UI uses this to show the number per patron group in /settings/users/groups
-    facets(0);
+  @BeforeEach
+  public void beforeEach() {
+    usersClient.deleteAllUsers();
+    groupsClient.deleteAllGroups();
   }
 
   @Test
-  void facetsLimit1() {
-    facets(1);
+  void canGetPatronGroupFacetsForUsers() {
+    final var alphaGroup = groupsClient.createGroup(Group.builder()
+      .group("Alpha group")
+      .build());
+
+    var zebraGroup = groupsClient.createGroup(Group.builder()
+      .group("Zebra group")
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("julia")
+      .patronGroup(alphaGroup.getId()).build());
+
+    usersClient.createUser(User.builder()
+      .username("alex")
+      .patronGroup(zebraGroup.getId()).build());
+
+    usersClient.createUser(User.builder()
+      .username("steven")
+      .patronGroup(zebraGroup.getId()).build());
+
+    final var patronGroupFacets = usersClient.getPatronGroupFacets();
+
+    assertThat(patronGroupFacets.getTotalRecords(), is(3));
+    assertThat(patronGroupFacets.getFacetCount(zebraGroup.getId()), is(2));
+    assertThat(patronGroupFacets.getFacetCount(alphaGroup.getId()), is(1));
   }
 
   @Test
@@ -144,6 +171,7 @@ class UsersAPIIT {
     String id1 = UUID.randomUUID().toString();
     String id2 = UUID.randomUUID().toString();
     String id3 = UUID.randomUUID().toString();
+
     createUser(id1, "apple");
     createUser(id2, "banana");
     createUser(id3, "cherry");
@@ -151,6 +179,7 @@ class UsersAPIIT {
     postPatronPinOK(id1, "1468");
     postPatronPinOK(id2, "ThisIsALonger1234PinWithSomeNumbers");
     postPatronPinOK(id3, "7778");
+
     // Update the patron pin for cherry
     postPatronPinOK(id3, "7777");
 
@@ -194,18 +223,6 @@ class UsersAPIIT {
     usersClient.deleteUsers("username == \"" + username + "\"");
   }
 
-  void facets(int limit) {
-    given().
-    when().get("/users?limit=" + limit + "&facets=patronGroup:50").
-    then().
-      statusCode(200).
-      body("resultInfo.facets[0].facetValues[0].count", is(88)).
-      body("resultInfo.facets[0].facetValues[0].value", is("bdc2b6d4-5ceb-4a12-ab46-249b9a68473e")).
-      body("resultInfo.facets[0].facetValues[1].count", is(81)).
-      body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
-
-  }
-
   void postPatronPinOK(String id, String pin) {
     given().
     when().
@@ -214,7 +231,6 @@ class UsersAPIIT {
     then().
       statusCode(201);
   }
-
 
   void deletePatronPinOK(String id) {
     given().
