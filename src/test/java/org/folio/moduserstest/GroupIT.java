@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -24,6 +23,7 @@ import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
+import org.folio.support.VertxModule;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.UsersClient;
@@ -35,9 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -62,21 +60,21 @@ class GroupIT {
     groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
     usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
 
-    final var tenantClient = new TenantClient(headers.getOkapiUrl(),
-      headers.getTenantId(), headers.getToken(), WebClient.create(vertx));
+    final var module = new VertxModule(vertx);
 
-    final var options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", port));
+    module.deployModule(port)
+      .onComplete(context.succeeding(res -> {
+        final var tenantClient = new TenantClient(headers.getOkapiUrl(),
+          headers.getTenantId(), headers.getToken(), WebClient.create(vertx));
 
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.succeeding(res -> {
-      TenantAttributes ta = new TenantAttributes();
-      ta.setModuleTo("mod-users-1.0.0");
-      List<Parameter> parameters = new LinkedList<>();
-      parameters.add(new Parameter().withKey("loadReference").withValue("false"));
-      parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-      ta.setParameters(parameters);
+        TenantAttributes ta = new TenantAttributes();
+        ta.setModuleTo("mod-users-1.0.0");
+        List<Parameter> parameters = new LinkedList<>();
+        parameters.add(new Parameter().withKey("loadReference").withValue("false"));
+        parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+        ta.setParameters(parameters);
 
-      TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
+        TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
     }));
   }
 
