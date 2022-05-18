@@ -2,26 +2,20 @@
 package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.not;
 
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.RestVerticle;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.Address;
 import org.folio.support.Personal;
 import org.folio.support.User;
-import org.junit.Assert;
+import org.folio.support.VertxModule;
+import org.folio.support.http.OkapiHeaders;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -32,7 +26,6 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
@@ -50,17 +43,29 @@ class UsersAPIIT {
   static String baseUrl;
 
   @BeforeAll
+  @SneakyThrows
   static void beforeAll() {
     vertx = Vertx.vertx();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    RestAssured.port = NetworkUtils.nextFreePort();
-    baseUrl = "http://localhost:" + RestAssured.port;
-    deploy();
-    deleteTenantIgnore();  // remove left over from previous test run
-    postTenant();
+
+    final var port = NetworkUtils.nextFreePort();
+
+    RestAssured.port = port;
+    baseUrl = "http://localhost:" + port;
+
+    final var headers = new OkapiHeaders("http://localhost:" + port,
+      TENANT, TOKEN);
+
+    final var module = new VertxModule(vertx);
+
+    module.deployModule(port)
+      .compose(res -> module.enableModule(headers, true, true))
+      .toCompletionStage()
+      .toCompletableFuture()
+      .get(30, TimeUnit.SECONDS);
   }
 
   @AfterAll
@@ -163,53 +168,6 @@ class UsersAPIIT {
         .header("X-Okapi-Url", baseUrl)
         .contentType(ContentType.JSON)
         .accept("application/json,text/plain");
-  }
-
-  static void deploy() {
-    DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject()
-        .put("http.port", RestAssured.port));
-    CompletableFuture<String> future = new CompletableFuture<>();
-    vertx.deployVerticle(new RestVerticle(), options, handler -> {
-      if (handler.succeeded()) {
-        future.complete(handler.result());
-      } else {
-        future.completeExceptionally(handler.cause());
-      }
-    });
-    try {
-      future.get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  static void deleteTenantIgnore() {
-    given().
-    when().delete("/_/tenant");
-    // ignore any error
-  }
-
-  static TenantAttributes tenantAttributes() {
-    List<Parameter> parameters = new ArrayList<>();
-    parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-    parameters.add(new Parameter().withKey("loadSample").withValue("true"));
-    return new TenantAttributes()
-        .withModuleTo("mod-users-9999999.0.0")
-        .withParameters(parameters);
-  }
-
-  static void postTenant() {
-    String id = given().body(tenantAttributes()).
-    when().post("/_/tenant").
-    then().statusCode(201).
-    extract().
-    path("id");
-    Boolean complete = given().when().get("/_/tenant/" + id + "?wait=60000")
-    .then().statusCode(200).extract().path("complete");
-    Assert.assertTrue(complete);
-    //if something went wrong internally with client setup,
-    //there will be an error attribute in the response body
-    given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
   }
 
   void userExists(String id) {

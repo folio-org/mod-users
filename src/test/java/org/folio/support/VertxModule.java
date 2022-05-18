@@ -15,6 +15,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
+import lombok.NonNull;
 
 public class VertxModule {
   private final Vertx vertx;
@@ -32,17 +33,26 @@ public class VertxModule {
     return vertx.deployVerticle(RestVerticle.class.getName(), options);
   }
 
-  public Future<Void> enableModule(OkapiHeaders headers) {
+  public Future<Void> enableModule(@NonNull OkapiHeaders headers,
+    @NonNull Boolean loadReferenceData, @NonNull Boolean loadSampleData) {
+
     final var tenantClient = new TenantClient(headers.getOkapiUrl(),
       headers.getTenantId(), headers.getToken(), webClient);
 
     TenantAttributes ta = new TenantAttributes();
     ta.setModuleTo("mod-users-1.0.0");
+
     List<Parameter> parameters = new LinkedList<>();
-    parameters.add(new Parameter().withKey("loadReference").withValue("false"));
-    parameters.add(new Parameter().withKey("loadSample").withValue("false"));
+
+    parameters.add(parameter("loadReference", loadReferenceData));
+    parameters.add(parameter("loadSample", loadSampleData));
+
     ta.setParameters(parameters);
 
     return TenantInit.init(tenantClient, ta);
+  }
+
+  private Parameter parameter(String name, Boolean value) {
+    return new Parameter().withKey(name).withValue(value.toString());
   }
 }
