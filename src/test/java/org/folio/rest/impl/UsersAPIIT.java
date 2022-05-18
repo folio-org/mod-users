@@ -2,7 +2,10 @@
 package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.net.URI;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -15,15 +18,14 @@ import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.VertxModule;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -42,6 +44,7 @@ class UsersAPIIT {
   static final String TENANT = "usersapiit";
   static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
   static String baseUrl;
+  private static UsersClient usersClient;
 
   @BeforeAll
   @SneakyThrows
@@ -57,6 +60,8 @@ class UsersAPIIT {
 
     final var headers = new OkapiHeaders("http://localhost:" + port,
       TENANT, TOKEN);
+
+    usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
 
     final var module = new VertxModule(vertx);
 
@@ -83,9 +88,9 @@ class UsersAPIIT {
     String id1 = UUID.randomUUID().toString();
     String id2 = UUID.randomUUID().toString();
     String id3 = UUID.randomUUID().toString();
-    postUser(id1, "1234");
-    postUser(id2, "201");
-    postUser(id3, "1999");
+    createUser(id1, "1234");
+    createUser(id2, "201");
+    createUser(id3, "1999");
 
     deleteUsersByUsername("1*");
 
@@ -106,9 +111,15 @@ class UsersAPIIT {
         .build())
       .build();
 
-    createUser(userToCreate)
-      .then()
-      .statusCode(201);
+    final var createdUser = usersClient.createUser(userToCreate);
+
+    assertThat(createdUser.getId(), is(notNullValue()));
+    assertThat(createdUser.getUsername(), is("julia"));
+
+    final var personal = createdUser.getPersonal();
+
+    assertThat(personal.getLastName(), is("brockhurst"));
+    assertThat(personal.getAddresses().size(), is(2));
   }
 
   @Test
@@ -123,8 +134,7 @@ class UsersAPIIT {
         .build())
       .build();
 
-    createUser(userWithMultipleAddresses)
-      .then()
+    usersClient.attemptToCreateUser(userWithMultipleAddresses)
       .statusCode(400)
       .body(is("Users are limited to one address per addresstype"));
   }
@@ -134,9 +144,9 @@ class UsersAPIIT {
     String id1 = UUID.randomUUID().toString();
     String id2 = UUID.randomUUID().toString();
     String id3 = UUID.randomUUID().toString();
-    postUser(id1, "apple");
-    postUser(id2, "banana");
-    postUser(id3, "cherry");
+    createUser(id1, "apple");
+    createUser(id2, "banana");
+    createUser(id3, "cherry");
 
     postPatronPinOK(id1, "1468");
     postPatronPinOK(id2, "ThisIsALonger1234PinWithSomeNumbers");
@@ -164,44 +174,24 @@ class UsersAPIIT {
   }
 
   void userExists(String id) {
-    given().
-    when().get("/users/" + id).
-    then().statusCode(200);
+    usersClient.attemptToGetUser(id)
+      .statusCode(200);
   }
 
   void userDoesntExist(String id) {
-    given().
-    when().get("/users/" + id).
-    then().statusCode(404);
+    usersClient.attemptToGetUser(id)
+      .statusCode(404);
   }
 
-  @SneakyThrows
-  private Response createUser(User userToCreate) {
-    return given()
-      .when()
-      .body(new ObjectMapper().writeValueAsString(userToCreate))
-      .post("/users");
-  }
-
-  /**
-   * Create a user by calling the POST /users API.
-   */
-  void postUser(String id, String username) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("username", username).encode()).
-      post("/users").
-    then().
-      statusCode(201);
+  void createUser(String id, String username) {
+    usersClient.createUser(User.builder()
+      .id(id)
+      .username(username)
+      .build());
   }
 
   void deleteUsersByUsername(String username) {
-    given().
-    when().
-      param("query", "username == \"" + username + "\"").
-      delete("/users").
-    then().
-      statusCode(204);
+    usersClient.deleteUsers("username == \"" + username + "\"");
   }
 
   void facets(int limit) {

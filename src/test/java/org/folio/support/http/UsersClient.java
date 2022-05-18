@@ -56,14 +56,18 @@ public class UsersClient {
   }
 
   public User getUser(String id) {
+    return attemptToGetUser(id)
+      .statusCode(HTTP_OK)
+      .extract().as(User.class);
+  }
+
+  public ValidatableResponse attemptToGetUser(String id) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .when()
       .get("/users/{id}", Map.of("id", id))
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(User.class);
+      .then();
   }
 
   public Users getUsers(String cqlQuery) {
@@ -78,16 +82,21 @@ public class UsersClient {
       .extract().as(Users.class);
   }
 
-  public void deleteAllUsers() {
+  public void deleteUsers(String cqlQuery) {
     given()
       .config(config)
       .spec(requestSpecification)
       .when()
-      .queryParam("query", "cql.allRecords=1")
+      .queryParam("query", cqlQuery)
       .delete("/users")
       .then()
       .statusCode(204);
   }
+
+  public void deleteAllUsers() {
+    deleteUsers("cql.allRecords=1");
+  }
+
   public void updateUser(@NonNull User user) {
     attemptToUpdateUser(user)
       .statusCode(HTTP_NO_CONTENT);
