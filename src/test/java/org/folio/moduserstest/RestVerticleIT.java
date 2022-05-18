@@ -1,13 +1,6 @@
 package org.folio.moduserstest;
 
 import static io.vertx.core.json.Json.encode;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import static org.folio.moduserstest.RestITSupport.assertStatus;
 import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
@@ -18,6 +11,12 @@ import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
@@ -29,21 +28,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.ext.web.client.HttpResponse;
-
+import org.apache.logging.log4j.Logger;
 import org.folio.postgres.testing.PostgresTesterContainer;
+import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.jaxrs.model.Parameter;
+import org.folio.rest.jaxrs.model.TenantAttributes;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
+import org.folio.test.util.TokenTestUtil;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
@@ -52,13 +47,17 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.test.util.TokenTestUtil;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -76,15 +75,15 @@ public class RestVerticleIT {
   private static final String FAKE_TOKEN = TokenTestUtil.generateToken("bubba", UUID.randomUUID().toString());
 
   private static final int DEFAULT_LIMIT = 10;
-  private JsonObject testAddress = new JsonObject().put("addressType", "school")
+  private final JsonObject testAddress = new JsonObject().put("addressType", "school")
     .put("desc", "Patron's School")
     .put("id", UUID.randomUUID().toString());
 
-  private JsonObject testGroup = new JsonObject().put("group", "dropouts")
+  private final JsonObject testGroup = new JsonObject().put("group", "dropouts")
     .put("desc", "Freaks and Geeks")
     .put("id", UUID.randomUUID().toString());
 
-  private JsonObject testProxyFor = new JsonObject()
+  private final JsonObject testProxyFor = new JsonObject()
     .put("userId", UUID.randomUUID().toString())
     .put("proxyUserId", UUID.randomUUID().toString())
     .put("status", "Active")
@@ -94,20 +93,20 @@ public class RestVerticleIT {
     .put("notificationsTo", "Proxy")
     .put("accrueTo", "Sponsor");
 
-  private static Vertx vertx;
-
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
   public static void setup(TestContext context) {
-    vertx = Vertx.vertx();
+    Vertx vertx = Vertx.vertx();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
-    Integer port = NetworkUtils.nextFreePort();
+    final var port = NetworkUtils.nextFreePort();
     RestITSupport.setUp(port);
-    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
+    TenantClient tenantClient = new TenantClient("http://localhost:" + port,
+      "diku", "diku", WebClient.create(vertx));
+
     DeploymentOptions options = new DeploymentOptions()
         .setConfig(new JsonObject().put("http.port", port));
 
@@ -278,10 +277,10 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> getUsersByCQL(TestContext context, String cql, int limit, String... expectedUsernames) {
+  private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
     log.info("Query users via CQL\n");
 
-    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql) + "&limit=" + limit);
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql) + "&limit=" + RestVerticleIT.DEFAULT_LIMIT);
 
     return future.map(json -> {
 
@@ -692,75 +691,6 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> postUserWithDuplicateId(TestContext context) {
-    log.info("Attempting to create a user with duplicate id");
-
-    String uuid = UUID.randomUUID().toString();
-    JsonObject user1 = new JsonObject().put("id", uuid);
-    JsonObject user2 = new JsonObject().put("id", uuid);
-
-    // create test user one
-    Future<Void> f1 = post("/users", encode(user1))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    // fail attempting to create user with duplicate id
-    return f1.compose(v -> post("/users", encode(user2)))
-      .map(response -> {
-        assertStatus(context, response, 422);
-
-        JsonObject validationErrorRes = response.bodyAsJsonObject();
-        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-
-        if (validationErrors.isEmpty()) {
-          fail("Did not return expected validation errors");
-        } else {
-          String errorMessage = validationErrors.getJsonObject(0).getString("message");
-          context.assertEquals(1, validationErrors.size());
-          context.assertEquals(errorMessage, "User with this id already exists");
-        }
-        return null;
-      });
-  }
-
-  private Future<Void> postUserWithDuplicateUsername(TestContext context) {
-    log.info("Attempting to create a user with duplicate username");
-
-    JsonObject user1 = new JsonObject()
-      .put("username", "the_twin")
-      .put("id",  UUID.randomUUID().toString());
-    JsonObject user2 = new JsonObject()
-      .put("username", "the_twin")
-      .put("id",  UUID.randomUUID().toString());
-
-    // create test user one
-    Future<Void> f1 = post("/users", encode(user1))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    // creating a second user with the same username should fail
-    return f1.compose(v -> post("/users", encode(user2)))
-      .map(response -> {
-        assertStatus(context, response, 422);
-
-        JsonObject validationErrorRes = response.bodyAsJsonObject();
-        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-
-        if (validationErrors.isEmpty()) {
-          fail("Did not return expected validation errors");
-        } else {
-          String errorMessage = validationErrors.getJsonObject(0).getString("message");
-          context.assertEquals(1, validationErrors.size());
-          context.assertEquals(errorMessage, "User with this username already exists");
-        }
-        return null;
-      });
-  }
-
   private Future<Void> putUserWithDuplicateUsername(TestContext context) {
     log.info("Changing a user to username that already exists\n");
 
@@ -1095,7 +1025,7 @@ public class RestVerticleIT {
   }
 
   private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
-      String endpoint, boolean checkMeta) {
+      String endpoint) {
 
     log.info(String.format(
       "Creating object %s at endpoint %s", ob.encode(), endpoint));
@@ -1113,14 +1043,14 @@ public class RestVerticleIT {
     //Get the object by id
     Future<String> f2 = f1.compose(v -> getJson(context, endpoint + "/" + v))
       .map(response -> {
-        if (checkMeta) {
-          JsonObject metadata = response.getJsonObject("metadata");
-          if (metadata == null) {
-            fail(String.format("No 'metadata' field in result: %s", response.toString()));
-          }
-          var createdDate = ZonedDateTime.parse(metadata.getString("createdDate"));
-          assertThat(createdDate, is(lessThanOrEqualTo(ZonedDateTime.now())));
+        JsonObject metadata = response.getJsonObject("metadata");
+
+        if (metadata == null) {
+          fail(String.format("No 'metadata' field in result: %s", response));
         }
+        var createdDate = ZonedDateTime.parse(metadata.getString("createdDate"));
+        assertThat(createdDate, is(lessThanOrEqualTo(ZonedDateTime.now())));
+
         return response.getString("id");
       });
 
@@ -1157,17 +1087,15 @@ public class RestVerticleIT {
       .compose(v -> putUserGood(context, joeBlockId, false))
       .compose(v -> deleteUser(context, joeBlockId))
       .compose(v -> postUser(true))
-      .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(true))
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
       .compose(v -> getUserByInvalidCQL(context))
       .compose(v -> deleteNonExistingUser(context))
       .compose(v -> postAnotherUser(context))
-      .compose(v -> getUsersByCQL(context, "id==x", DEFAULT_LIMIT) /* empty result */)
-      .compose(v -> getUsersByCQL(context, "id==\"\"", DEFAULT_LIMIT, "bobcircle", "joeblock"))
-      .compose(v -> getUsersByCQL(context, jSearch, DEFAULT_LIMIT, "joeblock"))
+      .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
+      .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
+      .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserPreferredFirstName(context))
       .compose(v -> getUserPreferredFirstName(context))
@@ -1190,8 +1118,6 @@ public class RestVerticleIT {
       .compose(v -> postUserWithDuplicateAddressType(context))
       .compose(v -> postUserBadAddress(context))
       .compose(v -> postUserWithNumericName(context))
-      .compose(v -> postUserWithDuplicateId(context))
-      .compose(v -> postUserWithDuplicateUsername(context))
       .compose(v -> postTwoUsersWithoutUsername(context))
       .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))
@@ -1203,9 +1129,9 @@ public class RestVerticleIT {
       .compose(v -> findAndGetProxyfor(context))
       .compose(v -> findAndUpdateProxyfor(context))
       .compose(v -> findAndDeleteProxyfor(context))
-      .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes", true))
-      .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups", true))
-      .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor", true));
+      .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes"))
+      .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups"))
+      .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor"));
 
     // It hung after 5-12 invocations. MODUSERS-100
     for (int i = 0; i < 25; i++) {
@@ -1226,7 +1152,8 @@ public class RestVerticleIT {
   public void test5UserName(TestContext context) {
     Async async = context.async();
     postUserWithWhitespace(context)
-      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace), DEFAULT_LIMIT, "user name"))
+      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace),
+        "user name"))
       .compose(v -> deleteUser(context, userIdWithWhitespace))
       .onComplete(res -> {
         if (res.succeeded()) {
@@ -1243,9 +1170,8 @@ public class RestVerticleIT {
     Map<String,String> headers = new HashMap<>();
     headers.put("Accept", "*/*");
     Future<HttpResponse<Buffer>> future = post("/users/expire/timer", "", headers);
-    future.onComplete(context.asyncAssertSuccess(res -> {
-      context.assertEquals(204, res.statusCode());
-    }));
+    future.onComplete(context.asyncAssertSuccess(res ->
+      context.assertEquals(204, res.statusCode())));
   }
 
   @Test
@@ -1254,9 +1180,8 @@ public class RestVerticleIT {
     headers.put("Accept", "*/*");
     headers.put("X-Okapi-Tenant", "badTenant");
     Future<HttpResponse<Buffer>> future = post("/users/expire/timer", "", headers);
-    future.onComplete(context.asyncAssertSuccess(res -> {
-      context.assertEquals(500, res.statusCode());
-    }));
+    future.onComplete(context.asyncAssertSuccess(res ->
+      context.assertEquals(500, res.statusCode())));
   }
 
   private Future<Void> postUserWithWhitespace(TestContext context) {
