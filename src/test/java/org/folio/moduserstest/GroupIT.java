@@ -9,17 +9,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
 import java.net.URI;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
@@ -36,7 +30,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
@@ -63,19 +56,8 @@ class GroupIT {
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
-      .onComplete(context.succeeding(res -> {
-        final var tenantClient = new TenantClient(headers.getOkapiUrl(),
-          headers.getTenantId(), headers.getToken(), WebClient.create(vertx));
-
-        TenantAttributes ta = new TenantAttributes();
-        ta.setModuleTo("mod-users-1.0.0");
-        List<Parameter> parameters = new LinkedList<>();
-        parameters.add(new Parameter().withKey("loadReference").withValue("false"));
-        parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-        ta.setParameters(parameters);
-
-        TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
-    }));
+      .onComplete(context.succeeding(res -> module.enableModule(headers)
+        .onComplete(context.succeedingThenComplete())));
   }
 
   @BeforeEach
