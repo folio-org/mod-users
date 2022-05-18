@@ -1,20 +1,25 @@
 package org.folio.rest.impl;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import org.folio.rest.jaxrs.model.ProxiesFor;
-import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criterion;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.interfaces.Results;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
-public class ProxiesForAPITest {
+class ProxiesForAPITest {
   @Test
   void userAndProxyUserComboExistsCanHandlePostgresClientFailure() {
     PostgresClient postgresClient = mock(PostgresClient.class);

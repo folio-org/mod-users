@@ -26,20 +26,9 @@ import org.apache.logging.log4j.Logger;
  * @author kurt
  */
 public class AddressTypeAPI implements Addresstypes {
-
   public static final String ADDRESS_TYPE_TABLE = "addresstype";
-  public static final String ADDRESS_TYPE_USER_JOIN_TABLE = "address_users";
   public static final String ID_FIELD_NAME = "id";
-  public static final String URL_PREFIX = "/addresstypes";
   private static final Logger logger = LogManager.getLogger(AddressTypeAPI.class);
-  private boolean suppressErrorResponse = false;
-
-  private String getErrorResponse(String response) {
-    if (suppressErrorResponse) {
-      return "Internal Server Error: Please contact Admin";
-    }
-    return response;
-  }
 
   @Validate
   @Override
@@ -88,7 +77,7 @@ public class AddressTypeAPI implements Addresstypes {
             logger.error(message, reply.cause());
             asyncResultHandler.handle(Future.succeededFuture(
               DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                getErrorResponse(message))));
+                message)));
           } else {
             List<User> userList = reply.result().getResults();
             if (! userList.isEmpty()) {
@@ -98,7 +87,7 @@ public class AddressTypeAPI implements Addresstypes {
                 .respond400WithTextPlain(message)));
               return;
             }
-            logger.info("Removing non-associated address type '" + addresstypeId + "'");
+            logger.info("Removing non-associated address type '{}'", addresstypeId);
 
             PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
               vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
@@ -109,7 +98,7 @@ public class AddressTypeAPI implements Addresstypes {
       logger.error(message, e);
       asyncResultHandler.handle(Future.succeededFuture(
         DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-          getErrorResponse(message))));
+          message)));
     }
   }
 

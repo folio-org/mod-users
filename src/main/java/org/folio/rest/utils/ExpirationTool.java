@@ -1,28 +1,26 @@
 package org.folio.rest.utils;
 
 
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
+import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import org.folio.okapi.common.GenericCompositeFuture;
-import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
+
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 
 public final class ExpirationTool {
   private static final Logger logger = LogManager.getLogger(ExpirationTool.class);
@@ -36,9 +34,9 @@ public final class ExpirationTool {
   public static Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
     Promise<Integer> promise = Promise.promise();
     try {
-      String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS\'Z\'").format(new Date());
+      String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date());
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(Arrays.asList(TABLE_NAME_USERS+".jsonb"));
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(List.of(TABLE_NAME_USERS+".jsonb"));
       CQLWrapper cqlWrapper = new CQLWrapper(cql2pgJson, query);
       String[] fieldList = {"*"};
       PostgresClient pgClient = postgresClient.apply(vertx, tenant);
@@ -78,7 +76,7 @@ public final class ExpirationTool {
   }
 
   static Future<Void> disableUser(Vertx vertx, String tenant, User user) {
-    logger.info(String.format("Disabling expired user with id %s for tenant %s", user.getId(), tenant));
+    logger.info("Disabling expired user with id {} for tenant {}", user.getId(), tenant);
     user.setActive(Boolean.FALSE);
     Promise<Void> promise = Promise.promise();
     try {
