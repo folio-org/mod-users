@@ -33,10 +33,10 @@ class RestITSupport {
   static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
   static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
   static final String HTTP_LOCALHOST = "http://localhost:";
-  private static final String LOCALHOST = "localhost";
+  public static final String LOCALHOST = "localhost";
 
-  private static WebClient client;
-  private static int port;
+  public static WebClient client;
+  public static int port;
 
   private RestITSupport() { }
 
@@ -46,7 +46,7 @@ class RestITSupport {
     port = verticlePort;
   }
 
-  static void fail(TestContext context, String message, HttpResponse<Buffer> response,
+  private static void fail(TestContext context, String message, HttpResponse<Buffer> response,
       StackTraceElement [] stacktrace) {
 
     Async async = context.async();
@@ -134,10 +134,6 @@ class RestITSupport {
     return promise.future();
   }
 
-  static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body) {
-    return putWithNoContentStatus(context, userId, request, body, new Header[0]);
-  }
-
   static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body, Header ...headers) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
 
@@ -156,17 +152,6 @@ class RestITSupport {
       assertStatus(context, res, HTTP_NO_CONTENT);
       return null;
     });
-  }
-
-  static Future<HttpResponse<Buffer>> delete(String request) {
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-
-    client.delete(port, LOCALHOST, request)
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("accept", "*/*")
-      .send(promise);
-
-    return promise.future();
   }
 
   static Future<Void> deleteWithNoContentStatus(TestContext context, String request) {

@@ -2,14 +2,13 @@ package org.folio.moduserstest;
 
 import static io.vertx.core.json.Json.encode;
 import static org.folio.moduserstest.RestITSupport.assertStatus;
-import static org.folio.moduserstest.RestITSupport.delete;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
-import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,8 +46,10 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
+import io.restassured.http.Header;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
@@ -121,6 +122,21 @@ public class RestVerticleIT {
       ta.setParameters(parameters);
       TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
     }));
+  }
+
+  static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body) {
+    return RestITSupport.putWithNoContentStatus(context, userId, request, body, new Header[0]);
+  }
+
+  static Future<HttpResponse<Buffer>> delete(String request) {
+    Promise<HttpResponse<Buffer>> promise = Promise.promise();
+
+    RestITSupport.client.delete(RestITSupport.port, RestITSupport.LOCALHOST, request)
+      .putHeader(OKAPI_HEADER_TENANT, "diku")
+      .putHeader("accept", "*/*")
+      .send(promise);
+
+    return promise.future();
   }
 
   private Future<Void> getEmptyUsers(TestContext context) {
