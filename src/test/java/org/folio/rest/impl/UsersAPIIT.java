@@ -8,7 +8,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.net.URI;
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
@@ -21,17 +20,18 @@ import org.folio.support.ValidationErrors;
 import org.folio.support.VertxModule;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
@@ -49,6 +49,7 @@ class UsersAPIIT {
   static String baseUrl;
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
+  private static PatronPinClient patronPinClient;
 
   @BeforeAll
   @SneakyThrows
@@ -67,6 +68,7 @@ class UsersAPIIT {
 
     usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
     groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
+    patronPinClient = new PatronPinClient(new URI("http://localhost:" + port), headers);
 
     final var module = new VertxModule(vertx);
 
@@ -113,18 +115,15 @@ class UsersAPIIT {
 
   @Test
   void deleteMultipleUsersUsingCQL() {
-    String id1 = UUID.randomUUID().toString();
-    String id2 = UUID.randomUUID().toString();
-    String id3 = UUID.randomUUID().toString();
-    createUser(id1, "1234");
-    createUser(id2, "201");
-    createUser(id3, "1999");
+    final var user1 = createUser("1234");
+    final var user2 = createUser("201");
+    final var user3 = createUser("1999");
 
     deleteUsersByUsername("1*");
 
-    userExists(id2);
-    userDoesntExist(id1);
-    userDoesntExist(id3);
+    userExists(user2.getId());
+    userDoesntExist(user1.getId());
+    userDoesntExist(user3.getId());
   }
 
   @Test
@@ -191,8 +190,7 @@ class UsersAPIIT {
 
   @Test
   void cannotCreateUserWithSameUsernameAsExistingUser() {
-    usersClient.createUser(User.builder()
-      .username("julia").build());
+    usersClient.createUser("julia");
 
     final var response = usersClient.attemptToCreateUser(User.builder()
       .username("julia").build());
@@ -207,55 +205,78 @@ class UsersAPIIT {
 
   @Test
   void cannotCreateUserWithSameIdAsExistingUser() {
-    final var existingUser = usersClient.createUser(User.builder()
-      .username("julia").build());
+    final var existingUser = usersClient.createUser("julia");
 
-    final var response = usersClient.attemptToCreateUser(User.builder()
+    final var errors = usersClient.attemptToCreateUser(User.builder()
       .id(existingUser.getId())
-      .username("steve").build());
-
-    response.statusCode(is(422));
-
-    final var errors = response.extract().as(ValidationErrors.class);
+      .username("steve")
+      .build())
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
   }
 
-  @Test
-  void postPatronPin() {
-    String id1 = UUID.randomUUID().toString();
-    String id2 = UUID.randomUUID().toString();
-    String id3 = UUID.randomUUID().toString();
+  @ParameterizedTest
+  @ValueSource(strings = {"1468", "ThisIsALonger1234PinWithSomeNumbers", "7778"})
+  void canVerifyCorrectPatronPin(String pin) {
+    final var user = usersClient.createUser("apple");
 
-    createUser(id1, "apple");
-    createUser(id2, "banana");
-    createUser(id3, "cherry");
+    patronPinClient.assignPatronPin(user.getId(), pin);
 
-    postPatronPinOK(id1, "1468");
-    postPatronPinOK(id2, "ThisIsALonger1234PinWithSomeNumbers");
-    postPatronPinOK(id3, "7778");
-
-    // Update the patron pin for cherry
-    postPatronPinOK(id3, "7777");
-
-    pinIsCorrect(id1, "1468");
-    pinIsIncorrect(id1, "1467");
-    pinIsIncorrect(id2, "1111");
-    pinIsIncorrect(id3, "7778");
-    pinIsCorrect(id3, "7777");
-
-    deletePatronPinOK(id1);
+    enteredPinIsValid(user, pin);
   }
 
-  static RequestSpecification given() {
-    return RestAssured
-        .given()
-        .header("X-Okapi-Tenant", TENANT)
-        .header("X-Okapi-Token", TOKEN)
-        .header("X-Okapi-Url", baseUrl)
-        .contentType(ContentType.JSON)
-        .accept("application/json,text/plain");
+  @ParameterizedTest
+  @CsvSource({"1468,1467", "ThisIsALonger1234PinWithSomeNumbers,1111"})
+  void canVerifyIncorrectPatronPin(String actualPin, String attemptedPin) {
+    final var user = usersClient.createUser("apple");
+
+    patronPinClient.assignPatronPin(user.getId(), actualPin);
+
+    enteredPinIsInvalid(user, attemptedPin);
+  }
+
+  @Test
+  void canVerifyPatronPinForUserWithNoPinAssigned() {
+    final var user = usersClient.createUser("apple");
+
+    enteredPinIsInvalid(user, "1234");
+  }
+
+  @Test
+  void canReassignPatronPin() {
+    final var user = usersClient.createUser("apple");
+
+    patronPinClient.assignPatronPin(user.getId(), "1234");
+
+    patronPinClient.assignPatronPin(user.getId(), "4567");
+
+    enteredPinIsValid(user, "4567");
+
+    enteredPinIsInvalid(user, "1234");
+  }
+
+  @Test
+  void canRemovePatronPin() {
+    final var user = usersClient.createUser("apple");
+
+    patronPinClient.assignPatronPin(user.getId(), "1234");
+
+    patronPinClient.removePatronPin(user.getId());
+
+    enteredPinIsInvalid(user, "1234");
+  }
+
+  private void enteredPinIsValid(User user, String pin) {
+    patronPinClient.verifyPatronPin(user.getId(), pin)
+      .statusCode(is(200));
+  }
+
+  private void enteredPinIsInvalid(User user, String pin) {
+    patronPinClient.verifyPatronPin(user.getId(), pin)
+      .statusCode(is(422));
   }
 
   void userExists(String id) {
@@ -268,50 +289,13 @@ class UsersAPIIT {
       .statusCode(404);
   }
 
-  void createUser(String id, String username) {
-    usersClient.createUser(User.builder()
-      .id(id)
+  User createUser(String username) {
+    return usersClient.createUser(User.builder()
       .username(username)
       .build());
   }
 
-  void deleteUsersByUsername(String username) {
+  private void deleteUsersByUsername(String username) {
     usersClient.deleteUsers("username == \"" + username + "\"");
-  }
-
-  void postPatronPinOK(String id, String pin) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
-      post("/patron-pin").
-    then().
-      statusCode(201);
-  }
-
-  void deletePatronPinOK(String id) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).encode()).
-      delete("/patron-pin").
-    then().
-      statusCode(200);
-  }
-
-  void pinIsCorrect(String id, String pin) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
-      post("/patron-pin/verify").
-    then().
-      statusCode(200);
-  }
-
-  void pinIsIncorrect(String id, String pin) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
-      post("/patron-pin/verify").
-    then().
-      statusCode(422);
   }
 }

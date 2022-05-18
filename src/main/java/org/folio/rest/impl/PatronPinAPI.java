@@ -1,27 +1,22 @@
 package org.folio.rest.impl;
 
+import java.util.Map;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.ws.rs.core.Response;
 
-import org.folio.rest.jaxrs.resource.PatronPin;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Patronpin;
-
+import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.persist.PgUtil;
-
-//https://github.com/folio-org/raml-module-builder/blob/10d34b51d42e038d675430da4d94bcdea9558c52/domain-models-runtime/src/main/java/org/folio/rest/persist/PostgresClient.java
 import org.folio.rest.persist.PostgresClient;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
-import java.util.Map;
 
 
 public class PatronPinAPI implements PatronPin {
@@ -63,28 +58,37 @@ public class PatronPinAPI implements PatronPin {
 
   }
 
-  public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+  public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    String suppliedPinDerivation = getDerivation(entity.getPin(), entity.getId());
+    final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-    Future<io.vertx.core.json.JsonObject> f = pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId());
-    f.onComplete( res -> {
-      io.vertx.core.AsyncResult<io.vertx.core.json.JsonObject> ar = res;
-      if (ar.succeeded()) {
-        JsonObject jo = ar.result();
-        if ( jo.getString("pin").equals(suppliedPinDerivation) ) {
-          asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
+    final var suppliedPinDerivation = getDerivation(entity.getPin(),
+      entity.getId());
+
+    pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId())
+      .onSuccess(assignedPin -> {
+        try {
+          if (assignedPin == null) {
+            logger.info("No pin assigned to {}", entity.getId());
+            asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
+          }
+          else if (assignedPin.getString("pin").equals(suppliedPinDerivation)) {
+            asyncResultHandler.handle(Future.succeededFuture(
+              PostPatronPinVerifyResponse.respond200()));
+          } else {
+            logger.info("Pins do not match");
+            asyncResultHandler.handle(Future.succeededFuture(
+              PostPatronPinVerifyResponse.respond422()));
+          }
         }
-        else {
-          logger.info("Pins do not match");
-          asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
+        catch (Exception e) {
+          asyncResultHandler.handle(Future.succeededFuture(
+            PostPatronPinVerifyResponse.respond500WithTextPlain(e.toString())));
         }
-      } else {
-        asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
-      }
-    });
-    
+      })
+      .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
+        PostPatronPinVerifyResponse.respond500WithTextPlain(cause.toString()))));
   }
 
   private String getDerivation(String input, String salt) {

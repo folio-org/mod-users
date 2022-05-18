@@ -44,6 +44,12 @@ public class UsersClient {
       .extract().as(User.class);
   }
 
+  public User createUser(String username) {
+    return createUser(User.builder()
+      .username(username)
+      .build());
+  }
+
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
     return given()
       .config(config)
