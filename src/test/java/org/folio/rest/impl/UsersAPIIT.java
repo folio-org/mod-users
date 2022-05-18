@@ -17,6 +17,7 @@ import org.folio.support.Address;
 import org.folio.support.Group;
 import org.folio.support.Personal;
 import org.folio.support.User;
+import org.folio.support.ValidationErrors;
 import org.folio.support.VertxModule;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
@@ -164,6 +165,61 @@ class UsersAPIIT {
     usersClient.attemptToCreateUser(userWithMultipleAddresses)
       .statusCode(400)
       .body(is("Users are limited to one address per addresstype"));
+  }
+
+  @Test
+  void canFindActiveUsers() {
+    usersClient.createUser(User.builder()
+      .username("steve")
+      .active(true)
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("joanne")
+      .active(false)
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("jenna")
+      .active(true)
+      .build());
+
+    final var activeUsers = usersClient.getUsers("active=true");
+
+    assertThat(activeUsers.getTotalRecords(), is(2));
+  }
+
+  @Test
+  void cannotCreateUserWithSameUsernameAsExistingUser() {
+    usersClient.createUser(User.builder()
+      .username("julia").build());
+
+    final var response = usersClient.attemptToCreateUser(User.builder()
+      .username("julia").build());
+
+    response.statusCode(is(422));
+
+    final var errors = response.extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("User with this username already exists"));
+  }
+
+  @Test
+  void cannotCreateUserWithSameIdAsExistingUser() {
+    final var existingUser = usersClient.createUser(User.builder()
+      .username("julia").build());
+
+    final var response = usersClient.attemptToCreateUser(User.builder()
+      .id(existingUser.getId())
+      .username("steve").build());
+
+    response.statusCode(is(422));
+
+    final var errors = response.extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("User with this id already exists"));
   }
 
   @Test
