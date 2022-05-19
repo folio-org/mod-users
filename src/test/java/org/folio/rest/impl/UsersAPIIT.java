@@ -1,6 +1,7 @@
 
 package org.folio.rest.impl;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Vertx;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
@@ -35,6 +37,7 @@ import lombok.SneakyThrows;
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
  * should be moved here.
  */
+@Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIIT {
   static final String HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
