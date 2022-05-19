@@ -1,6 +1,7 @@
 package org.folio.support;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -12,8 +13,13 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Personal {
-  String lastName;
-  String firstName;
-  List<Address> addresses;
+public class Groups {
+  List<Group> usergroups;
+  int totalRecords;
+
+  public Group getGroupByName(String name) {
+    return usergroups.stream()
+      .filter(group -> Objects.equals(group.getGroup(), name))
+      .findFirst().orElse(null);
+  }
 }
