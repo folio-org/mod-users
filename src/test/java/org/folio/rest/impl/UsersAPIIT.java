@@ -6,7 +6,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.URI;
-import java.util.Base64;
 import java.util.List;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
@@ -18,19 +17,15 @@ import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.VertxModule;
+import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import io.restassured.RestAssured;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -44,31 +39,24 @@ import lombok.SneakyThrows;
 class UsersAPIIT {
   static final String HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
   static final String ClAIM_ADDRESS_TYPE_ID = "b6f4d1c6-0dfa-463c-9534-f49c4f0ae090";
-  static final String TENANT = "usersapiit";
-  static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
-  static String baseUrl;
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
-  private static PatronPinClient patronPinClient;
 
   @BeforeAll
   @SneakyThrows
   static void beforeAll(Vertx vertx, VertxTestContext context) {
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
+    final var tenant = "users_integration_tests";
+    final var token = new FakeTokenGenerator().generateToken();
 
-    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+    PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     final var port = NetworkUtils.nextFreePort();
 
-    RestAssured.port = port;
-    baseUrl = "http://localhost:" + port;
-
     final var headers = new OkapiHeaders("http://localhost:" + port,
-      TENANT, TOKEN);
+      tenant, token);
 
     usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
     groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
-    patronPinClient = new PatronPinClient(new URI("http://localhost:" + port), headers);
 
     final var module = new VertxModule(vertx);
 
@@ -216,67 +204,6 @@ class UsersAPIIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"1468", "ThisIsALonger1234PinWithSomeNumbers", "7778"})
-  void canVerifyCorrectPatronPin(String pin) {
-    final var user = usersClient.createUser("apple");
-
-    patronPinClient.assignPatronPin(user.getId(), pin);
-
-    enteredPinIsValid(user, pin);
-  }
-
-  @ParameterizedTest
-  @CsvSource({"1468,1467", "ThisIsALonger1234PinWithSomeNumbers,1111"})
-  void canVerifyIncorrectPatronPin(String actualPin, String attemptedPin) {
-    final var user = usersClient.createUser("apple");
-
-    patronPinClient.assignPatronPin(user.getId(), actualPin);
-
-    enteredPinIsInvalid(user, attemptedPin);
-  }
-
-  @Test
-  void canVerifyPatronPinForUserWithNoPinAssigned() {
-    final var user = usersClient.createUser("apple");
-
-    enteredPinIsInvalid(user, "1234");
-  }
-
-  @Test
-  void canReassignPatronPin() {
-    final var user = usersClient.createUser("apple");
-
-    patronPinClient.assignPatronPin(user.getId(), "1234");
-
-    patronPinClient.assignPatronPin(user.getId(), "4567");
-
-    enteredPinIsValid(user, "4567");
-
-    enteredPinIsInvalid(user, "1234");
-  }
-
-  @Test
-  void canRemovePatronPin() {
-    final var user = usersClient.createUser("apple");
-
-    patronPinClient.assignPatronPin(user.getId(), "1234");
-
-    patronPinClient.removePatronPin(user.getId());
-
-    enteredPinIsInvalid(user, "1234");
-  }
-
-  private void enteredPinIsValid(User user, String pin) {
-    patronPinClient.verifyPatronPin(user.getId(), pin)
-      .statusCode(is(200));
-  }
-
-  private void enteredPinIsInvalid(User user, String pin) {
-    patronPinClient.verifyPatronPin(user.getId(), pin)
-      .statusCode(is(422));
   }
 
   void userExists(String id) {
