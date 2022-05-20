@@ -125,7 +125,8 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(group.getId()).build());
+      .patronGroup(group.getId())
+      .build());
 
     final var response = groupsClient.attemptToDeleteGroup(group.getId());
 
@@ -243,7 +244,8 @@ class GroupIT {
 
     final var response = usersClient.attemptToCreateUser(User.builder()
       .username("julia")
-      .patronGroup(unknownGroupId).build());
+      .patronGroup(unknownGroupId)
+      .build());
 
     response.statusCode(is(HTTP_BAD_REQUEST));
     response.body(is(
@@ -257,12 +259,14 @@ class GroupIT {
       .build());
 
     final var user = usersClient.createUser(User.builder()
-      .username("julia").build());
+      .username("julia")
+      .build());
 
     usersClient.updateUser(User.builder()
       .id(user.getId())
       .username("julia")
-      .patronGroup(group.getId()).build());
+      .patronGroup(group.getId())
+      .build());
 
     final var updatedUser = usersClient.getUser(user.getId());
 
@@ -277,14 +281,16 @@ class GroupIT {
 
     final var user = usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(group.getId()).build());
+      .patronGroup(group.getId())
+      .build());
 
     final var unknownGroupId = UUID.randomUUID().toString();
 
     final var response = usersClient.attemptToUpdateUser(User.builder()
       .id(user.getId())
       .username("julia")
-      .patronGroup(unknownGroupId).build());
+      .patronGroup(unknownGroupId)
+      .build());
 
     response.statusCode(is(HTTP_BAD_REQUEST));
     response.body(is(
@@ -306,13 +312,16 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(alphaGroup.getId()).build());
+      .patronGroup(alphaGroup.getId())
+      .build());
 
     usersClient.createUser(User.builder()
       .username("alex")
-      .patronGroup(zebraGroup.getId()).build());
+      .patronGroup(zebraGroup.getId())
+      .build());
 
-    final var usersSortedByGroup = usersClient.getUsers("cql.allRecords=1 sortBy " + sortClause);
+    final var usersSortedByGroup = usersClient.getUsers(
+      "cql.allRecords=1 sortBy " + sortClause);
 
     assertThat(usersSortedByGroup.getTotalRecords(), is(2));
     assertThat(usersSortedByGroup.getFirstUser().getUsername(), is(expectedFirstUsername));
@@ -330,13 +339,16 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(alphaGroup.getId()).build());
+      .patronGroup(alphaGroup.getId())
+      .build());
 
     usersClient.createUser(User.builder()
       .username("alex")
-      .patronGroup(zebraGroup.getId()).build());
+      .patronGroup(zebraGroup.getId())
+      .build());
 
-    final var usersFilteredByGroupName = usersClient.getUsers("patronGroup.group=alpha");
+    final var usersFilteredByGroupName = usersClient.getUsers(
+      "patronGroup.group=alpha");
 
     assertThat(usersFilteredByGroupName.getTotalRecords(), is(1));
     assertThat(usersFilteredByGroupName.getFirstUser().getUsername(), is("julia"));
@@ -350,9 +362,11 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(alphaGroup.getId()).build());
+      .patronGroup(alphaGroup.getId())
+      .build());
 
-    final var usersFilteredByGroupName = usersClient.getUsers("patronGroup.group=missing");
+    final var usersFilteredByGroupName = usersClient.getUsers(
+      "patronGroup.group=missing");
 
     assertThat(usersFilteredByGroupName.getTotalRecords(), is(0));
   }

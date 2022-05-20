@@ -87,15 +87,18 @@ class UsersAPIIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(alphaGroup.getId()).build());
+      .patronGroup(alphaGroup.getId())
+      .build());
 
     usersClient.createUser(User.builder()
       .username("alex")
-      .patronGroup(zebraGroup.getId()).build());
+      .patronGroup(zebraGroup.getId())
+      .build());
 
     usersClient.createUser(User.builder()
       .username("steven")
-      .patronGroup(zebraGroup.getId()).build());
+      .patronGroup(zebraGroup.getId())
+      .build());
 
     final var patronGroupFacets = usersClient.getPatronGroupFacets();
 
@@ -184,7 +187,8 @@ class UsersAPIIT {
     usersClient.createUser("julia");
 
     final var response = usersClient.attemptToCreateUser(User.builder()
-      .username("julia").build());
+      .username("julia")
+      .build());
 
     response.statusCode(is(422));
 
