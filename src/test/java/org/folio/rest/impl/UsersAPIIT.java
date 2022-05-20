@@ -13,11 +13,13 @@ import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.Address;
+import org.folio.support.AddressType;
 import org.folio.support.Group;
 import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.VertxModule;
+import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
@@ -40,10 +42,9 @@ import lombok.SneakyThrows;
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIIT {
-  static final String HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
-  static final String ClAIM_ADDRESS_TYPE_ID = "b6f4d1c6-0dfa-463c-9534-f49c4f0ae090";
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
+  private static AddressTypesClient addressTypesClient;
 
   @BeforeAll
   @SneakyThrows
@@ -60,12 +61,14 @@ class UsersAPIIT {
 
     usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
     groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
+    addressTypesClient = new AddressTypesClient(
+      new URI("http://localhost:" + port), headers);
 
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
       .onComplete(context.succeeding(res -> module.enableModule(headers,
-          true, false)
+          false, false)
         .onComplete(context.succeedingThenComplete())));
   }
 
@@ -73,6 +76,7 @@ class UsersAPIIT {
   public void beforeEach() {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
+    addressTypesClient.deleteAllAddressTypes();
   }
 
   @Test
@@ -122,13 +126,16 @@ class UsersAPIIT {
 
   @Test
   void canCreateUser() {
+    final var homeAddressType = createAddressType("Home");
+    final var returnsAddressType = createAddressType("Returns");
+
     final var userToCreate = User.builder()
       .username("julia")
       .personal(Personal.builder()
         .lastName("brockhurst")
         .addresses(List.of(
-          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build(),
-          Address.builder().addressTypeId(ClAIM_ADDRESS_TYPE_ID).build()))
+          Address.builder().addressTypeId(homeAddressType.getId()).build(),
+          Address.builder().addressTypeId(returnsAddressType.getId()).build()))
         .build())
       .build();
 
@@ -145,13 +152,15 @@ class UsersAPIIT {
 
   @Test
   void cannotCreateUserWithMultipleAddressesOfSameType() {
+    final var paymentAddressType = createAddressType("Payment");
+
     final var userWithMultipleAddresses = User.builder()
       .username("julia")
       .personal(Personal.builder()
         .lastName("brockhurst")
         .addresses(List.of(
-          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build(),
-          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build()))
+          Address.builder().addressTypeId(paymentAddressType.getId()).build(),
+          Address.builder().addressTypeId(paymentAddressType.getId()).build()))
         .build())
       .build();
 
@@ -227,6 +236,13 @@ class UsersAPIIT {
     return usersClient.createUser(User.builder()
       .username(username)
       .build());
+  }
+
+  private AddressType createAddressType(String Home) {
+    return addressTypesClient.createAddressType(
+      AddressType.builder()
+        .addressType(Home)
+        .build());
   }
 
   private void deleteUsersByUsername(String username) {

@@ -11,5 +11,6 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AddressType {
+  String id;
   String addressType;
 }
