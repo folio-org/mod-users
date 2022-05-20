@@ -88,6 +88,10 @@ public class UsersClient {
       .extract().as(Users.class);
   }
 
+  public Users getAllUsers() {
+    return getUsers("cql.AllRecords=1");
+  }
+
   public Users getPatronGroupFacets() {
     return given()
       .config(config)
