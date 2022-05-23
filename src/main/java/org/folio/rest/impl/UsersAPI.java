@@ -141,6 +141,8 @@ public class UsersAPI implements Users {
 
     try {
       logger.debug("Getting users");
+      logger.info("QUERY:" + query);
+      logger.info("HEADERS:" + okapiHeaders);
       // note that orderBy is NOT used
       String tableName = getTableName(query);
       CQLWrapper cql = getCQL(query, limit, offset);
