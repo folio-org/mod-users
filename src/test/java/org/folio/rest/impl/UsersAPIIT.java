@@ -1,6 +1,7 @@
 
 package org.folio.rest.impl;
 
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -9,6 +10,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
@@ -79,51 +81,6 @@ class UsersAPIIT {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
-  }
-
-  @Test
-  void canGetPatronGroupFacetsForUsers() {
-    final var alphaGroup = groupsClient.createGroup(Group.builder()
-      .group("Alpha group")
-      .build());
-
-    var zebraGroup = groupsClient.createGroup(Group.builder()
-      .group("Zebra group")
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("julia")
-      .patronGroup(alphaGroup.getId())
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("alex")
-      .patronGroup(zebraGroup.getId())
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("steven")
-      .patronGroup(zebraGroup.getId())
-      .build());
-
-    final var patronGroupFacets = usersClient.getPatronGroupFacets();
-
-    assertThat(patronGroupFacets.getTotalRecords(), is(3));
-    assertThat(patronGroupFacets.getFacetCount(zebraGroup.getId()), is(2));
-    assertThat(patronGroupFacets.getFacetCount(alphaGroup.getId()), is(1));
-  }
-
-  @Test
-  void deleteMultipleUsersUsingCQL() {
-    final var user1 = createUser("1234");
-    final var user2 = createUser("201");
-    final var user3 = createUser("1999");
-
-    deleteUsersByUsername("1*");
-
-    userExists(user2.getId());
-    userDoesntExist(user1.getId());
-    userDoesntExist(user3.getId());
   }
 
   @Test
@@ -222,28 +179,6 @@ class UsersAPIIT {
   }
 
   @Test
-  void canFindActiveUsers() {
-    usersClient.createUser(User.builder()
-      .username("steve")
-      .active(true)
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("joanne")
-      .active(false)
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("jenna")
-      .active(true)
-      .build());
-
-    final var activeUsers = usersClient.getUsers("active=true");
-
-    assertThat(activeUsers.getTotalRecords(), is(2));
-  }
-
-  @Test
   void cannotCreateUserWithSameUsernameAsExistingUser() {
     usersClient.createUser("julia");
 
@@ -274,14 +209,96 @@ class UsersAPIIT {
       is("User with this id already exists"));
   }
 
+  @Test
+  void canFindActiveUsers() {
+    usersClient.createUser(User.builder()
+      .username("steve")
+      .active(true)
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("joanne")
+      .active(false)
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("jenna")
+      .active(true)
+      .build());
+
+    final var activeUsers = usersClient.getUsers("active=true");
+
+    assertThat(activeUsers.getTotalRecords(), is(2));
+  }
+
+  @Test
+  void canGetPatronGroupFacetsForUsers() {
+    final var alphaGroup = groupsClient.createGroup(Group.builder()
+      .group("Alpha group")
+      .build());
+
+    var zebraGroup = groupsClient.createGroup(Group.builder()
+      .group("Zebra group")
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("julia")
+      .patronGroup(alphaGroup.getId())
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("alex")
+      .patronGroup(zebraGroup.getId())
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("steven")
+      .patronGroup(zebraGroup.getId())
+      .build());
+
+    final var patronGroupFacets = usersClient.getPatronGroupFacets();
+
+    assertThat(patronGroupFacets.getTotalRecords(), is(3));
+    assertThat(patronGroupFacets.getFacetCount(zebraGroup.getId()), is(2));
+    assertThat(patronGroupFacets.getFacetCount(alphaGroup.getId()), is(1));
+  }
+
+  @Test
+  void canDeleteAUser() {
+    final var user = createUser("joannek");
+
+    usersClient.deleteUser(user.getId());
+
+    usersClient.attemptToGetUser(user.getId())
+      .statusCode(404);
+  }
+
+  @Test
+  void cannotDeleteAUserThatDoesNotExist() {
+    final var user = createUser("joannek");
+
+    usersClient.attemptToDeleteUser(UUID.randomUUID().toString())
+      .statusCode(is(HTTP_NOT_FOUND));
+  }
+
+  @Test
+  void canDeleteMultipleUsersUsingCQL() {
+    final var user1 = createUser("1234");
+    final var user2 = createUser("201");
+    final var user3 = createUser("1999");
+
+    deleteUsersByUsername("1*");
+
+    userExists(user2.getId());
+    usersClient.attemptToGetUser(user1.getId())
+      .statusCode(404);
+    usersClient.attemptToGetUser(user3.getId())
+      .statusCode(404);
+  }
+
   void userExists(String id) {
     usersClient.attemptToGetUser(id)
       .statusCode(200);
-  }
-
-  void userDoesntExist(String id) {
-    usersClient.attemptToGetUser(id)
-      .statusCode(404);
   }
 
   User createUser(String username) {

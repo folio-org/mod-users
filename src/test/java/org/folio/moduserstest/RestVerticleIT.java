@@ -2,7 +2,6 @@ package org.folio.moduserstest;
 
 import static io.vertx.core.json.Json.encode;
 import static org.folio.moduserstest.RestITSupport.assertStatus;
-import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.post;
@@ -13,13 +12,9 @@ import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.fail;
 
-import java.text.SimpleDateFormat;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +31,6 @@ import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
-import org.folio.test.util.TokenTestUtil;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
@@ -66,31 +60,10 @@ public class RestVerticleIT {
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
-  private static final String jackTriangleId = "e133841d-b645-4488-9e52-9762d560b617";
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
-  private static final String userIdWithWhitespace = "56bd29f7-bf29-48bb-8259-d5ce76378a42";
-
-  private static final String FAKE_TOKEN = TokenTestUtil.generateToken("bubba", UUID.randomUUID().toString());
 
   private static final int DEFAULT_LIMIT = 10;
-  private final JsonObject testAddress = new JsonObject().put("addressType", "school")
-    .put("desc", "Patron's School")
-    .put("id", UUID.randomUUID().toString());
-
-  private final JsonObject testGroup = new JsonObject().put("group", "dropouts")
-    .put("desc", "Freaks and Geeks")
-    .put("id", UUID.randomUUID().toString());
-
-  private final JsonObject testProxyFor = new JsonObject()
-    .put("userId", UUID.randomUUID().toString())
-    .put("proxyUserId", UUID.randomUUID().toString())
-    .put("status", "Active")
-    .put("expirationDate",
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date()))
-    .put("requestForSponsor", "Yes")
-    .put("notificationsTo", "Proxy")
-    .put("accrueTo", "Sponsor");
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
@@ -122,8 +95,9 @@ public class RestVerticleIT {
     }));
   }
 
-  static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body) {
-    return RestITSupport.putWithNoContentStatus(context, userId, request, body);
+  static Future<Void> putWithNoContentStatus(TestContext context, String body) {
+    return RestITSupport.putWithNoContentStatus(context, joeBlockId,
+      "/users/" + joeBlockId, body);
   }
 
   static Future<HttpResponse<Buffer>> delete(String request) {
@@ -169,43 +143,12 @@ public class RestVerticleIT {
 
     JsonObject user = new JsonObject()
       .put("id", joeBlockId)
-      .put("active", true)
+      .put("active", false)
       .put("username", "joeblock");
 
     addTags(user);
 
     return postWithOkStatus(joeBlockId, "/users", user.encode());
-  }
-
-  private Future<Void> deleteNonExistingUser(TestContext context) {
-    log.info("Deleting non-existing user\n");
-
-    Future<HttpResponse<Buffer>> future = delete("/users/85936906-4737-4da7-b0fb-e8da080b97d8");
-
-    return future.map(response -> {
-      assertStatus(context, response, 404);
-      return null;
-    });
-  }
-
-  private Future<Void> deleteUser(TestContext context, String userId) {
-    log.info("Deleting existing user\n");
-    return deleteWithNoContentStatus(context, "/users/" + userId);
-  }
-
-  private Future<Void> getUser(TestContext context) {
-    log.info("Retrieving a user\n");
-
-    Future<JsonObject> future = getJson(context, "/users/" + joeBlockId);
-
-    return future.map(user -> {
-      assertThat(user.getString("username"), is("joeblock"));
-      assertThat(user.getJsonObject("tags"),
-          is(new JsonObject().put("tagList", new JsonArray().add("foo-tag").add("bar-tag"))));
-      assertThat(ZonedDateTime.parse(user.getString("createdDate")), is(lessThanOrEqualTo(ZonedDateTime.now())));
-      return null;
-    });
-
   }
 
   private Future<Void> getUserByCQL(TestContext context) {
@@ -277,7 +220,8 @@ public class RestVerticleIT {
   private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
     log.info("Query users via CQL\n");
 
-    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql) + "&limit=" + RestVerticleIT.DEFAULT_LIMIT);
+    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql)
+      + "&limit=" + RestVerticleIT.DEFAULT_LIMIT);
 
     return future.map(json -> {
 
@@ -297,32 +241,16 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> putUserGood(TestContext context, String id, boolean withUserName) {
+  private Future<Void> putUserGood(TestContext context) {
     log.info("Making a valid user modification\n");
 
     JsonObject user = new JsonObject()
-      .put("id", id)
-      .put("active", false);
-    if (withUserName) {
-      user.put("username", "bobcircle");
-    }
+      .put("id", joeBlockId)
+      .put("active", true)
+      .put("username", "joeblock");
 
-    return putWithNoContentStatus(context, id, "/users/" + id, encode(user));
-  }
-
-  private Future<Void> getGoodUser(TestContext context) {
-    log.info("Getting the modified user\n");
-
-    Future<JsonObject> future = getJson(context, "/users/" + bobCircleId);
-
-    return future.map(user -> {
-      assertThat(user.getString("username"), is("bobcircle"));
-      var createdDate = ZonedDateTime.parse(user.getString("createdDate"));
-      var updatedDate = ZonedDateTime.parse(user.getString("updatedDate"));
-      assertThat(createdDate, is(lessThanOrEqualTo(updatedDate)));
-      assertThat(updatedDate, is(lessThanOrEqualTo(ZonedDateTime.now())));
-      return null;
-    });
+    return putWithNoContentStatus(context,
+      encode(user));
   }
 
   private Future<Void> putUserBadUsername(TestContext context) {
@@ -458,7 +386,7 @@ public class RestVerticleIT {
 
   // https://issues.folio.org/browse/MODUSERS-90
   // https://issues.folio.org/browse/MODUSERS-108
-  private Future<Void> putUserWithNumericName(TestContext context) {
+  private Future<Void> cannotReplaceUserThatDoesNotExist(TestContext context) {
     log.info("Changing a user with numeric name\n");
 
     JsonObject user = new JsonObject()
@@ -503,51 +431,6 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> getAddressTypeUpdateUser(TestContext context) {
-    log.info("Getting the new addresstype, updating a user with it\n");
-
-    Future<JsonObject> f1 = getJson(context, "/addresstypes?query=addressType=sweethome")
-      .map(entries -> {
-        JsonObject addressType = entries.getJsonArray("addressTypes").getJsonObject(0);
-
-        if (!addressType.getString("addressType").equals("sweethome")) {
-          fail("addressType is not 'sweethome' in return addresstype");
-        }
-        return addressType;
-      });
-
-    Future<JsonObject> f2 = f1.compose(addressType -> {
-      JsonObject user = new JsonObject()
-        .put("username", "bobcircle")
-        .put("id", bobCircleId)
-        .put("active", false)
-        .put("personal", new JsonObject()
-          .put("lastName", "Circle")
-          .put("firstName", "Robert")
-          .put("addresses", new JsonArray()
-            .add(new JsonObject()
-              .put("countryId", "USA")
-              .put("addressLine1", "123 Somestreet")
-              .put("city", "Somewheresville")
-              .put("addressTypeId", addressType.getString("id"))
-            )
-          )
-        );
-
-      return put("/users/" + bobCircleId, encode(user))
-        .map(response -> {
-          assertStatus(context, response, 204);
-          return addressType;
-        });
-    });
-
-    return f2.compose(addressType -> delete("/addresstypes/" + addressType.getString("id")))
-      .map(response -> {
-        assertStatus(context, response, 400);
-        return null;
-      });
-  }
-
   private Future<Void> deleteAddressTypeThatDoesNotExist(TestContext context) {
     log.info("Deleting address type that does not exist\n");
 
@@ -590,42 +473,7 @@ public class RestVerticleIT {
       });
   }
 
-  private Future<Void> postUserWithDuplicateAddressType(TestContext context) {
-    log.info("Attempting to create a user with two of the same address types");
-
-    String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
-    JsonObject user = new JsonObject()
-      .put("username", "jacktriangle")
-      .put("id", jackTriangleId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Triangle")
-        .put("firstName", "Jack")
-        .put("addresses", new JsonArray()
-          .add(new JsonObject()
-            .put("countryId", "USA")
-            .put("addressLine1", "123 Somestreet")
-            .put("city", "Somewheresville")
-            .put("addressTypeId", addressTypeId)
-          )
-          .add(new JsonObject()
-            .put("countryId", "USA")
-            .put("addressLine1", "234 Somestreet")
-            .put("city", "Somewheresville")
-            .put("addressTypeId", addressTypeId)
-          )
-        )
-      );
-
-    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
-  private Future<Void> postUserBadAddress(TestContext context) {
+  private Future<Void> cannotUpdateUserWithUnknownAddressType(TestContext context) {
     log.info("Trying to create a bad address\n");
 
     String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
@@ -928,8 +776,8 @@ public class RestVerticleIT {
     log.info("Find and retrieve a particular proxyfor entry\n");
 
     log.info("Making CQL request\n");
-    Future<String> proxyId = getProxyId(context,
-      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    Future<String> proxyId = getProxyId(context
+    );
 
     log.info("Making get-by-id request\n");
 
@@ -944,8 +792,8 @@ public class RestVerticleIT {
     log.info("Find and update a particular proxyfor entry\n");
 
     log.info("Making CQL request\n");
-    Future<String> proxyId = getProxyId(context,
-      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    Future<String> proxyId = getProxyId(context
+    );
 
     JsonObject modifiedProxyObject = new JsonObject()
       .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
@@ -959,8 +807,9 @@ public class RestVerticleIT {
       });
   }
 
-  private Future<String> getProxyId(TestContext context, String requestUrl) {
-    Future<JsonObject> resultJson = getJson(context, requestUrl);
+  private Future<String> getProxyId(TestContext context) {
+    Future<JsonObject> resultJson = getJson(context,
+      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
 
     return resultJson.map(result -> {
       JsonArray proxyForArray = result.getJsonArray("proxiesFor");
@@ -977,59 +826,14 @@ public class RestVerticleIT {
     log.info("Find and delete a particular proxyfor entry");
 
     log.info("Making CQL request\n");
-    Future<String> proxyId = getProxyId(context,
-      "/proxiesfor?query=userId=2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5+AND+proxyUserId=2062d0ef-3f3e-40c5-a870-5912554bc0fa");
+    Future<String> proxyId = getProxyId(context
+    );
 
     return proxyId.compose(id -> delete("/proxiesfor/" + id))
       .map(response -> {
         assertStatus(context, response, 204);
         return null;
       });
-  }
-
-  private Future<Void> createTestDeleteObjectById(TestContext context, JsonObject ob,
-      String endpoint) {
-
-    log.info(String.format(
-      "Creating object %s at endpoint %s", ob.encode(), endpoint));
-
-    Map<String, String> ah = new HashMap<>();
-    ah.put("X-Okapi-Token", FAKE_TOKEN);
-
-    Future<String> f1 = post(endpoint, encode(ob), ah)
-      .map(response -> {
-        assertStatus(context, response, 201);
-
-        return response.bodyAsJsonObject().getString("id");
-      });
-
-    //Get the object by id
-    Future<String> f2 = f1.compose(v -> getJson(context, endpoint + "/" + v))
-      .map(response -> {
-        JsonObject metadata = response.getJsonObject("metadata");
-
-        if (metadata == null) {
-          fail(String.format("No 'metadata' field in result: %s", response));
-        }
-        var createdDate = ZonedDateTime.parse(metadata.getString("createdDate"));
-        assertThat(createdDate, is(lessThanOrEqualTo(ZonedDateTime.now())));
-
-        return response.getString("id");
-      });
-
-    //delete the object by id
-    return f2.compose(id -> deleteWithNoContentStatus(context, endpoint + "/" + id));
-  }
-
-  private Future<Void> getGroupByInvalidUuid(TestContext context) {
-    log.info("Retrieving a group by invalid uuid\n");
-
-    Future<HttpResponse<Buffer>> future = get("/groups/q");
-
-    return future.map(response -> {
-      assertStatus(context, response, 404);
-      return null;
-    });
   }
 
   @Test
@@ -1044,40 +848,32 @@ public class RestVerticleIT {
       + "sortby personal.lastName personal.firstName";
 
     Async async = context.async();
-    Future<Void> startFuture;
-    startFuture = getEmptyUsers(context)
+
+    Future<Void> startFuture = getEmptyUsers(context)
       .compose(v -> postUser())
-      .compose(v -> putUserGood(context, joeBlockId, false))
-      .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser())
-      .compose(v -> getUser(context))
+      .compose(v -> putUserGood(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
       .compose(v -> getUserByInvalidCQL(context))
-      .compose(v -> deleteNonExistingUser(context))
       .compose(v -> postAnotherUser(context))
       .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
       .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
       .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
-      .compose(v -> putUserGood(context, bobCircleId, true))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
-      .compose(v -> getGoodUser(context))
       .compose(v -> putUserBadId(context))
       .compose(v -> putUserNotMatchingId(context))
       .compose(v -> putUserDuplicatedAddressType(context))
       .compose(v -> putUserInvalidAddressType(context))
-      .compose(v -> putUserWithNumericName(context))
+      .compose(v -> cannotReplaceUserThatDoesNotExist(context))
       .compose(v -> putUserWithDuplicateUsername(context))
       .compose(v -> putUserWithDuplicateBarcode(context))
       .compose(v -> createAddressType(context))
       .compose(v -> createBadAddressType(context))
-      .compose(v -> getAddressTypeUpdateUser(context))
       .compose(v -> createAndDeleteAddressType(context))
       .compose(v -> deleteAddressTypeThatDoesNotExist(context))
       .compose(v -> deleteAddressTypeCQLError(context))
-      .compose(v -> postUserWithDuplicateAddressType(context))
-      .compose(v -> postUserBadAddress(context))
+      .compose(v -> cannotUpdateUserWithUnknownAddressType(context))
       .compose(v -> postTwoUsersWithoutUsername(context))
       .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))
@@ -1088,15 +884,7 @@ public class RestVerticleIT {
       .compose(v -> getProxyforCollection(context))
       .compose(v -> findAndGetProxyfor(context))
       .compose(v -> findAndUpdateProxyfor(context))
-      .compose(v -> findAndDeleteProxyfor(context))
-      .compose(v -> createTestDeleteObjectById(context, testAddress, "/addresstypes"))
-      .compose(v -> createTestDeleteObjectById(context, testGroup, "/groups"))
-      .compose(v -> createTestDeleteObjectById(context, testProxyFor, "/proxiesfor"));
-
-    // It hung after 5-12 invocations. MODUSERS-100
-    for (int i = 0; i < 25; i++) {
-      startFuture = startFuture.compose(v -> getGroupByInvalidUuid(context));
-    }
+      .compose(v -> findAndDeleteProxyfor(context));
 
     startFuture.onComplete(res -> {
       if (res.succeeded()) {
@@ -1106,23 +894,6 @@ public class RestVerticleIT {
         context.fail(res.cause());
       }
     });
-  }
-
-  @Test
-  public void test5UserName(TestContext context) {
-    Async async = context.async();
-    postUserWithWhitespace(context)
-      .compose(v -> getUsersByCQL(context, String.format("id==%s", userIdWithWhitespace),
-        "user name"))
-      .compose(v -> deleteUser(context, userIdWithWhitespace))
-      .onComplete(res -> {
-        if (res.succeeded()) {
-          async.complete();
-        } else {
-          res.cause().printStackTrace();
-          context.fail(res.cause());
-        }
-      });
   }
 
   @Test
@@ -1142,21 +913,5 @@ public class RestVerticleIT {
     Future<HttpResponse<Buffer>> future = post("/users/expire/timer", "", headers);
     future.onComplete(context.asyncAssertSuccess(res ->
       context.assertEquals(500, res.statusCode())));
-  }
-
-  private Future<Void> postUserWithWhitespace(TestContext context) {
-    log.info("Creating a user with a numeric name\n");
-
-    JsonObject user = new JsonObject()
-      .put("username", " user name ")
-      .put("id", userIdWithWhitespace)
-      .put("active", true);
-
-    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 201);
-      return null;
-    });
   }
 }

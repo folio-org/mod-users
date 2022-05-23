@@ -119,6 +119,20 @@ public class UsersClient {
       .extract().as(Users.class);
   }
 
+  public void deleteUser(String id) {
+    attemptToDeleteUser(id)
+      .statusCode(204);
+  }
+
+  public ValidatableResponse attemptToDeleteUser(String id) {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .when()
+      .delete("/users/{id}", Map.of("id", id))
+      .then();
+  }
+
   public void deleteUsers(String cqlQuery) {
     given()
       .config(config)
@@ -133,7 +147,6 @@ public class UsersClient {
   public void deleteAllUsers() {
     deleteUsers("cql.allRecords=1");
   }
-
   public void updateUser(@NonNull User user) {
     attemptToUpdateUser(user)
       .statusCode(HTTP_NO_CONTENT);
@@ -149,4 +162,5 @@ public class UsersClient {
       .put("/users/{id}", Map.of("id", user.getId()))
       .then();
   }
+
 }
