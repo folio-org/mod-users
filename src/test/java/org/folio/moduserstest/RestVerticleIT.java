@@ -14,7 +14,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.text.SimpleDateFormat;
@@ -46,7 +45,6 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
-import io.restassured.http.Header;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -125,7 +123,7 @@ public class RestVerticleIT {
   }
 
   static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body) {
-    return RestITSupport.putWithNoContentStatus(context, userId, request, body, new Header[0]);
+    return RestITSupport.putWithNoContentStatus(context, userId, request, body);
   }
 
   static Future<HttpResponse<Buffer>> delete(String request) {
@@ -166,15 +164,14 @@ public class RestVerticleIT {
     u.put("tags", tagobj);
   }
 
-  private Future<Void> postUser(boolean withUserName) {
+  private Future<Void> postUser() {
     log.info("Creating a new user\n");
 
     JsonObject user = new JsonObject()
       .put("id", joeBlockId)
-      .put("active", true);
-    if (withUserName) {
-      user.put("username", "joeblock");
-    }
+      .put("active", true)
+      .put("username", "joeblock");
+
     addTags(user);
 
     return postWithOkStatus(joeBlockId, "/users", user.encode());
@@ -194,22 +191,6 @@ public class RestVerticleIT {
   private Future<Void> deleteUser(TestContext context, String userId) {
     log.info("Deleting existing user\n");
     return deleteWithNoContentStatus(context, "/users/" + userId);
-  }
-
-  private Future<Void> postUserWithNumericName(TestContext context) {
-    log.info("Creating a user with a numeric name\n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "777777")
-      .put("id", user777777Id)
-      .put("active", true);
-
-    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 201);
-      return null;
-    });
   }
 
   private Future<Void> getUser(TestContext context) {
@@ -356,40 +337,6 @@ public class RestVerticleIT {
 
     return future.map(response -> {
       assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
-  private Future<Void> putUserPreferredFirstName(TestContext context) {
-    log.info("Trying to update user with preferred first name \n");
-
-    JsonObject user = new JsonObject()
-      .put("id", bobCircleId)
-      .put("active", false)
-      .put("personal", new JsonObject()
-        .put("lastName", "Circle")
-        .put("firstName", "Bob")
-        .put("preferredFirstName", "Jack")
-      );
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 204);
-      return null;
-    });
-  }
-
-  private Future<Void> getUserPreferredFirstName(TestContext context) {
-    log.info("Trying to get user with preferred first name \n");
-
-    String preferredName = "Jack";
-
-    Future<JsonObject> future = getJson(context, "/users/" + bobCircleId);
-
-    return future.map(user -> {
-      String actualFirstName = user.getJsonObject("personal").getString("preferredFirstName");
-      assertEquals(preferredName, actualFirstName);
       return null;
     });
   }
@@ -1099,10 +1046,10 @@ public class RestVerticleIT {
     Async async = context.async();
     Future<Void> startFuture;
     startFuture = getEmptyUsers(context)
-      .compose(v -> postUser(false))
+      .compose(v -> postUser())
       .compose(v -> putUserGood(context, joeBlockId, false))
       .compose(v -> deleteUser(context, joeBlockId))
-      .compose(v -> postUser(true))
+      .compose(v -> postUser())
       .compose(v -> getUser(context))
       .compose(v -> getUserByCQL(context))
       .compose(v -> getUserByCqlById(context))
@@ -1113,8 +1060,6 @@ public class RestVerticleIT {
       .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
       .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
       .compose(v -> putUserGood(context, bobCircleId, true))
-      .compose(v -> putUserPreferredFirstName(context))
-      .compose(v -> getUserPreferredFirstName(context))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
       .compose(v -> getGoodUser(context))
@@ -1133,7 +1078,6 @@ public class RestVerticleIT {
       .compose(v -> deleteAddressTypeCQLError(context))
       .compose(v -> postUserWithDuplicateAddressType(context))
       .compose(v -> postUserBadAddress(context))
-      .compose(v -> postUserWithNumericName(context))
       .compose(v -> postTwoUsersWithoutUsername(context))
       .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))

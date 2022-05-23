@@ -5,6 +5,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import java.net.URI;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.folio.support.Address;
 import org.folio.support.AddressType;
 import org.folio.support.Group;
 import org.folio.support.Personal;
+import org.folio.support.TagList;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.VertxModule;
@@ -130,24 +132,74 @@ class UsersAPIIT {
     final var returnsAddressType = createAddressType("Returns");
 
     final var userToCreate = User.builder()
-      .username("julia")
+      .username("juliab")
+      .active(true)
       .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
         .lastName("brockhurst")
         .addresses(List.of(
           Address.builder().addressTypeId(homeAddressType.getId()).build(),
           Address.builder().addressTypeId(returnsAddressType.getId()).build()))
         .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
       .build();
 
     final var createdUser = usersClient.createUser(userToCreate);
 
     assertThat(createdUser.getId(), is(notNullValue()));
-    assertThat(createdUser.getUsername(), is("julia"));
+    assertThat(createdUser.getUsername(), is("juliab"));
+    assertThat(createdUser.getActive(), is(true));
 
     final var personal = createdUser.getPersonal();
 
     assertThat(personal.getLastName(), is("brockhurst"));
+    assertThat(personal.getFirstName(), is("julia"));
+    assertThat(personal.getPreferredFirstName(), is("jules"));
     assertThat(personal.getAddresses().size(), is(2));
+
+    assertThat(createdUser.getTags().getTagList(), containsInAnyOrder("foo", "bar"));
+
+    assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
+    assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
+  }
+
+  @Test
+  void canGetAUser() {
+    final var homeAddressType = createAddressType("Home");
+
+    final var userToCreate = User.builder()
+      .username("juliab")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .addresses(List.of(
+          Address.builder().addressTypeId(homeAddressType.getId()).build()))
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var createdUserId = usersClient.createUser(userToCreate).getId();
+
+    final var fetchedUser = usersClient.getUser(createdUserId);
+
+    assertThat(fetchedUser.getId(), is(notNullValue()));
+    assertThat(fetchedUser.getUsername(), is("juliab"));
+    assertThat(fetchedUser.getActive(), is(true));
+
+    final var personal = fetchedUser.getPersonal();
+
+    assertThat(personal.getLastName(), is("brockhurst"));
+    assertThat(personal.getFirstName(), is("julia"));
+    assertThat(personal.getPreferredFirstName(), is("jules"));
+    assertThat(personal.getAddresses().size(), is(1));
+
+    assertThat(fetchedUser.getTags().getTagList(), containsInAnyOrder("foo", "bar"));
+
+    assertThat(fetchedUser.getMetadata().getCreatedDate(), is(notNullValue()));
+    assertThat(fetchedUser.getMetadata().getUpdatedDate(), is(notNullValue()));
   }
 
   @Test

@@ -12,6 +12,10 @@ import java.util.Map;
 import org.folio.support.User;
 import org.folio.support.Users;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.LogConfig;
 import io.restassured.config.ObjectMapperConfig;
@@ -34,7 +38,15 @@ public class UsersClient {
       .build();
 
     config = RestAssuredConfig.newConfig()
-      .objectMapperConfig(new ObjectMapperConfig(ObjectMapperType.JACKSON_2))
+      .objectMapperConfig(new ObjectMapperConfig(ObjectMapperType.JACKSON_2)
+        .jackson2ObjectMapperFactory((type, s) -> {
+          final var mapper = new ObjectMapper();
+
+          mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+          mapper.registerModule(new JavaTimeModule());
+
+          return mapper;
+        }))
       .logConfig(new LogConfig().enableLoggingOfRequestAndResponseIfValidationFails());
   }
 

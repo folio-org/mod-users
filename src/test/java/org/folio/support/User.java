@@ -16,4 +16,6 @@ public class User {
   Boolean active;
   Personal personal;
   String patronGroup;
+  TagList tags;
+  Metadata metadata;
 }
