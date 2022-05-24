@@ -87,9 +87,6 @@ class UsersAPIIT {
 
   @Test
   void canCreateUser() {
-    final var homeAddressType = createAddressType("Home");
-    final var returnsAddressType = createAddressType("Returns");
-
     final var userToCreate = User.builder()
       .username("juliab")
       .active(true)
@@ -97,9 +94,6 @@ class UsersAPIIT {
         .firstName("julia")
         .preferredFirstName("jules")
         .lastName("brockhurst")
-        .addresses(List.of(
-          Address.builder().addressTypeId(homeAddressType.getId()).build(),
-          Address.builder().addressTypeId(returnsAddressType.getId()).build()))
         .build())
       .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
       .build();
@@ -115,9 +109,9 @@ class UsersAPIIT {
     assertThat(personal.getLastName(), is("brockhurst"));
     assertThat(personal.getFirstName(), is("julia"));
     assertThat(personal.getPreferredFirstName(), is("jules"));
-    assertThat(personal.getAddresses().size(), is(2));
 
-    assertThat(createdUser.getTags().getTagList(), containsInAnyOrder("foo", "bar"));
+    assertThat(createdUser.getTags().getTagList(),
+      containsInAnyOrder("foo", "bar"));
 
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
@@ -125,7 +119,10 @@ class UsersAPIIT {
 
   @Test
   void canGetAUser() {
-    final var homeAddressType = createAddressType("Home");
+    final var homeAddressType = addressTypesClient.createAddressType(
+      AddressType.builder()
+        .addressType("Home")
+        .build());
 
     final var userToCreate = User.builder()
       .username("juliab")
@@ -155,29 +152,11 @@ class UsersAPIIT {
     assertThat(personal.getPreferredFirstName(), is("jules"));
     assertThat(personal.getAddresses().size(), is(1));
 
-    assertThat(fetchedUser.getTags().getTagList(), containsInAnyOrder("foo", "bar"));
+    assertThat(fetchedUser.getTags().getTagList(),
+      containsInAnyOrder("foo", "bar"));
 
     assertThat(fetchedUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(fetchedUser.getMetadata().getUpdatedDate(), is(notNullValue()));
-  }
-
-  @Test
-  void cannotCreateUserWithMultipleAddressesOfSameType() {
-    final var paymentAddressType = createAddressType("Payment");
-
-    final var userWithMultipleAddresses = User.builder()
-      .username("julia")
-      .personal(Personal.builder()
-        .lastName("brockhurst")
-        .addresses(List.of(
-          Address.builder().addressTypeId(paymentAddressType.getId()).build(),
-          Address.builder().addressTypeId(paymentAddressType.getId()).build()))
-        .build())
-      .build();
-
-    usersClient.attemptToCreateUser(userWithMultipleAddresses)
-      .statusCode(400)
-      .body(is("Users are limited to one address per addresstype"));
   }
 
   @Test
@@ -343,7 +322,8 @@ class UsersAPIIT {
 
   @Test
   void cannotDeleteAUserThatDoesNotExist() {
-    final var user = createUser("joannek");
+    // Define another user to make sure it isn't deleted by accident
+    createUser("joannek");
 
     usersClient.attemptToDeleteUser(UUID.randomUUID().toString())
       .statusCode(is(HTTP_NOT_FOUND));
@@ -357,29 +337,20 @@ class UsersAPIIT {
 
     deleteUsersByUsername("1*");
 
-    userExists(user2.getId());
+    usersClient.attemptToGetUser(user2.getId())
+      .statusCode(200);
+
     usersClient.attemptToGetUser(user1.getId())
       .statusCode(404);
+
     usersClient.attemptToGetUser(user3.getId())
       .statusCode(404);
-  }
-
-  void userExists(String id) {
-    usersClient.attemptToGetUser(id)
-      .statusCode(200);
   }
 
   User createUser(String username) {
     return usersClient.createUser(User.builder()
       .username(username)
       .build());
-  }
-
-  private AddressType createAddressType(String Home) {
-    return addressTypesClient.createAddressType(
-      AddressType.builder()
-        .addressType(Home)
-        .build());
   }
 
   private void deleteUsersByUsername(String username) {

@@ -57,7 +57,6 @@ public class RestVerticleIT {
 
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
-  private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
 
   @Rule
@@ -242,69 +241,6 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> putUserDuplicatedAddressType(TestContext context) {
-    log.info("Attempting to update a user with two of the same address types\n");
-
-    String addressTypeId = "4716a236-22eb-472a-9f33-d3456c9cc9d5";
-    JsonObject user = new JsonObject()
-      .put("username", "joeblock")
-      .put("id", joeBlockId)
-      .put("active", false)
-      .put("personal", new JsonObject()
-        .put("lastName", "Joe")
-        .put("firstName", "Block")
-        .put("addresses", new JsonArray()
-          .add(new JsonObject()
-            .put("countryId", "USA")
-            .put("addressLine1", "123 Somestreet")
-            .put("city", "Somewheresville")
-            .put("addressTypeId", addressTypeId)
-          )
-          .add(new JsonObject()
-            .put("countryId", "USA")
-            .put("addressLine1", "234 Somestreet")
-            .put("city", "Somewheresville")
-            .put("addressTypeId", addressTypeId)
-          )
-        )
-      );
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
-  private Future<Void> putUserInvalidAddressType(TestContext context) {
-    log.info("Attempting to update a user with invalid address types\n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "joeblock")
-      .put("id", joeBlockId)
-      .put("active", false)
-      .put("personal", new JsonObject()
-        .put("lastName", "Joe")
-        .put("firstName", "Block")
-        .put("addresses", new JsonArray()
-          .add(new JsonObject()
-            .put("countryId", "USA")
-            .put("addressLine1", "123 Somestreet")
-            .put("city", "Somewheresville")
-            .put("addressTypeId", UUID.randomUUID().toString())
-          )
-        )
-      );
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
   // https://issues.folio.org/browse/MODUSERS-90
   // https://issues.folio.org/browse/MODUSERS-108
   private Future<Void> cannotReplaceUserThatDoesNotExist(TestContext context) {
@@ -319,106 +255,6 @@ public class RestVerticleIT {
 
     return future.map(response -> {
       assertStatus(context, response, 404);
-      return null;
-    });
-  }
-
-  private Future<Void> createAddressType(TestContext context) {
-    log.info("Creating an address type\n");
-
-    JsonObject addressType = new JsonObject()
-      .put("addressType", "sweethome")
-      .put("desc", "The patron's primary residence");
-
-    Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
-
-    return future.map(response -> {
-      assertStatus(context, response, 201);
-      return null;
-    });
-  }
-
-  private Future<Void> createBadAddressType(TestContext context) {
-    log.info("Creating a bad address type\n");
-
-    JsonObject addressType = new JsonObject()
-      .put("desc", "The patron's summer residence");
-
-    Future<HttpResponse<Buffer>> future = post("/addresstypes", encode(addressType));
-
-    return future.map(response -> {
-      assertStatus(context, response, 422);
-      return null;
-    });
-  }
-
-  private Future<Void> deleteAddressTypeThatDoesNotExist(TestContext context) {
-    log.info("Deleting address type that does not exist\n");
-
-    Future<HttpResponse<Buffer>> future = delete("/addresstypes/foo");
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
-  private Future<Void> deleteAddressTypeCQLError(TestContext context) {
-    log.info("Deleting address type CQL error\n");
-
-    Future<HttpResponse<Buffer>> future = delete("/addresstypes/x=");
-
-    return future.map(response -> {
-      assertStatus(context, response, 500);
-      return null;
-    });
-  }
-
-  private Future<Void> createAndDeleteAddressType(TestContext context) {
-    log.info("Creating and deleting an address type\n");
-
-    JsonObject addressTypeObject = new JsonObject()
-      .put("addressType", "hardwork")
-      .put("desc", "The patron's work address");
-
-    Future<JsonObject> f1 = post("/addresstypes", encode(addressTypeObject))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return response.bodyAsJsonObject();
-      });
-
-    return f1.compose(at -> delete("/addresstypes/" + at.getString("id")))
-      .map(o -> {
-        assertStatus(context, o, 204);
-        return null;
-      });
-  }
-
-  private Future<Void> cannotUpdateUserWithUnknownAddressType(TestContext context) {
-    log.info("Trying to create a bad address\n");
-
-    String addressTypeId = "1b1ad9a7-5af5-4545-b5f0-4242ba5f62c8";
-    JsonObject user = new JsonObject()
-      .put("username", "annarhombus")
-      .put("id", annaRhombusId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Rhombus")
-        .put("firstName", "Anna")
-        .put("addresses", new JsonArray()
-          .add(new JsonObject()
-            .put("countryId", "USA")
-            .put("addressLine1", "456 Somestreet")
-            .put("city", "Somewheresville")
-            .put("addressTypeId", addressTypeId)
-          )
-        )
-      );
-
-    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
       return null;
     });
   }
@@ -769,17 +605,9 @@ public class RestVerticleIT {
       .compose(v -> putUserWithoutIdInMetadata(context))
       .compose(v -> putUserBadId(context))
       .compose(v -> putUserNotMatchingId(context))
-      .compose(v -> putUserDuplicatedAddressType(context))
-      .compose(v -> putUserInvalidAddressType(context))
       .compose(v -> cannotReplaceUserThatDoesNotExist(context))
       .compose(v -> putUserWithDuplicateUsername(context))
       .compose(v -> putUserWithDuplicateBarcode(context))
-      .compose(v -> createAddressType(context))
-      .compose(v -> createBadAddressType(context))
-      .compose(v -> createAndDeleteAddressType(context))
-      .compose(v -> deleteAddressTypeThatDoesNotExist(context))
-      .compose(v -> deleteAddressTypeCQLError(context))
-      .compose(v -> cannotUpdateUserWithUnknownAddressType(context))
       .compose(v -> postTwoUsersWithoutUsername(context))
       .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))

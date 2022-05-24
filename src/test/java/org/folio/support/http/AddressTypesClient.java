@@ -7,7 +7,6 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.net.URI;
-import java.util.Map;
 
 import org.folio.support.AddressType;
 import org.folio.support.AddressTypes;
@@ -57,6 +56,15 @@ public class AddressTypesClient {
       .then();
   }
 
+  public ValidatableResponse attemptToGetAddressType(String id) {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .when()
+      .get("/addresstypes/{id}", id)
+      .then();
+  }
+
   public AddressTypes getAddressTypes(String cqlQuery) {
     return given()
       .config(config)
@@ -73,14 +81,18 @@ public class AddressTypesClient {
     return getAddressTypes("cql.AllRecords=1");
   }
 
-  private void deleteAddressType(String id) {
-    given()
+  public void deleteAddressType(String id) {
+    attemptToDeleteAddressType(id)
+      .statusCode(HTTP_NO_CONTENT);
+  }
+
+  public ValidatableResponse attemptToDeleteAddressType(String id) {
+    return given()
       .config(config)
       .spec(requestSpecification)
       .when()
-      .delete("/addresstypes/{id}", Map.of("id", id))
-      .then()
-      .statusCode(HTTP_NO_CONTENT);
+      .delete("/addresstypes/{id}", id)
+      .then();
   }
 
   public void deleteAllAddressTypes() {
