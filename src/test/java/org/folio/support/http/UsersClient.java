@@ -44,6 +44,12 @@ public class UsersClient {
       .extract().as(User.class);
   }
 
+  public User createUser(String username) {
+    return createUser(User.builder()
+      .username(username)
+      .build());
+  }
+
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
     return given()
       .config(config)
@@ -56,14 +62,18 @@ public class UsersClient {
   }
 
   public User getUser(String id) {
+    return attemptToGetUser(id)
+      .statusCode(HTTP_OK)
+      .extract().as(User.class);
+  }
+
+  public ValidatableResponse attemptToGetUser(String id) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .when()
       .get("/users/{id}", Map.of("id", id))
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(User.class);
+      .then();
   }
 
   public Users getUsers(String cqlQuery) {
@@ -78,16 +88,40 @@ public class UsersClient {
       .extract().as(Users.class);
   }
 
-  public void deleteAllUsers() {
+  public Users getAllUsers() {
+    return getUsers("cql.AllRecords=1");
+  }
+
+  public Users getPatronGroupFacets() {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .when()
+      // Limit must be 1 as request fails with limit 0
+      // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
+      .queryParam("limit", 1)
+      .queryParam("facets", "patronGroup:50")
+      .get("/users")
+      .then()
+      .statusCode(HTTP_OK)
+      .extract().as(Users.class);
+  }
+
+  public void deleteUsers(String cqlQuery) {
     given()
       .config(config)
       .spec(requestSpecification)
       .when()
-      .queryParam("query", "cql.allRecords=1")
+      .queryParam("query", cqlQuery)
       .delete("/users")
       .then()
       .statusCode(204);
   }
+
+  public void deleteAllUsers() {
+    deleteUsers("cql.allRecords=1");
+  }
+
   public void updateUser(@NonNull User user) {
     attemptToUpdateUser(user)
       .statusCode(HTTP_NO_CONTENT);

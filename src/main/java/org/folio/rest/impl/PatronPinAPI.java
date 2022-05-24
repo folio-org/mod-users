@@ -1,90 +1,85 @@
 package org.folio.rest.impl;
 
+import java.util.Map;
+
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.ws.rs.core.Response;
 
-import org.folio.rest.jaxrs.resource.PatronPin;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Patronpin;
-
+import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.persist.PgUtil;
-
-//https://github.com/folio-org/raml-module-builder/blob/10d34b51d42e038d675430da4d94bcdea9558c52/domain-models-runtime/src/main/java/org/folio/rest/persist/PostgresClient.java
-import org.folio.rest.persist.PostgresClient;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
-import java.util.Map;
 
 
 public class PatronPinAPI implements PatronPin {
-
   private static final Logger logger = LogManager.getLogger(PatronPinAPI.class);
   public static final String TABLE_NAME_PATRON_PIN = "patronpin";
 
-  public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    String derivedKey = getDerivation(entity.getPin(), entity.getId());
+  public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+
+    final var derivedKey = getDerivation(entity.getPin(), entity.getId());
     entity.setPin(derivedKey);
 
-    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-    Future<String> f = pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true);
+    final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-    f.onComplete( res -> {
-      io.vertx.core.AsyncResult<String> ar = res;
-      if (ar.succeeded()) {
-        asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond201()));
-      }
-      else {
-        asyncResultHandler.handle(Future.succeededFuture( PostPatronPinResponse.respond500WithTextPlain("Failed to set Pin "+ar.toString())));
-      }
-    });
+    pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true)
+      .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
+        PostPatronPinResponse.respond201())))
+      .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
+        PostPatronPinResponse.respond500WithTextPlain(cause))));
   }
 
-  public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-    Future<io.vertx.sqlclient.RowSet<io.vertx.sqlclient.Row>> f = pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId());
+  public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    f.onComplete( res -> {
-      io.vertx.core.AsyncResult<io.vertx.sqlclient.RowSet<io.vertx.sqlclient.Row>> ar = res;
-      if (ar.succeeded()) {
-        asyncResultHandler.handle(Future.succeededFuture( DeletePatronPinResponse.respond200()));
-      }
-      else {
-        asyncResultHandler.handle(Future.succeededFuture( DeletePatronPinResponse.respond422()));
-      }
-    });
+    final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
+    pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId())
+      .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
+        DeletePatronPinResponse.respond200())))
+      .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
+        DeletePatronPinResponse.respond422())));
   }
 
-  public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PostgresClient pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+  public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    String suppliedPinDerivation = getDerivation(entity.getPin(), entity.getId());
+    final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-    Future<io.vertx.core.json.JsonObject> f = pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId());
-    f.onComplete( res -> {
-      io.vertx.core.AsyncResult<io.vertx.core.json.JsonObject> ar = res;
-      if (ar.succeeded()) {
-        JsonObject jo = ar.result();
-        if ( jo.getString("pin").equals(suppliedPinDerivation) ) {
-          asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond200()));
+    final var suppliedPinDerivation = getDerivation(entity.getPin(),
+      entity.getId());
+
+    pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId())
+      .onSuccess(assignedPin -> {
+        try {
+          if (assignedPin == null) {
+            logger.info("No pin assigned to {}", entity.getId());
+            asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
+          }
+          else if (assignedPin.getString("pin").equals(suppliedPinDerivation)) {
+            asyncResultHandler.handle(Future.succeededFuture(
+              PostPatronPinVerifyResponse.respond200()));
+          } else {
+            logger.info("Pins do not match");
+            asyncResultHandler.handle(Future.succeededFuture(
+              PostPatronPinVerifyResponse.respond422()));
+          }
         }
-        else {
-          logger.info("Pins do not match");
-          asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
+        catch (Exception e) {
+          asyncResultHandler.handle(Future.succeededFuture(
+            PostPatronPinVerifyResponse.respond500WithTextPlain(e.toString())));
         }
-      } else {
-        asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
-      }
-    });
-    
+      })
+      .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
+        PostPatronPinVerifyResponse.respond500WithTextPlain(cause.toString()))));
   }
 
   private String getDerivation(String input, String salt) {
@@ -111,5 +106,3 @@ public class PatronPinAPI implements PatronPin {
     return result;
   }
 }
-
-

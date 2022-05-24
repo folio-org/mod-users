@@ -9,21 +9,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
 import java.net.URI;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.utils.TenantInit;
 import org.folio.support.Group;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
+import org.folio.support.VertxModule;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.UsersClient;
@@ -35,10 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
@@ -62,22 +53,12 @@ class GroupIT {
     groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
     usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
 
-    final var tenantClient = new TenantClient(headers.getOkapiUrl(),
-      headers.getTenantId(), headers.getToken(), WebClient.create(vertx));
+    final var module = new VertxModule(vertx);
 
-    final var options = new DeploymentOptions()
-      .setConfig(new JsonObject().put("http.port", port));
-
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.succeeding(res -> {
-      TenantAttributes ta = new TenantAttributes();
-      ta.setModuleTo("mod-users-1.0.0");
-      List<Parameter> parameters = new LinkedList<>();
-      parameters.add(new Parameter().withKey("loadReference").withValue("false"));
-      parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-      ta.setParameters(parameters);
-
-      TenantInit.init(tenantClient, ta).onComplete(context.succeedingThenComplete());
-    }));
+    module.deployModule(port)
+      .onComplete(context.succeeding(res -> module.enableModule(headers,
+          false, false)
+        .onComplete(context.succeedingThenComplete())));
   }
 
   @BeforeEach
@@ -144,7 +125,8 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(group.getId()).build());
+      .patronGroup(group.getId())
+      .build());
 
     final var response = groupsClient.attemptToDeleteGroup(group.getId());
 
@@ -262,7 +244,8 @@ class GroupIT {
 
     final var response = usersClient.attemptToCreateUser(User.builder()
       .username("julia")
-      .patronGroup(unknownGroupId).build());
+      .patronGroup(unknownGroupId)
+      .build());
 
     response.statusCode(is(HTTP_BAD_REQUEST));
     response.body(is(
@@ -276,12 +259,14 @@ class GroupIT {
       .build());
 
     final var user = usersClient.createUser(User.builder()
-      .username("julia").build());
+      .username("julia")
+      .build());
 
     usersClient.updateUser(User.builder()
       .id(user.getId())
       .username("julia")
-      .patronGroup(group.getId()).build());
+      .patronGroup(group.getId())
+      .build());
 
     final var updatedUser = usersClient.getUser(user.getId());
 
@@ -296,14 +281,16 @@ class GroupIT {
 
     final var user = usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(group.getId()).build());
+      .patronGroup(group.getId())
+      .build());
 
     final var unknownGroupId = UUID.randomUUID().toString();
 
     final var response = usersClient.attemptToUpdateUser(User.builder()
       .id(user.getId())
       .username("julia")
-      .patronGroup(unknownGroupId).build());
+      .patronGroup(unknownGroupId)
+      .build());
 
     response.statusCode(is(HTTP_BAD_REQUEST));
     response.body(is(
@@ -325,13 +312,16 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(alphaGroup.getId()).build());
+      .patronGroup(alphaGroup.getId())
+      .build());
 
     usersClient.createUser(User.builder()
       .username("alex")
-      .patronGroup(zebraGroup.getId()).build());
+      .patronGroup(zebraGroup.getId())
+      .build());
 
-    final var usersSortedByGroup = usersClient.getUsers("cql.allRecords=1 sortBy " + sortClause);
+    final var usersSortedByGroup = usersClient.getUsers(
+      "cql.allRecords=1 sortBy " + sortClause);
 
     assertThat(usersSortedByGroup.getTotalRecords(), is(2));
     assertThat(usersSortedByGroup.getFirstUser().getUsername(), is(expectedFirstUsername));
@@ -349,13 +339,16 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(alphaGroup.getId()).build());
+      .patronGroup(alphaGroup.getId())
+      .build());
 
     usersClient.createUser(User.builder()
       .username("alex")
-      .patronGroup(zebraGroup.getId()).build());
+      .patronGroup(zebraGroup.getId())
+      .build());
 
-    final var usersFilteredByGroupName = usersClient.getUsers("patronGroup.group=alpha");
+    final var usersFilteredByGroupName = usersClient.getUsers(
+      "patronGroup.group=alpha");
 
     assertThat(usersFilteredByGroupName.getTotalRecords(), is(1));
     assertThat(usersFilteredByGroupName.getFirstUser().getUsername(), is("julia"));
@@ -369,67 +362,12 @@ class GroupIT {
 
     usersClient.createUser(User.builder()
       .username("julia")
-      .patronGroup(alphaGroup.getId()).build());
+      .patronGroup(alphaGroup.getId())
+      .build());
 
-    final var usersFilteredByGroupName = usersClient.getUsers("patronGroup.group=missing");
+    final var usersFilteredByGroupName = usersClient.getUsers(
+      "patronGroup.group=missing");
 
     assertThat(usersFilteredByGroupName.getTotalRecords(), is(0));
-  }
-
-  //These tests should  be in the integration tests for users not groups
-  //they can be moved when the users integration tests are improved
-  @Test
-  void canFindActiveUsers() {
-    usersClient.createUser(User.builder()
-      .username("steve")
-      .active(true)
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("joanne")
-      .active(false)
-      .build());
-
-    usersClient.createUser(User.builder()
-      .username("jenna")
-      .active(true)
-      .build());
-
-    final var activeUsers = usersClient.getUsers("active=true");
-
-    assertThat(activeUsers.getTotalRecords(), is(2));
-  }
-
-  @Test
-  void cannotCreateUserWithSameUsernameAsExistingUser() {
-    usersClient.createUser(User.builder()
-      .username("julia").build());
-
-    final var response = usersClient.attemptToCreateUser(User.builder()
-      .username("julia").build());
-
-    response.statusCode(is(422));
-
-    final var errors = response.extract().as(ValidationErrors.class);
-
-    assertThat(errors.getErrors().get(0).getMessage(),
-      is("User with this username already exists"));
-  }
-
-  @Test
-  void cannotCreateUserWithSameIdAsExistingUser() {
-    final var existingUser = usersClient.createUser(User.builder()
-      .username("julia").build());
-
-    final var response = usersClient.attemptToCreateUser(User.builder()
-      .id(existingUser.getId())
-      .username("steve").build());
-
-    response.statusCode(is(422));
-
-    final var errors = response.extract().as(ValidationErrors.class);
-
-    assertThat(errors.getErrors().get(0).getMessage(),
-      is("User with this id already exists"));
   }
 }

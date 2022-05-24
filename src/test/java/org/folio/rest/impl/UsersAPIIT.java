@@ -1,304 +1,251 @@
 
 package org.folio.rest.impl;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.util.ArrayList;
-import java.util.Base64;
+import java.net.URI;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.RestVerticle;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.Address;
+import org.folio.support.AddressType;
+import org.folio.support.Group;
 import org.folio.support.Personal;
 import org.folio.support.User;
-import org.junit.Assert;
-import org.junit.jupiter.api.AfterAll;
+import org.folio.support.ValidationErrors;
+import org.folio.support.VertxModule;
+import org.folio.support.http.AddressTypesClient;
+import org.folio.support.http.FakeTokenGenerator;
+import org.folio.support.http.GroupsClient;
+import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Timeout;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
 /**
  * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
  * should be moved here.
  */
+@Timeout(value = 20, timeUnit = SECONDS)
+@ExtendWith(VertxExtension.class)
 class UsersAPIIT {
-  static final String HOME_ADDRESS_TYPE_ID = "93d3d88d-499b-45d0-9bc7-ac73c3a19880";
-  static final String ClAIM_ADDRESS_TYPE_ID = "b6f4d1c6-0dfa-463c-9534-f49c4f0ae090";
-  static final String TENANT = "usersapiit";
-  static final String TOKEN = "header." + Base64.getEncoder().encodeToString("{}".getBytes()) + ".signature";
-  static Vertx vertx;
-  static String baseUrl;
+  private static UsersClient usersClient;
+  private static GroupsClient groupsClient;
+  private static AddressTypesClient addressTypesClient;
 
   @BeforeAll
-  static void beforeAll() {
-    vertx = Vertx.vertx();
+  @SneakyThrows
+  static void beforeAll(Vertx vertx, VertxTestContext context) {
+    final var tenant = "users_integration_tests";
+    final var token = new FakeTokenGenerator().generateToken();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
-    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    RestAssured.port = NetworkUtils.nextFreePort();
-    baseUrl = "http://localhost:" + RestAssured.port;
-    deploy();
-    deleteTenantIgnore();  // remove left over from previous test run
-    postTenant();
+    final var port = NetworkUtils.nextFreePort();
+
+    final var headers = new OkapiHeaders("http://localhost:" + port,
+      tenant, token);
+
+    usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
+    groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
+    addressTypesClient = new AddressTypesClient(
+      new URI("http://localhost:" + port), headers);
+
+    final var module = new VertxModule(vertx);
+
+    module.deployModule(port)
+      .onComplete(context.succeeding(res -> module.enableModule(headers,
+          false, false)
+        .onComplete(context.succeedingThenComplete())));
   }
 
-  @AfterAll
-  static void afterAll() {
-    vertx.close();
+  @BeforeEach
+  public void beforeEach() {
+    usersClient.deleteAllUsers();
+    groupsClient.deleteAllGroups();
+    addressTypesClient.deleteAllAddressTypes();
   }
 
-  @Disabled("fails, bug")  // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
   @Test
-  void facetsLimit0() {
-    // The UI uses this to show the number per patron group in /settings/users/groups
-    facets(0);
-  }
+  void canGetPatronGroupFacetsForUsers() {
+    final var alphaGroup = groupsClient.createGroup(Group.builder()
+      .group("Alpha group")
+      .build());
 
-  @Test
-  void facetsLimit1() {
-    facets(1);
+    var zebraGroup = groupsClient.createGroup(Group.builder()
+      .group("Zebra group")
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("julia")
+      .patronGroup(alphaGroup.getId())
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("alex")
+      .patronGroup(zebraGroup.getId())
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("steven")
+      .patronGroup(zebraGroup.getId())
+      .build());
+
+    final var patronGroupFacets = usersClient.getPatronGroupFacets();
+
+    assertThat(patronGroupFacets.getTotalRecords(), is(3));
+    assertThat(patronGroupFacets.getFacetCount(zebraGroup.getId()), is(2));
+    assertThat(patronGroupFacets.getFacetCount(alphaGroup.getId()), is(1));
   }
 
   @Test
   void deleteMultipleUsersUsingCQL() {
-    String id1 = UUID.randomUUID().toString();
-    String id2 = UUID.randomUUID().toString();
-    String id3 = UUID.randomUUID().toString();
-    postUser(id1, "1234");
-    postUser(id2, "201");
-    postUser(id3, "1999");
+    final var user1 = createUser("1234");
+    final var user2 = createUser("201");
+    final var user3 = createUser("1999");
 
     deleteUsersByUsername("1*");
 
-    userExists(id2);
-    userDoesntExist(id1);
-    userDoesntExist(id3);
+    userExists(user2.getId());
+    userDoesntExist(user1.getId());
+    userDoesntExist(user3.getId());
   }
 
   @Test
   void canCreateUser() {
+    final var homeAddressType = createAddressType("Home");
+    final var returnsAddressType = createAddressType("Returns");
+
     final var userToCreate = User.builder()
       .username("julia")
       .personal(Personal.builder()
         .lastName("brockhurst")
         .addresses(List.of(
-          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build(),
-          Address.builder().addressTypeId(ClAIM_ADDRESS_TYPE_ID).build()))
+          Address.builder().addressTypeId(homeAddressType.getId()).build(),
+          Address.builder().addressTypeId(returnsAddressType.getId()).build()))
         .build())
       .build();
 
-    createUser(userToCreate)
-      .then()
-      .statusCode(201);
+    final var createdUser = usersClient.createUser(userToCreate);
+
+    assertThat(createdUser.getId(), is(notNullValue()));
+    assertThat(createdUser.getUsername(), is("julia"));
+
+    final var personal = createdUser.getPersonal();
+
+    assertThat(personal.getLastName(), is("brockhurst"));
+    assertThat(personal.getAddresses().size(), is(2));
   }
 
   @Test
   void cannotCreateUserWithMultipleAddressesOfSameType() {
+    final var paymentAddressType = createAddressType("Payment");
+
     final var userWithMultipleAddresses = User.builder()
       .username("julia")
       .personal(Personal.builder()
         .lastName("brockhurst")
         .addresses(List.of(
-          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build(),
-          Address.builder().addressTypeId(HOME_ADDRESS_TYPE_ID).build()))
+          Address.builder().addressTypeId(paymentAddressType.getId()).build(),
+          Address.builder().addressTypeId(paymentAddressType.getId()).build()))
         .build())
       .build();
 
-    createUser(userWithMultipleAddresses)
-      .then()
+    usersClient.attemptToCreateUser(userWithMultipleAddresses)
       .statusCode(400)
       .body(is("Users are limited to one address per addresstype"));
   }
 
   @Test
-  void postPatronPin() {
-    String id1 = UUID.randomUUID().toString();
-    String id2 = UUID.randomUUID().toString();
-    String id3 = UUID.randomUUID().toString();
-    postUser(id1, "apple");
-    postUser(id2, "banana");
-    postUser(id3, "cherry");
+  void canFindActiveUsers() {
+    usersClient.createUser(User.builder()
+      .username("steve")
+      .active(true)
+      .build());
 
-    postPatronPinOK(id1, "1468");
-    postPatronPinOK(id2, "ThisIsALonger1234PinWithSomeNumbers");
-    postPatronPinOK(id3, "7778");
-    // Update the patron pin for cherry
-    postPatronPinOK(id3, "7777");
+    usersClient.createUser(User.builder()
+      .username("joanne")
+      .active(false)
+      .build());
 
-    pinIsCorrect(id1, "1468");
-    pinIsIncorrect(id1, "1467");
-    pinIsIncorrect(id2, "1111");
-    pinIsIncorrect(id3, "7778");
-    pinIsCorrect(id3, "7777");
+    usersClient.createUser(User.builder()
+      .username("jenna")
+      .active(true)
+      .build());
 
-    deletePatronPinOK(id1);
+    final var activeUsers = usersClient.getUsers("active=true");
+
+    assertThat(activeUsers.getTotalRecords(), is(2));
   }
 
-  static RequestSpecification given() {
-    return RestAssured
-        .given()
-        .header("X-Okapi-Tenant", TENANT)
-        .header("X-Okapi-Token", TOKEN)
-        .header("X-Okapi-Url", baseUrl)
-        .contentType(ContentType.JSON)
-        .accept("application/json,text/plain");
+  @Test
+  void cannotCreateUserWithSameUsernameAsExistingUser() {
+    usersClient.createUser("julia");
+
+    final var response = usersClient.attemptToCreateUser(User.builder()
+      .username("julia")
+      .build());
+
+    response.statusCode(is(422));
+
+    final var errors = response.extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("User with this username already exists"));
   }
 
-  static void deploy() {
-    DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject()
-        .put("http.port", RestAssured.port));
-    CompletableFuture<String> future = new CompletableFuture<>();
-    vertx.deployVerticle(new RestVerticle(), options, handler -> {
-      if (handler.succeeded()) {
-        future.complete(handler.result());
-      } else {
-        future.completeExceptionally(handler.cause());
-      }
-    });
-    try {
-      future.get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  @Test
+  void cannotCreateUserWithSameIdAsExistingUser() {
+    final var existingUser = usersClient.createUser("julia");
 
-  static void deleteTenantIgnore() {
-    given().
-    when().delete("/_/tenant");
-    // ignore any error
-  }
+    final var errors = usersClient.attemptToCreateUser(User.builder()
+      .id(existingUser.getId())
+      .username("steve")
+      .build())
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
 
-  static TenantAttributes tenantAttributes() {
-    List<Parameter> parameters = new ArrayList<>();
-    parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-    parameters.add(new Parameter().withKey("loadSample").withValue("true"));
-    return new TenantAttributes()
-        .withModuleTo("mod-users-9999999.0.0")
-        .withParameters(parameters);
-  }
-
-  static void postTenant() {
-    String id = given().body(tenantAttributes()).
-    when().post("/_/tenant").
-    then().statusCode(201).
-    extract().
-    path("id");
-    Boolean complete = given().when().get("/_/tenant/" + id + "?wait=60000")
-    .then().statusCode(200).extract().path("complete");
-    Assert.assertTrue(complete);
-    //if something went wrong internally with client setup,
-    //there will be an error attribute in the response body
-    given().when().get("/_/tenant/" + id).then().statusCode(200).body("$", not(hasKey("error")));
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("User with this id already exists"));
   }
 
   void userExists(String id) {
-    given().
-    when().get("/users/" + id).
-    then().statusCode(200);
+    usersClient.attemptToGetUser(id)
+      .statusCode(200);
   }
 
   void userDoesntExist(String id) {
-    given().
-    when().get("/users/" + id).
-    then().statusCode(404);
+    usersClient.attemptToGetUser(id)
+      .statusCode(404);
   }
 
-  @SneakyThrows
-  private Response createUser(User userToCreate) {
-    return given()
-      .when()
-      .body(new ObjectMapper().writeValueAsString(userToCreate))
-      .post("/users");
+  User createUser(String username) {
+    return usersClient.createUser(User.builder()
+      .username(username)
+      .build());
   }
 
-  /**
-   * Create a user by calling the POST /users API.
-   */
-  void postUser(String id, String username) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("username", username).encode()).
-      post("/users").
-    then().
-      statusCode(201);
+  private AddressType createAddressType(String Home) {
+    return addressTypesClient.createAddressType(
+      AddressType.builder()
+        .addressType(Home)
+        .build());
   }
 
-  void deleteUsersByUsername(String username) {
-    given().
-    when().
-      param("query", "username == \"" + username + "\"").
-      delete("/users").
-    then().
-      statusCode(204);
-  }
-
-  void facets(int limit) {
-    given().
-    when().get("/users?limit=" + limit + "&facets=patronGroup:50").
-    then().
-      statusCode(200).
-      body("resultInfo.facets[0].facetValues[0].count", is(88)).
-      body("resultInfo.facets[0].facetValues[0].value", is("bdc2b6d4-5ceb-4a12-ab46-249b9a68473e")).
-      body("resultInfo.facets[0].facetValues[1].count", is(81)).
-      body("resultInfo.facets[0].facetValues[1].value", is("3684a786-6671-4268-8ed0-9db82ebca60b"));
-
-  }
-
-  void postPatronPinOK(String id, String pin) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
-      post("/patron-pin").
-    then().
-      statusCode(201);
-  }
-
-
-  void deletePatronPinOK(String id) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).encode()).
-      delete("/patron-pin").
-    then().
-      statusCode(200);
-  }
-
-  void pinIsCorrect(String id, String pin) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
-      post("/patron-pin/verify").
-    then().
-      statusCode(200);
-  }
-
-  void pinIsIncorrect(String id, String pin) {
-    given().
-    when().
-      body(new JsonObject().put("id",  id).put("pin", pin).encode()).
-      post("/patron-pin/verify").
-    then().
-      statusCode(422);
+  private void deleteUsersByUsername(String username) {
+    usersClient.deleteUsers("username == \"" + username + "\"");
   }
 }
