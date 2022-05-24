@@ -8,13 +8,10 @@ import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
-import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,8 +59,6 @@ public class RestVerticleIT {
   private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
   private static final String annaRhombusId = "e8090974-8876-4411-befa-8ddcffad0b35";
   private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
-
-  private static final int DEFAULT_LIMIT = 10;
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
@@ -151,56 +146,6 @@ public class RestVerticleIT {
     return postWithOkStatus(joeBlockId, "/users", user.encode());
   }
 
-  private Future<Void> getUserByCQL(TestContext context) {
-    log.info("Getting user via CQL, by username\n");
-
-    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode("username==joeblock"));
-
-    return future.map(users -> {
-      int totalRecords = users.getInteger("totalRecords");
-      if (totalRecords != 1) {
-        fail("Expected 1 record, got " + totalRecords);
-      }
-
-      JsonArray userList = users.getJsonArray("users");
-      JsonObject user = userList.getJsonObject(0);
-      if (!user.getString("username").equals("joeblock")) {
-        fail("Unable to read proper data from JSON return value: " + encode(users));
-      }
-
-      return null;
-    });
-  }
-
-  private Future<Void> getUserByCqlById(TestContext context) {
-    log.info("Getting user via CQL, by user id\n");
-
-    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode("(id==" + joeBlockId + ")"));
-
-    return future.map(users -> {
-      int totalRecords = users.getInteger("totalRecords");
-      assertThat(totalRecords, is(1));
-
-      JsonArray userList = users.getJsonArray("users");
-      JsonObject user = userList.getJsonObject(0);
-      assertThat("username of " + encode(user), user.getString("username"), is("joeblock"));
-
-      return null;
-    });
-  }
-
-  private Future<Void> getUserByInvalidCQL(TestContext context) {
-    log.info("Getting user via invalid CQL\n");
-
-    // empty CQL query triggers parse exception
-    Future<HttpResponse<Buffer>> future = get("/users?query=");
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
   private Future<Void> postAnotherUser(TestContext context) {
     log.info("Creating another user\n");
 
@@ -213,30 +158,6 @@ public class RestVerticleIT {
 
     return future.map(response -> {
       assertStatus(context, response,  201);
-      return null;
-    });
-  }
-
-  private Future<Void> getUsersByCQL(TestContext context, String cql, String... expectedUsernames) {
-    log.info("Query users via CQL\n");
-
-    Future<JsonObject> future = getJson(context, "/users?query=" + urlEncode(cql)
-      + "&limit=" + RestVerticleIT.DEFAULT_LIMIT);
-
-    return future.map(json -> {
-
-      int totalRecords = json.getInteger("totalRecords");
-      JsonArray userList = json.getJsonArray("users");
-      if (userList.size() != totalRecords) {
-        fail("totalRecords=" + totalRecords + " mismatch users list: " + userList.encodePrettily());
-      }
-
-      List<String> usernames = new ArrayList<>();
-      for (int i = 0; i < userList.size(); i++) {
-        usernames.add(userList.getJsonObject(i).getString("username"));
-      }
-      assertThat(usernames, containsInAnyOrder(expectedUsernames));
-
       return null;
     });
   }
@@ -838,27 +759,12 @@ public class RestVerticleIT {
 
   @Test
   public void test1Sequential(TestContext context) {
-    /*
-      The CQL used for searching when a single j has been entered into the
-      search slot
-     */
-    final String jSearch = "(((username=\"j*\" or personal.firstName=\"j*\" or "
-      + "personal.lastName=\"j*\" or personal.email=\"j*\" or barcode=\"j*\" or "
-      + "id=\"j*\" or externalSystemId=\"j*\")) and active=\"true\") "
-      + "sortby personal.lastName personal.firstName";
-
     Async async = context.async();
 
     Future<Void> startFuture = getEmptyUsers(context)
       .compose(v -> postUser())
       .compose(v -> putUserGood(context))
-      .compose(v -> getUserByCQL(context))
-      .compose(v -> getUserByCqlById(context))
-      .compose(v -> getUserByInvalidCQL(context))
       .compose(v -> postAnotherUser(context))
-      .compose(v -> getUsersByCQL(context, "id==x") /* empty result */)
-      .compose(v -> getUsersByCQL(context, "id==\"\"", "bobcircle", "joeblock"))
-      .compose(v -> getUsersByCQL(context, jSearch, "joeblock"))
       .compose(v -> putUserBadUsername(context))
       .compose(v -> putUserWithoutIdInMetadata(context))
       .compose(v -> putUserBadId(context))

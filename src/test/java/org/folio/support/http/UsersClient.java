@@ -89,15 +89,19 @@ public class UsersClient {
   }
 
   public Users getUsers(String cqlQuery) {
+    return attemptToGetUsers(cqlQuery)
+      .statusCode(HTTP_OK)
+      .extract().as(Users.class);
+  }
+
+  public ValidatableResponse attemptToGetUsers(String cqlQuery) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
       .get("/users")
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Users.class);
+      .then();
   }
 
   public Users getAllUsers() {
@@ -162,5 +166,4 @@ public class UsersClient {
       .put("/users/{id}", Map.of("id", user.getId()))
       .then();
   }
-
 }

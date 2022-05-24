@@ -1,8 +1,10 @@
 
 package org.folio.rest.impl;
 
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -207,6 +209,72 @@ class UsersAPIIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
+  }
+
+  @Test
+  void canFindUserByUsername() {
+    final var steve = usersClient.createUser(User.builder()
+      .username("steve")
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("joanne")
+      .build());
+
+    final var foundUsers = usersClient.getUsers("username==\"steve\"");
+
+    assertThat(foundUsers.getTotalRecords(), is(1));
+    assertThat(foundUsers.getFirstUser().getUsername(), is("steve"));
+    assertThat(foundUsers.getFirstUser().getId(), is(steve.getId()));
+  }
+
+  @Test
+  void canFindUserById() {
+    final var steve = usersClient.createUser(User.builder()
+      .username("steve")
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("joanne")
+      .build());
+
+    final var foundUsers = usersClient.getUsers(
+      String.format("id==\"%s\"", steve.getId()));
+
+    assertThat(foundUsers.getTotalRecords(), is(1));
+    assertThat(foundUsers.getFirstUser().getUsername(), is("steve"));
+    assertThat(foundUsers.getFirstUser().getId(), is(steve.getId()));
+  }
+
+  @Test
+  void canSearchForUsers() {
+    final var steve = usersClient.createUser(User.builder()
+      .username("steve")
+      .active(true)
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("joanne")
+      .active(true)
+      .build());
+
+    final var typicalSearchFromUI = "(((username=\"ste*\" or personal.firstName=\"ste*\" or "
+      + "personal.lastName=\"ste*\" or personal.email=\"ste*\" or barcode=\"ste*\" or "
+      + "id=\"ste*\" or externalSystemId=\"ste*\")) and active=\"true\") "
+      + "sortby personal.lastName personal.firstName";
+
+    final var foundUsers = usersClient.getUsers(typicalSearchFromUI);
+
+    assertThat(foundUsers.getTotalRecords(), is(1));
+    assertThat(foundUsers.getFirstUser().getUsername(), is("steve"));
+    assertThat(foundUsers.getFirstUser().getId(), is(steve.getId()));
+  }
+
+  @Test
+  void cannotSearchUsingInvalidCQL() {
+    usersClient.attemptToGetUsers("username==")
+      .statusCode(is(HTTP_BAD_REQUEST))
+      .body(containsString("expected index or term, got EOF"));
   }
 
   @Test
