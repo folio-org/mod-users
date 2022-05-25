@@ -30,13 +30,12 @@ import junit.framework.AssertionFailedError;
  * For new tests consider using RestAssured instead of legacy RestITSupport.
  */
 class RestITSupport {
-  static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
-  static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
-  static final String HTTP_LOCALHOST = "http://localhost:";
-  public static final String LOCALHOST = "localhost";
-
-  public static WebClient client;
-  public static int port;
+  private static final String SUPPORTED_CONTENT_TYPE_JSON_DEF = "application/json";
+  private static final String SUPPORTED_CONTENT_TYPE_TEXT_DEF = "text/plain";
+  private static final String HTTP_LOCALHOST = "http://localhost:";
+  private static final String LOCALHOST = "localhost";
+  private static WebClient client;
+  private static int port;
 
   private RestITSupport() { }
 
