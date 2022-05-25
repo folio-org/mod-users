@@ -5,6 +5,7 @@ import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static org.hamcrest.CoreMatchers.is;
 
 import java.net.URI;
 
@@ -56,6 +57,12 @@ public class AddressTypesClient {
       .then();
   }
 
+  public AddressType getAddressType(String id) {
+    return attemptToGetAddressType(id)
+      .statusCode(is(HTTP_OK))
+      .extract().as(AddressType.class);
+  }
+
   public ValidatableResponse attemptToGetAddressType(String id) {
     return given()
       .config(config)
@@ -79,6 +86,18 @@ public class AddressTypesClient {
 
   public AddressTypes getAllAddressTypes() {
     return getAddressTypes("cql.AllRecords=1");
+  }
+
+  public void updateAddressType(@NonNull AddressType addressType) {
+    given()
+      .config(config)
+      .spec(requestSpecification)
+      .contentType(JSON)
+      .when()
+      .body(addressType)
+      .put("/addresstypes/{id}", addressType.getId())
+      .then()
+      .statusCode(is(HTTP_NO_CONTENT));
   }
 
   public void deleteAddressType(String id) {

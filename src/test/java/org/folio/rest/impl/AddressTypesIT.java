@@ -103,6 +103,25 @@ class AddressTypesIT {
   }
 
   @Test
+  void canUpdateAnAddressType() {
+    final var home = addressTypesClient.createAddressType(
+      AddressType.builder()
+        .addressType("Home")
+        .build());
+
+    addressTypesClient.updateAddressType(AddressType.builder()
+      .id(home.getId())
+      .addressType("Home")
+      .desc("home address")
+      .build());
+
+    final var updatedAddressType = addressTypesClient.getAddressType(home.getId());
+
+    assertThat(updatedAddressType.getDesc(), is("home address"));
+  }
+
+
+  @Test
   void canDeleteAnAddressType() {
     final var home = addressTypesClient.createAddressType(
       AddressType.builder()
@@ -115,7 +134,7 @@ class AddressTypesIT {
     addressTypesClient.attemptToGetAddressType(home.getId())
       .statusCode(is(HTTP_NOT_FOUND));
   }
-  
+
   @Test
   void cannotDeleteAnAddressTypeThatIsBeingUsed() {
     final var home = addressTypesClient.createAddressType(

@@ -13,4 +13,5 @@ import lombok.extern.jackson.Jacksonized;
 public class AddressType {
   String id;
   String addressType;
+  String desc;
 }
