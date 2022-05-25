@@ -5,7 +5,6 @@ import static org.folio.moduserstest.RestITSupport.assertStatus;
 import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.post;
-import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.junit.Assert.fail;
@@ -52,10 +51,6 @@ public class RestVerticleIT {
 
   private static final Logger log = LogManager.getLogger(RestVerticleIT.class);
 
-  private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
-  private static final String bobCircleId = "54afd8b8-fb3b-4de8-9b7c-299904887f7d";
-  private static final String user777777Id = "72bd29f7-bf29-48bb-8259-d5ce78378a56";
-
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
@@ -95,113 +90,6 @@ public class RestVerticleIT {
       .send(promise);
 
     return promise.future();
-  }
-
-  private Future<Void> getEmptyUsers(TestContext context) {
-    log.info("Getting an empty user set\n");
-
-    Future<HttpResponse<Buffer>> future = get("/users");
-
-    return future.map(response -> {
-      assertStatus(context, response, 200);
-
-      JsonObject userCollectionObject = response.bodyAsJsonObject();
-      if (userCollectionObject.getJsonArray("users").size() != 0
-        || userCollectionObject.getInteger("totalRecords") != 0) {
-        fail("Expected users array to be empty and totalRecords = 0 but got: "
-            + response.bodyAsString());
-      }
-      return null;
-    });
-  }
-
-  private Future<Void> postUser() {
-    log.info("Creating a new user\n");
-
-    JsonObject user = new JsonObject()
-      .put("id", joeBlockId)
-      .put("active", false)
-      .put("username", "joeblock");
-
-    return postWithOkStatus(joeBlockId, "/users", user.encode());
-  }
-
-  private Future<Void> postAnotherUser(TestContext context) {
-    log.info("Creating another user\n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "bobcircle")
-      .put("id", bobCircleId)
-      .put("active", true);
-
-    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response,  201);
-      return null;
-    });
-  }
-
-  private Future<Void> putUserGood(TestContext context) {
-    log.info("Making a valid user modification\n");
-
-    JsonObject user = new JsonObject()
-      .put("id", joeBlockId)
-      .put("active", true)
-      .put("username", "joeblock");
-
-    return RestITSupport.putWithNoContentStatus(context, joeBlockId,
-      "/users/" + joeBlockId, encode(user));
-  }
-
-  private Future<Void> putUserDuplicateUsername(TestContext context) {
-    log.info("Trying to assign an invalid id \n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "bobcircle")
-      .put("id", joeBlockId)
-      .put("active", false);
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
-  private Future<Void> putUserNotMatchingId(TestContext context) {
-    log.info("Trying to Update user id \n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "joeblock")
-      .put("id", bobCircleId)
-      .put("active", false);
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + joeBlockId, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
-  // https://issues.folio.org/browse/MODUSERS-90
-  // https://issues.folio.org/browse/MODUSERS-108
-  private Future<Void> cannotReplaceUserThatDoesNotExist(TestContext context) {
-    log.info("Changing a user with numeric name\n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "777777")
-      .put("id", user777777Id)
-      .put("active", false);
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + user777777Id, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 404);
-      return null;
-    });
   }
 
   private Future<Void> createProxyfor(TestContext context) {
@@ -346,14 +234,7 @@ public class RestVerticleIT {
   public void test1Sequential(TestContext context) {
     Async async = context.async();
 
-    Future<Void> startFuture = getEmptyUsers(context)
-      .compose(v -> postUser())
-      .compose(v -> putUserGood(context))
-      .compose(v -> postAnotherUser(context))
-      .compose(v -> putUserDuplicateUsername(context))
-      .compose(v -> putUserNotMatchingId(context))
-      .compose(v -> cannotReplaceUserThatDoesNotExist(context))
-      .compose(v -> createProxyfor(context))
+    Future<Void> startFuture = createProxyfor(context)
       .compose(v -> createProxyforWithSameUserId(context))
       .compose(v -> createProxyforWithSameProxyUserId(context))
       .compose(v -> failToCreateDuplicateProxyfor(context))

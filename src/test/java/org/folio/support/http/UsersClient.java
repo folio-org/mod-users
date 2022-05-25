@@ -157,13 +157,17 @@ public class UsersClient {
   }
 
   public ValidatableResponse attemptToUpdateUser(@NonNull User user) {
+    return attemptToUpdateUser(user.getId(), user);
+  }
+
+  public ValidatableResponse attemptToUpdateUser(String id, @NonNull User user) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .contentType(JSON)
       .when()
       .body(user)
-      .put("/users/{id}", Map.of("id", user.getId()))
+      .put("/users/{id}", Map.of("id", id))
       .then();
   }
 }

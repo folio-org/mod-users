@@ -41,10 +41,6 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
-/**
- * Most old UsersAPI tests are in deprecated org.folio.moduserstest.RestVerticleIT and
- * should be moved here.
- */
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIIT {
@@ -205,7 +201,9 @@ class UsersAPIIT {
 
   @Test
   void cannotCreateUserWithSameIdAsExistingUser() {
-    final var existingUser = usersClient.createUser("julia");
+    final var existingUser = usersClient.createUser(User.builder()
+      .username("julia")
+      .build());
 
     final var errors = usersClient.attemptToCreateUser(User.builder()
       .id(existingUser.getId())
@@ -216,6 +214,72 @@ class UsersAPIIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
+  }
+
+
+  @Test
+  void canUpdateAUser() {
+    final var user = usersClient.createUser(User.builder()
+      .username("julia")
+      .build());
+
+    usersClient.attemptToUpdateUser(User.builder()
+        .id(user.getId())
+        .username("julia-brockhurst")
+        .build())
+      .statusCode(is(204));
+
+    final var updatedUser = usersClient.getUser(user.getId());
+
+    assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
+  }
+
+  @Test
+  void cannotUpdateAUserThatDoesNotExist() {
+    // Create a user to ensure this isn't updated unintentionally
+    usersClient.createUser(User.builder()
+      .username("julia")
+      .build());
+
+    usersClient.attemptToUpdateUser(User.builder()
+        .id(UUID.randomUUID().toString())
+        .username("julia-brockhurst")
+        .build())
+      .statusCode(is(404));
+  }
+
+  @Test
+  void cannotUpdateAUserWithUsernameThatAlreadyExists() {
+    usersClient.createUser(User.builder()
+      .username("a-username")
+      .build());
+
+    final var anotherUser = usersClient.createUser(User.builder()
+      .username("another-username")
+      .build());
+
+    usersClient.attemptToUpdateUser(
+      User.builder()
+        .id(anotherUser.getId())
+        .username("a-username")
+        .build())
+      .statusCode(is(400))
+      .body(is("User with this username already exists"));
+  }
+
+  @Test
+  void cannotChangeAUsersId() {
+    final var julia = usersClient.createUser(User.builder()
+      .username("julia")
+      .build());
+
+    usersClient.attemptToUpdateUser(julia.getId(),
+      User.builder()
+        .id(UUID.randomUUID().toString())
+        .username("julia")
+        .build())
+      .statusCode(is(400))
+      .body(is("You cannot change the value of the id field"));
   }
 
   @Test
