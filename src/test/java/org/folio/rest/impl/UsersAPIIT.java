@@ -160,6 +160,16 @@ class UsersAPIIT {
   }
 
   @Test
+  void canCreateMultipleUsersWithoutUsername() {
+    usersClient.createUser(User.builder()
+      .build());
+
+    usersClient.attemptToCreateUser(User.builder()
+      .build())
+      .statusCode(is(201));
+  }
+
+  @Test
   void cannotCreateUserWithSameUsernameAsExistingUser() {
     usersClient.createUser("julia");
 

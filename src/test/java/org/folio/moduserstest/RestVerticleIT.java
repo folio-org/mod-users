@@ -89,11 +89,6 @@ public class RestVerticleIT {
     }));
   }
 
-  static Future<Void> putWithNoContentStatus(TestContext context, String body) {
-    return RestITSupport.putWithNoContentStatus(context, joeBlockId,
-      "/users/" + joeBlockId, body);
-  }
-
   static Future<HttpResponse<Buffer>> delete(String request) {
     Promise<HttpResponse<Buffer>> promise = Promise.promise();
 
@@ -123,15 +118,6 @@ public class RestVerticleIT {
     });
   }
 
-  private static void addTags(JsonObject u) {
-    JsonArray tagList = new JsonArray();
-    tagList.add("foo-tag");
-    tagList.add("bar-tag");
-    JsonObject tagobj = new JsonObject();
-    tagobj.put("tagList", tagList);
-    u.put("tags", tagobj);
-  }
-
   private Future<Void> postUser() {
     log.info("Creating a new user\n");
 
@@ -139,8 +125,6 @@ public class RestVerticleIT {
       .put("id", joeBlockId)
       .put("active", false)
       .put("username", "joeblock");
-
-    addTags(user);
 
     return postWithOkStatus(joeBlockId, "/users", user.encode());
   }
@@ -169,47 +153,11 @@ public class RestVerticleIT {
       .put("active", true)
       .put("username", "joeblock");
 
-    return putWithNoContentStatus(context,
-      encode(user));
+    return RestITSupport.putWithNoContentStatus(context, joeBlockId,
+      "/users/" + joeBlockId, encode(user));
   }
 
-  private Future<Void> putUserBadUsername(TestContext context) {
-    log.info("Trying to assign an invalid username \n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "joeblock")
-      .put("id", bobCircleId)
-      .put("active", false);
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 400);
-      return null;
-    });
-  }
-
-  private Future<Void> putUserWithoutIdInMetadata(TestContext context) {
-    log.info("Changing a user without id in metadata\n");
-
-    JsonObject user = new JsonObject()
-      .put("username", "bobcircle")
-      .put("id", bobCircleId)
-      .put("active", false)
-      // metadata with createdDate but without createdByUserId
-      // https://issues.folio.org/browse/RMB-459
-      // https://issues.folio.org/browse/UIU-1069
-      .put("metadata", new JsonObject().put("createdDate", "2000-12-31T01:02:03"));
-
-    Future<HttpResponse<Buffer>> future = put("/users/" + bobCircleId, encode(user));
-
-    return future.map(response -> {
-      assertStatus(context, response, 204);
-      return null;
-    });
-  }
-
-  private Future<Void> putUserBadId(TestContext context) {
+  private Future<Void> putUserDuplicateUsername(TestContext context) {
     log.info("Trying to assign an invalid id \n");
 
     JsonObject user = new JsonObject()
@@ -292,62 +240,6 @@ public class RestVerticleIT {
 
           context.assertEquals("User with this username already exists", response.bodyAsString());
 
-          return null;
-        });
-    });
-  }
-
-  // https://issues.folio.org/browse/MODUSERS-147
-  private Future<Void> postTwoUsersWithoutUsername(TestContext context) {
-    log.info("Attempting to create two users without username");
-
-    JsonObject user1 = new JsonObject()
-      .put("id",  UUID.randomUUID().toString());
-    JsonObject user2 = new JsonObject()
-      .put("id",  UUID.randomUUID().toString());
-
-    Future<Void> f1 = post("/users", encode(user1))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    return f1.compose(v -> post("/users", encode(user2)))
-      .map(response -> {
-        // should succeed, there can be any number of users without username
-        assertStatus(context, response, 201);
-        return null;
-      });
-  }
-
-  // https://issues.folio.org/browse/MODUSERS-147
-  private Future<Void> putSecondUserWithoutUsername(TestContext context) {
-    log.info("Updating second user to have no username");
-
-    JsonObject user1 = new JsonObject()
-      .put("id", UUID.randomUUID().toString());
-    JsonObject user2 = new JsonObject()
-      .put("username", "name_for_sale")
-      .put("id", UUID.randomUUID().toString());
-
-    Future<Void> f1 = post("/users", encode(user1))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    return f2.compose(v -> {
-      user2.remove("username");  // try to PUT with username removed
-
-      return put("/users/" + user2.getString("id"), encode(user2))
-        .map(response -> {
-          assertStatus(context, response, 204);
           return null;
         });
     });
@@ -601,15 +493,11 @@ public class RestVerticleIT {
       .compose(v -> postUser())
       .compose(v -> putUserGood(context))
       .compose(v -> postAnotherUser(context))
-      .compose(v -> putUserBadUsername(context))
-      .compose(v -> putUserWithoutIdInMetadata(context))
-      .compose(v -> putUserBadId(context))
+      .compose(v -> putUserDuplicateUsername(context))
       .compose(v -> putUserNotMatchingId(context))
       .compose(v -> cannotReplaceUserThatDoesNotExist(context))
       .compose(v -> putUserWithDuplicateUsername(context))
       .compose(v -> putUserWithDuplicateBarcode(context))
-      .compose(v -> postTwoUsersWithoutUsername(context))
-      .compose(v -> putSecondUserWithoutUsername(context))
       .compose(v -> postUserWithDuplicateBarcode(context))
       .compose(v -> createProxyfor(context))
       .compose(v -> createProxyforWithSameUserId(context))
