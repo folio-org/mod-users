@@ -8,15 +8,12 @@ import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -207,146 +204,6 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> putUserWithDuplicateUsername(TestContext context) {
-    log.info("Changing a user to username that already exists\n");
-
-    JsonObject user1 = new JsonObject()
-      .put("username", "left_shoe")
-      .put("id", UUID.randomUUID().toString());
-    JsonObject user2 = new JsonObject()
-      .put("username", "right_shoe")
-      .put("id", UUID.randomUUID().toString());
-
-    // create test user one
-    Future<Void> f1 = post("/users", encode(user1))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    Future<Void> f2 = f1.compose(v -> post("/users", encode(user2)))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    return f2.compose(v -> {
-      // attempt to update user2 changing username to a duplicate
-      user2.put("username", "left_shoe");
-
-      return put("/users/" + user2.getString("id"), encode(user2))
-        .map(response -> {
-          assertStatus(context, response, 400);
-
-          context.assertEquals("User with this username already exists", response.bodyAsString());
-
-          return null;
-        });
-    });
-  }
-
-  // https://issues.folio.org/browse/MODUSERS-118
-  private Future<Void> postUserWithDuplicateBarcode(TestContext context) {
-    log.info("Attempting to create a user with duplicate barcode");
-
-    JsonObject userObject1 = new JsonObject()
-      .put("username", "test_one")
-      .put("id",  UUID.randomUUID().toString())
-      .put("active", true)
-      .put("barcode", "943259854978643")
-      .put("personal", new JsonObject()
-        .put("lastName", "One")
-        .put("firstName", "Test")
-      );
-    JsonObject userObject2 = new JsonObject()
-      .put("username", "test_two")
-      .put("id",  UUID.randomUUID().toString())
-      .put("active", true)
-      .put("barcode", "943259854978643")
-      .put("personal", new JsonObject()
-        .put("lastName", "Two")
-        .put("firstName", "Test")
-      );
-
-    Future<Void> f1 = post("/users", encode(userObject1))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    return f1.compose(v -> post("/users", encode(userObject2)))
-      // fail attempting to create user with duplicate barcode
-      .map(response -> {
-        assertStatus(context, response, 422);
-
-        JsonObject validationErrorRes = response.bodyAsJsonObject();
-        JsonArray validationErrors = validationErrorRes.getJsonArray("errors");
-        if (validationErrors.isEmpty()) {
-          fail("Did not return expected validation errors");
-        } else {
-          String errorMessage = validationErrors.getJsonObject(0).getString("message");
-          assertThat(1, is(validationErrors.size()));
-          assertThat(errorMessage, is("This barcode has already been taken"));
-        }
-
-        return null;
-      });
-  }
-
-  // https://issues.folio.org/browse/MODUSERS-118
-  private Future<Void> putUserWithDuplicateBarcode(TestContext context) {
-    log.info("Changing a user to barcode that already exists\n");
-
-    JsonObject userObject1 = new JsonObject()
-      .put("username", "test_three")
-      .put("id", UUID.randomUUID().toString())
-      .put("active", true)
-      .put("barcode", "304276530498752")
-      .put("personal", new JsonObject()
-        .put("lastName", "Three")
-        .put("firstName", "Test")
-      );
-    String testUserFourId = UUID.randomUUID().toString();
-    JsonObject userObject2 = new JsonObject()
-      .put("username", "test_four")
-      .put("id", testUserFourId)
-      .put("active", true)
-      .put("barcode", "098743509873450")
-      .put("personal", new JsonObject()
-        .put("lastName", "Four")
-        .put("firstName", "Test")
-      );
-
-    // create test user one
-    Future<Void> f1 = post("/users", encode(userObject1))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    // create test user two
-    Future<Void> f2 = f1.compose(v -> post("/users", encode(userObject2)))
-      .map(response -> {
-        assertStatus(context, response, 201);
-        return null;
-      });
-
-    return f2.compose(v -> {
-      // fail attempting to update user changing barcode to a duplicate
-      userObject2.put("barcode", "304276530498752");
-
-      return put("/users/" + testUserFourId, encode(userObject2))
-        .map(response -> {
-          assertStatus(context, response, 400);
-
-          String errorMessage = response.bodyAsString();
-          assertThat(errorMessage, is("This barcode has already been taken"));
-
-          return null;
-        });
-    });
-  }
-
   private Future<Void> createProxyfor(TestContext context) {
     log.info("Creating a new proxyfor entry\n");
 
@@ -496,9 +353,6 @@ public class RestVerticleIT {
       .compose(v -> putUserDuplicateUsername(context))
       .compose(v -> putUserNotMatchingId(context))
       .compose(v -> cannotReplaceUserThatDoesNotExist(context))
-      .compose(v -> putUserWithDuplicateUsername(context))
-      .compose(v -> putUserWithDuplicateBarcode(context))
-      .compose(v -> postUserWithDuplicateBarcode(context))
       .compose(v -> createProxyfor(context))
       .compose(v -> createProxyforWithSameUserId(context))
       .compose(v -> createProxyforWithSameProxyUserId(context))

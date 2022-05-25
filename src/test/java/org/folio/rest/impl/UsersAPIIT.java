@@ -186,6 +186,24 @@ class UsersAPIIT {
   }
 
   @Test
+  void cannotCreateUserWithSameBarcodeAsExistingUser() {
+    usersClient.createUser(User.builder()
+      .barcode("12345")
+      .build());
+
+    final var response = usersClient.attemptToCreateUser(User.builder()
+      .barcode("12345")
+      .build());
+
+    response.statusCode(is(422));
+
+    final var errors = response.extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("This barcode has already been taken"));
+  }
+
+  @Test
   void cannotCreateUserWithSameIdAsExistingUser() {
     final var existingUser = usersClient.createUser("julia");
 
