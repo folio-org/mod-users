@@ -1,6 +1,8 @@
 package org.folio.moduserstest;
 
 import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -67,7 +69,7 @@ class ProxyRelationshipsIT {
   }
 
   @Test
-  void userMayHaveAProxy() {
+  void userMayNominateAProxy() {
     final var userId = generateId();
     final var proxyUserId = generateId();
 
@@ -200,6 +202,34 @@ class ProxyRelationshipsIT {
       .collect(Collectors.toList());
 
     assertThat(allProxies, containsInAnyOrder(firstProxyUserId, secondProxyUserId));
+  }
+
+  @Test
+  void canDeleteRelationship() {
+    final var relationship = proxiesClient.createProxyRelationship(
+      ProxyRelationship.builder()
+        .userId(generateId())
+        .proxyUserId(generateId())
+        .build());
+
+    proxiesClient.attemptToDeleteProxyRelationship(relationship.getId())
+      .statusCode(is(HTTP_NO_CONTENT));
+
+    proxiesClient.attemptToGetProxyRelationship(relationship.getId())
+      .statusCode(is(HTTP_NOT_FOUND));
+  }
+
+  @Test
+  void cannotDeleteUnknownRelationship() {
+    // Create a relationship to ensure it isn't accidentally deleted
+    proxiesClient.createProxyRelationship(
+      ProxyRelationship.builder()
+        .userId(generateId())
+        .proxyUserId(generateId())
+        .build());
+
+    proxiesClient.attemptToDeleteProxyRelationship(generateId())
+      .statusCode(is(HTTP_NOT_FOUND));
   }
 
   private static String generateId() {

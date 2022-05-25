@@ -5,7 +5,6 @@ import static org.folio.moduserstest.RestITSupport.assertStatus;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.put;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.junit.Assert.fail;
 
 import java.util.HashMap;
@@ -33,7 +32,6 @@ import org.junit.runners.MethodSorters;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
@@ -78,17 +76,6 @@ public class RestVerticleIT {
       ta.setParameters(parameters);
       TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
     }));
-  }
-
-  static Future<HttpResponse<Buffer>> delete(String request) {
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-
-    RestITSupport.client.delete(RestITSupport.port, RestITSupport.LOCALHOST, request)
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("accept", "*/*")
-      .send(promise);
-
-    return promise.future();
   }
 
   private Future<Void> createProxyfor(TestContext context) {
@@ -140,26 +127,12 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> findAndDeleteProxyfor(TestContext context) {
-    log.info("Find and delete a particular proxyfor entry");
-
-    log.info("Making CQL request\n");
-    Future<String> proxyId = getProxyId(context);
-
-    return proxyId.compose(id -> delete("/proxiesfor/" + id))
-      .map(response -> {
-        assertStatus(context, response, 204);
-        return null;
-      });
-  }
-
   @Test
   public void test1Sequential(TestContext context) {
     Async async = context.async();
 
     Future<Void> startFuture = createProxyfor(context)
-      .compose(v -> findAndUpdateProxyfor(context))
-      .compose(v -> findAndDeleteProxyfor(context));
+      .compose(v -> findAndUpdateProxyfor(context));
 
     startFuture.onComplete(res -> {
       if (res.succeeded()) {
