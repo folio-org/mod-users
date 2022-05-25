@@ -167,6 +167,46 @@ class ProxyRelationshipsIT {
   }
 
   @Test
+  void canUpdateProxyRelationship() {
+    final var createdRelationship = proxiesClient.createProxyRelationship(
+      ProxyRelationship.builder()
+        .userId(generateId())
+        .proxyUserId(generateId())
+        .build());
+
+    final var changedProxyUserId = generateId();
+
+    proxiesClient.attemptToUpdateProxyRelationship(ProxyRelationship.builder()
+      .id(createdRelationship.getId())
+      .userId(generateId())
+      .proxyUserId(changedProxyUserId)
+      .build())
+      .statusCode(is(HTTP_NO_CONTENT));
+
+    final var fetchedRelationship = proxiesClient.getProxyRelationship(
+      createdRelationship.getId());
+
+    assertThat(fetchedRelationship.getProxyUserId(), is(changedProxyUserId));
+  }
+
+  @Test
+  void cannotUpdateUnknownProxyRelationship() {
+    // Create a relationship to ensure it isn't accidentally deleted
+    proxiesClient.createProxyRelationship(
+      ProxyRelationship.builder()
+        .userId(generateId())
+        .proxyUserId(generateId())
+        .build());
+
+    proxiesClient.attemptToUpdateProxyRelationship(ProxyRelationship.builder()
+        .id(generateId())
+        .userId(generateId())
+        .proxyUserId(generateId())
+        .build())
+      .statusCode(is(HTTP_NOT_FOUND));
+  }
+
+  @Test
   void canFindProxiesForUser() {
     final var userId = generateId();
     final var differentUserId = generateId();

@@ -9,8 +9,8 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import java.net.URI;
 import java.util.Map;
 
-import org.folio.support.ProxyRelationships;
 import org.folio.support.ProxyRelationship;
+import org.folio.support.ProxyRelationships;
 
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.LogConfig;
@@ -109,6 +109,19 @@ public class ProxiesClient {
       .spec(requestSpecification)
       .when()
       .get("/proxiesfor/{id}", Map.of("id", id))
+      .then();
+  }
+
+  public ValidatableResponse attemptToUpdateProxyRelationship(
+    ProxyRelationship proxyRelationship) {
+
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .contentType(JSON)
+      .when()
+      .body(proxyRelationship)
+      .put("/proxiesfor/{id}", Map.of("id", proxyRelationship.getId()))
       .then();
   }
 }
