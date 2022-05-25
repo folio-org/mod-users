@@ -1,6 +1,7 @@
 
 package org.folio.rest.impl;
 
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
@@ -112,6 +113,41 @@ class AddressTypesIT {
       .statusCode(is(HTTP_NO_CONTENT));
 
     addressTypesClient.attemptToGetAddressType(home.getId())
+      .statusCode(is(HTTP_NOT_FOUND));
+  }
+  
+  @Test
+  void cannotDeleteAnAddressTypeThatIsBeingUsed() {
+    final var home = addressTypesClient.createAddressType(
+      AddressType.builder()
+        .addressType("Home")
+        .build());
+
+    usersClient.createUser(User.builder()
+      .username("joe")
+      .personal(Personal.builder()
+        .lastName("montana")
+        .addresses(List.of(Address.builder()
+          .addressTypeId(home.getId())
+          .build()))
+        .build())
+      .build());
+
+    addressTypesClient.attemptToDeleteAddressType(home.getId())
+      .statusCode(is(HTTP_BAD_REQUEST))
+      .body(is(String.format(
+        "Cannot remove address type '%s', 1 users associated with it", home.getId())));
+  }
+
+  @Test
+  void cannotDeleteAnAddressTypeThatDoesNotExist() {
+    // Another address to ensure it isn't deleted by accident
+    addressTypesClient.createAddressType(
+      AddressType.builder()
+        .addressType("Home")
+        .build());
+
+    addressTypesClient.attemptToDeleteAddressType(UUID.randomUUID().toString())
       .statusCode(is(HTTP_NOT_FOUND));
   }
 
