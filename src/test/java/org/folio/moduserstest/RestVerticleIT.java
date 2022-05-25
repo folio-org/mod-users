@@ -2,7 +2,6 @@ package org.folio.moduserstest;
 
 import static io.vertx.core.json.Json.encode;
 import static org.folio.moduserstest.RestITSupport.assertStatus;
-import static org.folio.moduserstest.RestITSupport.get;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.put;
@@ -107,81 +106,6 @@ public class RestVerticleIT {
     });
   }
 
-  private Future<Void> createProxyforWithSameUserId(TestContext context) {
-    log.info("Trying to create a proxyfor with an existing userid\n");
-
-    JsonObject proxyObject = new JsonObject()
-      .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
-      .put("proxyUserId", "5b0a9a0b-6eb6-447c-bc31-9c99940a29c5");
-
-    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
-
-    return future.map(response -> {
-      assertStatus(context, response, 201);
-      return null;
-    });
-  }
-
-  private Future<Void> createProxyforWithSameProxyUserId(TestContext context) {
-    log.info("Trying to create a proxyfor with an existing proxy userid\n");
-
-    JsonObject proxyObject = new JsonObject()
-      .put("userId", "bd2cbc13-9d43-4a74-8090-75bc4e26a8df")
-      .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-
-    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
-
-    return future.map(response -> {
-      assertStatus(context, response, 201);
-      return null;
-    });
-  }
-
-  private Future<Void> failToCreateDuplicateProxyfor(TestContext context) {
-    log.info("Trying to create a proxyfor entry with the same id and proxy user id\n");
-
-    JsonObject proxyObject = new JsonObject()
-      .put("userId", "2498aeb2-23ca-436a-87ea-a4e1bfaa5bb5")
-      .put("proxyUserId", "2062d0ef-3f3e-40c5-a870-5912554bc0fa");
-
-    Future<HttpResponse<Buffer>> future = post("/proxiesfor", proxyObject.encode());
-
-    return future.map(response -> {
-      assertStatus(context, response, 422);
-      return null;
-    });
-  }
-
-  private Future<Void> getProxyforCollection(TestContext context) {
-    log.info("Getting proxyfor entries\n");
-
-    Future<JsonObject> future = getJson(context, "/proxiesfor");
-
-    return future.map(proxies -> {
-      JsonArray proxyForArray = proxies.getJsonArray("proxiesFor");
-      if (proxyForArray.size() != 3) {
-        fail("Expected 3 entries, found " + proxyForArray.size());
-      }
-      return null;
-    });
-  }
-
-  private Future<Void> findAndGetProxyfor(TestContext context) {
-    log.info("Find and retrieve a particular proxyfor entry\n");
-
-    log.info("Making CQL request\n");
-    Future<String> proxyId = getProxyId(context
-    );
-
-    log.info("Making get-by-id request\n");
-
-    return proxyId.compose(id -> get("/proxiesfor/" + id))
-      .map(response -> {
-        assertStatus(context, response, 200);
-        return null;
-      });
-  }
-
   private Future<Void> findAndUpdateProxyfor(TestContext context) {
     log.info("Find and update a particular proxyfor entry\n");
 
@@ -220,8 +144,7 @@ public class RestVerticleIT {
     log.info("Find and delete a particular proxyfor entry");
 
     log.info("Making CQL request\n");
-    Future<String> proxyId = getProxyId(context
-    );
+    Future<String> proxyId = getProxyId(context);
 
     return proxyId.compose(id -> delete("/proxiesfor/" + id))
       .map(response -> {
@@ -235,11 +158,6 @@ public class RestVerticleIT {
     Async async = context.async();
 
     Future<Void> startFuture = createProxyfor(context)
-      .compose(v -> createProxyforWithSameUserId(context))
-      .compose(v -> createProxyforWithSameProxyUserId(context))
-      .compose(v -> failToCreateDuplicateProxyfor(context))
-      .compose(v -> getProxyforCollection(context))
-      .compose(v -> findAndGetProxyfor(context))
       .compose(v -> findAndUpdateProxyfor(context))
       .compose(v -> findAndDeleteProxyfor(context));
 

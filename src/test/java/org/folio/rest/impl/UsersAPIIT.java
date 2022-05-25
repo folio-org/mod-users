@@ -169,13 +169,11 @@ class UsersAPIIT {
   void cannotCreateUserWithSameUsernameAsExistingUser() {
     usersClient.createUser("julia");
 
-    final var response = usersClient.attemptToCreateUser(User.builder()
+    final var errors = usersClient.attemptToCreateUser(User.builder()
       .username("julia")
-      .build());
-
-    response.statusCode(is(422));
-
-    final var errors = response.extract().as(ValidationErrors.class);
+      .build())
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this username already exists"));
@@ -187,13 +185,11 @@ class UsersAPIIT {
       .barcode("12345")
       .build());
 
-    final var response = usersClient.attemptToCreateUser(User.builder()
+    final var errors = usersClient.attemptToCreateUser(User.builder()
       .barcode("12345")
-      .build());
-
-    response.statusCode(is(422));
-
-    final var errors = response.extract().as(ValidationErrors.class);
+      .build())
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("This barcode has already been taken"));
