@@ -2,7 +2,6 @@ package org.folio.support.http;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static org.hamcrest.CoreMatchers.is;
 
 import java.net.URI;
 
@@ -75,5 +74,4 @@ public class PatronPinClient {
       .then()
       .statusCode(200);
   }
-
 }
