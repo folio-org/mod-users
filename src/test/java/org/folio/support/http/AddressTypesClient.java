@@ -6,8 +6,6 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.is;
 
-import java.net.URI;
-
 import org.folio.support.AddressType;
 import org.folio.support.AddressTypes;
 
@@ -17,26 +15,27 @@ import lombok.NonNull;
 public class AddressTypesClient {
   private final RestAssuredClient<AddressType> client;
 
-  public AddressTypesClient(URI baseUri, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(baseUri, defaultHeaders);
+  public AddressTypesClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
+    client = new RestAssuredClient<>(okapiUrl.asURI("/addresstypes"),
+      defaultHeaders);
   }
 
   public AddressType createAddressType(@NonNull AddressType addressType) {
-    return client.createRecord("/addresstypes", addressType, AddressType.class);
+    return client.createRecord("", addressType, AddressType.class);
   }
 
   public ValidatableResponse attemptToCreateAddressType(
     @NonNull AddressType addressType) {
 
-    return client.attemptToCreateRecord("/addresstypes", addressType);
+    return client.attemptToCreateRecord("", addressType);
   }
 
   public AddressType getAddressType(String id) {
-    return client.getRecord("/addresstypes/{id}", id, AddressType.class);
+    return client.getRecord("/{id}", id, AddressType.class);
   }
 
   public ValidatableResponse attemptToGetAddressType(String id) {
-    return client.attemptToGetRecord("/addresstypes/{id}", id);
+    return client.attemptToGetRecord("/{id}", id);
   }
 
   public AddressTypes getAddressTypes(String cqlQuery) {
@@ -45,7 +44,7 @@ public class AddressTypesClient {
       .spec(client.requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
-      .get("/addresstypes")
+      .get()
       .then()
       .statusCode(HTTP_OK)
       .extract().as(AddressTypes.class);
@@ -62,7 +61,7 @@ public class AddressTypesClient {
       .contentType(JSON)
       .when()
       .body(addressType)
-      .put("/addresstypes/{id}", addressType.getId())
+      .put("/{id}", addressType.getId())
       .then()
       .statusCode(is(HTTP_NO_CONTENT));
   }
@@ -77,7 +76,7 @@ public class AddressTypesClient {
       .config(client.config)
       .spec(client.requestSpecification)
       .when()
-      .delete("/addresstypes/{id}", id)
+      .delete("/{id}", id)
       .then();
   }
 

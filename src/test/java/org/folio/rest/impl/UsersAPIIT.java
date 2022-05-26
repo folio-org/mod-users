@@ -10,7 +10,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +28,7 @@ import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,12 +58,12 @@ class UsersAPIIT {
 
     final var port = NetworkUtils.nextFreePort();
 
-    final var okapiUrl = "http://localhost:" + port;
+    final var okapiUrl = new OkapiUrl("http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, tenant, token);
 
-    usersClient = new UsersClient(new URI(okapiUrl), headers);
-    groupsClient = new GroupsClient(new URI(okapiUrl), headers);
-    addressTypesClient = new AddressTypesClient(new URI(okapiUrl), headers);
+    usersClient = new UsersClient(okapiUrl.asURI(), headers);
+    groupsClient = new GroupsClient(okapiUrl.asURI(), headers);
+    addressTypesClient = new AddressTypesClient(okapiUrl, headers);
 
     final var module = new VertxModule(vertx);
 
