@@ -23,13 +23,13 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import lombok.NonNull;
 
-public class RestAssuredClient<Record, Collection> {
+public class RestAssuredCollectionApiClient<Record, Collection> {
   final RequestSpecification requestSpecification;
   final RestAssuredConfig config;
   private final Class<Record> recordDeserializesTo;
   private final Class<Collection> collectionDeserializesTo;
 
-  RestAssuredClient(URI baseUri, OkapiHeaders defaultHeaders,
+  RestAssuredCollectionApiClient(URI baseUri, OkapiHeaders defaultHeaders,
     Class<Record> recordDeserializesTo,
     Class<Collection> collectionDeserializesTo) {
 

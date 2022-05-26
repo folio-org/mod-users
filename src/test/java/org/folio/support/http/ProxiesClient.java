@@ -7,10 +7,10 @@ import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
 public class ProxiesClient {
-  private final RestAssuredClient<ProxyRelationship, ProxyRelationships> client;
+  private final RestAssuredCollectionApiClient<ProxyRelationship, ProxyRelationships> client;
 
   public ProxiesClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(okapiUrl.asURI("/proxiesfor"),
+    client = new RestAssuredCollectionApiClient<>(okapiUrl.asURI("/proxiesfor"),
       defaultHeaders, ProxyRelationship.class, ProxyRelationships.class);
   }
 

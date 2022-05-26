@@ -10,10 +10,10 @@ import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
 public class AddressTypesClient {
-  private final RestAssuredClient<AddressType, AddressTypes> client;
+  private final RestAssuredCollectionApiClient<AddressType, AddressTypes> client;
 
   public AddressTypesClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(okapiUrl.asURI("/addresstypes"),
+    client = new RestAssuredCollectionApiClient<>(okapiUrl.asURI("/addresstypes"),
       defaultHeaders, AddressType.class, AddressTypes.class);
   }
 

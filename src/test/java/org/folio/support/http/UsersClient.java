@@ -11,10 +11,10 @@ import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
 public class UsersClient {
-  private final RestAssuredClient<User, Users> client;
+  private final RestAssuredCollectionApiClient<User, Users> client;
 
   public UsersClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(okapiUrl.asURI("/users"),
+    client = new RestAssuredCollectionApiClient<>(okapiUrl.asURI("/users"),
       defaultHeaders, User.class, Users.class);
   }
 

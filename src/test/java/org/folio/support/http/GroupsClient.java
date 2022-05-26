@@ -10,10 +10,10 @@ import lombok.NonNull;
 
 public class GroupsClient {
 
-  private final RestAssuredClient<Group, Groups> client;
+  private final RestAssuredCollectionApiClient<Group, Groups> client;
 
   public GroupsClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(okapiUrl.asURI("/groups"),
+    client = new RestAssuredCollectionApiClient<>(okapiUrl.asURI("/groups"),
       defaultHeaders, Group.class, Groups.class);
   }
 
