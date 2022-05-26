@@ -21,6 +21,7 @@ import io.restassured.config.RestAssuredConfig;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import lombok.NonNull;
 
 public class RestAssuredClient<Record, Collection> {
   final RequestSpecification requestSpecification;
@@ -105,6 +106,17 @@ public class RestAssuredClient<Record, Collection> {
       .when()
       .queryParam("query", cqlQuery)
       .get()
+      .then();
+  }
+
+  ValidatableResponse attemptToUpdateRecord(String id, @NonNull Record record) {
+    return given()
+      .config(this.config)
+      .spec(this.requestSpecification)
+      .contentType(JSON)
+      .when()
+      .body(record)
+      .put("/{id}", Map.of("id", id))
       .then();
   }
 

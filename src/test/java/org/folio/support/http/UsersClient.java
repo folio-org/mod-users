@@ -1,11 +1,8 @@
 package org.folio.support.http;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
-
-import java.util.Map;
 
 import org.folio.support.User;
 import org.folio.support.Users;
@@ -96,13 +93,6 @@ public class UsersClient {
   }
 
   public ValidatableResponse attemptToUpdateUser(String id, @NonNull User user) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .contentType(JSON)
-      .when()
-      .body(user)
-      .put("/{id}", Map.of("id", id))
-      .then();
+    return client.attemptToUpdateRecord(id, user);
   }
 }

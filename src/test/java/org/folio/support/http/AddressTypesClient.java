@@ -1,7 +1,5 @@
 package org.folio.support.http;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.hamcrest.CoreMatchers.is;
 
@@ -42,14 +40,7 @@ public class AddressTypesClient {
   }
 
   public void updateAddressType(@NonNull AddressType addressType) {
-    given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .contentType(JSON)
-      .when()
-      .body(addressType)
-      .put("/{id}", addressType.getId())
-      .then()
+    client.attemptToUpdateRecord(addressType.getId(), addressType)
       .statusCode(is(HTTP_NO_CONTENT));
   }
 

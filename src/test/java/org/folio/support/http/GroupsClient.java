@@ -1,10 +1,6 @@
 package org.folio.support.http;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-
-import java.util.Map;
 
 import org.folio.support.Group;
 import org.folio.support.Groups;
@@ -60,13 +56,7 @@ public class GroupsClient {
   }
 
   public void updateGroup(@NonNull Group group) {
-    given()
-      .spec(client.requestSpecification)
-      .contentType(JSON)
-      .when()
-      .body(group)
-      .put("/{id}", Map.of("id", group.getId()))
-      .then()
+    client.attemptToUpdateRecord(group.getId(), group)
       .statusCode(HTTP_NO_CONTENT);
   }
 }
