@@ -62,7 +62,7 @@ class UsersAPIIT {
     final var headers = new OkapiHeaders(okapiUrl, tenant, token);
 
     usersClient = new UsersClient(okapiUrl.asURI(), headers);
-    groupsClient = new GroupsClient(okapiUrl.asURI(), headers);
+    groupsClient = new GroupsClient(okapiUrl, headers);
     addressTypesClient = new AddressTypesClient(okapiUrl, headers);
 
     final var module = new VertxModule(vertx);

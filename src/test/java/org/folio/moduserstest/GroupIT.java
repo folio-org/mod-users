@@ -8,7 +8,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
-import java.net.URI;
 import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
@@ -20,6 +19,7 @@ import org.folio.support.ValidationErrors;
 import org.folio.support.VertxModule;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,11 +47,11 @@ class GroupIT {
 
     int port = NetworkUtils.nextFreePort();
 
-    final var okapiUrl = "http://localhost:" + port;
+    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
 
-    groupsClient = new GroupsClient(new URI(okapiUrl), headers);
-    usersClient = new UsersClient(new URI(okapiUrl), headers);
+    groupsClient = new GroupsClient(okapiUrl, headers);
+    usersClient = new UsersClient(okapiUrl.asURI(), headers);
 
     final var module = new VertxModule(vertx);
 

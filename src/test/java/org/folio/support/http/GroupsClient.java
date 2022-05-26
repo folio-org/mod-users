@@ -5,7 +5,6 @@ import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
-import java.net.URI;
 import java.util.Map;
 
 import org.folio.support.Group;
@@ -18,16 +17,16 @@ public class GroupsClient {
 
   private final RestAssuredClient<Group> client;
 
-  public GroupsClient(URI baseUri, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(baseUri, defaultHeaders);
+  public GroupsClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
+    client = new RestAssuredClient<>(okapiUrl.asURI("/groups"), defaultHeaders);
   }
 
   public Group createGroup(@NonNull Group group) {
-    return client.createRecord("/groups", group, Group.class);
+    return client.createRecord("", group, Group.class);
   }
 
   public ValidatableResponse attemptToCreateGroup(@NonNull Group group) {
-    return client.attemptToCreateRecord("/groups", group);
+    return client.attemptToCreateRecord("", group);
   }
 
   public Groups getAllGroups() {
@@ -35,7 +34,7 @@ public class GroupsClient {
       .config(client.config)
       .spec(client.requestSpecification)
       .when()
-      .get("/groups")
+      .get()
       .then()
       .statusCode(HTTP_OK)
       .extract().as(Groups.class);
@@ -51,7 +50,7 @@ public class GroupsClient {
       .config(client.config)
       .spec(client.requestSpecification)
       .when()
-      .delete("/groups/{id}", Map.of("id", id))
+      .delete("/{id}", Map.of("id", id))
       .then();
   }
 
@@ -62,11 +61,11 @@ public class GroupsClient {
   }
 
   public Group getGroup(String id) {
-    return client.getRecord("/groups/{id}", id, Group.class);
+    return client.getRecord("/{id}", id, Group.class);
   }
 
   public ValidatableResponse attemptToGetGroup(String id) {
-    return client.attemptToGetRecord("/groups/{id}", id);
+    return client.attemptToGetRecord("/{id}", id);
   }
 
   public Groups findGroups(String cqlQuery) {
@@ -75,7 +74,7 @@ public class GroupsClient {
       .spec(client.requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
-      .get("/groups")
+      .get()
       .then()
       .statusCode(HTTP_OK)
       .extract().as(Groups.class);
@@ -87,7 +86,7 @@ public class GroupsClient {
       .contentType(JSON)
       .when()
       .body(group)
-      .put("/groups/{id}", Map.of("id", group.getId()))
+      .put("/{id}", Map.of("id", group.getId()))
       .then()
       .statusCode(HTTP_NO_CONTENT);
   }
