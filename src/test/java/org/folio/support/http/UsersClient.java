@@ -14,14 +14,15 @@ import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
 public class UsersClient {
-  private final RestAssuredClient<User> client;
+  private final RestAssuredClient<User, Users> client;
 
   public UsersClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(okapiUrl.asURI("/users"), defaultHeaders);
+    client = new RestAssuredClient<>(okapiUrl.asURI("/users"),
+      defaultHeaders, User.class, Users.class);
   }
 
   public User createUser(@NonNull User user) {
-    return client.createRecord(user, User.class);
+    return client.createRecord(user);
   }
 
   public User createUser(String username) {
@@ -35,7 +36,7 @@ public class UsersClient {
   }
 
   public User getUser(String id) {
-    return client.getRecord(id, User.class);
+    return client.getRecord(id);
   }
 
   public ValidatableResponse attemptToGetUser(String id) {
@@ -43,23 +44,15 @@ public class UsersClient {
   }
 
   public Users getUsers(String cqlQuery) {
-    return attemptToGetUsers(cqlQuery)
-      .statusCode(HTTP_OK)
-      .extract().as(Users.class);
+    return client.getRecords(cqlQuery);
   }
 
   public ValidatableResponse attemptToGetUsers(String cqlQuery) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .queryParam("query", cqlQuery)
-      .get()
-      .then();
+    return client.attemptToGetRecords(cqlQuery);
   }
 
   public Users getAllUsers() {
-    return getUsers("cql.AllRecords=1");
+    return client.getAllRecords();
   }
 
   public Users getPatronGroupFacets() {

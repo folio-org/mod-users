@@ -22,11 +22,16 @@ import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 
-public class RestAssuredClient<Record> {
+public class RestAssuredClient<Record, Collection> {
   final RequestSpecification requestSpecification;
   final RestAssuredConfig config;
+  private final Class<Record> recordDeserializesTo;
+  private final Class<Collection> collectionDeserializesTo;
 
-  RestAssuredClient(URI baseUri, OkapiHeaders defaultHeaders) {
+  RestAssuredClient(URI baseUri, OkapiHeaders defaultHeaders,
+    Class<Record> recordDeserializesTo,
+    Class<Collection> collectionDeserializesTo) {
+
     this.requestSpecification = new RequestSpecBuilder()
       .setBaseUri(baseUri)
       .addHeader("X-Okapi-Tenant", defaultHeaders.getTenantId())
@@ -46,12 +51,15 @@ public class RestAssuredClient<Record> {
 
           return mapper;
         }));
+
+    this.recordDeserializesTo = recordDeserializesTo;
+    this.collectionDeserializesTo = collectionDeserializesTo;
   }
 
-  Record createRecord(@NotNull Record user, Class<Record> deserializeTo) {
+  Record createRecord(@NotNull Record user) {
     return attemptToCreateRecord(user)
       .statusCode(HTTP_CREATED)
-      .extract().as(deserializeTo);
+      .extract().as(recordDeserializesTo);
   }
 
   ValidatableResponse attemptToCreateRecord(@NotNull Record record) {
@@ -65,10 +73,10 @@ public class RestAssuredClient<Record> {
       .then();
   }
 
-  Record getRecord(String id, Class<Record> deserializationClass) {
+  Record getRecord(String id) {
     return attemptToGetRecord(id)
       .statusCode(HTTP_OK)
-      .extract().as(deserializationClass);
+      .extract().as(recordDeserializesTo);
   }
 
   ValidatableResponse attemptToGetRecord(String id) {
@@ -77,6 +85,26 @@ public class RestAssuredClient<Record> {
       .spec(this.requestSpecification)
       .when()
       .get("/{id}", Map.of("id", id))
+      .then();
+  }
+
+  Collection getRecords(String cqlQuery) {
+    return attemptToGetRecords(cqlQuery)
+      .statusCode(HTTP_OK)
+      .extract().as(collectionDeserializesTo);
+  }
+
+  Collection getAllRecords() {
+    return getRecords("cql.AllRecords=1");
+  }
+
+  ValidatableResponse attemptToGetRecords(String cqlQuery) {
+    return given()
+      .config(this.config)
+      .spec(this.requestSpecification)
+      .when()
+      .queryParam("query", cqlQuery)
+      .get()
       .then();
   }
 }

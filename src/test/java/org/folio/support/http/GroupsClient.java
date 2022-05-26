@@ -3,7 +3,6 @@ package org.folio.support.http;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.util.Map;
 
@@ -15,29 +14,19 @@ import lombok.NonNull;
 
 public class GroupsClient {
 
-  private final RestAssuredClient<Group> client;
+  private final RestAssuredClient<Group, Groups> client;
 
   public GroupsClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(okapiUrl.asURI("/groups"), defaultHeaders);
+    client = new RestAssuredClient<>(okapiUrl.asURI("/groups"),
+      defaultHeaders, Group.class, Groups.class);
   }
 
   public Group createGroup(@NonNull Group group) {
-    return client.createRecord(group, Group.class);
+    return client.createRecord(group);
   }
 
   public ValidatableResponse attemptToCreateGroup(@NonNull Group group) {
     return client.attemptToCreateRecord(group);
-  }
-
-  public Groups getAllGroups() {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .get()
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Groups.class);
   }
 
   public void deleteGroup(String id) {
@@ -61,23 +50,19 @@ public class GroupsClient {
   }
 
   public Group getGroup(String id) {
-    return client.getRecord(id, Group.class);
+    return client.getRecord(id);
   }
 
   public ValidatableResponse attemptToGetGroup(String id) {
     return client.attemptToGetRecord(id);
   }
 
-  public Groups findGroups(String cqlQuery) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .queryParam("query", cqlQuery)
-      .get()
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Groups.class);
+  public Groups getGroups(String cqlQuery) {
+    return client.getRecords(cqlQuery);
+  }
+
+  public Groups getAllGroups() {
+    return client.getAllRecords();
   }
 
   public void updateGroup(@NonNull Group group) {

@@ -3,7 +3,6 @@ package org.folio.support.http;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.CoreMatchers.is;
 
 import org.folio.support.AddressType;
@@ -13,15 +12,15 @@ import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
 public class AddressTypesClient {
-  private final RestAssuredClient<AddressType> client;
+  private final RestAssuredClient<AddressType, AddressTypes> client;
 
   public AddressTypesClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
     client = new RestAssuredClient<>(okapiUrl.asURI("/addresstypes"),
-      defaultHeaders);
+      defaultHeaders, AddressType.class, AddressTypes.class);
   }
 
   public AddressType createAddressType(@NonNull AddressType addressType) {
-    return client.createRecord(addressType, AddressType.class);
+    return client.createRecord(addressType);
   }
 
   public ValidatableResponse attemptToCreateAddressType(
@@ -31,27 +30,15 @@ public class AddressTypesClient {
   }
 
   public AddressType getAddressType(String id) {
-    return client.getRecord(id, AddressType.class);
+    return client.getRecord(id);
   }
 
   public ValidatableResponse attemptToGetAddressType(String id) {
     return client.attemptToGetRecord(id);
   }
 
-  public AddressTypes getAddressTypes(String cqlQuery) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .queryParam("query", cqlQuery)
-      .get()
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(AddressTypes.class);
-  }
-
   public AddressTypes getAllAddressTypes() {
-    return getAddressTypes("cql.AllRecords=1");
+    return client.getAllRecords();
   }
 
   public void updateAddressType(@NonNull AddressType addressType) {

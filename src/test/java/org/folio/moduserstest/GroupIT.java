@@ -227,7 +227,7 @@ class GroupIT {
       .desc("Second group description")
       .build());
 
-    final var groups = groupsClient.findGroups("group==Second");
+    final var groups = groupsClient.getGroups("group==Second");
 
     assertThat(groups.getTotalRecords(), is(1));
 
