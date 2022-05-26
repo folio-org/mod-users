@@ -47,7 +47,7 @@ class UsersAPIIT {
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
   private static AddressTypesClient addressTypesClient;
-
+  
   @BeforeAll
   @SneakyThrows
   static void beforeAll(Vertx vertx, VertxTestContext context) {
