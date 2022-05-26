@@ -12,15 +12,6 @@ import java.util.Map;
 import org.folio.support.User;
 import org.folio.support.Users;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.LogConfig;
-import io.restassured.config.ObjectMapperConfig;
-import io.restassured.config.RestAssuredConfig;
-import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
@@ -28,24 +19,7 @@ public class UsersClient {
   private final RestAssuredClient client;
 
   public UsersClient(URI baseUri, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient(new RequestSpecBuilder()
-      .setBaseUri(baseUri)
-      .addHeader("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .addHeader("X-Okapi-Token", defaultHeaders.getToken())
-      .addHeader("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .setAccept("application/json, text/plain")
-      .build(),
-      RestAssuredConfig.newConfig()
-      .logConfig(new LogConfig().enableLoggingOfRequestAndResponseIfValidationFails())
-      .objectMapperConfig(new ObjectMapperConfig(ObjectMapperType.JACKSON_2)
-        .jackson2ObjectMapperFactory((type, s) -> {
-          final var mapper = new ObjectMapper();
-
-          mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-          mapper.registerModule(new JavaTimeModule());
-
-          return mapper;
-        })));
+    client = new RestAssuredClient(baseUri, defaultHeaders);
   }
 
   public User createUser(@NonNull User user) {
@@ -61,14 +35,7 @@ public class UsersClient {
   }
 
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .contentType(JSON)
-      .when()
-      .body(user)
-      .post("/users")
-      .then();
+    return client.attemptToCreateRecord("/users", user);
   }
 
   public User getUser(String id) {
