@@ -2,6 +2,7 @@ package org.folio.support.http;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static java.net.HttpURLConnection.HTTP_CREATED;
 
 import java.net.URI;
 
@@ -19,7 +20,7 @@ import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 
-public class RestAssuredClient {
+public class RestAssuredClient<Record> {
   final RequestSpecification requestSpecification;
   final RestAssuredConfig config;
 
@@ -45,14 +46,20 @@ public class RestAssuredClient {
         }));
   }
 
-  <T> ValidatableResponse attemptToCreateRecord(String path, @NotNull T record) {
+  Record createRecord(@NotNull Record user, Class<Record> deserializeTo) {
+    return attemptToCreateRecord(user)
+      .statusCode(HTTP_CREATED)
+      .extract().as(deserializeTo);
+  }
+
+  ValidatableResponse attemptToCreateRecord(@NotNull Record record) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .contentType(JSON)
       .when()
       .body(record)
-      .post(path)
+      .post("/users")
       .then();
   }
 }

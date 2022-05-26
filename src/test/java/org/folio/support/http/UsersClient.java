@@ -2,7 +2,6 @@ package org.folio.support.http;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
@@ -16,16 +15,14 @@ import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
 public class UsersClient {
-  private final RestAssuredClient client;
+  private final RestAssuredClient<User> client;
 
   public UsersClient(URI baseUri, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient(baseUri, defaultHeaders);
+    client = new RestAssuredClient<>(baseUri, defaultHeaders);
   }
 
   public User createUser(@NonNull User user) {
-    return attemptToCreateUser(user)
-      .statusCode(HTTP_CREATED)
-      .extract().as(User.class);
+    return client.createRecord(user, User.class);
   }
 
   public User createUser(String username) {
@@ -35,7 +32,7 @@ public class UsersClient {
   }
 
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
-    return client.attemptToCreateRecord("/users", user);
+    return client.attemptToCreateRecord(user);
   }
 
   public User getUser(String id) {
