@@ -22,22 +22,21 @@ import io.restassured.config.ObjectMapperConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.ValidatableResponse;
-import io.restassured.specification.RequestSpecification;
 import lombok.NonNull;
 
 public class UsersClient {
-  private final RequestSpecification requestSpecification;
-  private final RestAssuredConfig config;
+  private final RestAssuredClient client;
+
   public UsersClient(URI baseUri, OkapiHeaders defaultHeaders) {
-    requestSpecification = new RequestSpecBuilder()
+    client = new RestAssuredClient(new RequestSpecBuilder()
       .setBaseUri(baseUri)
       .addHeader("X-Okapi-Tenant", defaultHeaders.getTenantId())
       .addHeader("X-Okapi-Token", defaultHeaders.getToken())
       .addHeader("X-Okapi-Url", defaultHeaders.getOkapiUrl())
       .setAccept("application/json, text/plain")
-      .build();
-
-    config = RestAssuredConfig.newConfig()
+      .build(),
+      RestAssuredConfig.newConfig()
+      .logConfig(new LogConfig().enableLoggingOfRequestAndResponseIfValidationFails())
       .objectMapperConfig(new ObjectMapperConfig(ObjectMapperType.JACKSON_2)
         .jackson2ObjectMapperFactory((type, s) -> {
           final var mapper = new ObjectMapper();
@@ -46,8 +45,7 @@ public class UsersClient {
           mapper.registerModule(new JavaTimeModule());
 
           return mapper;
-        }))
-      .logConfig(new LogConfig().enableLoggingOfRequestAndResponseIfValidationFails());
+        })));
   }
 
   public User createUser(@NonNull User user) {
@@ -64,8 +62,8 @@ public class UsersClient {
 
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
     return given()
-      .config(config)
-      .spec(requestSpecification)
+      .config(client.config)
+      .spec(client.requestSpecification)
       .contentType(JSON)
       .when()
       .body(user)
@@ -81,8 +79,8 @@ public class UsersClient {
 
   public ValidatableResponse attemptToGetUser(String id) {
     return given()
-      .config(config)
-      .spec(requestSpecification)
+      .config(client.config)
+      .spec(client.requestSpecification)
       .when()
       .get("/users/{id}", Map.of("id", id))
       .then();
@@ -96,8 +94,8 @@ public class UsersClient {
 
   public ValidatableResponse attemptToGetUsers(String cqlQuery) {
     return given()
-      .config(config)
-      .spec(requestSpecification)
+      .config(client.config)
+      .spec(client.requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
       .get("/users")
@@ -110,8 +108,8 @@ public class UsersClient {
 
   public Users getPatronGroupFacets() {
     return given()
-      .config(config)
-      .spec(requestSpecification)
+      .config(client.config)
+      .spec(client.requestSpecification)
       .when()
       // Limit must be 1 as request fails with limit 0
       // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
@@ -130,8 +128,8 @@ public class UsersClient {
 
   public ValidatableResponse attemptToDeleteUser(String id) {
     return given()
-      .config(config)
-      .spec(requestSpecification)
+      .config(client.config)
+      .spec(client.requestSpecification)
       .when()
       .delete("/users/{id}", Map.of("id", id))
       .then();
@@ -139,8 +137,8 @@ public class UsersClient {
 
   public void deleteUsers(String cqlQuery) {
     given()
-      .config(config)
-      .spec(requestSpecification)
+      .config(client.config)
+      .spec(client.requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
       .delete("/users")
@@ -162,8 +160,8 @@ public class UsersClient {
 
   public ValidatableResponse attemptToUpdateUser(String id, @NonNull User user) {
     return given()
-      .config(config)
-      .spec(requestSpecification)
+      .config(client.config)
+      .spec(client.requestSpecification)
       .contentType(JSON)
       .when()
       .body(user)
