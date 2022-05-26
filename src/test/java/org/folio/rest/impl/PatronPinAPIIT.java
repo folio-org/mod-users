@@ -119,12 +119,12 @@ class PatronPinAPIIT {
   }
 
   private void enteredPinIsValid(User user, String pin) {
-    patronPinClient.verifyPatronPin(user.getId(), pin)
+    patronPinClient.attemptToVerifyPatronPin(user.getId(), pin)
       .statusCode(is(200));
   }
 
   private void enteredPinIsInvalid(User user, String pin) {
-    patronPinClient.verifyPatronPin(user.getId(), pin)
+    patronPinClient.attemptToVerifyPatronPin(user.getId(), pin)
       .statusCode(is(422));
   }
 

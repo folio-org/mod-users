@@ -41,7 +41,7 @@ class ExpirationIT {
     final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
 
     usersClient = new UsersClient(okapiUrl, headers);
-    expirationClient = new ExpirationClient(okapiUrl.asURI(), headers);
+    expirationClient = new ExpirationClient(okapiUrl, headers);
 
     final var module = new VertxModule(vertx);
 

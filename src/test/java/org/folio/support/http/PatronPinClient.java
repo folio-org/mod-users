@@ -28,7 +28,7 @@ public class PatronPinClient {
       .statusCode(201);
   }
 
-  public ValidatableResponse verifyPatronPin(String userId, String pin) {
+  public ValidatableResponse attemptToVerifyPatronPin(String userId, String pin) {
     return configuration.initialSpecification()
       .contentType(JSON)
       .when()
