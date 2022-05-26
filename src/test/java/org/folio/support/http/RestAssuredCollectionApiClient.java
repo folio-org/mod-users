@@ -1,6 +1,5 @@
 package org.folio.support.http;
 
-import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -10,48 +9,21 @@ import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.config.LogConfig;
-import io.restassured.config.ObjectMapperConfig;
-import io.restassured.config.RestAssuredConfig;
-import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import lombok.NonNull;
 
 public class RestAssuredCollectionApiClient<Record, Collection> {
-  final RequestSpecification requestSpecification;
-  final RestAssuredConfig config;
   private final Class<Record> recordDeserializesTo;
   private final Class<Collection> collectionDeserializesTo;
+
+  private final RestAssuredConfiguration configuration;
 
   RestAssuredCollectionApiClient(URI baseUri, OkapiHeaders defaultHeaders,
     Class<Record> recordDeserializesTo,
     Class<Collection> collectionDeserializesTo) {
 
-    this.requestSpecification = new RequestSpecBuilder()
-      .setBaseUri(baseUri)
-      .addHeader("X-Okapi-Tenant", defaultHeaders.getTenantId())
-      .addHeader("X-Okapi-Token", defaultHeaders.getToken())
-      .addHeader("X-Okapi-Url", defaultHeaders.getOkapiUrl())
-      .setAccept("application/json, text/plain")
-      .build();
-
-    this.config = RestAssuredConfig.newConfig()
-      .logConfig(new LogConfig().enableLoggingOfRequestAndResponseIfValidationFails())
-      .objectMapperConfig(new ObjectMapperConfig(ObjectMapperType.JACKSON_2)
-        .jackson2ObjectMapperFactory((type, s) -> {
-          final var mapper = new ObjectMapper();
-
-          mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-          mapper.registerModule(new JavaTimeModule());
-
-          return mapper;
-        }));
+    configuration = new RestAssuredConfiguration(baseUri, defaultHeaders);
 
     this.recordDeserializesTo = recordDeserializesTo;
     this.collectionDeserializesTo = collectionDeserializesTo;
@@ -64,9 +36,7 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
   }
 
   ValidatableResponse attemptToCreateRecord(@NotNull Record record) {
-    return given()
-      .config(config)
-      .spec(requestSpecification)
+    return initialSpecification()
       .contentType(JSON)
       .when()
       .body(record)
@@ -81,9 +51,7 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
   }
 
   ValidatableResponse attemptToGetRecord(String id) {
-    return given()
-      .config(this.config)
-      .spec(this.requestSpecification)
+    return initialSpecification()
       .when()
       .get("/{id}", Map.of("id", id))
       .then();
@@ -100,9 +68,7 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
   }
 
   ValidatableResponse attemptToGetRecords(String cqlQuery) {
-    return given()
-      .config(this.config)
-      .spec(this.requestSpecification)
+    return initialSpecification()
       .when()
       .queryParam("query", cqlQuery)
       .get()
@@ -110,9 +76,7 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
   }
 
   ValidatableResponse attemptToUpdateRecord(String id, @NonNull Record record) {
-    return given()
-      .config(this.config)
-      .spec(this.requestSpecification)
+    return initialSpecification()
       .contentType(JSON)
       .when()
       .body(record)
@@ -120,28 +84,28 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
       .then();
   }
 
-  public void deleteRecord(String id) {
+  void deleteRecord(String id) {
     attemptToDeleteRecord(id)
       .statusCode(204);
   }
 
   ValidatableResponse attemptToDeleteRecord(String id) {
-    return given()
-      .config(this.config)
-      .spec(this.requestSpecification)
+    return initialSpecification()
       .when()
       .delete("/{id}", Map.of("id", id))
       .then();
   }
 
   void deleteRecords(String cqlQuery) {
-    given()
-      .config(this.config)
-      .spec(this.requestSpecification)
+    initialSpecification()
       .when()
       .queryParam("query", cqlQuery)
       .delete()
       .then()
       .statusCode(204);
+  }
+
+  RequestSpecification initialSpecification() {
+    return configuration.initialSpecification();
   }
 }

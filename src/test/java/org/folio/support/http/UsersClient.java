@@ -1,6 +1,5 @@
 package org.folio.support.http;
 
-import static io.restassured.RestAssured.given;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
@@ -53,9 +52,7 @@ public class UsersClient {
   }
 
   public Users getPatronGroupFacets() {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
+    return client.initialSpecification()
       .when()
       // Limit must be 1 as request fails with limit 0
       // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
