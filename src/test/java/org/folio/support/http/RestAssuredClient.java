@@ -26,7 +26,7 @@ public class RestAssuredClient<Record> {
   final RequestSpecification requestSpecification;
   final RestAssuredConfig config;
 
-  public RestAssuredClient(URI baseUri, OkapiHeaders defaultHeaders) {
+  RestAssuredClient(URI baseUri, OkapiHeaders defaultHeaders) {
     this.requestSpecification = new RequestSpecBuilder()
       .setBaseUri(baseUri)
       .addHeader("X-Okapi-Tenant", defaultHeaders.getTenantId())
@@ -48,37 +48,35 @@ public class RestAssuredClient<Record> {
         }));
   }
 
-  Record createRecord(String path, @NotNull Record user, Class<Record> deserializeTo) {
-    return attemptToCreateRecord(path, user)
+  Record createRecord(@NotNull Record user, Class<Record> deserializeTo) {
+    return attemptToCreateRecord(user)
       .statusCode(HTTP_CREATED)
       .extract().as(deserializeTo);
   }
 
-  ValidatableResponse attemptToCreateRecord(String path, @NotNull Record record) {
+  ValidatableResponse attemptToCreateRecord(@NotNull Record record) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .contentType(JSON)
       .when()
       .body(record)
-      .post(path)
+      .post()
       .then();
   }
 
-  <Record> Record getRecord(String parameterisedPath, String id,
-    Class<Record> deserializationClass) {
-
-    return attemptToGetRecord(parameterisedPath, id)
+  Record getRecord(String id, Class<Record> deserializationClass) {
+    return attemptToGetRecord(id)
       .statusCode(HTTP_OK)
       .extract().as(deserializationClass);
   }
 
-  ValidatableResponse attemptToGetRecord(String parameterisedPath, String id) {
+  ValidatableResponse attemptToGetRecord(String id) {
     return given()
       .config(this.config)
       .spec(this.requestSpecification)
       .when()
-      .get(parameterisedPath, Map.of("id", id))
+      .get("/{id}", Map.of("id", id))
       .then();
   }
 }

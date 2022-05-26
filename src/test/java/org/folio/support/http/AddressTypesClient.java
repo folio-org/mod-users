@@ -21,21 +21,21 @@ public class AddressTypesClient {
   }
 
   public AddressType createAddressType(@NonNull AddressType addressType) {
-    return client.createRecord("", addressType, AddressType.class);
+    return client.createRecord(addressType, AddressType.class);
   }
 
   public ValidatableResponse attemptToCreateAddressType(
     @NonNull AddressType addressType) {
 
-    return client.attemptToCreateRecord("", addressType);
+    return client.attemptToCreateRecord(addressType);
   }
 
   public AddressType getAddressType(String id) {
-    return client.getRecord("/{id}", id, AddressType.class);
+    return client.getRecord(id, AddressType.class);
   }
 
   public ValidatableResponse attemptToGetAddressType(String id) {
-    return client.attemptToGetRecord("/{id}", id);
+    return client.attemptToGetRecord(id);
   }
 
   public AddressTypes getAddressTypes(String cqlQuery) {

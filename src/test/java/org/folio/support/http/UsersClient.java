@@ -21,7 +21,7 @@ public class UsersClient {
   }
 
   public User createUser(@NonNull User user) {
-    return client.createRecord("", user, User.class);
+    return client.createRecord(user, User.class);
   }
 
   public User createUser(String username) {
@@ -31,15 +31,15 @@ public class UsersClient {
   }
 
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
-    return client.attemptToCreateRecord("", user);
+    return client.attemptToCreateRecord(user);
   }
 
   public User getUser(String id) {
-    return client.getRecord("/{id}", id, User.class);
+    return client.getRecord(id, User.class);
   }
 
   public ValidatableResponse attemptToGetUser(String id) {
-    return client.attemptToGetRecord("/{id}", id);
+    return client.attemptToGetRecord(id);
   }
 
   public Users getUsers(String cqlQuery) {

@@ -22,11 +22,11 @@ public class GroupsClient {
   }
 
   public Group createGroup(@NonNull Group group) {
-    return client.createRecord("", group, Group.class);
+    return client.createRecord(group, Group.class);
   }
 
   public ValidatableResponse attemptToCreateGroup(@NonNull Group group) {
-    return client.attemptToCreateRecord("", group);
+    return client.attemptToCreateRecord(group);
   }
 
   public Groups getAllGroups() {
@@ -61,11 +61,11 @@ public class GroupsClient {
   }
 
   public Group getGroup(String id) {
-    return client.getRecord("/{id}", id, Group.class);
+    return client.getRecord(id, Group.class);
   }
 
   public ValidatableResponse attemptToGetGroup(String id) {
-    return client.attemptToGetRecord("/{id}", id);
+    return client.attemptToGetRecord(id);
   }
 
   public Groups findGroups(String cqlQuery) {
