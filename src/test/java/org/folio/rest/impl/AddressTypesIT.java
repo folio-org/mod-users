@@ -67,9 +67,8 @@ class AddressTypesIT {
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
-      .onComplete(context.succeeding(res -> module.enableModule(headers,
-          false, false)
-        .onComplete(context.succeedingThenComplete())));
+      .compose(res -> module.enableModule(headers))
+      .onComplete(context.succeedingThenComplete());
   }
 
   @BeforeEach
