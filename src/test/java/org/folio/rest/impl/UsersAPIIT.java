@@ -47,7 +47,7 @@ class UsersAPIIT {
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
   private static AddressTypesClient addressTypesClient;
-  
+
   @BeforeAll
   @SneakyThrows
   static void beforeAll(Vertx vertx, VertxTestContext context) {
@@ -58,13 +58,12 @@ class UsersAPIIT {
 
     final var port = NetworkUtils.nextFreePort();
 
-    final var headers = new OkapiHeaders("http://localhost:" + port,
-      tenant, token);
+    final var okapiUrl = "http://localhost:" + port;
+    final var headers = new OkapiHeaders(okapiUrl, tenant, token);
 
-    usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
-    groupsClient = new GroupsClient(new URI("http://localhost:" + port), headers);
-    addressTypesClient = new AddressTypesClient(
-      new URI("http://localhost:" + port), headers);
+    usersClient = new UsersClient(new URI(okapiUrl), headers);
+    groupsClient = new GroupsClient(new URI(okapiUrl), headers);
+    addressTypesClient = new AddressTypesClient(new URI(okapiUrl), headers);
 
     final var module = new VertxModule(vertx);
 

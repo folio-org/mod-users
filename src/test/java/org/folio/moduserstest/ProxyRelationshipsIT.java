@@ -50,10 +50,10 @@ class ProxyRelationshipsIT {
 
     int port = NetworkUtils.nextFreePort();
 
-    final var headers = new OkapiHeaders("http://localhost:" + port,
-      "diku", "diku");
+    final var okapiUrl = "http://localhost:" + port;
+    final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
 
-    proxiesClient = new ProxiesClient(new URI("http://localhost:" + port), headers);
+    proxiesClient = new ProxiesClient(new URI(okapiUrl), headers);
 
     final var module = new VertxModule(vertx);
 

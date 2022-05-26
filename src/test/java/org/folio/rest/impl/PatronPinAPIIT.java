@@ -46,18 +46,17 @@ class PatronPinAPIIT {
 
     final var port = NetworkUtils.nextFreePort();
 
-    final var headers = new OkapiHeaders("http://localhost:" + port,
-      TENANT, token);
+    final var okapiUrl = "http://localhost:" + port;
+    final var headers = new OkapiHeaders(okapiUrl, TENANT, token);
 
-    usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
-    patronPinClient = new PatronPinClient(new URI("http://localhost:" + port), headers);
+    usersClient = new UsersClient(new URI(okapiUrl), headers);
+    patronPinClient = new PatronPinClient(new URI(okapiUrl), headers);
 
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
-      .onComplete(context.succeeding(res -> module.enableModule(headers,
-          false, false)
-        .onComplete(context.succeedingThenComplete())));
+      .compose(res -> module.enableModule(headers)
+      .onComplete(context.succeedingThenComplete()));
   }
 
   @BeforeEach
