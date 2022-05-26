@@ -30,17 +30,11 @@ public class GroupsClient {
   }
 
   public void deleteGroup(String id) {
-    attemptToDeleteGroup(id)
-      .statusCode(HTTP_NO_CONTENT);
+    client.deleteRecord(id);
   }
 
   public ValidatableResponse attemptToDeleteGroup(String id) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .delete("/{id}", Map.of("id", id))
-      .then();
+    return client.attemptToDeleteRecord(id);
   }
 
   public void deleteAllGroups() {

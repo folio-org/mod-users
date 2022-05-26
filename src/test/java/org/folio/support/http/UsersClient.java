@@ -71,33 +71,21 @@ public class UsersClient {
   }
 
   public void deleteUser(String id) {
-    attemptToDeleteUser(id)
-      .statusCode(204);
+    client.deleteRecord(id);
   }
 
   public ValidatableResponse attemptToDeleteUser(String id) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .delete("/{id}", Map.of("id", id))
-      .then();
+    return client.attemptToDeleteRecord(id);
   }
 
   public void deleteUsers(String cqlQuery) {
-    given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .queryParam("query", cqlQuery)
-      .delete()
-      .then()
-      .statusCode(204);
+    client.deleteRecords(cqlQuery);
   }
 
   public void deleteAllUsers() {
     deleteUsers("cql.allRecords=1");
   }
+
   public void updateUser(@NonNull User user) {
     attemptToUpdateUser(user)
       .statusCode(HTTP_NO_CONTENT);

@@ -54,17 +54,11 @@ public class AddressTypesClient {
   }
 
   public void deleteAddressType(String id) {
-    attemptToDeleteAddressType(id)
-      .statusCode(HTTP_NO_CONTENT);
+    client.deleteRecord(id);
   }
 
   public ValidatableResponse attemptToDeleteAddressType(String id) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .delete("/{id}", id)
-      .then();
+    return client.attemptToDeleteRecord(id);
   }
 
   public void deleteAllAddressTypes() {

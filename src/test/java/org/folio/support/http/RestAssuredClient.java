@@ -107,4 +107,29 @@ public class RestAssuredClient<Record, Collection> {
       .get()
       .then();
   }
+
+  public void deleteRecord(String id) {
+    attemptToDeleteRecord(id)
+      .statusCode(204);
+  }
+
+  ValidatableResponse attemptToDeleteRecord(String id) {
+    return given()
+      .config(this.config)
+      .spec(this.requestSpecification)
+      .when()
+      .delete("/{id}", Map.of("id", id))
+      .then();
+  }
+
+  void deleteRecords(String cqlQuery) {
+    given()
+      .config(this.config)
+      .spec(this.requestSpecification)
+      .when()
+      .queryParam("query", cqlQuery)
+      .delete()
+      .then()
+      .statusCode(204);
+  }
 }
