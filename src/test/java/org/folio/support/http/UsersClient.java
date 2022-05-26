@@ -22,7 +22,7 @@ public class UsersClient {
   }
 
   public User createUser(@NonNull User user) {
-    return client.createRecord(user, User.class);
+    return client.createRecord("/users", user, User.class);
   }
 
   public User createUser(String username) {
@@ -32,7 +32,7 @@ public class UsersClient {
   }
 
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
-    return client.attemptToCreateRecord(user);
+    return client.attemptToCreateRecord("/users", user);
   }
 
   public User getUser(String id) {

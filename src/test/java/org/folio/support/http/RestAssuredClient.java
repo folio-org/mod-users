@@ -46,20 +46,20 @@ public class RestAssuredClient<Record> {
         }));
   }
 
-  Record createRecord(@NotNull Record user, Class<Record> deserializeTo) {
-    return attemptToCreateRecord(user)
+  Record createRecord(String path, @NotNull Record user, Class<Record> deserializeTo) {
+    return attemptToCreateRecord(path, user)
       .statusCode(HTTP_CREATED)
       .extract().as(deserializeTo);
   }
 
-  ValidatableResponse attemptToCreateRecord(@NotNull Record record) {
+  ValidatableResponse attemptToCreateRecord(String path, @NotNull Record record) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .contentType(JSON)
       .when()
       .body(record)
-      .post("/users")
+      .post(path)
       .then();
   }
 }
