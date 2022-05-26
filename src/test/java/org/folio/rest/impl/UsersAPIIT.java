@@ -61,7 +61,7 @@ class UsersAPIIT {
     final var okapiUrl = new OkapiUrl("http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, tenant, token);
 
-    usersClient = new UsersClient(okapiUrl.asURI(), headers);
+    usersClient = new UsersClient(okapiUrl, headers);
     groupsClient = new GroupsClient(okapiUrl, headers);
     addressTypesClient = new AddressTypesClient(okapiUrl, headers);
 

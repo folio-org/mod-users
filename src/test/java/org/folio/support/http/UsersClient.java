@@ -5,7 +5,6 @@ import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
-import java.net.URI;
 import java.util.Map;
 
 import org.folio.support.User;
@@ -17,12 +16,12 @@ import lombok.NonNull;
 public class UsersClient {
   private final RestAssuredClient<User> client;
 
-  public UsersClient(URI baseUri, OkapiHeaders defaultHeaders) {
-    client = new RestAssuredClient<>(baseUri, defaultHeaders);
+  public UsersClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
+    client = new RestAssuredClient<>(okapiUrl.asURI("/users"), defaultHeaders);
   }
 
   public User createUser(@NonNull User user) {
-    return client.createRecord("/users", user, User.class);
+    return client.createRecord("", user, User.class);
   }
 
   public User createUser(String username) {
@@ -32,15 +31,15 @@ public class UsersClient {
   }
 
   public ValidatableResponse attemptToCreateUser(@NonNull User user) {
-    return client.attemptToCreateRecord("/users", user);
+    return client.attemptToCreateRecord("", user);
   }
 
   public User getUser(String id) {
-    return client.getRecord("/users/{id}", id, User.class);
+    return client.getRecord("/{id}", id, User.class);
   }
 
   public ValidatableResponse attemptToGetUser(String id) {
-    return client.attemptToGetRecord("/users/{id}", id);
+    return client.attemptToGetRecord("/{id}", id);
   }
 
   public Users getUsers(String cqlQuery) {
@@ -55,7 +54,7 @@ public class UsersClient {
       .spec(client.requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
-      .get("/users")
+      .get()
       .then();
   }
 
@@ -72,7 +71,7 @@ public class UsersClient {
       // https://issues.folio.org/browse/UIU-1562  https:/issues.folio.org/browse/RMB-722
       .queryParam("limit", 1)
       .queryParam("facets", "patronGroup:50")
-      .get("/users")
+      .get()
       .then()
       .statusCode(HTTP_OK)
       .extract().as(Users.class);
@@ -88,7 +87,7 @@ public class UsersClient {
       .config(client.config)
       .spec(client.requestSpecification)
       .when()
-      .delete("/users/{id}", Map.of("id", id))
+      .delete("/{id}", Map.of("id", id))
       .then();
   }
 
@@ -98,7 +97,7 @@ public class UsersClient {
       .spec(client.requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
-      .delete("/users")
+      .delete()
       .then()
       .statusCode(204);
   }
@@ -122,7 +121,7 @@ public class UsersClient {
       .contentType(JSON)
       .when()
       .body(user)
-      .put("/users/{id}", Map.of("id", id))
+      .put("/{id}", Map.of("id", id))
       .then();
   }
 }

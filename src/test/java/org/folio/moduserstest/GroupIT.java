@@ -51,7 +51,7 @@ class GroupIT {
     final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
 
     groupsClient = new GroupsClient(okapiUrl, headers);
-    usersClient = new UsersClient(okapiUrl.asURI(), headers);
+    usersClient = new UsersClient(okapiUrl, headers);
 
     final var module = new VertxModule(vertx);
 

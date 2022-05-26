@@ -4,8 +4,6 @@ package org.folio.rest.impl;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 
-import java.net.URI;
-
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -13,6 +11,7 @@ import org.folio.support.User;
 import org.folio.support.VertxModule;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
 import org.folio.test.util.DBTestUtil;
@@ -46,11 +45,11 @@ class PatronPinAPIIT {
 
     final var port = NetworkUtils.nextFreePort();
 
-    final var okapiUrl = "http://localhost:" + port;
+    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, TENANT, token);
 
-    usersClient = new UsersClient(new URI(okapiUrl), headers);
-    patronPinClient = new PatronPinClient(new URI(okapiUrl), headers);
+    usersClient = new UsersClient(okapiUrl, headers);
+    patronPinClient = new PatronPinClient(okapiUrl.asURI(), headers);
 
     final var module = new VertxModule(vertx);
 

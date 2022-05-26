@@ -5,14 +5,13 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 
-import java.net.URI;
-
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.VertxModule;
 import org.folio.support.http.ExpirationClient;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,11 +37,11 @@ class ExpirationIT {
 
     int port = NetworkUtils.nextFreePort();
 
-    final var okapiUrl = "http://localhost:" + port;
+    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
 
-    usersClient = new UsersClient(new URI(okapiUrl), headers);
-    expirationClient = new ExpirationClient(new URI(okapiUrl), headers);
+    usersClient = new UsersClient(okapiUrl, headers);
+    expirationClient = new ExpirationClient(okapiUrl.asURI(), headers);
 
     final var module = new VertxModule(vertx);
 
