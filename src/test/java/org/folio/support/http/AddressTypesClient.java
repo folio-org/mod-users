@@ -32,18 +32,11 @@ public class AddressTypesClient {
   }
 
   public AddressType getAddressType(String id) {
-    return attemptToGetAddressType(id)
-      .statusCode(is(HTTP_OK))
-      .extract().as(AddressType.class);
+    return client.getRecord("/addresstypes/{id}", id, AddressType.class);
   }
 
   public ValidatableResponse attemptToGetAddressType(String id) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .get("/addresstypes/{id}", id)
-      .then();
+    return client.attemptToGetRecord("/addresstypes/{id}", id);
   }
 
   public AddressTypes getAddressTypes(String cqlQuery) {

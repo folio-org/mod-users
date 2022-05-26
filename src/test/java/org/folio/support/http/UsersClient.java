@@ -36,18 +36,11 @@ public class UsersClient {
   }
 
   public User getUser(String id) {
-    return attemptToGetUser(id)
-      .statusCode(HTTP_OK)
-      .extract().as(User.class);
+    return client.getRecord("/users/{id}", id, User.class);
   }
 
   public ValidatableResponse attemptToGetUser(String id) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .get("/users/{id}", Map.of("id", id))
-      .then();
+    return client.attemptToGetRecord("/users/{id}", id);
   }
 
   public Users getUsers(String cqlQuery) {

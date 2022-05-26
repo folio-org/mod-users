@@ -62,18 +62,11 @@ public class GroupsClient {
   }
 
   public Group getGroup(String id) {
-    return attemptToGetGroup(id)
-      .statusCode(HTTP_OK)
-      .extract().as(Group.class);
+    return client.getRecord("/groups/{id}", id, Group.class);
   }
 
   public ValidatableResponse attemptToGetGroup(String id) {
-    return given()
-      .config(client.config)
-      .spec(client.requestSpecification)
-      .when()
-      .get("/groups/{id}", Map.of("id", id))
-      .then();
+    return client.attemptToGetRecord("/groups/{id}", id);
   }
 
   public Groups findGroups(String cqlQuery) {

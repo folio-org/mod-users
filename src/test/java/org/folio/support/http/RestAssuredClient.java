@@ -3,8 +3,10 @@ package org.folio.support.http;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_OK;
 
 import java.net.URI;
+import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -60,6 +62,23 @@ public class RestAssuredClient<Record> {
       .when()
       .body(record)
       .post(path)
+      .then();
+  }
+
+  <Record> Record getRecord(String parameterisedPath, String id,
+    Class<Record> deserializationClass) {
+
+    return attemptToGetRecord(parameterisedPath, id)
+      .statusCode(HTTP_OK)
+      .extract().as(deserializationClass);
+  }
+
+  ValidatableResponse attemptToGetRecord(String parameterisedPath, String id) {
+    return given()
+      .config(this.config)
+      .spec(this.requestSpecification)
+      .when()
+      .get(parameterisedPath, Map.of("id", id))
       .then();
   }
 }
