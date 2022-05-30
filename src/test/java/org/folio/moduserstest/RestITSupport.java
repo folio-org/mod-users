@@ -7,8 +7,6 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
 
 import org.folio.rest.tools.utils.VertxUtils;
 
@@ -73,28 +71,6 @@ class RestITSupport {
       response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
   }
 
-  static Future<HttpResponse<Buffer>> post(String request, String body) {
-    return post(request, body, Collections.emptyMap());
-  }
-
-  static Future<HttpResponse<Buffer>> post(String request, String body,
-      Map<String, String> additionalHeaders) {
-
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-
-    HttpRequest<Buffer> req = client.post(port, LOCALHOST, request)
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF);
-
-    additionalHeaders.forEach(req::putHeader);
-
-    req.sendBuffer(Buffer.buffer(body), promise);
-
-    return promise.future();
-  }
-
   static Future<Void> postWithOkStatus(String userId, String request, String body) {
     return postWithOkStatus(userId, request, body, new Header[0]);
   }
@@ -118,19 +94,6 @@ class RestITSupport {
       .sendBuffer(Buffer.buffer(body), promise);
 
     return promise.future().mapEmpty();
-  }
-
-  static Future<HttpResponse<Buffer>> put(String request, String body) {
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-
-    client.put(port, LOCALHOST, request)
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_TEXT_DEF)
-      .sendBuffer(Buffer.buffer(body), promise);
-
-    return promise.future();
   }
 
   static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body, Header ...headers) {
