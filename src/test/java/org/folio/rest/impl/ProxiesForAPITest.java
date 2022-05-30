@@ -8,6 +8,9 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.UUID;
+
+import org.folio.rest.jaxrs.model.ProxiesFor;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.junit.jupiter.api.Test;
@@ -22,9 +25,12 @@ class ProxiesForAPITest {
     when(postgresClient.get(anyString(), any(), any(Criterion.class), anyBoolean()))
       .thenReturn(Future.failedFuture(new RuntimeException("my exception")));
 
+    final var proxyRelationship = new ProxiesFor()
+      .withUserId(UUID.randomUUID().toString())
+      .withProxyUserId(UUID.randomUUID().toString());
+
     var future = new ProxiesForAPI()
-      .userAndProxyUserComboExists("someUserId", "someProxyUserId",
-        postgresClient);
+      .userAndProxyUserComboExists(proxyRelationship, postgresClient);
 
     assertThat(future.cause().getMessage(), is("my exception"));
   }
