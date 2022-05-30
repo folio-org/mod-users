@@ -3,17 +3,16 @@ package org.folio.moduserstest;
 import static io.vertx.core.json.Json.encode;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.folio.moduserstest.RestITSupport.getJson;
-import static org.folio.moduserstest.RestITSupport.post;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
-import static org.folio.moduserstest.RestITSupport.put;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -21,12 +20,13 @@ import org.apache.logging.log4j.Logger;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
+import org.folio.support.User;
+import org.folio.support.ValidationErrors;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
@@ -47,14 +47,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.ext.web.client.HttpResponse;
 import lombok.SneakyThrows;
 
 @RunWith(VertxUnitRunner.class)
@@ -137,12 +134,12 @@ public class CustomFieldIT {
 
     postUser()
       .compose(v -> postCustomField())
-      .compose(v -> postUserWithInvalidCustomFieldValueLength(context))
+      .compose(v -> postUserWithInvalidCustomFieldValueLength())
       .compose(v -> postUserWithCustomFields())
       .compose(v -> getUserWithCustomFields(context))
       .compose(v -> deleteUser(johnRectangleId))
-      .compose(v -> putUserWithNotExistingCustomField(context))
-      .compose(v -> postUserWithNotExistingCustomField(context))
+      .compose(v -> putUserWithNotExistingCustomField())
+      .compose(v -> postUserWithNotExistingCustomField())
       .compose(v -> deleteUser(joeBlockId))
       .compose(v -> deleteCustomField(context))
       .onComplete(testResultHandler(context, async));
@@ -173,50 +170,46 @@ public class CustomFieldIT {
   }
 
   private Future<Void> postUser() {
-    log.info("Creating a new user\n");
-    JsonObject user = getUser(joeBlockId, "joeblock");
-    return postWithOkStatus(joeBlockId, "/users", user.encode());
+    final var userToCreate = User.builder()
+      .id(joeBlockId)
+      .username("joeBlock")
+      .active(true)
+      .build();
+
+    usersClient.createUser(userToCreate);
+
+    return Future.succeededFuture();
   }
 
   private Future<Void> postUserWithCustomFields() {
-    log.info("Creating a new user\n");
-    JsonObject user = getUser(johnRectangleId, "johnRectangle");
-    addCustomFields(user);
+    final var userToCreate = User.builder()
+      .id(johnRectangleId)
+      .username("johnRectangle")
+      .active(true)
+      .customFields(Map.of("department", "Math"))
+      .build();
 
-    return postWithOkStatus(johnRectangleId, "/users", user.encode());
+    usersClient.createUser(userToCreate);
+
+    return Future.succeededFuture();
   }
 
-  private Future<Void> postUserWithInvalidCustomFieldValueLength(TestContext context) {
-    log.info("Creating a new user\n");
-    JsonObject user = getUser(johnRectangleId, "johnRectangle");
-    addInvalidCustomFieldValue(user);
-    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+  private Future<Void> postUserWithInvalidCustomFieldValueLength() {
+    final var userToCreate = User.builder()
+      .id(johnRectangleId)
+      .username("johnRectangle")
+      .active(true)
+      .customFields(Map.of("department", RandomStringUtils.randomAlphanumeric(151)))
+      .build();
 
-    return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 422);
-      Errors errors = Json.decodeValue(response.body(), Errors.class);
-      context.assertEquals("Maximum length of the value is 150", errors.getErrors().get(0).getMessage());
-      return null;
-    });
-  }
+    final var errors = usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
 
-  private JsonObject getUser(String userId, String userName) {
-    return new JsonObject()
-      .put("id", userId)
-      .put("active", true)
-      .put("username", userName);
-  }
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("Maximum length of the value is 150"));
 
-  private static void addCustomFields(JsonObject jsonObject) {
-    JsonObject customFields = new JsonObject();
-    customFields.put("department", "Math");
-    jsonObject.put("customFields", customFields);
-  }
-
-  private static void addInvalidCustomFieldValue(JsonObject jsonObject) {
-    JsonObject customFields = new JsonObject();
-    customFields.put("department", RandomStringUtils.randomAlphanumeric(151));
-    jsonObject.put("customFields", customFields);
+    return Future.succeededFuture();
   }
 
   private Future<Void> getUserWithCustomFields(TestContext context) {
@@ -235,65 +228,51 @@ public class CustomFieldIT {
     });
   }
 
-  private Future<Void> putUserWithNotExistingCustomField(TestContext context) {
-    log.info("Changing a user with not existing custom field");
+  private Future<Void> putUserWithNotExistingCustomField() {
+    final var userToCreate = User.builder()
+      .id(johnRectangleId)
+      .username("johnRectangle")
+      .active(true)
+      .customFields(Map.of(notExistingCustomField, "abc"))
+      .build();
 
-    JsonObject user = new JsonObject()
-      .put("username", "johnrectangle")
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Rectangle")
-        .put("firstName", "John")
-      )
-      .put("customFields", new JsonObject()
-        .put(notExistingCustomField, "abc")
-      );
+    final var errors = usersClient.attemptToUpdateUser(userToCreate)
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
 
-    Future<HttpResponse<Buffer>> future = put("/users/" + johnRectangleId, encode(user));
+    assertThat(errors.getErrors().size(), is(1));
+    final var firstError = errors.getErrors().get(0);
 
-    return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 422);
+    assertThat(firstError.getMessage(),
+      is("Custom field with refId notExistingCustomField is not found"));
+    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
+    assertThat(firstError.getParameters().get(0).getValue(), is(notExistingCustomField));
 
-      Errors errors = Json.decodeValue(response.body(), Errors.class);
-
-      Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
-
-      context.assertEquals("customFields", errorParam.getKey());
-      context.assertEquals(notExistingCustomField, errorParam.getValue());
-
-      return null;
-    });
+    return Future.succeededFuture();
   }
 
-  private Future<Void> postUserWithNotExistingCustomField(TestContext context) {
-    log.info("Attempting to create a user with not existing custom field");
+  private Future<Void> postUserWithNotExistingCustomField() {
+    final var userToCreate = User.builder()
+      .id(johnRectangleId)
+      .username("johnRectangle")
+      .active(true)
+      .customFields(Map.of(notExistingCustomField, "abc"))
+      .build();
 
-    JsonObject user = new JsonObject()
-      .put("username", "johnrectangle")
-      .put("id", johnRectangleId)
-      .put("active", true)
-      .put("personal", new JsonObject()
-        .put("lastName", "Rectangle")
-        .put("firstName", "John")
-      )
-      .put("customFields", new JsonObject()
-        .put(notExistingCustomField, "abc")
-      );
+    final var errors = usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
 
-    Future<HttpResponse<Buffer>> future = post("/users", encode(user));
+    assertThat(errors.getErrors().size(), is(1));
+    final var firstError = errors.getErrors().get(0);
 
-    return future.map(response -> {
-      RestITSupport.assertStatus(context, response, 422);
+    assertThat(firstError.getMessage(),
+      is("Custom field with refId notExistingCustomField is not found"));
 
-      Errors errors = Json.decodeValue(response.body(), Errors.class);
-      Parameter errorParam = errors.getErrors().get(0).getParameters().get(0);
+    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
+    assertThat(firstError.getParameters().get(0).getValue(), is(notExistingCustomField));
 
-      context.assertEquals("customFields", errorParam.getKey());
-      context.assertEquals(notExistingCustomField, errorParam.getValue());
-
-      return null;
-    });
+    return Future.succeededFuture();
   }
 
   private Future<Void> assertCustomFieldValues(JsonObject result) {

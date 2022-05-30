@@ -1,5 +1,7 @@
 package org.folio.support;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Builder;
@@ -19,4 +21,5 @@ public class User {
   String patronGroup;
   TagList tags;
   Metadata metadata;
+  Map<String, String> customFields;
 }
