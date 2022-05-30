@@ -12,6 +12,10 @@ import java.util.Map;
 import org.folio.support.User;
 import org.folio.support.Users;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.LogConfig;
 import io.restassured.config.ObjectMapperConfig;
@@ -34,7 +38,15 @@ public class UsersClient {
       .build();
 
     config = RestAssuredConfig.newConfig()
-      .objectMapperConfig(new ObjectMapperConfig(ObjectMapperType.JACKSON_2))
+      .objectMapperConfig(new ObjectMapperConfig(ObjectMapperType.JACKSON_2)
+        .jackson2ObjectMapperFactory((type, s) -> {
+          final var mapper = new ObjectMapper();
+
+          mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+          mapper.registerModule(new JavaTimeModule());
+
+          return mapper;
+        }))
       .logConfig(new LogConfig().enableLoggingOfRequestAndResponseIfValidationFails());
   }
 
@@ -77,15 +89,19 @@ public class UsersClient {
   }
 
   public Users getUsers(String cqlQuery) {
+    return attemptToGetUsers(cqlQuery)
+      .statusCode(HTTP_OK)
+      .extract().as(Users.class);
+  }
+
+  public ValidatableResponse attemptToGetUsers(String cqlQuery) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .when()
       .queryParam("query", cqlQuery)
       .get("/users")
-      .then()
-      .statusCode(HTTP_OK)
-      .extract().as(Users.class);
+      .then();
   }
 
   public Users getAllUsers() {
@@ -107,6 +123,20 @@ public class UsersClient {
       .extract().as(Users.class);
   }
 
+  public void deleteUser(String id) {
+    attemptToDeleteUser(id)
+      .statusCode(204);
+  }
+
+  public ValidatableResponse attemptToDeleteUser(String id) {
+    return given()
+      .config(config)
+      .spec(requestSpecification)
+      .when()
+      .delete("/users/{id}", Map.of("id", id))
+      .then();
+  }
+
   public void deleteUsers(String cqlQuery) {
     given()
       .config(config)
@@ -121,20 +151,23 @@ public class UsersClient {
   public void deleteAllUsers() {
     deleteUsers("cql.allRecords=1");
   }
-
   public void updateUser(@NonNull User user) {
     attemptToUpdateUser(user)
       .statusCode(HTTP_NO_CONTENT);
   }
 
   public ValidatableResponse attemptToUpdateUser(@NonNull User user) {
+    return attemptToUpdateUser(user.getId(), user);
+  }
+
+  public ValidatableResponse attemptToUpdateUser(String id, @NonNull User user) {
     return given()
       .config(config)
       .spec(requestSpecification)
       .contentType(JSON)
       .when()
       .body(user)
-      .put("/users/{id}", Map.of("id", user.getId()))
+      .put("/users/{id}", Map.of("id", id))
       .then();
   }
 }

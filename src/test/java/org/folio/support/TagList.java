@@ -12,9 +12,6 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Personal {
-  String lastName;
-  String firstName;
-  String preferredFirstName;
-  List<Address> addresses;
+public class TagList {
+  List<String> tagList;
 }

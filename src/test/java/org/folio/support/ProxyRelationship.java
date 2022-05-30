@@ -1,7 +1,5 @@
 package org.folio.support;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Builder;
@@ -12,9 +10,8 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Personal {
-  String lastName;
-  String firstName;
-  String preferredFirstName;
-  List<Address> addresses;
+public class ProxyRelationship {
+  String id;
+  String userId;
+  String proxyUserId;
 }

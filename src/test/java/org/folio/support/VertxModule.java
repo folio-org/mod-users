@@ -33,6 +33,10 @@ public class VertxModule {
     return vertx.deployVerticle(RestVerticle.class.getName(), options);
   }
 
+  public Future<Void> enableModule(@NonNull OkapiHeaders headers) {
+    return enableModule(headers, false, false);
+  }
+
   public Future<Void> enableModule(@NonNull OkapiHeaders headers,
     @NonNull Boolean loadReferenceData, @NonNull Boolean loadSampleData) {
 

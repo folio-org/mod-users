@@ -13,7 +13,10 @@ import lombok.extern.jackson.Jacksonized;
 public class User {
   String id;
   String username;
+  String barcode;
   Boolean active;
   Personal personal;
   String patronGroup;
+  TagList tags;
+  Metadata metadata;
 }
