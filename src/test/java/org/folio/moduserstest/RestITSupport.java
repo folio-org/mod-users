@@ -15,7 +15,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.client.HttpRequest;
@@ -61,13 +60,13 @@ class RestITSupport {
    * Fail the context if response does not have the provided status.
    */
 
-  static void assertStatus(TestContext context, HttpResponse<Buffer> response, int status) {
-    if (response.statusCode() == status) {
+  static void assertStatus(TestContext context, HttpResponse<Buffer> response) {
+    if (response.statusCode() == HTTP_NO_CONTENT) {
       return;
     }
     StackTraceElement [] stacktrace = new Throwable().getStackTrace();
     // remove the element with this assertStatus method from the stacktrace
-    fail(context, "Expected status " + status + " but got",
+    fail(context, "Expected status " + HTTP_NO_CONTENT + " but got",
       response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
   }
 
@@ -111,7 +110,7 @@ class RestITSupport {
       req.sendBuffer(Buffer.buffer(body), promise);
 
     return promise.future().map(res -> {
-      assertStatus(context, res, HTTP_NO_CONTENT);
+      assertStatus(context, res);
       return null;
     });
   }
@@ -125,27 +124,9 @@ class RestITSupport {
       .send(promise);
 
     return promise.future().map(res -> {
-      assertStatus(context, res, HTTP_NO_CONTENT);
+      assertStatus(context, res);
       return null;
     });
   }
 
-  static Future<HttpResponse<Buffer>> get(String requestUrl) {
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-
-    client.get(port, LOCALHOST, requestUrl)
-      .putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .send(promise);
-
-    return promise.future();
-  }
-
-  static Future<JsonObject> getJson(TestContext context, String requestUrl) {
-    return get(requestUrl).map(res -> {
-      RestITSupport.assertStatus(context, res, HTTP_OK);
-      return res.bodyAsJsonObject();
-    });
-  }
 }

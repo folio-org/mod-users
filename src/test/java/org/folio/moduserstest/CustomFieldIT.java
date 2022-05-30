@@ -1,10 +1,8 @@
 package org.folio.moduserstest;
 
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
-import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
-import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -25,11 +23,13 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
+import org.folio.support.http.CustomFieldsClient;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.folio.test.util.TokenTestUtil;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
@@ -43,9 +43,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -87,6 +85,7 @@ public class CustomFieldIT {
 
   private static Vertx vertx;
   private static UsersClient usersClient;
+  private static CustomFieldsClient customFieldsClient;
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
@@ -107,6 +106,7 @@ public class CustomFieldIT {
     final var headers = new OkapiHeaders(okapiUrl, tenant, token);
 
     usersClient = new UsersClient(okapiUrl, headers);
+    customFieldsClient = new CustomFieldsClient(okapiUrl, headers);
 
     RestITSupport.setUp(port);
 
@@ -124,6 +124,11 @@ public class CustomFieldIT {
       ta.setParameters(parameters);
       TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
     }));
+  }
+
+  @Before
+  public void before() {
+    usersClient.deleteAllUsers();
   }
 
   @Test
@@ -149,8 +154,7 @@ public class CustomFieldIT {
     postUser()
       .compose(v -> postCustomField())
       .compose(v -> putCustomField(context))
-      .compose(v -> queryCustomField(context))
-      .compose(this::assertCustomFieldValues)
+      .compose(v -> queryCustomField())
       .compose(v -> deleteUser(joeBlockId))
       .compose(v -> deleteCustomField(context))
       .onComplete(testResultHandler(context, async));
@@ -268,30 +272,19 @@ public class CustomFieldIT {
     return Future.succeededFuture();
   }
 
-  private Future<Void> assertCustomFieldValues(JsonObject result) {
-    Promise<Void> promise = Promise.promise();
-    int totalRecords = result.getInteger("totalRecords");
-    if (totalRecords != 1) {
-      promise.fail("Expected 1 record, got " + totalRecords);
-    }
-    JsonArray customFields = result.getJsonArray("customFields");
-    JsonObject customField = customFields.getJsonObject(0);
-    assertThat(customField.getString("entityType"), is("user"));
-
-    promise.complete();
-    return promise.future();
-  }
-
   private Future<Void> deleteCustomField(TestContext context) {
     log.info("Deleting existing custom field\n");
     return deleteWithNoContentStatus(context, customFieldsPath + "/" + customFieldId);
   }
 
-  private Future<JsonObject> queryCustomField(TestContext context) {
-    String requestUrl = customFieldsPath + "?query=" + urlEncode("entityType==user");
-    log.info("Getting custom field via CQL, by entityType\n");
+  private Future<Void> queryCustomField() {
+    final var customFields = customFieldsClient.getCustomFields(
+      "entityType==user");
 
-    return getJson(context, requestUrl);
+    assertThat(customFields.getTotalRecords(), is(1));
+    assertThat(customFields.getCustomFields().get(0).getEntityType(), is("user"));
+
+    return Future.succeededFuture();
   }
 
   private Future<Void> postCustomField() {
