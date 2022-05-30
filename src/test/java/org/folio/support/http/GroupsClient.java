@@ -9,7 +9,6 @@ import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
 
 public class GroupsClient {
-
   private final RestAssuredCollectionApiClient<Group, Groups> client;
 
   public GroupsClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
