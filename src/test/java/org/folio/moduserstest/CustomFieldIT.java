@@ -1,6 +1,5 @@
 package org.folio.moduserstest;
 
-import static io.vertx.core.json.Json.encode;
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.folio.moduserstest.RestITSupport.getJson;
 import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
@@ -8,7 +7,6 @@ import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.folio.util.StringUtil.urlEncode;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -136,7 +134,7 @@ public class CustomFieldIT {
       .compose(v -> postCustomField())
       .compose(v -> postUserWithInvalidCustomFieldValueLength())
       .compose(v -> postUserWithCustomFields())
-      .compose(v -> getUserWithCustomFields(context))
+      .compose(v -> getUserWithCustomFields())
       .compose(v -> deleteUser(johnRectangleId))
       .compose(v -> putUserWithNotExistingCustomField())
       .compose(v -> postUserWithNotExistingCustomField())
@@ -212,20 +210,15 @@ public class CustomFieldIT {
     return Future.succeededFuture();
   }
 
-  private Future<Void> getUserWithCustomFields(TestContext context) {
+  private Future<Void> getUserWithCustomFields() {
     log.info("Retrieving a user with custom fields\n");
 
-    Future<JsonObject> future = getJson(context, "/users/" + johnRectangleId);
+    final var user = usersClient.getUser(johnRectangleId);
 
-    return future.map(user -> {
-      JsonObject customFields = user.getJsonObject("customFields");
+    assertThat(user.getCustomFields().size(), is(1));
+    assertThat(user.getCustomFields().get("department"), is("Math"));
 
-      if (customFields == null || !customFields.encode().equals("{\"department\":\"Math\"}")) {
-        fail("Bad value for customFields. " + encode(customFields));
-      }
-
-      return null;
-    });
+    return Future.succeededFuture();
   }
 
   private Future<Void> putUserWithNotExistingCustomField() {
