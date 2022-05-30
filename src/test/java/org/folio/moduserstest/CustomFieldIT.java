@@ -27,6 +27,10 @@ import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
+import org.folio.support.http.FakeTokenGenerator;
+import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
+import org.folio.support.http.UsersClient;
 import org.folio.test.util.TokenTestUtil;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -51,6 +55,7 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
+import lombok.SneakyThrows;
 
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -86,19 +91,32 @@ public class CustomFieldIT {
 
 
   private static Vertx vertx;
+  private static UsersClient usersClient;
 
   @Rule
   public Timeout rule = Timeout.seconds(20);
 
   @BeforeClass
+  @SneakyThrows
   public static void setup(TestContext context) {
+    final var tenant = "diku";
+    final var token = new FakeTokenGenerator().generateToken();
+
     vertx = Vertx.vertx();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
-    Integer port = NetworkUtils.nextFreePort();
+    final var port = NetworkUtils.nextFreePort();
+
+    final var okapiUrl = new OkapiUrl("http://localhost:" + port);
+    final var headers = new OkapiHeaders(okapiUrl, tenant, token);
+
+    usersClient = new UsersClient(okapiUrl, headers);
+
     RestITSupport.setUp(port);
-    TenantClient tenantClient = new TenantClient("http://localhost:" + Integer.toString(port), "diku", "diku");
+
+    TenantClient tenantClient = new TenantClient("http://localhost:" + port, tenant, token);
+
     DeploymentOptions options = new DeploymentOptions()
         .setConfig(new JsonObject().put("http.port", port));
 
@@ -122,10 +140,10 @@ public class CustomFieldIT {
       .compose(v -> postUserWithInvalidCustomFieldValueLength(context))
       .compose(v -> postUserWithCustomFields())
       .compose(v -> getUserWithCustomFields(context))
-      .compose(v -> deleteUser(context, johnRectangleId))
+      .compose(v -> deleteUser(johnRectangleId))
       .compose(v -> putUserWithNotExistingCustomField(context))
       .compose(v -> postUserWithNotExistingCustomField(context))
-      .compose(v -> deleteUser(context, joeBlockId))
+      .compose(v -> deleteUser(joeBlockId))
       .compose(v -> deleteCustomField(context))
       .onComplete(testResultHandler(context, async));
   }
@@ -136,8 +154,9 @@ public class CustomFieldIT {
     postUser()
       .compose(v -> postCustomField())
       .compose(v -> putCustomField(context))
-      .compose(v -> queryCustomField(context)).compose(this::assertCustomFieldValues)
-      .compose(v -> deleteUser(context, joeBlockId))
+      .compose(v -> queryCustomField(context))
+      .compose(this::assertCustomFieldValues)
+      .compose(v -> deleteUser(joeBlockId))
       .compose(v -> deleteCustomField(context))
       .onComplete(testResultHandler(context, async));
   }
@@ -313,9 +332,9 @@ public class CustomFieldIT {
     return putWithNoContentStatus(context, joeBlockId, customFieldsPath + "/" + customFieldId, putCustomField, FAKE_TOKEN);
   }
 
-  private Future<Void> deleteUser(TestContext context, String userId) {
-    log.info("Deleting existing user\n");
-    return deleteWithNoContentStatus(context, "/users/" + userId);
-  }
+  private Future<Void> deleteUser(String userId) {
+    usersClient.deleteUser(userId);
 
+    return Future.succeededFuture();
+  }
 }
