@@ -1,16 +1,12 @@
 package org.folio.rest.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.List;
 import java.util.Map;
+
 import javax.ws.rs.core.Response;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.ProxiesFor;
 import org.folio.rest.jaxrs.model.ProxyforCollection;
@@ -20,6 +16,11 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.ValidationHelper;
+
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 
 /**
  *
@@ -115,26 +116,22 @@ public class ProxiesForAPI implements Proxiesfor {
     PgUtil.put(PROXY_FOR_TABLE, entity, id, okapiHeaders, vertxContext, PutProxiesforByIdResponse.class, asyncResultHandler);
   }
 
-  Future<Boolean> userAndProxyUserComboExists(
-      String userId,
-      String proxyUserId,
-      PostgresClient postgresClient) {
+  Future<Boolean> userAndProxyUserComboExists(String userId, String proxyUserId,
+    PostgresClient postgresClient) {
 
-    Promise<Boolean> promise = Promise.promise();
     Criteria userCrit = new Criteria().addField(USERID_FIELD_NAME).
       setOperation("=").setVal(userId).setJSONB(true);
+
     Criteria proxyUserCrit = new Criteria().addField(PROXY_USERID_FIELD_NAME).
       setOperation("=").setVal(proxyUserId).setJSONB(true);
+
     Criterion criterion = new Criterion();
     criterion.addCriterion(userCrit, "AND", proxyUserCrit);
-    postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true, getReply -> {
-      if (getReply.failed()) {
-        promise.fail(getReply.cause());
-      } else {
-        List<ProxiesFor> proxyForList = getReply.result().getResults();
-        promise.complete(! proxyForList.isEmpty());
-      }
-    });
-    return promise.future();
+
+    return postgresClient.get(PROXY_FOR_TABLE, ProxiesFor.class, criterion, true)
+      .map(results -> {
+        List<ProxiesFor> proxyForList = results.getResults();
+        return !proxyForList.isEmpty();
+      });
   }
 }
