@@ -37,7 +37,6 @@ import lombok.SneakyThrows;
 public class CustomFieldIT {
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
-  private static final String notExistingCustomField = "notExistingCustomField";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
 
   private static UsersClient usersClient;
@@ -72,6 +71,55 @@ public class CustomFieldIT {
     customFieldsClient.deleteAllCustomFields();
   }
 
+  @Test
+  void cannotCreateUserWithCustomFieldThatDoesNotExist() {
+    final var userToCreate = User.builder()
+      .username("some-user")
+      .customFields(Map.of("does-not-exist", "abc"));
+
+    final var errors = usersClient.attemptToCreateUser(userToCreate
+      .build())
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().size(), is(1));
+
+    final var firstError = errors.getErrors().get(0);
+
+    assertThat(firstError.getMessage(),
+      is("Custom field with refId does-not-exist is not found"));
+
+    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
+    assertThat(firstError.getParameters().get(0).getValue(), is("does-not-exist"));
+  }
+
+  @Test
+  void cannotAssignCustomFieldThatDoesNotExistToAUser() {
+    final var createdUser = usersClient.createUser(User.builder()
+        .username("some-user")
+      .build());
+
+    final var userToUpdate = User.builder()
+      .id(createdUser.getId())
+      .username("some-user")
+      .customFields(Map.of("does-not-exist", "abc"))
+      .build();
+
+    final var errors = usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().size(), is(1));
+
+    final var firstError = errors.getErrors().get(0);
+
+    assertThat(firstError.getMessage(),
+      is("Custom field with refId does-not-exist is not found"));
+
+    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
+    assertThat(firstError.getParameters().get(0).getValue(), is("does-not-exist"));
+  }
+
   @Order(1)
   @Test
   void test1Sequential() {
@@ -81,8 +129,6 @@ public class CustomFieldIT {
       .compose(v -> postUserWithCustomFields())
       .compose(v -> getUserWithCustomFields())
       .compose(v -> deleteUser(johnRectangleId))
-      .compose(v -> putUserWithNotExistingCustomField())
-      .compose(v -> postUserWithNotExistingCustomField())
       .compose(v -> deleteUser(joeBlockId))
       .compose(v -> deleteCustomField());
   }
@@ -146,53 +192,6 @@ public class CustomFieldIT {
 
     assertThat(user.getCustomFields().size(), is(1));
     assertThat(user.getCustomFields().get("department"), is("Math"));
-
-    return Future.succeededFuture();
-  }
-
-  private Future<Void> putUserWithNotExistingCustomField() {
-    final var userToCreate = User.builder()
-      .id(johnRectangleId)
-      .username("johnRectangle")
-      .active(true)
-      .customFields(Map.of(notExistingCustomField, "abc"))
-      .build();
-
-    final var errors = usersClient.attemptToUpdateUser(userToCreate)
-      .statusCode(is(422))
-      .extract().as(ValidationErrors.class);
-
-    assertThat(errors.getErrors().size(), is(1));
-    final var firstError = errors.getErrors().get(0);
-
-    assertThat(firstError.getMessage(),
-      is("Custom field with refId notExistingCustomField is not found"));
-    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
-    assertThat(firstError.getParameters().get(0).getValue(), is(notExistingCustomField));
-
-    return Future.succeededFuture();
-  }
-
-  private Future<Void> postUserWithNotExistingCustomField() {
-    final var userToCreate = User.builder()
-      .id(johnRectangleId)
-      .username("johnRectangle")
-      .active(true)
-      .customFields(Map.of(notExistingCustomField, "abc"))
-      .build();
-
-    final var errors = usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(is(422))
-      .extract().as(ValidationErrors.class);
-
-    assertThat(errors.getErrors().size(), is(1));
-    final var firstError = errors.getErrors().get(0);
-
-    assertThat(firstError.getMessage(),
-      is("Custom field with refId notExistingCustomField is not found"));
-
-    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
-    assertThat(firstError.getParameters().get(0).getValue(), is(notExistingCustomField));
 
     return Future.succeededFuture();
   }
