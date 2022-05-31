@@ -1,68 +1,53 @@
 package org.folio.moduserstest;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.RestVerticle;
-import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.Parameter;
-import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.rest.utils.TenantInit;
 import org.folio.support.CustomField;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
+import org.folio.support.VertxModule;
 import org.folio.support.http.CustomFieldsClient;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.Timeout;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
-@RunWith(VertxUnitRunner.class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Timeout(value = 20, timeUnit = SECONDS)
+@ExtendWith(VertxExtension.class)
 public class CustomFieldIT {
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String notExistingCustomField = "notExistingCustomField";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
 
-  private static Vertx vertx;
   private static UsersClient usersClient;
   private static CustomFieldsClient customFieldsClient;
 
-  @Rule
-  public Timeout rule = Timeout.seconds(20);
-
-  @BeforeClass
+  @BeforeAll
   @SneakyThrows
-  public static void setup(TestContext context) {
+  public static void beforeAll(Vertx vertx, VertxTestContext context) {
     final var tenant = "diku";
     final var token = new FakeTokenGenerator().generateToken();
-
-    vertx = Vertx.vertx();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
@@ -74,30 +59,22 @@ public class CustomFieldIT {
     usersClient = new UsersClient(okapiUrl, headers);
     customFieldsClient = new CustomFieldsClient(okapiUrl, headers);
 
-    TenantClient tenantClient = new TenantClient("http://localhost:" + port, tenant, token);
+    final var module = new VertxModule(vertx);
 
-    DeploymentOptions options = new DeploymentOptions()
-        .setConfig(new JsonObject().put("http.port", port));
-
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess(res -> {
-      TenantAttributes ta = new TenantAttributes();
-      ta.setModuleTo("mod-users-1.0.0");
-      List<Parameter> parameters = new LinkedList<>();
-      parameters.add(new Parameter().withKey("loadReference").withValue("true"));
-      parameters.add(new Parameter().withKey("loadSample").withValue("false"));
-      ta.setParameters(parameters);
-      TenantInit.init(tenantClient, ta).onComplete(context.asyncAssertSuccess());
-    }));
+    module.deployModule(port)
+      .compose(res -> module.enableModule(headers))
+      .onComplete(context.succeedingThenComplete());
   }
 
-  @Before
-  public void before() {
+  @BeforeEach
+  public void beforeEach() {
     usersClient.deleteAllUsers();
     customFieldsClient.deleteAllCustomFields();
   }
 
+  @Order(1)
   @Test
-  public void test1Sequential() {
+  void test1Sequential() {
     postUser()
       .compose(v -> postCustomField())
       .compose(v -> postUserWithInvalidCustomFieldValueLength())
@@ -110,8 +87,9 @@ public class CustomFieldIT {
       .compose(v -> deleteCustomField());
   }
 
+  @Order(2)
   @Test
-  public void test4CustomFields() {
+  void test4CustomFields() {
     postUser()
       .compose(v -> postCustomField())
       .compose(v -> putCustomField())
