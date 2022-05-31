@@ -33,13 +33,10 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.SneakyThrows;
@@ -100,9 +97,7 @@ public class CustomFieldIT {
   }
 
   @Test
-  public void test1Sequential(TestContext context) {
-    Async async = context.async();
-
+  public void test1Sequential() {
     postUser()
       .compose(v -> postCustomField())
       .compose(v -> postUserWithInvalidCustomFieldValueLength())
@@ -112,31 +107,17 @@ public class CustomFieldIT {
       .compose(v -> putUserWithNotExistingCustomField())
       .compose(v -> postUserWithNotExistingCustomField())
       .compose(v -> deleteUser(joeBlockId))
-      .compose(v -> deleteCustomField())
-      .onComplete(testResultHandler(context, async));
+      .compose(v -> deleteCustomField());
   }
 
   @Test
-  public void test4CustomFields(TestContext context) {
-    Async async = context.async();
+  public void test4CustomFields() {
     postUser()
       .compose(v -> postCustomField())
       .compose(v -> putCustomField())
       .compose(v -> queryCustomField())
       .compose(v -> deleteUser(joeBlockId))
-      .compose(v -> deleteCustomField())
-      .onComplete(testResultHandler(context, async));
-  }
-
-  private Handler<AsyncResult<Void>> testResultHandler(TestContext context, Async async) {
-    return res -> {
-      if (res.succeeded()) {
-        async.complete();
-      } else {
-        res.cause().printStackTrace();
-        context.fail(res.cause());
-      }
-    };
+      .compose(v -> deleteCustomField());
   }
 
   private Future<Void> postUser() {
