@@ -1,7 +1,6 @@
 package org.folio.moduserstest;
 
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
-import static org.folio.moduserstest.RestITSupport.postWithOkStatus;
 import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,6 +20,7 @@ import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.rest.utils.TenantInit;
+import org.folio.support.CustomField;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.CustomFieldsClient;
@@ -65,14 +65,6 @@ public class CustomFieldIT {
 
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
 
-  private static final String postCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
-    "\"name\": \"Department\", " +
-    "\"visible\": true, " +
-    "\"required\": true, " +
-    "\"helpText\": \"Provide a department\", " +
-    "\"entityType\": \"user\", " +
-    "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1 }";
   private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
     "\"name\": \"Department updated\", " +
     "\"visible\": false, " +
@@ -81,8 +73,7 @@ public class CustomFieldIT {
     "\"entityType\": \"user\", " +
     "\"type\": \"TEXTBOX_SHORT\", " +
     "\"order\": 1 }";
-
-
+  
   private static Vertx vertx;
   private static UsersClient usersClient;
   private static CustomFieldsClient customFieldsClient;
@@ -288,8 +279,22 @@ public class CustomFieldIT {
   }
 
   private Future<Void> postCustomField() {
-    log.info("Creating a new custom field definition\n");
-    return postWithOkStatus(joeBlockId, customFieldsPath, postCustomField, FAKE_TOKEN);
+    final var creatingUser = usersClient.createUser(User.builder()
+      .username("some-user")
+      .build());
+
+    customFieldsClient.createCustomField(CustomField.builder()
+      .id("524d3210-9ca2-4f91-87b4-d2227d595aaa")
+      .name("Department")
+      .visible(true)
+      .required(true)
+      .helpText("Provide a department")
+      .entityType("user")
+      .type("TEXTBOX_SHORT")
+      .order(1)
+      .build(), creatingUser);
+
+    return Future.succeededFuture();
   }
 
   private Future<Void> putCustomField(TestContext context) {
