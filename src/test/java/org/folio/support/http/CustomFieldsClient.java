@@ -2,6 +2,7 @@ package org.folio.support.http;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 
 import org.folio.support.CustomField;
 import org.folio.support.CustomFields;
@@ -20,16 +21,16 @@ public class CustomFieldsClient {
    * Creates a custom field
    *
    * @param customField the custom field to create
-   * @param createdByUser the user needed to create it, as custom fields specifically
-   *                      requires that a user exist and be referenced when creating
-   *                      a custom field this way
+   * @param creatingUser the user needed to create the custom field,
+   *                     as custom fields specifically requires that a user exist
+   *                     and be referenced when creating a custom field this way
    * @return the created custom field
    */
-  public CustomField createCustomField(CustomField customField, User createdByUser) {
+  public CustomField createCustomField(CustomField customField, User creatingUser) {
     return client.initialSpecification()
       .header("X-Okapi-Token", TokenTestUtil.generateToken(
-      createdByUser.getUsername(), createdByUser.getId()))
-      .header("X-Okapi-User-Id", createdByUser.getId())
+      creatingUser.getUsername(), creatingUser.getId()))
+      .header("X-Okapi-User-Id", creatingUser.getId())
       .contentType(JSON)
       .when()
       .body(customField)
@@ -37,6 +38,27 @@ public class CustomFieldsClient {
       .then()
       .statusCode(HTTP_CREATED)
       .extract().as(CustomField.class);
+  }
+
+  /**
+   * Update an existing custom field
+   *
+   * @param customField the custom field to create
+   * @param updatingUser the user needed to update the custom field,
+   *                     as custom fields specifically requires that a user exist
+   *                     and be referenced when creating a custom field this way
+   */
+  public void updateCustomField(CustomField customField, User updatingUser) {
+    client.initialSpecification()
+      .header("X-Okapi-Token", TokenTestUtil.generateToken(
+        updatingUser.getUsername(), updatingUser.getId()))
+      .header("X-Okapi-User-Id", updatingUser.getId())
+      .contentType(JSON)
+      .when()
+      .body(customField)
+      .put("/{id}", customField.getId())
+      .then()
+      .statusCode(HTTP_NO_CONTENT);
   }
 
   public CustomFields getCustomFields(String cqlQuery) {
