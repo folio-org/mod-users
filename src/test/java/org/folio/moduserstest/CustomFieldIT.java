@@ -96,6 +96,7 @@ public class CustomFieldIT {
   @Before
   public void before() {
     usersClient.deleteAllUsers();
+    customFieldsClient.deleteAllCustomFields();
   }
 
   @Test
