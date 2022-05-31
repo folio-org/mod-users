@@ -9,6 +9,8 @@ import org.folio.support.CustomFields;
 import org.folio.support.User;
 import org.folio.test.util.TokenTestUtil;
 
+import io.restassured.response.ValidatableResponse;
+
 public class CustomFieldsClient {
   private final RestAssuredCollectionApiClient<CustomField, CustomFields> client;
 
@@ -61,6 +63,10 @@ public class CustomFieldsClient {
       .statusCode(HTTP_NO_CONTENT);
   }
 
+  public ValidatableResponse attemptToGetCustomField(String id) {
+    return client.attemptToGetRecord(id);
+  }
+
   public CustomFields getCustomFields(String cqlQuery) {
     return client.getRecords(cqlQuery);
   }
@@ -71,6 +77,10 @@ public class CustomFieldsClient {
 
   public void deleteCustomField(String id) {
     client.deleteRecord(id);
+  }
+
+  public ValidatableResponse attemptToDeleteCustomField(String id) {
+    return client.attemptToDeleteRecord(id);
   }
 
   public void deleteAllCustomFields() {

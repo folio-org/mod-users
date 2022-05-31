@@ -1,5 +1,7 @@
 package org.folio.moduserstest;
 
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -120,6 +122,54 @@ public class CustomFieldIT {
     assertThat(firstError.getParameters().get(0).getValue(), is("does-not-exist"));
   }
 
+  @Test
+  void canDeleteACustomField() {
+    final var maintainingUser = usersClient.createUser(User.builder()
+      .username("some-user")
+      .build());
+
+    final var createdCustomField = customFieldsClient.createCustomField(
+      CustomField.builder()
+        .name("Department")
+        .helpText("Provide a department")
+        .entityType("user")
+        .type("TEXTBOX_SHORT")
+        .build(), maintainingUser);
+
+    customFieldsClient.attemptToDeleteCustomField(createdCustomField.getId())
+      .statusCode(is(HTTP_NO_CONTENT));
+
+    customFieldsClient.attemptToGetCustomField(createdCustomField.getId())
+      .statusCode(is(HTTP_NOT_FOUND));
+  }
+
+  @Test
+  void valuesAreRemovedWhenCustomFieldIsDeleted() {
+    final var maintainingUser = usersClient.createUser(User.builder()
+      .username("maintaining-user")
+      .build());
+
+    final var createdCustomField = customFieldsClient.createCustomField(
+      CustomField.builder()
+        .name("Department")
+        .helpText("Provide a department")
+        .entityType("user")
+        .type("TEXTBOX_SHORT")
+        .build(), maintainingUser);
+
+    final var assignedUser = usersClient.createUser(User.builder()
+      .username("some-user")
+      .customFields(Map.of("department", "History"))
+      .build());
+
+    customFieldsClient.attemptToDeleteCustomField(createdCustomField.getId())
+      .statusCode(is(HTTP_NO_CONTENT));
+
+    final var updatedUser = usersClient.getUser(assignedUser.getId());
+
+    assertThat(updatedUser.getCustomFields().size(), is(0));
+  }
+
   @Order(1)
   @Test
   void test1Sequential() {
@@ -127,10 +177,7 @@ public class CustomFieldIT {
       .compose(v -> postCustomField())
       .compose(v -> postUserWithInvalidCustomFieldValueLength())
       .compose(v -> postUserWithCustomFields())
-      .compose(v -> getUserWithCustomFields())
-      .compose(v -> deleteUser(johnRectangleId))
-      .compose(v -> deleteUser(joeBlockId))
-      .compose(v -> deleteCustomField());
+      .compose(v -> getUserWithCustomFields());
   }
 
   @Order(2)
@@ -139,9 +186,7 @@ public class CustomFieldIT {
     postUser()
       .compose(v -> postCustomField())
       .compose(v -> putCustomField())
-      .compose(v -> queryCustomField())
-      .compose(v -> deleteUser(joeBlockId))
-      .compose(v -> deleteCustomField());
+      .compose(v -> queryCustomField());
   }
 
   private Future<Void> postUser() {
@@ -196,12 +241,6 @@ public class CustomFieldIT {
     return Future.succeededFuture();
   }
 
-  private Future<Void> deleteCustomField() {
-    customFieldsClient.deleteCustomField(customFieldId);
-
-    return Future.succeededFuture();
-  }
-
   private Future<Void> queryCustomField() {
     final var customFields = customFieldsClient.getCustomFields(
       "entityType==user");
@@ -246,12 +285,6 @@ public class CustomFieldIT {
       .type("TEXTBOX_SHORT")
       .order(1)
       .build(), updatingUser);
-
-    return Future.succeededFuture();
-  }
-
-  private Future<Void> deleteUser(String userId) {
-    usersClient.deleteUser(userId);
 
     return Future.succeededFuture();
   }
