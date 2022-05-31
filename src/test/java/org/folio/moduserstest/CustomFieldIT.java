@@ -1,7 +1,6 @@
 package org.folio.moduserstest;
 
 import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
-import static org.folio.moduserstest.RestITSupport.putWithNoContentStatus;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -28,7 +27,6 @@ import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
-import org.folio.test.util.TokenTestUtil;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -38,7 +36,6 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
-import io.restassured.http.Header;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -58,21 +55,8 @@ public class CustomFieldIT {
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String notExistingCustomField = "notExistingCustomField";
-
-  private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("joeBlock", joeBlockId);
-
   private static final String customFieldsPath = "/custom-fields";
-
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
-
-  private static final String putCustomField = "{\"id\": \"524d3210-9ca2-4f91-87b4-d2227d595aaa\", " +
-    "\"name\": \"Department updated\", " +
-    "\"visible\": false, " +
-    "\"required\": true, " +
-    "\"helpText\": \"Provide a department\", " +
-    "\"entityType\": \"user\", " +
-    "\"type\": \"TEXTBOX_SHORT\", " +
-    "\"order\": 1 }";
   
   private static Vertx vertx;
   private static UsersClient usersClient;
@@ -144,7 +128,7 @@ public class CustomFieldIT {
     Async async = context.async();
     postUser()
       .compose(v -> postCustomField())
-      .compose(v -> putCustomField(context))
+      .compose(v -> putCustomField())
       .compose(v -> queryCustomField())
       .compose(v -> deleteUser(joeBlockId))
       .compose(v -> deleteCustomField(context))
@@ -284,7 +268,7 @@ public class CustomFieldIT {
       .build());
 
     customFieldsClient.createCustomField(CustomField.builder()
-      .id("524d3210-9ca2-4f91-87b4-d2227d595aaa")
+      .id(customFieldId)
       .name("Department")
       .visible(true)
       .required(true)
@@ -297,9 +281,23 @@ public class CustomFieldIT {
     return Future.succeededFuture();
   }
 
-  private Future<Void> putCustomField(TestContext context) {
-    log.info("Update custom field definition\n");
-    return putWithNoContentStatus(context, joeBlockId, customFieldsPath + "/" + customFieldId, putCustomField, FAKE_TOKEN);
+  private Future<Void> putCustomField() {
+    final var updatingUser = usersClient.createUser(User.builder()
+      .username("some-other-user")
+      .build());
+
+    customFieldsClient.updateCustomField(CustomField.builder()
+      .id(customFieldId)
+      .name("Department updated")
+      .visible(false)
+      .required(true)
+      .helpText("Provide a department")
+      .entityType("user")
+      .type("TEXTBOX_SHORT")
+      .order(1)
+      .build(), updatingUser);
+
+    return Future.succeededFuture();
   }
 
   private Future<Void> deleteUser(String userId) {
