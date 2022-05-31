@@ -1,6 +1,5 @@
 package org.folio.moduserstest;
 
-import static org.folio.moduserstest.RestITSupport.deleteWithNoContentStatus;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -9,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
@@ -50,14 +47,11 @@ import lombok.SneakyThrows;
 @RunWith(VertxUnitRunner.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class CustomFieldIT {
-
-  private static final Logger log = LogManager.getLogger(CustomFieldIT.class);
   private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String notExistingCustomField = "notExistingCustomField";
-  private static final String customFieldsPath = "/custom-fields";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
-  
+
   private static Vertx vertx;
   private static UsersClient usersClient;
   private static CustomFieldsClient customFieldsClient;
@@ -82,8 +76,6 @@ public class CustomFieldIT {
 
     usersClient = new UsersClient(okapiUrl, headers);
     customFieldsClient = new CustomFieldsClient(okapiUrl, headers);
-
-    RestITSupport.setUp(port);
 
     TenantClient tenantClient = new TenantClient("http://localhost:" + port, tenant, token);
 
@@ -119,7 +111,7 @@ public class CustomFieldIT {
       .compose(v -> putUserWithNotExistingCustomField())
       .compose(v -> postUserWithNotExistingCustomField())
       .compose(v -> deleteUser(joeBlockId))
-      .compose(v -> deleteCustomField(context))
+      .compose(v -> deleteCustomField())
       .onComplete(testResultHandler(context, async));
   }
 
@@ -131,7 +123,7 @@ public class CustomFieldIT {
       .compose(v -> putCustomField())
       .compose(v -> queryCustomField())
       .compose(v -> deleteUser(joeBlockId))
-      .compose(v -> deleteCustomField(context))
+      .compose(v -> deleteCustomField())
       .onComplete(testResultHandler(context, async));
   }
 
@@ -190,8 +182,6 @@ public class CustomFieldIT {
   }
 
   private Future<Void> getUserWithCustomFields() {
-    log.info("Retrieving a user with custom fields\n");
-
     final var user = usersClient.getUser(johnRectangleId);
 
     assertThat(user.getCustomFields().size(), is(1));
@@ -247,9 +237,10 @@ public class CustomFieldIT {
     return Future.succeededFuture();
   }
 
-  private Future<Void> deleteCustomField(TestContext context) {
-    log.info("Deleting existing custom field\n");
-    return deleteWithNoContentStatus(context, customFieldsPath + "/" + customFieldId);
+  private Future<Void> deleteCustomField() {
+    customFieldsClient.deleteCustomField(customFieldId);
+
+    return Future.succeededFuture();
   }
 
   private Future<Void> queryCustomField() {

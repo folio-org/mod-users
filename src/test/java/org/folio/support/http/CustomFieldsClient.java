@@ -64,4 +64,8 @@ public class CustomFieldsClient {
   public CustomFields getCustomFields(String cqlQuery) {
     return client.getRecords(cqlQuery);
   }
+
+  public void deleteCustomField(String id) {
+    client.deleteRecord(id);
+  }
 }
