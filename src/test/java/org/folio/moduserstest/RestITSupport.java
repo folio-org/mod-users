@@ -1,8 +1,6 @@
 package org.folio.moduserstest;
 
-import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 
@@ -20,7 +18,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.client.predicate.ResponsePredicateResult;
 import junit.framework.AssertionFailedError;
 
 /**
@@ -68,31 +65,6 @@ class RestITSupport {
     // remove the element with this assertStatus method from the stacktrace
     fail(context, "Expected status " + HTTP_NO_CONTENT + " but got",
       response, Arrays.copyOfRange(stacktrace, 1, stacktrace.length));
-  }
-
-  static Future<Void> postWithOkStatus(String userId, String request, String body) {
-    return postWithOkStatus(userId, request, body, new Header[0]);
-  }
-
-  static Future<Void> postWithOkStatus(String userId, String request, String body, Header ...headers) {
-    Promise<HttpResponse<Buffer>> promise = Promise.promise();
-    HttpRequest<Buffer> req = client.post(port, LOCALHOST, request);
-       req.putHeader(OKAPI_HEADER_TENANT, "diku")
-      .putHeader("X-Okapi-Url", RestITSupport.HTTP_LOCALHOST + port)
-      .putHeader(OKAPI_USERID_HEADER, userId)
-      .putHeader("content-type", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF)
-      .putHeader("accept", RestITSupport.SUPPORTED_CONTENT_TYPE_JSON_DEF);
-
-      Arrays.stream(headers).forEach(h->req.putHeader(h.getName(), h.getValue()));
-
-      req.expect(res ->
-        res.statusCode() >= HTTP_OK && res.statusCode() < HTTP_MULT_CHOICE
-              ? ResponsePredicateResult.success()
-              : ResponsePredicateResult.failure("Got status code: " + res.statusCode())
-      )
-      .sendBuffer(Buffer.buffer(body), promise);
-
-    return promise.future().mapEmpty();
   }
 
   static Future<Void> putWithNoContentStatus(TestContext context, String userId, String request, String body, Header ...headers) {

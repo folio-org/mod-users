@@ -11,6 +11,7 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CustomField {
+  String id;
   String name;
   Boolean visible;
   Boolean required;
