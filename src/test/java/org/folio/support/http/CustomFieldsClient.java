@@ -65,7 +65,18 @@ public class CustomFieldsClient {
     return client.getRecords(cqlQuery);
   }
 
+  private CustomFields getAllCustomFields() {
+    return client.getAllRecords();
+  }
+
   public void deleteCustomField(String id) {
     client.deleteRecord(id);
+  }
+
+  public void deleteAllCustomFields() {
+    final CustomFields customFields = getAllCustomFields();
+
+    customFields.getCustomFields()
+      .forEach(field -> deleteCustomField(field.getId()));
   }
 }
