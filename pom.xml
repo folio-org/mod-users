@@ -144,6 +144,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.folio.okapi</groupId>
+      <artifactId>okapi-testing</artifactId>
+      <version>${okapi-testing.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>3.2.4</version>
@@ -499,7 +505,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>33.2.4</raml-module-builder.version>
+    <raml-module-builder.version>34.0.0</raml-module-builder.version>
+    <okapi-testing.version>4.14.1</okapi-testing.version>
     <vertx.version>4.1.4</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.8.1</junit.version>
