@@ -323,6 +323,7 @@ class UsersAPIIT {
       .personal(Personal.builder()
         .firstName("wilson")
         .preferredFirstName("will")
+        .lastName("anderson")
         .build())
       .build());
 
