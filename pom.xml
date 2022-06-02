@@ -146,7 +146,7 @@
     <dependency>
       <groupId>org.folio.okapi</groupId>
       <artifactId>okapi-testing</artifactId>
-      <version>${okapi-testing.version}</version>
+      <version>4.14.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -506,7 +506,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <raml-module-builder.version>34.0.0</raml-module-builder.version>
-    <okapi-testing.version>4.14.1</okapi-testing.version>
     <vertx.version>4.1.4</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.8.1</junit.version>
