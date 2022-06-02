@@ -4,8 +4,6 @@ package org.folio.rest.impl;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 
-import java.net.URI;
-
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -13,6 +11,7 @@ import org.folio.support.User;
 import org.folio.support.VertxModule;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
 import org.folio.test.util.DBTestUtil;
@@ -46,18 +45,17 @@ class PatronPinAPIIT {
 
     final var port = NetworkUtils.nextFreePort();
 
-    final var headers = new OkapiHeaders("http://localhost:" + port,
-      TENANT, token);
+    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
+    final var headers = new OkapiHeaders(okapiUrl, TENANT, token);
 
-    usersClient = new UsersClient(new URI("http://localhost:" + port), headers);
-    patronPinClient = new PatronPinClient(new URI("http://localhost:" + port), headers);
+    usersClient = new UsersClient(okapiUrl, headers);
+    patronPinClient = new PatronPinClient(okapiUrl.asURI(), headers);
 
     final var module = new VertxModule(vertx);
 
     module.deployModule(port)
-      .onComplete(context.succeeding(res -> module.enableModule(headers,
-          false, false)
-        .onComplete(context.succeedingThenComplete())));
+      .compose(res -> module.enableModule(headers)
+      .onComplete(context.succeedingThenComplete()));
   }
 
   @BeforeEach
@@ -121,12 +119,12 @@ class PatronPinAPIIT {
   }
 
   private void enteredPinIsValid(User user, String pin) {
-    patronPinClient.verifyPatronPin(user.getId(), pin)
+    patronPinClient.attemptToVerifyPatronPin(user.getId(), pin)
       .statusCode(is(200));
   }
 
   private void enteredPinIsInvalid(User user, String pin) {
-    patronPinClient.verifyPatronPin(user.getId(), pin)
+    patronPinClient.attemptToVerifyPatronPin(user.getId(), pin)
       .statusCode(is(422));
   }
 
