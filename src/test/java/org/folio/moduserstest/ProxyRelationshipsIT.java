@@ -9,7 +9,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.notNullValue;
 
-import java.net.URI;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -20,6 +19,7 @@ import org.folio.support.ProxyRelationship;
 import org.folio.support.ValidationErrors;
 import org.folio.support.VertxModule;
 import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.ProxiesClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,10 +50,10 @@ class ProxyRelationshipsIT {
 
     int port = NetworkUtils.nextFreePort();
 
-    final var headers = new OkapiHeaders("http://localhost:" + port,
-      "diku", "diku");
+    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
+    final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
 
-    proxiesClient = new ProxiesClient(new URI("http://localhost:" + port), headers);
+    proxiesClient = new ProxiesClient(okapiUrl, headers);
 
     final var module = new VertxModule(vertx);
 
