@@ -337,13 +337,12 @@ class UsersAPIIT {
         .build())
       .build();
 
-    usersClient.createUser(userToFind).getId();
-
+    final var userToFindId = usersClient.createUser(userToFind).getId();
     final var foundUsers = usersClient.getUsers("personal.preferredFirstName==\"jules\"");
 
     assertThat(foundUsers.getTotalRecords(), is(1));
     assertThat(foundUsers.getFirstUser().getUsername(), is("juliab"));
-    assertThat(foundUsers.getFirstUser().getId(), is(userToFind.getId()));
+    assertThat(foundUsers.getFirstUser().getId(), is(userToFindId));
   }
 
   @Test
