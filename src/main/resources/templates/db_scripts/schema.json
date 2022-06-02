@@ -178,6 +178,10 @@
           "tOps" : "ADD"
         },
         {
+          "fieldName" : "personal.preferredFirstName",
+          "tOps" : "ADD"
+        },
+        {
           "fieldName" : "personal.email",
           "tOps" : "ADD"
         },

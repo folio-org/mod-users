@@ -312,6 +312,40 @@ class UsersAPIIT {
   }
 
   @Test
+  void canFindUserByPreferredFirstName() {
+    usersClient.createUser(User.builder()
+      .username("steve")
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("wilson")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("wilson")
+        .preferredFirstName("will")
+        .lastName("anderson")
+        .build())
+      .build());
+
+    final var userToFind = User.builder()
+      .username("juliab")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .build();
+
+    final var userToFindId = usersClient.createUser(userToFind).getId();
+    final var foundUsers = usersClient.getUsers("personal.preferredFirstName==\"jules\"");
+
+    assertThat(foundUsers.getTotalRecords(), is(1));
+    assertThat(foundUsers.getFirstUser().getUsername(), is("juliab"));
+    assertThat(foundUsers.getFirstUser().getId(), is(userToFindId));
+  }
+
+  @Test
   void canSearchForUsers() {
     final var steve = usersClient.createUser(User.builder()
       .username("steve")
