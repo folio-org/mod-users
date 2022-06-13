@@ -129,12 +129,7 @@ public class CustomFieldIT {
       .build());
 
     final var createdCustomField = customFieldsClient.createCustomField(
-      CustomField.builder()
-        .name("Department")
-        .helpText("Provide a department")
-        .entityType("user")
-        .type("TEXTBOX_SHORT")
-        .build(), maintainingUser);
+      departmentCustomField(), maintainingUser);
 
     customFieldsClient.attemptToDeleteCustomField(createdCustomField.getId())
       .statusCode(is(HTTP_NO_CONTENT));
@@ -150,12 +145,7 @@ public class CustomFieldIT {
       .build());
 
     final var createdCustomField = customFieldsClient.createCustomField(
-      CustomField.builder()
-        .name("Department")
-        .helpText("Provide a department")
-        .entityType("user")
-        .type("TEXTBOX_SHORT")
-        .build(), maintainingUser);
+      departmentCustomField(), maintainingUser);
 
     final var assignedUser = usersClient.createUser(User.builder()
       .username("some-user")
@@ -287,5 +277,15 @@ public class CustomFieldIT {
       .build(), updatingUser);
 
     return Future.succeededFuture();
+  }
+
+  private static CustomField departmentCustomField() {
+    return CustomField.builder()
+      .name("Department")
+      .helpText("Provide a department")
+      .entityType("user")
+      .type("TEXTBOX_SHORT")
+      .order(1)
+      .build();
   }
 }
