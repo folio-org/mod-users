@@ -1,3 +1,8 @@
+## 18.3.0 2022-06-13
+
+* Added index to search by perferredFirstName (MODUSERS-310)
+* Fixed issue posting user with text custom field with null values (MODUSERS-306)
+
 ## 18.2.0 2022-02-22
 
 * Upgrade to RMB 33.2.4 and Folio Service Tools 1.7.2. (CVE-2021-44228) (MODUSERS-295, MODUSERS-301)
