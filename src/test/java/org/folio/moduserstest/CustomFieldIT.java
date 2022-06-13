@@ -37,7 +37,6 @@ import lombok.SneakyThrows;
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 public class CustomFieldIT {
-  private static final String joeBlockId = "ba6baf95-bf14-4020-b44c-0cad269fb5c9";
   private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
 
@@ -71,6 +70,37 @@ public class CustomFieldIT {
   public void beforeEach() {
     usersClient.deleteAllUsers();
     customFieldsClient.deleteAllCustomFields();
+  }
+
+  @Test
+  void canCreateUserWithValueForCustomField() {
+    final var maintainingUser = usersClient.createUser(User.builder()
+      .username("admin-user")
+      .build());
+
+    customFieldsClient.createCustomField(
+      CustomField.builder()
+        .name("Hobbies")
+        .helpText("Describe hobbies")
+        .entityType("user")
+        .type("TEXTBOX_SHORT")
+        .order(1)
+        .build(), maintainingUser);
+
+    final var createdUser = usersClient.attemptToCreateUser(User.builder()
+      .username("some-user")
+      .customFields(Map.of("hobbies", "cross-stitch"))
+      .build())
+      .statusCode(is(201))
+      .extract().as(User.class);
+
+    assertThat(createdUser.getCustomFields().size(), is(1));
+    assertThat(createdUser.getCustomFields().get("hobbies"), is("cross-stitch"));
+
+    final var fetchedUser = usersClient.getUser(createdUser.getId());
+
+    assertThat(fetchedUser.getCustomFields().size(), is(1));
+    assertThat(fetchedUser.getCustomFields().get("hobbies"), is("cross-stitch"));
   }
 
   @Test
@@ -163,45 +193,16 @@ public class CustomFieldIT {
   @Order(1)
   @Test
   void test1Sequential() {
-    postUser()
-      .compose(v -> postCustomField())
-      .compose(v -> postUserWithInvalidCustomFieldValueLength())
-      .compose(v -> postUserWithCustomFields())
-      .compose(v -> getUserWithCustomFields());
+    postCustomField()
+      .compose(v -> postUserWithInvalidCustomFieldValueLength());
   }
 
   @Order(2)
   @Test
   void test4CustomFields() {
-    postUser()
-      .compose(v -> postCustomField())
+    postCustomField()
       .compose(v -> putCustomField())
       .compose(v -> queryCustomField());
-  }
-
-  private Future<Void> postUser() {
-    final var userToCreate = User.builder()
-      .id(joeBlockId)
-      .username("joeBlock")
-      .active(true)
-      .build();
-
-    usersClient.createUser(userToCreate);
-
-    return Future.succeededFuture();
-  }
-
-  private Future<Void> postUserWithCustomFields() {
-    final var userToCreate = User.builder()
-      .id(johnRectangleId)
-      .username("johnRectangle")
-      .active(true)
-      .customFields(Map.of("department", "Math"))
-      .build();
-
-    usersClient.createUser(userToCreate);
-
-    return Future.succeededFuture();
   }
 
   private Future<Void> postUserWithInvalidCustomFieldValueLength() {
@@ -218,15 +219,6 @@ public class CustomFieldIT {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("Maximum length of the value is 150"));
-
-    return Future.succeededFuture();
-  }
-
-  private Future<Void> getUserWithCustomFields() {
-    final var user = usersClient.getUser(johnRectangleId);
-
-    assertThat(user.getCustomFields().size(), is(1));
-    assertThat(user.getCustomFields().get("department"), is("Math"));
 
     return Future.succeededFuture();
   }
