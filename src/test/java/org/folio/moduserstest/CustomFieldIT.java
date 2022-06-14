@@ -23,7 +23,6 @@ import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -37,7 +36,6 @@ import lombok.SneakyThrows;
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 public class CustomFieldIT {
-  private static final String johnRectangleId = "ae6d1c57-3041-4645-9215-3ca0094b77fc";
   private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
 
   private static UsersClient usersClient;
@@ -153,6 +151,25 @@ public class CustomFieldIT {
   }
 
   @Test
+  void cannotCreateUserWithValueTooLongForCustomField() {
+    final var maintainingUser = usersClient.createUser(User.builder()
+      .username("admin-user")
+      .build());
+
+    customFieldsClient.createCustomField(departmentCustomField(), maintainingUser);
+
+    final var errors = usersClient.attemptToCreateUser(User.builder()
+        .username("some-user")
+        .customFields(Map.of("department", RandomStringUtils.randomAlphanumeric(151)))
+        .build())
+      .statusCode(is(422))
+      .extract().as(ValidationErrors.class);
+
+    assertThat(errors.getErrors().get(0).getMessage(),
+      is("Maximum length of the value is 150"));
+  }
+
+  @Test
   void canDeleteACustomField() {
     final var maintainingUser = usersClient.createUser(User.builder()
       .username("some-user")
@@ -190,37 +207,11 @@ public class CustomFieldIT {
     assertThat(updatedUser.getCustomFields().size(), is(0));
   }
 
-  @Order(1)
-  @Test
-  void test1Sequential() {
-    postCustomField()
-      .compose(v -> postUserWithInvalidCustomFieldValueLength());
-  }
-
-  @Order(2)
   @Test
   void test4CustomFields() {
     postCustomField()
       .compose(v -> putCustomField())
       .compose(v -> queryCustomField());
-  }
-
-  private Future<Void> postUserWithInvalidCustomFieldValueLength() {
-    final var userToCreate = User.builder()
-      .id(johnRectangleId)
-      .username("johnRectangle")
-      .active(true)
-      .customFields(Map.of("department", RandomStringUtils.randomAlphanumeric(151)))
-      .build();
-
-    final var errors = usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(is(422))
-      .extract().as(ValidationErrors.class);
-
-    assertThat(errors.getErrors().get(0).getMessage(),
-      is("Maximum length of the value is 150"));
-
-    return Future.succeededFuture();
   }
 
   private Future<Void> queryCustomField() {
