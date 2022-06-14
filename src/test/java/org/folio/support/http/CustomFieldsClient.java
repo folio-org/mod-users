@@ -63,6 +63,10 @@ public class CustomFieldsClient {
       .statusCode(HTTP_NO_CONTENT);
   }
 
+  public CustomField getCustomField(String id) {
+    return client.getRecord(id);
+  }
+
   public ValidatableResponse attemptToGetCustomField(String id) {
     return client.attemptToGetRecord(id);
   }

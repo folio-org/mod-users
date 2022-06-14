@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
@@ -36,8 +35,6 @@ import lombok.SneakyThrows;
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 public class CustomFieldIT {
-  private static final String customFieldId = "524d3210-9ca2-4f91-87b4-d2227d595aaa";
-
   private static UsersClient usersClient;
   private static CustomFieldsClient customFieldsClient;
 
@@ -208,48 +205,28 @@ public class CustomFieldIT {
   }
 
   @Test
-  void test4CustomFields() {
-    postCustomField()
-      .compose(v -> putCustomField())
-      .compose(v -> queryCustomField());
-  }
-
-  private Future<Void> queryCustomField() {
-    final var customFields = customFieldsClient.getCustomFields(
-      "entityType==user");
-
-    assertThat(customFields.getTotalRecords(), is(1));
-    assertThat(customFields.getCustomFields().get(0).getEntityType(), is("user"));
-
-    return Future.succeededFuture();
-  }
-
-  private Future<Void> postCustomField() {
+  void customFieldCanBeUpdated() {
     final var creatingUser = usersClient.createUser(User.builder()
       .username("some-user")
       .build());
 
-    customFieldsClient.createCustomField(CustomField.builder()
-      .id(customFieldId)
-      .name("Department")
-      .visible(true)
-      .required(true)
-      .helpText("Provide a department")
-      .entityType("user")
-      .type("TEXTBOX_SHORT")
-      .order(1)
-      .build(), creatingUser);
+    final var createdCustomField = customFieldsClient.createCustomField(
+      CustomField.builder()
+        .name("Department")
+        .visible(true)
+        .required(true)
+        .helpText("Provide a department")
+        .entityType("user")
+        .type("TEXTBOX_SHORT")
+        .order(1)
+        .build(), creatingUser);
 
-    return Future.succeededFuture();
-  }
-
-  private Future<Void> putCustomField() {
     final var updatingUser = usersClient.createUser(User.builder()
       .username("some-other-user")
       .build());
 
     customFieldsClient.updateCustomField(CustomField.builder()
-      .id(customFieldId)
+      .id(createdCustomField.getId())
       .name("Department updated")
       .visible(false)
       .required(true)
@@ -259,7 +236,47 @@ public class CustomFieldIT {
       .order(1)
       .build(), updatingUser);
 
-    return Future.succeededFuture();
+    final var fetchedCustomField = customFieldsClient.getCustomField(
+      createdCustomField.getId());
+
+    assertThat(fetchedCustomField.getName(), is("Department updated"));
+    assertThat(fetchedCustomField.getVisible(), is(false));
+  }
+
+  @Test
+  void canFindCustomFieldsByName() {
+    final var creatingUser = usersClient.createUser(User.builder()
+      .username("some-user")
+      .build());
+
+    final var departmentCustomField = customFieldsClient.createCustomField(
+      CustomField.builder()
+        .name("Department")
+        .visible(true)
+        .required(true)
+        .helpText("Provide a department")
+        .entityType("user")
+        .type("TEXTBOX_SHORT")
+        .order(1)
+        .build(), creatingUser);
+
+    customFieldsClient.createCustomField(
+      CustomField.builder()
+        .name("Hobbies")
+        .visible(true)
+        .required(true)
+        .helpText("Describe user's hobbies")
+        .entityType("user")
+        .type("TEXTBOX_SHORT")
+        .order(2)
+        .build(), creatingUser);
+
+    final var foundCustomFields = customFieldsClient.getCustomFields(
+      "name=Department");
+
+    assertThat(foundCustomFields.getTotalRecords(), is(1));
+    assertThat(foundCustomFields.getCustomFields().get(0).getId(),
+      is(departmentCustomField.getId()));
   }
 
   private static CustomField departmentCustomField() {
