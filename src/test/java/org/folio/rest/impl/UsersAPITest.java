@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +20,6 @@ import javax.ws.rs.core.Response;
 
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.jaxrs.model.Address;
-import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
@@ -29,11 +28,8 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.interfaces.Results;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.z3950.zing.cql.CQLParseException;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -168,9 +164,10 @@ class UsersAPITest {
   }
 
   @Test
-  void checkAddressTypeValidCanHandleNullPostgresClient(Vertx vertx, VertxTestContext context) {
-    Future<Boolean> future = new UsersAPI().checkAddressTypeValid("myId", vertx.getOrCreateContext(),
-        /* postgresClient */ null);
+  void checkAddressTypeValidCanHandleNullPostgresClient(VertxTestContext context) {
+    final var future = new UsersAPI()
+      .checkAddressTypeValid("myId", null);
+
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
       context.completeNow();
@@ -178,12 +175,11 @@ class UsersAPITest {
   }
 
   @Test
-  void checkAllAddressTypesValidCanHandleNullPostgresClient(Vertx vertx, VertxTestContext context) {
+  void checkAllAddressTypesValidCanHandleNullPostgresClient(VertxTestContext context) {
     Address address = new Address().withAddressTypeId("someAddressTypeId");
     Personal personal = new Personal().withAddresses(Collections.singletonList(address));
     User user = new User().withPersonal(personal);
-    Future<Boolean> future = new UsersAPI().checkAllAddressTypesValid(user, vertx.getOrCreateContext(),
-        /* postgresClient */ null);
+    Future<Boolean> future = new UsersAPI().checkAllAddressTypesValid(user, null);
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
       context.completeNow();
@@ -191,29 +187,18 @@ class UsersAPITest {
   }
 
   private void checkAddressTypeValid(VertxTestContext context,
-    AsyncResult<Results<AddressType>> result, Handler<Throwable> handler) {
+    Future<Results<Object>> result, Handler<Throwable> handler) {
 
     final var postgresClient = mock(PostgresClient.class);
 
-    doAnswer((Answer<Void>) invocationOnMock -> provideFutureToHandler(
-      invocationOnMock, result))
-      .when(postgresClient).get(anyString(), any(), any(Criterion.class), anyBoolean(), any());
+    when(postgresClient.get(anyString(), any(), any(Criterion.class), anyBoolean()))
+      .thenReturn(result);
 
     final var future = new UsersAPI()
-      .checkAddressTypeValid("someAddressTypeId", Vertx.vertx().getOrCreateContext(), postgresClient);
+      .checkAddressTypeValid("someAddressTypeId", postgresClient);
 
     future.onComplete(context.failing(e ->
       context.verify(() -> handler.handle(future.cause()))));
-  }
-
-  private static Void provideFutureToHandler(InvocationOnMock invocationOnMock,
-    AsyncResult<Results<AddressType>> result) {
-
-    final Handler<AsyncResult<Results<AddressType>>> handler = invocationOnMock.getArgument(4);
-
-    handler.handle(result);
-
-    return null;
   }
 }
 

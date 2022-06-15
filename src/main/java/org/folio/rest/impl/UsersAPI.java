@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 
 import java.util.ArrayList;
@@ -198,7 +199,7 @@ public class UsersAPI implements Users {
           return new ValidationServiceImpl(vertxContext)
             .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
         })
-        .compose(o -> checkAllAddressTypesValid(entity, vertxContext, postgresClient.getValue()))
+        .compose(o -> checkAllAddressTypesValid(entity, postgresClient.getValue()))
         .compose(result -> {
           if (Boolean.FALSE.equals(result)) {
             asyncResultHandler.handle(succeededFuture(
@@ -359,7 +360,7 @@ public class UsersAPI implements Users {
           }
           PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-          return checkAllAddressTypesValid(entity, vertxContext, postgresClient)
+          return checkAllAddressTypesValid(entity, postgresClient)
             .compose(result -> {
               if (Boolean.FALSE.equals(result)) {
                 asyncResultHandler.handle(Future.succeededFuture(
@@ -509,57 +510,43 @@ public class UsersAPI implements Users {
     entity.setUsername(username);
   }
 
-  Future<Boolean> checkAddressTypeValid(
-      String addressTypeId, Context vertxContext, PostgresClient postgresClient) {
+  Future<Boolean> checkAddressTypeValid(String addressTypeId, PostgresClient postgresClient) {
 
-    Promise<Boolean> promise = Promise.promise();
-    Criterion criterion = new Criterion(
-          new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME).
-                  setJSONB(false).setOperation("=").setVal(addressTypeId));
-    vertxContext.runOnContext(v -> {
-      try {
-        postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true, reply -> {
-          try {
-            if (reply.failed()) {
-              String message = reply.cause().getLocalizedMessage();
-              logger.error(message, reply.cause());
-              promise.fail(reply.cause());
-            } else {
-              List<AddressType> addressTypeList = reply.result().getResults();
-              promise.complete(!addressTypeList.isEmpty());
-            }
-          } catch (Exception e) {
-            String message = e.getLocalizedMessage();
-            logger.error(message, e);
-            promise.fail(e);
-          }
-        });
-      } catch (Exception e) {
-        String message = e.getLocalizedMessage();
-        logger.error(message, e);
-        promise.fail(e);
-      }
-    });
-    return promise.future();
+    final var criterion = new Criterion(
+      new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME)
+        .setJSONB(false).setOperation("=").setVal(addressTypeId));
+
+    try {
+      return postgresClient.get(AddressTypeAPI.ADDRESS_TYPE_TABLE, AddressType.class, criterion, true)
+        .map(addressTypes -> !addressTypes.getResults().isEmpty());
+    }
+    catch (Exception e) {
+      return failedFuture(e);
+    }
   }
 
-  Future<Boolean> checkAllAddressTypesValid(User user, Context vertxContext, PostgresClient postgresClient) {
+  Future<Boolean> checkAllAddressTypesValid(User user, PostgresClient postgresClient) {
     Promise<Boolean> promise = Promise.promise();
+
     List<Future<Boolean>> futureList = new ArrayList<>();
+
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
       promise.complete(true);
       return promise.future();
     }
+
     for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
+
+      // If any address type ID is not provided, fail immediately
       if (addressTypeId == null) {
         promise.complete(false);
         return promise.future();
       }
 
-      Future<Boolean> addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
-      futureList.add(addressTypeExistsFuture);
+      futureList.add(checkAddressTypeValid(addressTypeId, postgresClient));
     }
+
     CompositeFuture compositeFuture = GenericCompositeFuture.all(futureList);
     compositeFuture.onComplete(res -> {
       if (res.failed()) {
