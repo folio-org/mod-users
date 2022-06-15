@@ -36,11 +36,15 @@ import io.vertx.sqlclient.RowSet;
 class ExpirationToolTest {
   @Test
   void expirationForNullTenant(Vertx vertx, VertxTestContext context) {
-    final var expirationTool = new ExpirationTool();
+    final var postgresClient = mock(PostgresClient.class);
+    final var expirationTool = new ExpirationTool((v, t) -> postgresClient);
+
     final var future = expirationTool.doExpirationForTenant(vertx, null);
 
     future.onComplete(context.failing(e -> context.verify(() -> {
-      assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
+      assertThat(future.cause(), is(instanceOf(IllegalArgumentException.class)));
+      assertThat(future.cause().getMessage(),
+        is("Cannot expire users for undefined tenant"));
       context.completeNow();
     })));
   }
@@ -48,7 +52,7 @@ class ExpirationToolTest {
   @Test
   void expirationForTenantCanHandleException(Vertx vertx, VertxTestContext context) {
     final var postgresClient = mock(PostgresClient.class);
-    final var expirationTool = new ExpirationTool((v,t) -> postgresClient);
+    final var expirationTool = new ExpirationTool((v, t) -> postgresClient);
 
     doThrow(new RuntimeException("pg"))
       .when(postgresClient).get(anyString(), any(), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any(Handler.class));
@@ -106,7 +110,7 @@ class ExpirationToolTest {
 
   @Test
   void disableUserCanHandleNullPostgresClient(Vertx vertx) {
-    final var expirationTool = new ExpirationTool((v,t) -> null);
+    final var expirationTool = new ExpirationTool((v, t) -> null);
 
     var future = expirationTool.disableUser(vertx, "myTenant", new User());
 
@@ -116,7 +120,7 @@ class ExpirationToolTest {
   @Test
   void disableUserCanHandlePostgresFailure(Vertx vertx) {
     final var postgresClient = mock(PostgresClient.class);
-    final var expirationTool = new ExpirationTool((v,t) -> postgresClient);
+    final var expirationTool = new ExpirationTool((v, t) -> postgresClient);
 
     var future = expirationTool.disableUser(vertx, "myTenant", new User());
 

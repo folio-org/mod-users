@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
@@ -43,6 +44,11 @@ public final class ExpirationTool {
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(List.of(TABLE_NAME_USERS+".jsonb"));
       CQLWrapper cqlWrapper = new CQLWrapper(cql2pgJson, query);
       String[] fieldList = {"*"};
+      
+      if (StringUtils.isEmpty(tenant)) {
+        return Future.failedFuture(
+          new IllegalArgumentException("Cannot expire users for undefined tenant"));
+      }
 
       PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
 
