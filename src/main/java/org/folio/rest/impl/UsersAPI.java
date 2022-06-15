@@ -400,7 +400,9 @@ public class UsersAPI implements Users {
   public void postUsersExpireTimer(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    ExpirationTool.doExpirationForTenant(vertxContext.owner(), okapiHeaders.get("x-okapi-tenant"))
+    final var expirationTool = new ExpirationTool();
+
+    expirationTool.doExpirationForTenant(vertxContext.owner(), okapiHeaders.get("x-okapi-tenant"))
         .onSuccess(res -> asyncResultHandler.handle(
             Future.succeededFuture(PostUsersExpireTimerResponse.respond204())))
         .onFailure(cause -> asyncResultHandler.handle(

@@ -27,11 +27,7 @@ public final class ExpirationTool {
   /** PostgresClient::getInstance, or some other method for unit testing */
   static BiFunction<Vertx, String, PostgresClient> postgresClient = PostgresClient::getInstance;
 
-  private ExpirationTool() {
-    throw new UnsupportedOperationException("Cannot instantiate utility class.");
-  }
-
-  public static Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
+  public Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
     Promise<Integer> promise = Promise.promise();
     try {
       String nowDateString = ZonedDateTime.now().format(ISO_INSTANT);
@@ -77,7 +73,7 @@ public final class ExpirationTool {
     return promise.future();
   }
 
-  static Future<Void> disableUser(Vertx vertx, String tenant, User user) {
+  Future<Void> disableUser(Vertx vertx, String tenant, User user) {
     logger.info("Disabling expired user with id {} for tenant {}", user.getId(), tenant);
     user.setActive(Boolean.FALSE);
     Promise<Void> promise = Promise.promise();

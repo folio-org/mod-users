@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import org.folio.okapi.testing.UtilityClassTester;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
@@ -42,13 +41,9 @@ class ExpirationToolTest {
   }
 
   @Test
-  void isUtilityClass() {
-    UtilityClassTester.assertUtilityClass(ExpirationTool.class);
-  }
-
-  @Test
   void expirationForNullTenant(Vertx vertx, VertxTestContext context) {
-    var future = ExpirationTool.doExpirationForTenant(vertx, null);
+    final var expirationTool = new ExpirationTool();
+    final var future = expirationTool.doExpirationForTenant(vertx, null);
 
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
@@ -58,13 +53,14 @@ class ExpirationToolTest {
 
   @Test
   void expirationForTenantCanHandleException(Vertx vertx, VertxTestContext context) {
-    var postgresClient = mock(PostgresClient.class);
-    ExpirationTool.postgresClient = (v,t) -> postgresClient;
+    final var postgresClient = mock(PostgresClient.class);
+    final var expirationTool = new ExpirationTool();
+    expirationTool.postgresClient = (v,t) -> postgresClient;
 
     doThrow(new RuntimeException("pg"))
       .when(postgresClient).get(anyString(), any(), any(), any(CQLWrapper.class), anyBoolean(), anyBoolean(), any(Handler.class));
 
-    var future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
+    final var future = expirationTool.doExpirationForTenant(vertx, "someTenant");
 
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause().getMessage(), is("pg"));
@@ -74,10 +70,11 @@ class ExpirationToolTest {
 
   @Test
   void expirationForTenantCanHandlePostgresClientFailure(Vertx vertx, VertxTestContext context) {
-    var postgresClient = mock(PostgresClient.class);
-    ExpirationTool.postgresClient = (v,t) -> postgresClient;
+    final var postgresClient = mock(PostgresClient.class);
+    final var expirationTool = new ExpirationTool();
+    expirationTool.postgresClient = (v,t) -> postgresClient;
 
-    var future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
+    final var future = expirationTool.doExpirationForTenant(vertx, "someTenant");
 
     ArgumentCaptor<Handler<AsyncResult<Results<User>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
 
@@ -94,10 +91,11 @@ class ExpirationToolTest {
 
   @Test
   void noUsersHaveExpired(Vertx vertx, VertxTestContext context) {
-    var postgresClient = mock(PostgresClient.class);
-    ExpirationTool.postgresClient = (v,t) -> postgresClient;
+    final var postgresClient = mock(PostgresClient.class);
+    final var expirationTool = new ExpirationTool();
+    expirationTool.postgresClient = (v,t) -> postgresClient;
 
-    var future = ExpirationTool.doExpirationForTenant(vertx, "someTenant");
+    final var future = expirationTool.doExpirationForTenant(vertx, "someTenant");
 
     ArgumentCaptor<Handler<AsyncResult<Results<User>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
     verify(postgresClient)
@@ -117,19 +115,22 @@ class ExpirationToolTest {
 
   @Test
   void disableUserCanHandleNullPostgresClient(Vertx vertx) {
+    final var expirationTool = new ExpirationTool();
     ExpirationTool.postgresClient = (v,t) -> null;
 
-    var future = ExpirationTool.disableUser(vertx, "myTenant", new User());
+    var future = expirationTool.disableUser(vertx, "myTenant", new User());
 
     assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
   }
 
   @Test
   void disableUserCanHandlePostgresFailure(Vertx vertx) {
-    var postgresClient = mock(PostgresClient.class);
-    ExpirationTool.postgresClient = (v,t) -> postgresClient;
+    final var postgresClient = mock(PostgresClient.class);
 
-    var future = ExpirationTool.disableUser(vertx, "myTenant", new User());
+    final var expirationTool = new ExpirationTool();
+    expirationTool.postgresClient = (v,t) -> postgresClient;
+
+    var future = expirationTool.disableUser(vertx, "myTenant", new User());
 
     ArgumentCaptor<Handler<AsyncResult<RowSet<Row>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
 
