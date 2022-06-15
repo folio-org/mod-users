@@ -86,6 +86,22 @@ class ExpirationIT {
   }
 
   @Test
+  void unexpiredUsersAreNotDisabled() {
+    final var unexpiredUser = usersClient.createUser(User.builder()
+      .username("some-user")
+      .active(true)
+      .expirationDate(ZonedDateTime.now().plusHours(3))
+      .build());
+
+    expirationClient.attemptToTriggerExpiration("diku")
+      .statusCode(is(HTTP_NO_CONTENT));
+
+    final var fetchedUser = usersClient.getUser(unexpiredUser.getId());
+
+    assertThat(fetchedUser.getActive(), is(true));
+  }
+
+  @Test
   void cannotTriggerExpirationForUnknownTenant() {
     expirationClient.attemptToTriggerExpiration("made-up-tenant")
       .statusCode(is(HTTP_INTERNAL_ERROR));
