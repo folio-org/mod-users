@@ -1,8 +1,7 @@
 package org.folio.support;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.Builder;
 import lombok.Value;
@@ -12,14 +11,14 @@ import lombok.extern.jackson.Jacksonized;
 @Builder
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class User {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class CustomField {
   String id;
-  String username;
-  String barcode;
-  Boolean active;
-  Personal personal;
-  String patronGroup;
-  TagList tags;
-  Metadata metadata;
-  Map<String, String> customFields;
+  String name;
+  Boolean visible;
+  Boolean required;
+  String helpText;
+  String entityType;
+  String type;
+  Integer order;
 }
