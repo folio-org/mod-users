@@ -24,8 +24,16 @@ import io.vertx.core.Vertx;
 
 public final class ExpirationTool {
   private static final Logger logger = LogManager.getLogger(ExpirationTool.class);
-  /** PostgresClient::getInstance, or some other method for unit testing */
-  static BiFunction<Vertx, String, PostgresClient> postgresClient = PostgresClient::getInstance;
+
+  BiFunction<Vertx, String, PostgresClient> postgresClientFactory;
+
+  public ExpirationTool() {
+    this(PostgresClient::getInstance);
+  }
+
+  public ExpirationTool(BiFunction<Vertx, String, PostgresClient> postgresClientFactory) {
+    this.postgresClientFactory = postgresClientFactory;
+  }
 
   public Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
     Promise<Integer> promise = Promise.promise();
@@ -36,7 +44,7 @@ public final class ExpirationTool {
       CQLWrapper cqlWrapper = new CQLWrapper(cql2pgJson, query);
       String[] fieldList = {"*"};
 
-      PostgresClient pgClient = postgresClient.apply(vertx, tenant);
+      PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
 
       pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
         if (reply.failed()) {
@@ -78,7 +86,7 @@ public final class ExpirationTool {
     user.setActive(Boolean.FALSE);
     Promise<Void> promise = Promise.promise();
     try {
-      PostgresClient pgClient = postgresClient.apply(vertx, tenant);
+      PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
       pgClient.update(TABLE_NAME_USERS, user, user.getId(), updateReply -> {
         if (updateReply.succeeded()) {
           promise.complete();
