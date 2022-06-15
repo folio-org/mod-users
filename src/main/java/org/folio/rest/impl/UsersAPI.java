@@ -9,7 +9,10 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -48,11 +51,9 @@ import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.ext.web.RoutingContext;
 
 
@@ -181,7 +182,7 @@ public class UsersAPI implements Users {
       final var addressValidator = new AddressValidator();
 
       if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
-        asyncResultHandler.handle(Future.succeededFuture(
+        asyncResultHandler.handle(succeededFuture(
           PostUsersResponse.respond400WithTextPlain(
             "Users are limited to one address per addresstype")));
         return;
@@ -209,7 +210,7 @@ public class UsersAPI implements Users {
             validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
                     handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
           }
-          return Future.succeededFuture();
+          return succeededFuture();
         })
         .otherwise(e -> {
           if (e instanceof CustomFieldValidationException) {
@@ -218,19 +219,19 @@ public class UsersAPI implements Users {
                 ((CustomFieldValidationException) e).getErrors())));
           } else {
             logger.error(e.getMessage(), e);
-            asyncResultHandler.handle(Future.succeededFuture(
+            asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond500WithTextPlain(
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
           return null;
         }).onFailure(e -> {
           logger.error(e.getMessage(), e);
-          asyncResultHandler.handle(Future.succeededFuture(
+          asyncResultHandler.handle(succeededFuture(
             PostUsersResponse.respond500WithTextPlain(e.getMessage())));
         });
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
-      asyncResultHandler.handle(Future.succeededFuture(
+      asyncResultHandler.handle(succeededFuture(
         PostUsersResponse.respond500WithTextPlain(e.getMessage())));
     }
   }
@@ -338,7 +339,7 @@ public class UsersAPI implements Users {
       Context vertxContext) {
 
     try {
-      Future.succeededFuture()
+      succeededFuture()
         .compose(o -> {
           removeCustomFieldIfEmpty(entity);
           return new ValidationServiceImpl(vertxContext)
@@ -349,27 +350,27 @@ public class UsersAPI implements Users {
           final var addressValidator = new AddressValidator();
 
           if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
-            asyncResultHandler.handle(Future.succeededFuture(
+            asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
-            return Future.succeededFuture();
+            return succeededFuture();
           }
           if (!userId.equals(entity.getId())) {
-            asyncResultHandler.handle(Future.succeededFuture(
+            asyncResultHandler.handle(succeededFuture(
               PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
-            return Future.succeededFuture();
+            return succeededFuture();
           }
           PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
           return checkAllAddressTypesValid(entity, postgresClient)
             .compose(result -> {
               if (Boolean.FALSE.equals(result)) {
-                asyncResultHandler.handle(Future.succeededFuture(
+                asyncResultHandler.handle(succeededFuture(
                   PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
               } else {
                 validatePatronGroup(entity.getPatronGroup(), postgresClient, asyncResultHandler,
                   handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
               }
-              return Future.succeededFuture();
+              return succeededFuture();
             });
         })
         .otherwise(e -> {
@@ -379,19 +380,19 @@ public class UsersAPI implements Users {
               PostUsersResponse.respond422WithApplicationJson(
                 ((CustomFieldValidationException) e).getErrors())));
           } else {
-            asyncResultHandler.handle(Future.succeededFuture(
+            asyncResultHandler.handle(succeededFuture(
               PutUsersByUserIdResponse.respond500WithTextPlain(
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
           return null;
         }).onFailure(e -> {
           logger.error(e.getMessage(), e);
-          asyncResultHandler.handle(Future.succeededFuture(
+          asyncResultHandler.handle(succeededFuture(
               PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
         });
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
-      asyncResultHandler.handle(Future.succeededFuture(
+      asyncResultHandler.handle(succeededFuture(
           PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
     }
   }
@@ -405,9 +406,9 @@ public class UsersAPI implements Users {
 
     expirationTool.doExpirationForTenant(vertxContext.owner(), okapiHeaders.get("x-okapi-tenant"))
         .onSuccess(res -> asyncResultHandler.handle(
-            Future.succeededFuture(PostUsersExpireTimerResponse.respond204())))
+            succeededFuture(PostUsersExpireTimerResponse.respond204())))
         .onFailure(cause -> asyncResultHandler.handle(
-            Future.succeededFuture(PostUsersExpireTimerResponse.respond500WithTextPlain(cause.getMessage()))));
+            succeededFuture(PostUsersExpireTimerResponse.respond500WithTextPlain(cause.getMessage()))));
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders,
@@ -451,14 +452,14 @@ public class UsersAPI implements Users {
 
     if (patronGroupId == null) {
       //allow null patron groups so that they can be added after a record is created
-      handler.handle(io.vertx.core.Future.succeededFuture(1));
+      handler.handle(succeededFuture(1));
     } else {
       postgresClient.getById(UserGroupAPI.GROUP_TABLE, patronGroupId, check -> {
         if (check.succeeded()) {
           if (check.result() == null) {
-            handler.handle(io.vertx.core.Future.succeededFuture(0));
+            handler.handle(succeededFuture(0));
           } else {
-            handler.handle(io.vertx.core.Future.succeededFuture(1));
+            handler.handle(succeededFuture(1));
           }
         } else {
           Throwable t = check.cause();
@@ -467,7 +468,7 @@ public class UsersAPI implements Users {
           if (t.getLocalizedMessage().contains("uuid")) {
             retCode = 0;
           }
-          handler.handle(io.vertx.core.Future.succeededFuture(retCode));
+          handler.handle(succeededFuture(retCode));
         }
       });
     }
@@ -492,15 +493,15 @@ public class UsersAPI implements Users {
           patronGroupId +
           ". Patron group not found";
         logger.error(message);
-        asyncResultHandler.handle(Future.succeededFuture(
+        asyncResultHandler.handle(succeededFuture(
           PostUsersResponse.respond400WithTextPlain(
             message)));
       } else if (res == -1) {
-        asyncResultHandler.handle(Future.succeededFuture(
+        asyncResultHandler.handle(succeededFuture(
           PostUsersResponse
             .respond500WithTextPlain("")));
       } else {
-        onSuccess.handle(Future.succeededFuture());
+        onSuccess.handle(succeededFuture());
       }
     });
   }
@@ -511,7 +512,6 @@ public class UsersAPI implements Users {
   }
 
   Future<Boolean> checkAddressTypeValid(String addressTypeId, PostgresClient postgresClient) {
-
     final var criterion = new Criterion(
       new Criteria().addField(AddressTypeAPI.ID_FIELD_NAME)
         .setJSONB(false).setOperation("=").setVal(addressTypeId));
@@ -526,42 +526,29 @@ public class UsersAPI implements Users {
   }
 
   Future<Boolean> checkAllAddressTypesValid(User user, PostgresClient postgresClient) {
-    Promise<Boolean> promise = Promise.promise();
-
     List<Future<Boolean>> futureList = new ArrayList<>();
 
     if (user.getPersonal() == null || user.getPersonal().getAddresses() == null) {
-      promise.complete(true);
-      return promise.future();
+      return succeededFuture(true);
     }
 
-    for (Address address : user.getPersonal().getAddresses()) {
-      String addressTypeId = address.getAddressTypeId();
+    final var addressTypes = user.getPersonal().getAddresses()
+      .stream()
+      .map(Address::getAddressTypeId)
+      .collect(Collectors.toList());
 
-      // If any address type ID is not provided, fail immediately
-      if (addressTypeId == null) {
-        promise.complete(false);
-        return promise.future();
-      }
-
-      futureList.add(checkAddressTypeValid(addressTypeId, postgresClient));
+    // If any address type ID is not provided, fail immediately
+    if (addressTypes.stream().anyMatch(Objects::isNull)) {
+      return Future.succeededFuture(false);
     }
 
-    CompositeFuture compositeFuture = GenericCompositeFuture.all(futureList);
-    compositeFuture.onComplete(res -> {
-      if (res.failed()) {
-        promise.fail(res.cause());
-        return;
-      }
-      for (Future<Boolean> f : futureList) {
-        if (Boolean.FALSE.equals(f.result())) {
-          promise.complete(false);
-          return;
-        }
-      }
-      promise.complete(true);
-    });
-    return promise.future();
+    addressTypes.forEach(addressTypeId -> futureList.add(
+      checkAddressTypeValid(addressTypeId, postgresClient)));
+
+    return GenericCompositeFuture.all(futureList)
+      .map(res -> futureList.stream()
+        .map(Future::result)
+        .allMatch(Predicate.isEqual(true)));
   }
 
   private static Map<String, Object> getCustomFields(User entity) {
