@@ -19,7 +19,6 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.persist.interfaces.Results;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
@@ -70,24 +69,16 @@ public final class ExpirationTool {
       return Future.succeededFuture(0);
     }
 
-    final var userList = results.getResults();
     List<Future<Void>> futureList = new ArrayList<>();
 
-    for (User user : userList) {
-      futureList.add(disableUser(vertx, tenant, user));
-    }
-    CompositeFuture compositeFuture = GenericCompositeFuture.join(futureList);
+    results.getResults()
+      .forEach(user -> futureList.add(disableUser(vertx, tenant, user)));
 
-    return compositeFuture.compose(compRes -> {
-      int succeededCount = 0;
-      for (Future<Void> fut : futureList) {
-        if (fut.succeeded()) {
-          succeededCount++;
-        }
-      }
-
-      return Future.succeededFuture(succeededCount);
-    });
+    return GenericCompositeFuture.join(futureList)
+      .map(compRes -> futureList.stream()
+        .filter(Future::succeeded)
+        .mapToInt(a -> 1)
+        .sum());
   }
 
   Future<Void> disableUser(Vertx vertx, String tenant, User user) {
