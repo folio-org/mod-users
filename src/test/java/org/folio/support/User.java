@@ -1,6 +1,7 @@
 package org.folio.support;
 
 import java.util.Map;
+import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -17,6 +18,7 @@ public class User {
   String username;
   String barcode;
   Boolean active;
+  ZonedDateTime expirationDate;
   Personal personal;
   String patronGroup;
   TagList tags;

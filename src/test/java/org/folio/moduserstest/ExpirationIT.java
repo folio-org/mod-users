@@ -4,10 +4,14 @@ import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.time.ZonedDateTime;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.support.User;
 import org.folio.support.VertxModule;
 import org.folio.support.http.ExpirationClient;
 import org.folio.support.http.OkapiHeaders;
@@ -56,9 +60,29 @@ class ExpirationIT {
   }
 
   @Test
-  void canTriggerExpiration() {
+  void expiredUsersAreDisabled() {
+    final var firstExpiredUser = usersClient.createUser(User.builder()
+      .username("first-user")
+      .active(true)
+      .expirationDate(ZonedDateTime.now().minusHours(3))
+      .build());
+
+    final var secondExpiredUser = usersClient.createUser(User.builder()
+      .username("second-user")
+      .active(true)
+      .expirationDate(ZonedDateTime.now().minusDays(15))
+      .build());
+
     expirationClient.attemptToTriggerExpiration("diku")
       .statusCode(is(HTTP_NO_CONTENT));
+
+    final var firstFetchedUser = usersClient.getUser(firstExpiredUser.getId());
+
+    assertThat(firstFetchedUser.getActive(), is(false));
+
+    final var secondFetchedUser = usersClient.getUser(secondExpiredUser.getId());
+
+    assertThat(secondFetchedUser.getActive(), is(false));
   }
 
   @Test
