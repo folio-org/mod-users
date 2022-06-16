@@ -1,11 +1,11 @@
 package org.folio.rest.utils;
 
 
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
 
-import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -34,12 +34,14 @@ public final class ExpirationTool {
   public static Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
     Promise<Integer> promise = Promise.promise();
     try {
-      String nowDateString =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date());
+      String nowDateString = ZonedDateTime.now().format(ISO_INSTANT);
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(List.of(TABLE_NAME_USERS+".jsonb"));
       CQLWrapper cqlWrapper = new CQLWrapper(cql2pgJson, query);
       String[] fieldList = {"*"};
+
       PostgresClient pgClient = postgresClient.apply(vertx, tenant);
+
       pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
         if (reply.failed()) {
           logger.error(String.format("Error executing postgres query for tenant %s: '%s', %s",
