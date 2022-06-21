@@ -17,6 +17,7 @@ types:
     body:
       application/json:
         schema: patronpin
+        example: !include examples/patron-pin.sample
     responses:
       201:
         description: Pin created
@@ -30,6 +31,7 @@ types:
     body:
       application/json:
         schema: patronpin
+        example: !include examples/patron-pin-remove.sample
     responses:
       200: 
         description: Pin removed
@@ -46,6 +48,7 @@ types:
       body:
         application/json:
           schema: patronpin
+          example: !include examples/patron-pin.sample
       responses:
         200:
           description: Pin valid
