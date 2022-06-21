@@ -387,6 +387,21 @@
       "description" : "Delete a department record"
     },
     {
+      "permissionName": "patron-pin.set",
+      "displayName": "Permission to set patron pin",
+      "description": "Permission to set patron pin"
+    },
+    {
+      "permissionName": "patron-pin.delete",
+      "displayName": "Permission to delete patron pin",
+      "description": "Permission to delete patron pin"
+    },
+    {
+      "permissionName": "patron-pin.validate",
+      "displayName": "Permission to validate patron pin",
+      "description": "Permission to validate patron pin"
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -470,21 +485,6 @@
         "user-settings.custom-fields.item.option.stats.get"
       ],
       "visible": false
-    },
-    {
-      "permissionName": "patron-pin.set",
-      "displayName": "Permission to set patron pin",
-      "description": "Permission to set patron pin"
-    },
-    {
-      "permissionName": "patron-pin.delete",
-      "displayName": "Permission to delete patron pin",
-      "description": "Permission to delete patron pin"
-    },
-    {
-      "permissionName": "patron-pin.validate",
-      "displayName": "Permission to validate patron pin",
-      "description": "Permission to validate patron pin"
     }
   ],
   "launchDescriptor": {
