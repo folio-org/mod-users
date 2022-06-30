@@ -550,6 +550,11 @@ public class UsersAPI implements Users {
     }
     for (Address address : user.getPersonal().getAddresses()) {
       String addressTypeId = address.getAddressTypeId();
+      if (addressTypeId == null) {
+        promise.complete(false);
+        return promise.future();
+      }
+
       Future<Boolean> addressTypeExistsFuture = checkAddressTypeValid(addressTypeId, vertxContext, postgresClient);
       futureList.add(addressTypeExistsFuture);
     }

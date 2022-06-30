@@ -210,6 +210,31 @@ class UsersAPIIT {
       is("User with this id already exists"));
   }
 
+  @Test
+  void cannotCreateUserWithAddressButNoAddressType() {
+    final var addressWithoutId = Address.builder().build();
+    final var homeAddressType = addressTypesClient.createAddressType(
+      AddressType.builder()
+        .addressType("Home")
+        .build());
+    final var homeAddress = Address.builder()
+      .addressTypeId(homeAddressType.getId()).build();
+
+    final var userToCreate = User.builder()
+      .username("juliab")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .addresses(List.of(homeAddress, addressWithoutId))
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(is(400));
+  }
 
   @Test
   void canUpdateAUser() {
