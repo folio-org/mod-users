@@ -433,7 +433,10 @@
         "departments.item.get",
         "departments.item.post",
         "departments.item.put",
-        "departments.item.delete"
+        "departments.item.delete",
+        "patron-pin.set",
+        "patron-pin.delete",
+        "patron-pin.validate"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
