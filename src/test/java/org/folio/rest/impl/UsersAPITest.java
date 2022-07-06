@@ -197,8 +197,7 @@ class UsersAPITest {
     final var future = new UsersAPI()
       .checkAddressTypeValid("someAddressTypeId", postgresClient);
 
-    future.onComplete(context.failing(e ->
-      context.verify(() -> handler.handle(future.cause()))));
+    future.onComplete(context.failing(handler));
   }
 }
 
