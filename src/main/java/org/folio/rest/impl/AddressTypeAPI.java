@@ -13,8 +13,6 @@ import org.folio.rest.jaxrs.model.AddresstypeCollection;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.resource.Addresstypes;
 import org.folio.rest.persist.PgUtil;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.persist.cql.CQLWrapper;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -62,32 +60,35 @@ public class AddressTypeAPI implements Addresstypes {
     try {
       //Check to make certain no users' addresses are currently using this type
       /* CQL statement to check for users with addresses that use a particular address type */
-      String query = "personal.addresses=" + addresstypeId;
-      CQLWrapper cql = UsersAPI.getCQL(query, 1, 0);
-      PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-      postgresClient.get(
-        UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
-        cql, true, false, reply -> {
-          if (reply.failed()) {
-            String message = reply.cause().getLocalizedMessage();
-            logger.error(message, reply.cause());
-            asyncResultHandler.handle(Future.succeededFuture(
-              DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
-                message)));
-          } else {
-            List<User> userList = reply.result().getResults();
-            if (! userList.isEmpty()) {
-              String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
-              logger.error(message);
-              asyncResultHandler.handle(Future.succeededFuture(DeleteAddresstypesByAddresstypeIdResponse
-                .respond400WithTextPlain(message)));
-              return;
-            }
-            logger.info("Removing non-associated address type '{}'", addresstypeId);
+      final var query = "personal.addresses=" + addresstypeId;
+      final var cql = UsersAPI.getCQL(query, 1, 0);
+      final var postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-            PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
-              vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
+      postgresClient.get(UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
+        cql, true, false, List.of())
+        .onFailure(cause -> {
+          String message = cause.getLocalizedMessage();
+          logger.error(message, cause);
+
+          asyncResultHandler.handle(Future.succeededFuture(
+            DeleteAddresstypesByAddresstypeIdResponse.respond500WithTextPlain(
+              message)));
+        })
+        .onSuccess(results -> {
+          final var userList = results.getResults();
+
+          if (! userList.isEmpty()) {
+            String message = "Cannot remove address type '" + addresstypeId + "', " + userList.size() + " users associated with it";
+            logger.error(message);
+            asyncResultHandler.handle(Future.succeededFuture(DeleteAddresstypesByAddresstypeIdResponse
+              .respond400WithTextPlain(message)));
+            return;
           }
+
+          logger.info("Removing non-associated address type '{}'", addresstypeId);
+
+          PgUtil.deleteById(ADDRESS_TYPE_TABLE, addresstypeId, okapiHeaders,
+            vertxContext, DeleteAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
         });
     } catch (Exception e) {
       String message = e.getLocalizedMessage();
