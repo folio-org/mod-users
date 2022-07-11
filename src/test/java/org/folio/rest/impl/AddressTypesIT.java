@@ -153,7 +153,7 @@ class AddressTypesIT {
     addressTypesClient.attemptToDeleteAddressType(home.getId())
       .statusCode(is(HTTP_BAD_REQUEST))
       .body(is(String.format(
-        "Cannot remove address type '%s', 1 users associated with it", home.getId())));
+        "Cannot remove address type '%s' as it is being used", home.getId())));
   }
 
   @Test

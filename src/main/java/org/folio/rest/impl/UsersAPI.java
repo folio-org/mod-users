@@ -98,7 +98,7 @@ public class UsersAPI implements Users {
     return cql;
   }
 
-  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
+  public static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
     if (query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
       List<String> fields = new LinkedList<>();
