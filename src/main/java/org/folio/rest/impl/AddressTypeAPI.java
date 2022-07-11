@@ -5,26 +5,22 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.AddresstypeCollection;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.resource.Addresstypes;
+import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.persist.PgUtil;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-
-/**
- *
- * @author kurt
- */
 public class AddressTypeAPI implements Addresstypes {
   public static final String ADDRESS_TYPE_TABLE = "addresstype";
   public static final String ID_FIELD_NAME = "id";
@@ -110,5 +106,4 @@ public class AddressTypeAPI implements Addresstypes {
     PgUtil.put(ADDRESS_TYPE_TABLE, entity, addresstypeId, okapiHeaders,
       vertxContext, PutAddresstypesByAddresstypeIdResponse.class, asyncResultHandler);
   }
-
 }
