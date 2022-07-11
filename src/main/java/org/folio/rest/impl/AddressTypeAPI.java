@@ -30,15 +30,15 @@ public class AddressTypeAPI implements Addresstypes {
   @Override
   public void getAddresstypes(String query, int offset, int limit, String lang,
       Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.get(ADDRESS_TYPE_TABLE, AddressType.class, AddresstypeCollection.class,
       query, offset, limit, okapiHeaders, vertxContext, GetAddresstypesResponse.class, asyncResultHandler);
   }
 
   @Override
-  public void postAddresstypes(String lang, AddressType entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+  public void postAddresstypes(String lang, AddressType entity,
+      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
     PgUtil.post(ADDRESS_TYPE_TABLE, entity, okapiHeaders, vertxContext,
