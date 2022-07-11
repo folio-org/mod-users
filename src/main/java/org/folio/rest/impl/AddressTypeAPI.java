@@ -60,7 +60,7 @@ public class AddressTypeAPI implements Addresstypes {
       PgUtil.postgresClient(vertxContext, okapiHeaders));
 
     //Check to make certain no users' addresses are currently using this type
-    userRepository.addressTypeAssignedToUser(addresstypeId)
+    userRepository.addressTypeAssignedToUser(addresstypeId, UsersAPI::getCQL)
       .onFailure(cause -> {
         String message = cause.getLocalizedMessage();
         logger.error(message, cause);

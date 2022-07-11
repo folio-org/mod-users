@@ -20,14 +20,14 @@ public class UserRepository {
     this.postgresClient = postgresClient;
   }
 
-  public Future<Boolean> addressTypeAssignedToUser(String addressTypeId) {
+  public Future<Boolean> addressTypeAssignedToUser(String addressTypeId,
+    CQLWrapperSupplier cqlSupplier) {
+
     final var query = "personal.addresses=" + addressTypeId;
     final CQLWrapper cql;
 
     try {
-      // This method is shared due to how some parts of the implementation use
-      // PgUtil to also handle API responses
-      cql = UsersAPI.getCQL(query, 1, 0);
+      cql = cqlSupplier.supply(query, 1, 0);
     } catch (CQL2PgJSONException e) {
       return failedFuture(e);
     }
@@ -36,5 +36,9 @@ public class UserRepository {
       cql, true, false, List.of())
       .map(Results::getResults)
       .map(users -> !users.isEmpty());
+  }
+
+  public interface CQLWrapperSupplier {
+    CQLWrapper supply(String cql, int limit, int offset) throws CQL2PgJSONException;
   }
 }
