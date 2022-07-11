@@ -1,6 +1,7 @@
 package org.folio.rest.impl;
 
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.ws.rs.core.Response;
 
@@ -11,6 +12,7 @@ import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.AddresstypeCollection;
 import org.folio.rest.jaxrs.resource.Addresstypes;
 import org.folio.rest.persist.PgUtil;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.service.impl.UserRepository;
 
 import io.vertx.core.AsyncResult;
@@ -22,6 +24,17 @@ public class AddressTypeAPI implements Addresstypes {
   public static final String ADDRESS_TYPE_TABLE = "addresstype";
   public static final String ID_FIELD_NAME = "id";
   private static final Logger logger = LogManager.getLogger(AddressTypeAPI.class);
+
+  private final Function<PostgresClient, UserRepository> userRepositoryFactory;
+
+  // Used when RMB instantiates this class
+  public AddressTypeAPI() {
+    this(UserRepository::new);
+  }
+
+  public AddressTypeAPI(Function<PostgresClient, UserRepository> userRepositoryFactory) {
+    this.userRepositoryFactory = userRepositoryFactory;
+  }
 
   @Validate
   @Override
@@ -56,7 +69,7 @@ public class AddressTypeAPI implements Addresstypes {
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    final var userRepository = new UserRepository(
+    final var userRepository = userRepositoryFactory.apply(
       PgUtil.postgresClient(vertxContext, okapiHeaders));
 
     //Check to make certain no users' addresses are currently using this type
