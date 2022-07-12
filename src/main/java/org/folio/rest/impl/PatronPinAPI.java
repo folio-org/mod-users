@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static org.folio.support.FailureHandler.throwableToString;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -32,7 +33,7 @@ public class PatronPinAPI implements PatronPin {
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
-      PostPatronPinResponse::respond500WithTextPlain);
+      throwableToString(PostPatronPinResponse::respond500WithTextPlain));
 
     final var successHandler = new SuccessHandler<String>(asyncResultHandler,
       failureHandler, s -> PostPatronPinResponse.respond201());
@@ -62,7 +63,7 @@ public class PatronPinAPI implements PatronPin {
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
-      DeletePatronPinResponse::respond500WithTextPlain);
+      throwableToString(DeletePatronPinResponse::respond500WithTextPlain));
 
     final var successHandler = new SuccessHandler<RowSet<Row>>(asyncResultHandler,
       failureHandler, s -> DeletePatronPinResponse.respond200());
@@ -78,7 +79,7 @@ public class PatronPinAPI implements PatronPin {
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
-      PostPatronPinVerifyResponse::respond500WithTextPlain);
+      throwableToString(PostPatronPinVerifyResponse::respond500WithTextPlain));
 
     final var patronPinService = new PatronPinService(new PasswordHashService());
 

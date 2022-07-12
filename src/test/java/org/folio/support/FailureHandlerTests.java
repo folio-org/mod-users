@@ -1,5 +1,6 @@
 package org.folio.support;
 
+import static org.folio.support.FailureHandler.throwableToString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -23,7 +24,7 @@ class FailureHandlerTests {
       .entity(s)
       .build();
     final FailureHandler failureHandler = new FailureHandler(responseHandler,
-      logger, responseProducer);
+      logger, throwableToString(responseProducer));
 
   @Test
   void shouldProduceResponseWhenHandlingFailure() {

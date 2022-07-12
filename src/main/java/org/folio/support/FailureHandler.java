@@ -12,12 +12,19 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
 public class FailureHandler {
+  public static Function<Throwable, Response> throwableToString(
+    Function<String, Response> responseProducer) {
+
+    return t -> responseProducer.apply(t.getLocalizedMessage());
+  }
+
   private final Logger logger;
-  private final Function<String, Response> errorResponseMapper;
+  private final Function<Throwable, Response> errorResponseMapper;
+
   private final Handler<AsyncResult<Response>> asyncResultHandler;
 
   public FailureHandler(Handler<AsyncResult<Response>> asyncResultHandler,
-    Logger logger, Function<String, Response> errorResponseMapper) {
+    Logger logger, Function<Throwable, Response> errorResponseMapper) {
 
     this.logger = logger;
     this.errorResponseMapper = errorResponseMapper;
@@ -25,9 +32,8 @@ public class FailureHandler {
   }
 
   public void handleFailure(Throwable cause) {
-    logger.error(cause.getLocalizedMessage());
+    logger.error(cause.getMessage());
 
-    asyncResultHandler.handle(succeededFuture(
-      errorResponseMapper.apply(cause.getLocalizedMessage())));
+    asyncResultHandler.handle(succeededFuture(errorResponseMapper.apply(cause)));
   }
 }

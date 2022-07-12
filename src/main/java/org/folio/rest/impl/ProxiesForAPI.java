@@ -1,5 +1,7 @@
 package org.folio.rest.impl;
 
+import static org.folio.support.FailureHandler.throwableToString;
+
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +49,7 @@ public class ProxiesForAPI implements Proxiesfor {
     var postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
-      PostProxiesforResponse::respond500WithTextPlain);
+      throwableToString(PostProxiesforResponse::respond500WithTextPlain));
 
     userAndProxyUserComboExists(entity, postgresClient)
       .onSuccess(proxyAlreadyExists -> {

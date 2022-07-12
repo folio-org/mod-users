@@ -2,6 +2,7 @@ package org.folio.rest.impl;
 
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
+import static org.folio.support.FailureHandler.throwableToString;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -173,7 +174,7 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
-      PostUsersResponse::respond500WithTextPlain);
+      throwableToString(PostUsersResponse::respond500WithTextPlain));
 
     try {
       final var addressValidator = new AddressValidator();
@@ -332,7 +333,7 @@ public class UsersAPI implements Users {
       Context vertxContext) {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
-      PutUsersByUserIdResponse::respond500WithTextPlain);
+      throwableToString(PutUsersByUserIdResponse::respond500WithTextPlain));
 
     try {
       succeededFuture()
@@ -455,7 +456,7 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Void>> onSuccess) {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
-      PostUsersResponse::respond500WithTextPlain);
+      throwableToString(PostUsersResponse::respond500WithTextPlain));
 
     patronGroupExists(patronGroupId, postgresClient)
       .onSuccess(groupExists -> {
