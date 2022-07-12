@@ -13,6 +13,7 @@ import org.folio.service.impl.PasswordHashService;
 import org.folio.service.impl.PatronPinService;
 import org.folio.service.impl.PatronPinRepository;
 import org.folio.support.FailureHandler;
+import org.folio.support.SuccessHandler;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -30,15 +31,17 @@ public class PatronPinAPI implements PatronPin {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PostPatronPinResponse::respond500WithTextPlain);
 
+    final var successHandler = new SuccessHandler<String>(asyncResultHandler,
+      failureHandler, s -> PostPatronPinResponse.respond201());
+
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
     final var patronPinRepository = new PatronPinRepository(pgClient);
 
     Future.succeededFuture(derivePin(entity))
-        .flatMap(patronPinRepository::savePin)
-        .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
-          PostPatronPinResponse.respond201())))
-        .onFailure(failureHandler::handleFailure);
+      .flatMap(patronPinRepository::savePin)
+      .onSuccess(successHandler::handleSuccess)
+      .onFailure(failureHandler::handleFailure);
   }
 
   private Patronpin derivePin(Patronpin patronPin) {
