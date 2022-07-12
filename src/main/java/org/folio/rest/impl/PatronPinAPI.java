@@ -19,6 +19,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 
 
 public class PatronPinAPI implements PatronPin {
@@ -61,11 +64,13 @@ public class PatronPinAPI implements PatronPin {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       DeletePatronPinResponse::respond500WithTextPlain);
 
+    final var successHandler = new SuccessHandler<RowSet<Row>>(asyncResultHandler,
+      failureHandler, s -> DeletePatronPinResponse.respond200());
+
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
     pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId())
-      .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
-        DeletePatronPinResponse.respond200())))
+      .onSuccess(successHandler::handleSuccess)
       .onFailure(failureHandler::handleFailure);
   }
 
@@ -75,34 +80,29 @@ public class PatronPinAPI implements PatronPin {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PostPatronPinVerifyResponse::respond500WithTextPlain);
 
-    final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-
     final var patronPinService = new PatronPinService(new PasswordHashService());
 
     final var suppliedPinDerivation = patronPinService.derivePin(entity.getPin(),
       entity.getId());
 
+    final var successHandler = new SuccessHandler<JsonObject>(asyncResultHandler,
+      failureHandler, assignedPin -> {
+        if (assignedPin == null) {
+          logger.info("No pin assigned to {}", entity.getId());
+          return PostPatronPinVerifyResponse.respond422();
+        }
+        else if (assignedPin.getString("pin").equals(suppliedPinDerivation)) {
+            return PostPatronPinVerifyResponse.respond200();
+        } else {
+          logger.info("Pins do not match");
+          return PostPatronPinVerifyResponse.respond422();
+        }
+    });
+
+    final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+
     pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId())
-      .onSuccess(assignedPin -> {
-        try {
-          if (assignedPin == null) {
-            logger.info("No pin assigned to {}", entity.getId());
-            asyncResultHandler.handle(Future.succeededFuture(
-              PostPatronPinVerifyResponse.respond422()));
-          }
-          else if (assignedPin.getString("pin").equals(suppliedPinDerivation)) {
-            asyncResultHandler.handle(Future.succeededFuture(
-              PostPatronPinVerifyResponse.respond200()));
-          } else {
-            logger.info("Pins do not match");
-            asyncResultHandler.handle(Future.succeededFuture(
-              PostPatronPinVerifyResponse.respond422()));
-          }
-        }
-        catch (Exception e) {
-          failureHandler.handleFailure(e);
-        }
-      })
+      .onSuccess(successHandler::handleSuccess)
       .onFailure(failureHandler::handleFailure);
   }
 }
