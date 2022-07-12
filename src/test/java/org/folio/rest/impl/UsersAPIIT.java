@@ -287,6 +287,27 @@ class UsersAPIIT {
   }
 
   @Test
+  void cannotUpdateAUserWithBarcodeThatAlreadyExists() {
+    usersClient.createUser(User.builder()
+      .username("some-user")
+      .barcode("54396735869")
+      .build());
+
+    final var anotherUser = usersClient.createUser(User.builder()
+      .username("another-user")
+      .build());
+
+    usersClient.attemptToUpdateUser(
+        User.builder()
+          .id(anotherUser.getId())
+          .username("another-user")
+          .barcode("54396735869")
+          .build())
+      .statusCode(is(400))
+      .body(is("This barcode has already been taken"));
+  }
+
+  @Test
   void cannotChangeAUsersId() {
     final var julia = usersClient.createUser(User.builder()
       .username("julia")
