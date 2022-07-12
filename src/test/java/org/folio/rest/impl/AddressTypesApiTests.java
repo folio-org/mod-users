@@ -13,12 +13,12 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 
 import org.folio.service.impl.UserRepository;
+import org.folio.support.FakeHandler;
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 
 class AddressTypesApiTests {
   @Test
@@ -36,14 +36,5 @@ class AddressTypesApiTests {
 
     assertThat(handler.handledObject.succeeded(), is(true));
     assertThat(handler.handledObject.result().getStatus(), is(500));
-  }
-
-  static class FakeHandler<T> implements Handler<T> {
-    T handledObject;
-
-    @Override
-    public void handle(T o) {
-      handledObject = o;
-    }
   }
 }
