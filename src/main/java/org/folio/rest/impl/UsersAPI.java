@@ -57,11 +57,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
-
-/**
- *
- * @author kurt
- */
 @Path("users")
 public class UsersAPI implements Users {
 
@@ -173,11 +168,12 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void postUsers(String lang, User entity,
-      RoutingContext routingContext,
+  public void postUsers(String lang, User entity, RoutingContext routingContext,
       Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PostUsersResponse::respond500WithTextPlain);
 
     try {
       final var addressValidator = new AddressValidator();
@@ -194,6 +190,7 @@ public class UsersAPI implements Users {
       }
 
       MutableObject<PostgresClient> postgresClient = new MutableObject<>();
+
       succeededFuture()
         .compose(o -> {
           postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
@@ -225,15 +222,10 @@ public class UsersAPI implements Users {
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
           return null;
-        }).onFailure(e -> {
-          logger.error(e.getMessage(), e);
-          asyncResultHandler.handle(succeededFuture(
-            PostUsersResponse.respond500WithTextPlain(e.getMessage())));
-        });
+        })
+        .onFailure(failureHandler::handleFailure);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      asyncResultHandler.handle(succeededFuture(
-        PostUsersResponse.respond500WithTextPlain(e.getMessage())));
+      failureHandler.handleFailure(e);
     }
   }
 
