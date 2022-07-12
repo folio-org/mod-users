@@ -11,6 +11,7 @@ import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.persist.PgUtil;
 import org.folio.service.impl.PasswordHashService;
 import org.folio.service.impl.PatronPinService;
+import org.folio.support.FailureHandler;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -25,6 +26,9 @@ public class PatronPinAPI implements PatronPin {
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PostPatronPinResponse::respond500WithTextPlain);
+
     final var patronPinService = new PatronPinService(new PasswordHashService());
 
     final var derivedPin = patronPinService.derivePin(entity.getPin(), entity.getId());
@@ -36,24 +40,28 @@ public class PatronPinAPI implements PatronPin {
     pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true)
       .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
         PostPatronPinResponse.respond201())))
-      .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
-        PostPatronPinResponse.respond500WithTextPlain(cause))));
+      .onFailure(failureHandler::handleFailure);
   }
 
   public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      DeletePatronPinResponse::respond500WithTextPlain);
 
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
     pgClient.delete(TABLE_NAME_PATRON_PIN, entity.getId())
       .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
         DeletePatronPinResponse.respond200())))
-      .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
-        DeletePatronPinResponse.respond422())));
+      .onFailure(failureHandler::handleFailure);
   }
 
   public void postPatronPinVerify(Patronpin entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PostPatronPinVerifyResponse::respond500WithTextPlain);
 
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
@@ -67,7 +75,8 @@ public class PatronPinAPI implements PatronPin {
         try {
           if (assignedPin == null) {
             logger.info("No pin assigned to {}", entity.getId());
-            asyncResultHandler.handle(Future.succeededFuture(PostPatronPinVerifyResponse.respond422()));
+            asyncResultHandler.handle(Future.succeededFuture(
+              PostPatronPinVerifyResponse.respond422()));
           }
           else if (assignedPin.getString("pin").equals(suppliedPinDerivation)) {
             asyncResultHandler.handle(Future.succeededFuture(
@@ -79,11 +88,9 @@ public class PatronPinAPI implements PatronPin {
           }
         }
         catch (Exception e) {
-          asyncResultHandler.handle(Future.succeededFuture(
-            PostPatronPinVerifyResponse.respond500WithTextPlain(e.toString())));
+          failureHandler.handleFailure(e);
         }
       })
-      .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
-        PostPatronPinVerifyResponse.respond500WithTextPlain(cause.toString()))));
+      .onFailure(failureHandler::handleFailure);
   }
 }
