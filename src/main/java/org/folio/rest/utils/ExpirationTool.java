@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
@@ -16,23 +17,25 @@ import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
+import org.folio.rest.persist.interfaces.Results;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 
 public final class ExpirationTool {
   private static final Logger logger = LogManager.getLogger(ExpirationTool.class);
-  /** PostgresClient::getInstance, or some other method for unit testing */
-  static BiFunction<Vertx, String, PostgresClient> postgresClient = PostgresClient::getInstance;
 
-  private ExpirationTool() {
-    throw new UnsupportedOperationException("Cannot instantiate utility class.");
+  BiFunction<Vertx, String, PostgresClient> postgresClientFactory;
+
+  public ExpirationTool() {
+    this(PostgresClient::getInstance);
   }
 
-  public static Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
-    Promise<Integer> promise = Promise.promise();
+  public ExpirationTool(BiFunction<Vertx, String, PostgresClient> postgresClientFactory) {
+    this.postgresClientFactory = postgresClientFactory;
+  }
+
+  public Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
     try {
       String nowDateString = ZonedDateTime.now().format(ISO_INSTANT);
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
@@ -40,62 +43,60 @@ public final class ExpirationTool {
       CQLWrapper cqlWrapper = new CQLWrapper(cql2pgJson, query);
       String[] fieldList = {"*"};
 
-      PostgresClient pgClient = postgresClient.apply(vertx, tenant);
+      if (StringUtils.isEmpty(tenant)) {
+        return Future.failedFuture(
+          new IllegalArgumentException("Cannot expire users for undefined tenant"));
+      }
 
-      pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true, false, reply -> {
-        if (reply.failed()) {
+      PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
+
+      return pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true)
+        .onFailure(error ->
           logger.error(String.format("Error executing postgres query for tenant %s: '%s', %s",
-            tenant, query, reply.cause().getMessage()), reply.cause());
-          promise.fail(reply.cause());
-          return;
-        }
-        if (reply.result().getResults().isEmpty()) {
-          logger.debug(String.format("No results found for tenant %s and query %s", tenant, query));
-          promise.complete(0);
-          return;
-        }
-        List<User> userList = reply.result().getResults();
-        List<Future<Void>> futureList = new ArrayList<>();
-        for(User user : userList) {
-          futureList.add(disableUser(vertx, tenant, user));
-        }
-        CompositeFuture compositeFuture = GenericCompositeFuture.join(futureList);
-        compositeFuture.onComplete(compRes -> {
-          int succeededCount = 0;
-          for(Future<Void> fut : futureList) {
-            if(fut.succeeded()) {
-              succeededCount++;
-            }
-          }
-          promise.complete(succeededCount);
-        });
-      });
+            tenant, query, error.getMessage()), error))
+        .compose(results -> disableUsers(vertx, tenant, query, results));
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
-      promise.tryFail(e);
+      return Future.failedFuture(e);
     }
-    return promise.future();
   }
 
-  static Future<Void> disableUser(Vertx vertx, String tenant, User user) {
+  private Future<Integer> disableUsers(Vertx vertx, String tenant,
+    String query, Results<User> results) {
+
+    if (results.getResults().isEmpty()) {
+      logger.debug("No results found for tenant {} and query {}", tenant, query);
+      return Future.succeededFuture(0);
+    }
+
+    List<Future<Void>> futureList = new ArrayList<>();
+
+    results.getResults()
+      .forEach(user -> futureList.add(disableUser(vertx, tenant, user)));
+
+    return GenericCompositeFuture.join(futureList)
+      .map(compRes -> futureList.stream()
+        .filter(Future::succeeded)
+        .mapToInt(a -> 1)
+        .sum());
+  }
+
+  Future<Void> disableUser(Vertx vertx, String tenant, User user) {
     logger.info("Disabling expired user with id {} for tenant {}", user.getId(), tenant);
-    user.setActive(Boolean.FALSE);
-    Promise<Void> promise = Promise.promise();
-    try {
-      PostgresClient pgClient = postgresClient.apply(vertx, tenant);
-      pgClient.update(TABLE_NAME_USERS, user, user.getId(), updateReply -> {
-        if (updateReply.succeeded()) {
-          promise.complete();
-          return;
-        }
-        logger.error(String.format("Error updating user %s for tenant %s: %s", user.getId(), tenant,
-          updateReply.cause().getMessage()), updateReply.cause());
-        promise.fail(updateReply.cause());
-      });
-    } catch(Exception e) {
-      promise.tryFail(e);
-    }
-    return promise.future();
-  }
 
+    user.setActive(Boolean.FALSE);
+
+    try {
+      PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
+
+      return pgClient.update(TABLE_NAME_USERS, user, user.getId())
+        .onFailure(cause -> logger.error(String.format(
+          "Error updating user %s for tenant %s: %s", user.getId(), tenant,
+          cause.getMessage()), cause))
+        .mapEmpty();
+
+    } catch(Exception e) {
+      return Future.failedFuture(e);
+    }
+  }
 }

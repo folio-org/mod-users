@@ -1,31 +1,35 @@
 package org.folio.rest.impl;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import javax.ws.rs.core.Response;
+
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.rest.jaxrs.model.Address;
-import org.folio.rest.jaxrs.model.AddressType;
+import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.CustomFields;
-import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.Criteria.Criterion;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.interfaces.Results;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.z3950.zing.cql.CQLParseException;
-import io.vertx.core.AsyncResult;
+
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -117,7 +121,7 @@ class UsersAPITest {
 
   @Test
   void postUsersExceptionInOnFailure(VertxTestContext vtc) {
-    Map<String,String> okapiHeaders = new HashMap<String,String>() {
+    Map<String,String> okapiHeaders = new HashMap<>() {
       @Override
       public String get(Object key) {
         throw new IllegalArgumentException() {
@@ -143,20 +147,6 @@ class UsersAPITest {
         })), null);
   }
 
-  private void checkAddressTypeValid(VertxTestContext context,
-      AsyncResult<Results<AddressType>> result, Handler<Throwable> handler) {
-
-    PostgresClient postgresClient = mock(PostgresClient.class);
-    Future<Boolean> future = new UsersAPI()
-        .checkAddressTypeValid("someAddressTypeId", Vertx.vertx().getOrCreateContext(), postgresClient);
-    ArgumentCaptor<Handler<AsyncResult<Results<AddressType>>>> handlerCaptor = ArgumentCaptor.forClass(Handler.class);
-    verify(postgresClient, timeout(100)).get(anyString(), any(), any(Criterion.class), anyBoolean(), handlerCaptor.capture());
-    handlerCaptor.getValue().handle(result);
-    future.onComplete(context.failing(e -> context.verify(() -> {
-      handler.handle(future.cause());
-    })));
-  }
-
   @Test
   void checkAddressTypeValidCanHandlePostgresClientFailure(VertxTestContext context) {
     checkAddressTypeValid(context, Future.failedFuture(new RuntimeException("postgres failed")), throwable -> {
@@ -174,9 +164,10 @@ class UsersAPITest {
   }
 
   @Test
-  void checkAddressTypeValidCanHandleNullPostgresClient(Vertx vertx, VertxTestContext context) {
-    Future<Boolean> future = new UsersAPI().checkAddressTypeValid("myId", vertx.getOrCreateContext(),
-        /* postgresClient */ null);
+  void checkAddressTypeValidCanHandleNullPostgresClient(VertxTestContext context) {
+    final var future = new UsersAPI()
+      .checkAddressTypeValid("myId", null);
+
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
       context.completeNow();
@@ -184,16 +175,29 @@ class UsersAPITest {
   }
 
   @Test
-  void checkAllAddressTypesValidCanHandleNullPostgresClient(Vertx vertx, VertxTestContext context) {
+  void checkAllAddressTypesValidCanHandleNullPostgresClient(VertxTestContext context) {
     Address address = new Address().withAddressTypeId("someAddressTypeId");
     Personal personal = new Personal().withAddresses(Collections.singletonList(address));
     User user = new User().withPersonal(personal);
-    Future<Boolean> future = new UsersAPI().checkAllAddressTypesValid(user, vertx.getOrCreateContext(),
-        /* postgresClient */ null);
+    Future<Boolean> future = new UsersAPI().checkAllAddressTypesValid(user, null);
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
       context.completeNow();
     })));
+  }
+
+  private void checkAddressTypeValid(VertxTestContext context,
+    Future<Results<Object>> result, Handler<Throwable> handler) {
+
+    final var postgresClient = mock(PostgresClient.class);
+
+    when(postgresClient.get(anyString(), any(), any(Criterion.class), anyBoolean()))
+      .thenReturn(result);
+
+    final var future = new UsersAPI()
+      .checkAddressTypeValid("someAddressTypeId", postgresClient);
+
+    future.onComplete(context.failing(handler));
   }
 }
 
