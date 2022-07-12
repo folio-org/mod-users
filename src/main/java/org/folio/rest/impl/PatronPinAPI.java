@@ -11,7 +11,7 @@ import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.persist.PgUtil;
 import org.folio.service.impl.PasswordHashService;
 import org.folio.service.impl.PatronPinService;
-import org.folio.rest.persist.PostgresClient;
+import org.folio.service.impl.PatronPinRepository;
 import org.folio.support.FailureHandler;
 
 import io.vertx.core.AsyncResult;
@@ -32,8 +32,10 @@ public class PatronPinAPI implements PatronPin {
 
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
+    final var patronPinRepository = new PatronPinRepository(pgClient);
+
     Future.succeededFuture(derivePin(entity))
-        .flatMap(pin -> savePin(entity, pgClient))
+        .flatMap(patronPinRepository::savePin)
         .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
           PostPatronPinResponse.respond201())))
         .onFailure(failureHandler::handleFailure);
@@ -48,10 +50,6 @@ public class PatronPinAPI implements PatronPin {
     patronPin.setPin(derivedPin);
 
     return patronPin;
-  }
-
-  private Future<String> savePin(Patronpin patronPin, PostgresClient pgClient) {
-    return pgClient.save(TABLE_NAME_PATRON_PIN, patronPin.getId(), patronPin, false, true);
   }
 
   public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders,
