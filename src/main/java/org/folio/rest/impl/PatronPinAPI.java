@@ -11,6 +11,7 @@ import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.persist.PgUtil;
 import org.folio.service.impl.PasswordHashService;
 import org.folio.service.impl.PatronPinService;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.support.FailureHandler;
 
 import io.vertx.core.AsyncResult;
@@ -29,18 +30,28 @@ public class PatronPinAPI implements PatronPin {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PostPatronPinResponse::respond500WithTextPlain);
 
-    final var patronPinService = new PatronPinService(new PasswordHashService());
-
-    final var derivedPin = patronPinService.derivePin(entity.getPin(), entity.getId());
-
-    entity.setPin(derivedPin);
-
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-    pgClient.save(TABLE_NAME_PATRON_PIN, entity.getId(), entity, false, true)
-      .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
-        PostPatronPinResponse.respond201())))
-      .onFailure(failureHandler::handleFailure);
+    Future.succeededFuture(derivePin(entity))
+        .flatMap(pin -> savePin(entity, pgClient))
+        .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(
+          PostPatronPinResponse.respond201())))
+        .onFailure(failureHandler::handleFailure);
+  }
+
+  private Patronpin derivePin(Patronpin patronPin) {
+    final var patronPinService = new PatronPinService(new PasswordHashService());
+
+    final var derivedPin = patronPinService.derivePin(patronPin.getPin(),
+      patronPin.getId());
+
+    patronPin.setPin(derivedPin);
+
+    return patronPin;
+  }
+
+  private Future<String> savePin(Patronpin patronPin, PostgresClient pgClient) {
+    return pgClient.save(TABLE_NAME_PATRON_PIN, patronPin.getId(), patronPin, false, true);
   }
 
   public void deletePatronPin(Patronpin entity, Map<String, String> okapiHeaders,
