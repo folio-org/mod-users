@@ -46,6 +46,7 @@ import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
+import org.folio.support.FailureHandler;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
@@ -338,6 +339,9 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PutUsersByUserIdResponse::respond500WithTextPlain);
+
     try {
       succeededFuture()
         .compose(o -> {
@@ -385,15 +389,10 @@ public class UsersAPI implements Users {
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
           return null;
-        }).onFailure(e -> {
-          logger.error(e.getMessage(), e);
-          asyncResultHandler.handle(succeededFuture(
-              PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
-        });
+        })
+        .onFailure(failureHandler::handleFailure);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      asyncResultHandler.handle(succeededFuture(
-          PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
+      failureHandler.handleFailure(e);
     }
   }
 
