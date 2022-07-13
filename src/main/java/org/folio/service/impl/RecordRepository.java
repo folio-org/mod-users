@@ -2,13 +2,13 @@ package org.folio.service.impl;
 
 import java.util.List;
 
-import io.vertx.core.Future;
-
 import org.folio.model.RecordUpdate;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFieldOptionStatistic;
 import org.folio.rest.jaxrs.model.CustomFieldStatistic;
 import org.folio.rest.jaxrs.model.User;
+
+import io.vertx.core.Future;
 
 public interface RecordRepository {
 
@@ -20,5 +20,5 @@ public interface RecordRepository {
 
   Future<List<User>> findUsersByFieldValues(RecordUpdate recordUpdate, String tenantId);
 
-  Future<Boolean> updateUser(User user, String tenantId);
+  Future<Void> updateUser(User user, String tenantId);
 }
