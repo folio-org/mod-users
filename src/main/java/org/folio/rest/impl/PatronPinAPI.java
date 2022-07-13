@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Patronpin;
 import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.persist.PgUtil;
+import org.folio.service.impl.PasswordHashService;
 import org.folio.service.impl.PatronPinService;
 
 import io.vertx.core.AsyncResult;
@@ -24,7 +25,7 @@ public class PatronPinAPI implements PatronPin {
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    final var patronPinService = new PatronPinService();
+    final var patronPinService = new PatronPinService(new PasswordHashService());
 
     final var derivedPin = patronPinService.derivePin(entity.getPin(), entity.getId());
 
@@ -56,7 +57,7 @@ public class PatronPinAPI implements PatronPin {
 
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-    final var patronPinService = new PatronPinService();
+    final var patronPinService = new PatronPinService(new PasswordHashService());
 
     final var suppliedPinDerivation = patronPinService.derivePin(entity.getPin(),
       entity.getId());
