@@ -94,7 +94,7 @@ public class RecordRepositoryImpl implements RecordRepository {
 
     pgClient(tenantId).update(USERS_TABLE, user, user.getId(), promise);
 
-    return promise.future().map(r -> null);
+    return promise.future().mapEmpty();
   }
 
   private CustomFieldStatistic fieldStatistic(CustomField field, Integer count) {
