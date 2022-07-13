@@ -1,5 +1,7 @@
 package org.folio.rest.impl;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
 
 import javax.crypto.SecretKeyFactory;
@@ -83,7 +85,6 @@ public class PatronPinAPI implements PatronPin {
   }
 
   private String getDerivation(String input, String salt) {
-    String result = null;
     try {
       SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512") ;
       PBEKeySpec keySpec = new PBEKeySpec(input.toCharArray(), // Input character array of password
@@ -92,17 +93,13 @@ public class PatronPinAPI implements PatronPin {
                                           64) ; // 256 bits output hashed password
 
       // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
-      byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
-      result = javax.xml.bind.DatatypeConverter.printHexBinary(pbkdfHashedArray);
-    }
-    catch ( java.security.NoSuchAlgorithmException nsae ) {
-      // reactive handler
-      logger.error("Unable to encode pin",nsae);
-    }
-    catch ( java.security.spec.InvalidKeySpecException ikse ) {
-      logger.error("Unable to encode pin",ikse);
-    }
+      byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded();
 
-    return result;
+      return javax.xml.bind.DatatypeConverter.printHexBinary(pbkdfHashedArray);
+    }
+    catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      logger.error("Unable to encode pin", e);
+      return null;
+    }
   }
 }
