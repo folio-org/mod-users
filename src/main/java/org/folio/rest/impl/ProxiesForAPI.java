@@ -63,7 +63,7 @@ public class ProxiesForAPI implements Proxiesfor {
         }
 
         PgUtil.post(PROXY_FOR_TABLE, entity, okapiHeaders, vertxContext,
-        PostProxiesforResponse.class, asyncResultHandler);
+          PostProxiesforResponse.class, asyncResultHandler);
       })
       .onFailure(failureHandler::handleFailure);
   }
