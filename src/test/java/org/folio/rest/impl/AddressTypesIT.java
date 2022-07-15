@@ -153,7 +153,7 @@ class AddressTypesIT {
     addressTypesClient.attemptToDeleteAddressType(home.getId())
       .statusCode(is(HTTP_BAD_REQUEST))
       .body(is(String.format(
-        "Cannot remove address type '%s', 1 users associated with it", home.getId())));
+        "Cannot remove address type '%s' as it is being used", home.getId())));
   }
 
   @Test
@@ -190,7 +190,7 @@ class AddressTypesIT {
 
   @Test
   void cannotCreateUserWithAddressesOfUnknownType() {
-    final var userWithMultipleAddresses = User.builder()
+    final var user = User.builder()
       .username("julia")
       .personal(Personal.builder()
         .lastName("brockhurst")
@@ -199,9 +199,32 @@ class AddressTypesIT {
         .build())
       .build();
 
-    usersClient.attemptToCreateUser(userWithMultipleAddresses)
+    usersClient.attemptToCreateUser(user)
       .statusCode(400)
       .body(is("You cannot add addresses with non-existent address types"));
+  }
+
+  @Test
+  void cannotUpdateUserWithAddressesOfUnknownType() {
+    final var user = User.builder()
+      .username("julia")
+      .build();
+
+    final var createdUser = usersClient.createUser(user);
+
+    final var userToUpdate = User.builder()
+      .id(createdUser.getId())
+      .username("julia")
+      .personal(Personal.builder()
+        .lastName("brockhurst")
+        .addresses(List.of(
+          Address.builder().addressTypeId(UUID.randomUUID().toString()).build()))
+        .build())
+      .build();
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(400)
+      .body(is("All addresses types defined for users must be existing"));
   }
 
   @Test

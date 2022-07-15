@@ -46,6 +46,7 @@ import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
+import org.folio.support.FailureHandler;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
@@ -56,11 +57,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
-
-/**
- *
- * @author kurt
- */
 @Path("users")
 public class UsersAPI implements Users {
 
@@ -98,7 +94,7 @@ public class UsersAPI implements Users {
     return cql;
   }
 
-  static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
+  public static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
     if (query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
       List<String> fields = new LinkedList<>();
@@ -172,11 +168,12 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void postUsers(String lang, User entity,
-      RoutingContext routingContext,
+  public void postUsers(String lang, User entity, RoutingContext routingContext,
       Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PostUsersResponse::respond500WithTextPlain);
 
     try {
       final var addressValidator = new AddressValidator();
@@ -193,6 +190,7 @@ public class UsersAPI implements Users {
       }
 
       MutableObject<PostgresClient> postgresClient = new MutableObject<>();
+
       succeededFuture()
         .compose(o -> {
           postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
@@ -224,15 +222,10 @@ public class UsersAPI implements Users {
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
           return null;
-        }).onFailure(e -> {
-          logger.error(e.getMessage(), e);
-          asyncResultHandler.handle(succeededFuture(
-            PostUsersResponse.respond500WithTextPlain(e.getMessage())));
-        });
+        })
+        .onFailure(failureHandler::handleFailure);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      asyncResultHandler.handle(succeededFuture(
-        PostUsersResponse.respond500WithTextPlain(e.getMessage())));
+      failureHandler.handleFailure(e);
     }
   }
 
@@ -338,6 +331,9 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PutUsersByUserIdResponse::respond500WithTextPlain);
+
     try {
       succeededFuture()
         .compose(o -> {
@@ -351,12 +347,14 @@ public class UsersAPI implements Users {
 
           if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
             asyncResultHandler.handle(succeededFuture(
-              PostUsersResponse.respond400WithTextPlain("Users are limited to one address per addresstype")));
+              PostUsersResponse.respond400WithTextPlain(
+                "Users are limited to one address per addresstype")));
             return succeededFuture();
           }
           if (!userId.equals(entity.getId())) {
             asyncResultHandler.handle(succeededFuture(
-              PutUsersByUserIdResponse.respond400WithTextPlain("You cannot change the value of the id field")));
+              PutUsersByUserIdResponse.respond400WithTextPlain(
+                "You cannot change the value of the id field")));
             return succeededFuture();
           }
           PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
@@ -365,7 +363,8 @@ public class UsersAPI implements Users {
             .compose(result -> {
               if (Boolean.FALSE.equals(result)) {
                 asyncResultHandler.handle(succeededFuture(
-                  PostUsersResponse.respond400WithTextPlain("All addresses types defined for users must be existing")));
+                  PostUsersResponse.respond400WithTextPlain(
+                    "All addresses types defined for users must be existing")));
               } else {
                 validatePatronGroup(entity.getPatronGroup(), postgresClient, asyncResultHandler,
                   handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
@@ -385,15 +384,10 @@ public class UsersAPI implements Users {
                 messages.getMessage(lang, MessageConsts.InternalServerError))));
           }
           return null;
-        }).onFailure(e -> {
-          logger.error(e.getMessage(), e);
-          asyncResultHandler.handle(succeededFuture(
-              PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
-        });
+        })
+        .onFailure(failureHandler::handleFailure);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      asyncResultHandler.handle(succeededFuture(
-          PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
+      failureHandler.handleFailure(e);
     }
   }
 
@@ -437,41 +431,15 @@ public class UsersAPI implements Users {
     });
   }
 
-  /**
-   * Checks if patron group exists
-   * @param patronGroupId id of patron group
-   * @param postgresClient PostgresClient
-   * @param handler Handler that will be called with one of following values
-   *                0 if patron group doesn't exist,
-   *                1 if patron group exists
-   *                -1 if exception was thrown
-   */
-  private void checkPatronGroupExists(String patronGroupId,
-      PostgresClient postgresClient,
-      Handler<AsyncResult<Integer>> handler) {
+  private Future<Boolean> patronGroupExists(String patronGroupId,
+    PostgresClient postgresClient) {
 
     if (patronGroupId == null) {
-      //allow null patron groups so that they can be added after a record is created
-      handler.handle(succeededFuture(1));
-    } else {
-      postgresClient.getById(UserGroupAPI.GROUP_TABLE, patronGroupId, check -> {
-        if (check.succeeded()) {
-          if (check.result() == null) {
-            handler.handle(succeededFuture(0));
-          } else {
-            handler.handle(succeededFuture(1));
-          }
-        } else {
-          Throwable t = check.cause();
-          logger.error(t.getLocalizedMessage(), t);
-          int retCode = -1;
-          if (t.getLocalizedMessage().contains("uuid")) {
-            retCode = 0;
-          }
-          handler.handle(succeededFuture(retCode));
-        }
-      });
+      return succeededFuture(true);
     }
+
+    return postgresClient.getById(UserGroupAPI.GROUP_TABLE, patronGroupId)
+      .map(Objects::nonNull);
   }
 
   /**
@@ -486,24 +454,22 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Handler<AsyncResult<Void>> onSuccess) {
 
-    checkPatronGroupExists(patronGroupId, postgresClient, handler -> {
-      int res = handler.result();
-      if (res == 0) {
-        String message = "Cannot add " +
-          patronGroupId +
-          ". Patron group not found";
-        logger.error(message);
-        asyncResultHandler.handle(succeededFuture(
-          PostUsersResponse.respond400WithTextPlain(
-            message)));
-      } else if (res == -1) {
-        asyncResultHandler.handle(succeededFuture(
-          PostUsersResponse
-            .respond500WithTextPlain("")));
-      } else {
-        onSuccess.handle(succeededFuture());
-      }
-    });
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PostUsersResponse::respond500WithTextPlain);
+
+    patronGroupExists(patronGroupId, postgresClient)
+      .onSuccess(groupExists -> {
+        if (Boolean.TRUE.equals(groupExists)) {
+          onSuccess.handle(succeededFuture());
+        }
+        else {
+          String message = "Cannot add " + patronGroupId + ". Patron group not found";
+          logger.error(message);
+          asyncResultHandler.handle(succeededFuture(
+            PostUsersResponse.respond400WithTextPlain(message)));
+        }
+      })
+      .onFailure(failureHandler::handleFailure);
   }
 
   private void trimWhiteSpaceInUsername(User entity) {

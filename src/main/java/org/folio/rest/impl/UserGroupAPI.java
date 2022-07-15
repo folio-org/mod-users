@@ -9,21 +9,16 @@ import org.folio.rest.jaxrs.model.Usergroup;
 import org.folio.rest.jaxrs.model.Usergroups;
 import org.folio.rest.jaxrs.resource.Groups;
 import org.folio.rest.persist.PgUtil;
-import org.folio.rest.tools.utils.ValidationHelper;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * @author shale
  *
  */
 public class UserGroupAPI implements Groups {
-  private final Logger logger = LogManager.getLogger(UserGroupAPI.class);
   public static final String GROUP_TABLE = "groups";
 
   @Validate
@@ -43,21 +38,8 @@ public class UserGroupAPI implements Groups {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    PgUtil.post(GROUP_TABLE, entity, okapiHeaders, vertxContext, PostGroupsResponse.class, post -> {
-      try {
-        if (post.succeeded() && isDuplicate(post.result().getEntity().toString())) {
-          asyncResultHandler.handle(Future.succeededFuture(
-              PostGroupsResponse.respond422WithApplicationJson(
-                ValidationHelper.createValidationErrorMessage(
-                  "group", entity.getGroup(), "Group exists"))));
-          return;
-        }
-        asyncResultHandler.handle(post);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-        ValidationHelper.handleError(e, asyncResultHandler);
-      }
-    });
+    PgUtil.post(GROUP_TABLE, entity, okapiHeaders, vertxContext,
+      PostGroupsResponse.class, asyncResultHandler);
   }
 
   @Validate
@@ -86,9 +68,5 @@ public class UserGroupAPI implements Groups {
 
     PgUtil.put(GROUP_TABLE, entity, groupId, okapiHeaders, vertxContext,
         PutGroupsByGroupIdResponse.class, asyncResultHandler);
-  }
-
-  protected boolean isDuplicate(String errorMessage) {
-    return errorMessage != null && errorMessage.contains("duplicate key value violates unique constraint");
   }
 }

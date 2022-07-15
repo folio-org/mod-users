@@ -16,16 +16,13 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.ValidationHelper;
+import org.folio.support.FailureHandler;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 
-/**
- *
- * @author kurt
- */
 public class ProxiesForAPI implements Proxiesfor {
   public static final String PROXY_FOR_TABLE = "proxyfor";
   public static final String USERID_FIELD_NAME = "'userId'";
@@ -49,13 +46,17 @@ public class ProxiesForAPI implements Proxiesfor {
 
     var postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
+    final var failureHandler = new FailureHandler(asyncResultHandler, logger,
+      PostProxiesforResponse::respond500WithTextPlain);
+
     userAndProxyUserComboExists(entity, postgresClient)
-      .onFailure(handleFailure(asyncResultHandler))
       .onSuccess(proxyAlreadyExists -> {
         if (Boolean.TRUE.equals(proxyAlreadyExists)) {
           logger.error("Proxy relationship already exists: {}", entity.getId());
+
           Errors existsError = ValidationHelper.createValidationErrorMessage(
             "proxyFor", entity.getId(), "Proxy relationship already exists");
+
           asyncResultHandler.handle(Future.succeededFuture(
             PostProxiesforResponse.respond422WithApplicationJson(existsError)));
           return;
@@ -63,7 +64,8 @@ public class ProxiesForAPI implements Proxiesfor {
 
         PgUtil.post(PROXY_FOR_TABLE, entity, okapiHeaders, vertxContext,
           PostProxiesforResponse.class, asyncResultHandler);
-      });
+      })
+      .onFailure(failureHandler::handleFailure);
   }
 
   @Override
@@ -110,16 +112,5 @@ public class ProxiesForAPI implements Proxiesfor {
         List<ProxiesFor> proxyForList = results.getResults();
         return !proxyForList.isEmpty();
       });
-  }
-
-  private Handler<Throwable> handleFailure(
-    Handler<AsyncResult<Response>> asyncResultHandler) {
-
-    return cause -> {
-      logger.error(cause.getLocalizedMessage());
-
-      asyncResultHandler.handle(Future.succeededFuture(
-        PostProxiesforResponse.respond500WithTextPlain(cause.getLocalizedMessage())));
-    };
   }
 }

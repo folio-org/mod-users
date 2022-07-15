@@ -2,8 +2,6 @@ package org.folio.rest.impl;
 
 import java.util.Map;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import javax.ws.rs.core.Response;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +9,8 @@ import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Patronpin;
 import org.folio.rest.jaxrs.resource.PatronPin;
 import org.folio.rest.persist.PgUtil;
+import org.folio.service.impl.PasswordHashService;
+import org.folio.service.impl.PatronPinService;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -25,8 +25,11 @@ public class PatronPinAPI implements PatronPin {
   public void postPatronPin(Patronpin entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    final var derivedKey = getDerivation(entity.getPin(), entity.getId());
-    entity.setPin(derivedKey);
+    final var patronPinService = new PatronPinService(new PasswordHashService());
+
+    final var derivedPin = patronPinService.derivePin(entity.getPin(), entity.getId());
+
+    entity.setPin(derivedPin);
 
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
@@ -54,7 +57,9 @@ public class PatronPinAPI implements PatronPin {
 
     final var pgClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
 
-    final var suppliedPinDerivation = getDerivation(entity.getPin(),
+    final var patronPinService = new PatronPinService(new PasswordHashService());
+
+    final var suppliedPinDerivation = patronPinService.derivePin(entity.getPin(),
       entity.getId());
 
     pgClient.getById(TABLE_NAME_PATRON_PIN, entity.getId())
@@ -80,29 +85,5 @@ public class PatronPinAPI implements PatronPin {
       })
       .onFailure(cause -> asyncResultHandler.handle(Future.succeededFuture(
         PostPatronPinVerifyResponse.respond500WithTextPlain(cause.toString()))));
-  }
-
-  private String getDerivation(String input, String salt) {
-    String result = null;
-    try {
-      SecretKeyFactory pbkdf2KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512") ;
-      PBEKeySpec keySpec = new PBEKeySpec(input.toCharArray(), // Input character array of password
-                                          salt.getBytes(), // We should add tenant is here also?
-                                          150000, // Iteration count (c)
-                                          64) ; // 256 bits output hashed password
-
-      // Computes hashed password using PBKDF2HMACSHA512 algorithm and provided PBE specs.
-      byte[] pbkdfHashedArray = pbkdf2KeyFactory.generateSecret(keySpec).getEncoded() ;
-      result = javax.xml.bind.DatatypeConverter.printHexBinary(pbkdfHashedArray);
-    }
-    catch ( java.security.NoSuchAlgorithmException nsae ) {
-      // reactive handler
-      logger.error("Unable to encode pin",nsae);
-    }
-    catch ( java.security.spec.InvalidKeySpecException ikse ) {
-      logger.error("Unable to encode pin",ikse);
-    }
-
-    return result;
   }
 }

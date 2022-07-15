@@ -4,12 +4,9 @@ import static io.vertx.core.Future.succeededFuture;
 
 import java.util.List;
 
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.collections4.CollectionUtils;
-
 import org.folio.model.RecordUpdate;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFieldOptionStatistic;
@@ -17,6 +14,9 @@ import org.folio.rest.jaxrs.model.CustomFieldStatistic;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.service.RecordService;
+
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 
 public class RecordServiceImpl implements RecordService {
 
@@ -65,15 +65,10 @@ public class RecordServiceImpl implements RecordService {
     Future<Void> updated = succeededFuture();
 
     for (User user : users) {
-      Object removedValue = user.getCustomFields().getAdditionalProperties().remove(field.getRefId());
+      user.getCustomFields().getAdditionalProperties().remove(field.getRefId());
 
       updated = updated
-        .compose(v -> repository.updateUser(user, tenantId))
-        .map(found -> {
-          LOG.debug("Field removed from user: refId = {}, value = {}, userName = {}",
-            field.getRefId(), removedValue, user.getUsername());
-          return null;
-        });
+        .compose(v -> repository.updateUser(user, tenantId));
     }
 
     return updated;
