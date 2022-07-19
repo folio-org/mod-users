@@ -233,7 +233,7 @@ class UsersAPIIT {
       .build();
 
     usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(is(400));
+      .statusCode(is(422));
   }
 
   @Test
