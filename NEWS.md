@@ -1,3 +1,7 @@
+## 19.0.0 IN-PROGRESS
+
+* Made AddressTypeId field required for all user addresses (MODUSERS-212)
+
 ## 18.3.0 2022-06-13
 
 * Added index to search by perferredFirstName (MODUSERS-310)

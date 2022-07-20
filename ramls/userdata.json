@@ -135,7 +135,9 @@
                 "type": "boolean"
               }
             },
-            "required":["addressTypeId"],
+            "required":[
+              "addressTypeId"
+            ],
             "additionalProperties": false
           }
         },
