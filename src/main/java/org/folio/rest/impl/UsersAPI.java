@@ -503,11 +503,6 @@ public class UsersAPI implements Users {
       .map(Address::getAddressTypeId)
       .collect(Collectors.toList());
 
-    // If any address type ID is not provided, fail immediately
-    if (addressTypes.stream().anyMatch(Objects::isNull)) {
-      return Future.succeededFuture(false);
-    }
-
     addressTypes.forEach(addressTypeId -> futureList.add(
       checkAddressTypeValid(addressTypeId, postgresClient)));
 
