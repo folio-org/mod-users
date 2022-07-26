@@ -3,14 +3,18 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.support.Personal;
 import org.folio.support.User;
 import org.folio.support.VertxModule;
 import org.folio.support.http.ExpirationClient;
@@ -100,6 +104,31 @@ class ExpirationIT {
     final var fetchedUser = usersClient.getUser(unexpiredUser.getId());
 
     assertThat(fetchedUser.getActive(), is(true));
+  }
+
+  @Test
+  void expiredUserWithInvalidDateOfBirthCannotBeExpiredOrFetched() {
+    final var expiredUserId = UUID.randomUUID().toString();
+
+    usersClient.attemptToCreateUser(User.builder()
+      .id(expiredUserId)
+      .username("first-user")
+      .personal(Personal.builder()
+        .lastName("marc-test")
+        .dateOfBirth(ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")))
+        .build())
+      .active(true)
+      .expirationDate(ZonedDateTime.now().minusHours(3))
+      .build())
+      .statusCode(is(HTTP_INTERNAL_ERROR));
+
+    expirationClient.attemptToTriggerExpiration(TENANT)
+      .statusCode(is(HTTP_INTERNAL_ERROR))
+      .body(is(""));
+
+    usersClient.attemptToGetUser(expiredUserId)
+      .statusCode(is(HTTP_INTERNAL_ERROR))
+      .body(containsString("Cannot deserialize value of type `java.util.Date` from String \"+0000-01-01T00:00:00.000+00:00\""));
   }
 
   @Test

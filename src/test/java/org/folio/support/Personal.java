@@ -1,5 +1,6 @@
 package org.folio.support;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,5 +17,6 @@ public class Personal {
   String lastName;
   String firstName;
   String preferredFirstName;
+  ZonedDateTime dateOfBirth;
   List<Address> addresses;
 }
