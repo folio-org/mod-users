@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 class ExpirationIT {
+  private final static String TENANT = "expirationit";
   private static UsersClient usersClient;
   private static ExpirationClient expirationClient;
 
@@ -38,7 +39,7 @@ class ExpirationIT {
     int port = NetworkUtils.nextFreePort();
 
     final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
+    final var headers = new OkapiHeaders(okapiUrl, TENANT, "diku");
 
     usersClient = new UsersClient(okapiUrl, headers);
     expirationClient = new ExpirationClient(okapiUrl, headers);
@@ -57,7 +58,7 @@ class ExpirationIT {
 
   @Test
   void canTriggerExpiration() {
-    expirationClient.attemptToTriggerExpiration("diku")
+    expirationClient.attemptToTriggerExpiration(TENANT)
       .statusCode(is(HTTP_NO_CONTENT));
   }
 
