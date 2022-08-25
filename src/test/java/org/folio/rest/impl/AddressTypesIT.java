@@ -49,7 +49,7 @@ class AddressTypesIT {
   @BeforeAll
   @SneakyThrows
   static void beforeAll(Vertx vertx, VertxTestContext context) {
-    final var tenant = "users_integration_tests";
+    final var tenant = "addresstypesit";
     final var token = new FakeTokenGenerator().generateToken();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
