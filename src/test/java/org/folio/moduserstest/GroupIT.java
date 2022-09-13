@@ -48,7 +48,8 @@ class GroupIT {
     int port = NetworkUtils.nextFreePort();
 
     final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
+    final var tenant = "groupit";
+    final var headers = new OkapiHeaders(okapiUrl, tenant, "token");
 
     groupsClient = new GroupsClient(okapiUrl, headers);
     usersClient = new UsersClient(okapiUrl, headers);

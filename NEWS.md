@@ -1,3 +1,8 @@
+## 18.3.1 2022-09-12
+
+* Vert.x 4.3.3, Spring 5.4.20 fixing vulnerabilities (MODUSERS-326)
+* Don't reuse tenant in integration tests (MODUSERS-324)
+
 ## 18.3.0 2022-06-13
 
 * Added index to search by perferredFirstName (MODUSERS-310)

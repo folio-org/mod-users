@@ -51,7 +51,8 @@ class ProxyRelationshipsIT {
     int port = NetworkUtils.nextFreePort();
 
     final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
+    final var tenant = "proxyrelationshipsit";
+    final var headers = new OkapiHeaders(okapiUrl, tenant, "token");
 
     proxiesClient = new ProxiesClient(okapiUrl, headers);
 
