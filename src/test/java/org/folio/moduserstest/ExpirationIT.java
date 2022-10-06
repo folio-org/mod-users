@@ -31,6 +31,7 @@ import lombok.SneakyThrows;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 class ExpirationIT {
+  private final static String TENANT = "expirationit";
   private static UsersClient usersClient;
   private static ExpirationClient expirationClient;
 
@@ -42,7 +43,7 @@ class ExpirationIT {
     int port = NetworkUtils.nextFreePort();
 
     final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var headers = new OkapiHeaders(okapiUrl, "diku", "diku");
+    final var headers = new OkapiHeaders(okapiUrl, TENANT, "token");
 
     usersClient = new UsersClient(okapiUrl, headers);
     expirationClient = new ExpirationClient(okapiUrl, headers);
@@ -73,7 +74,7 @@ class ExpirationIT {
       .expirationDate(ZonedDateTime.now().minusDays(15))
       .build());
 
-    expirationClient.attemptToTriggerExpiration("diku")
+    expirationClient.attemptToTriggerExpiration(TENANT)
       .statusCode(is(HTTP_NO_CONTENT));
 
     final var firstFetchedUser = usersClient.getUser(firstExpiredUser.getId());
@@ -93,7 +94,7 @@ class ExpirationIT {
       .expirationDate(ZonedDateTime.now().plusHours(3))
       .build());
 
-    expirationClient.attemptToTriggerExpiration("diku")
+    expirationClient.attemptToTriggerExpiration(TENANT)
       .statusCode(is(HTTP_NO_CONTENT));
 
     final var fetchedUser = usersClient.getUser(unexpiredUser.getId());

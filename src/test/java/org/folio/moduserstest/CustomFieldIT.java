@@ -41,7 +41,7 @@ public class CustomFieldIT {
   @BeforeAll
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context) {
-    final var tenant = "diku";
+    final var tenant = "customfieldit";
     final var token = new FakeTokenGenerator().generateToken();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());

@@ -49,7 +49,7 @@ class AddressTypesIT {
   @BeforeAll
   @SneakyThrows
   static void beforeAll(Vertx vertx, VertxTestContext context) {
-    final var tenant = "users_integration_tests";
+    final var tenant = "addresstypesit";
     final var token = new FakeTokenGenerator().generateToken();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
@@ -96,8 +96,10 @@ class AddressTypesIT {
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors(), hasSize(1));
-    assertThat(errors.getErrors().get(0).getMessage(),
-      is("must not be null"));
+    // message gets translated when running "LANG=de_DE.UTF-8 mvn install",
+    // parameters stay the same
+    assertThat(errors.getErrors().get(0).getParameters().toString(),
+        is("[Parameter(key=addressType, value=null)]"));
   }
 
   @Test
