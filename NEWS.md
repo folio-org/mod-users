@@ -1,5 +1,6 @@
 ## 19.0.0 IN-PROGRESS
 
+* Upgraded RMB to 35.0.0 (MODUSERS-330)
 * Made AddressTypeId field required for all user addresses (MODUSERS-212)
 * Removes users facets API (MODUSERS-308)
 * Provides `users 16.0`
