@@ -1,9 +1,11 @@
-## 19.0.0 IN-PROGRESS
+## 19.0.0 2022-10-18
 
 * Upgraded RMB to 35.0.0 (MODUSERS-330)
 * Made AddressTypeId field required for all user addresses (MODUSERS-212)
 * Removes users facets API (MODUSERS-308)
 * Provides `users 16.0`
+* POST or PUT user without addressTypeId throws silent HTTP 500 (MODUSERS-232)
+* Increased delay in disabling expired users when running in non-UTC timezone (MODUSERS-318)
 
 ## 18.3.0 2022-06-13
 
