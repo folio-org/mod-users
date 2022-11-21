@@ -99,4 +99,24 @@ public final class ExpirationTool {
       return Future.failedFuture(e);
     }
   }
+
+  Future<Void> disableUserActuallyCloseConnectionExample(Vertx vertx, String tenant, User user) {
+    logger.info("Disabling expired user with id {} for tenant {}", user.getId(), tenant);
+
+    user.setActive(Boolean.FALSE);
+
+    PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
+
+    try {
+      return pgClient.update(TABLE_NAME_USERS, user, user.getId())
+        .onFailure(cause -> logger.error(String.format(
+          "Error updating user %s for tenant %s: %s", user.getId(), tenant,
+          cause.getMessage()), cause))
+        .mapEmpty();
+
+    } catch(Exception e) {
+      pgClient.closeClient();
+      return Future.failedFuture(e);
+    }
+  }
 }
