@@ -1,5 +1,5 @@
-_Last Updated: (date form was last changed)_
-_Last Reviewed: (date form was last reviewed for accuracy)_
+_Last Updated: Mon, 21 Nov 2022 UTC_
+_Last Reviewed: Mon, 21 Nov 2022 UTC_
 
 ## Overview
 
