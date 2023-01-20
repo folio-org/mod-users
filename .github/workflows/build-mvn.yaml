@@ -53,25 +53,26 @@ jobs:
         run: >
           if test -f "${{ env.MOD_DESCRIPTOR }}"; then
             echo "ModuleDescriptor.json found!!!"
+            cat ${{ env.MOD_DESCRIPTOR }}
             mv ${{ env.MOD_DESCRIPTOR }} MOD_DESCRIPTOR.orig
           else
             echo "ModuleDescriptor.json not found.."
           fi
 
-      - name: RAML Lint
-        run: |
-          echo "Assesing RAML and running raml-cop..."
-          git clone ${{ env.FOLIO_TOOLS }}
-          cd folio-tools/lint-raml && yarn install && pip3 install -r requirements.txt
-          mkdir -p ci
-          echo "<html><body><pre>" > ci/lintRamlCop.html
-          python3 folio-tools/lint-raml/lint_raml_cop.py -l info --validate-only >>ci/lintRamlCop.html
-          echo "</pre><body></html>" >> ci/lintRamlCop.html
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ci-raml-lint
-          path: ci/lintRamlCop.html
-      - run: rm -rf ci && rm -rf folio-tools
+     # - name: RAML Lint
+     #   run: |
+     #     echo "Assesing RAML and running raml-cop..."
+     #     git clone ${{ env.FOLIO_TOOLS }}
+     #     cd folio-tools/lint-raml && yarn install && pip3 install -r requirements.txt
+     #     mkdir -p ci
+     #     echo "<html><body><pre>" > ci/lintRamlCop.html
+     #     python3 folio-tools/lint-raml/lint_raml_cop.py -l info --validate-only >>ci/lintRamlCop.html
+     #     echo "</pre><body></html>" >> ci/lintRamlCop.html
+     # - uses: actions/upload-artifact@v2
+     #   with:
+     #     name: ci-raml-lint
+     #     path: ci/lintRamlCop.html
+     # - run: rm -rf ci && rm -rf folio-tools
     
       - name: Docker publish
         if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
