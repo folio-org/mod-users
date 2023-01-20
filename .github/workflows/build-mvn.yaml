@@ -17,7 +17,7 @@ jobs:
       FOLIO_TOOLS: "https://github.com/folio-org/folio-tools.git"
       FOLIO_MAVEN_REPOSITORY: 'https://repository.folio.org/repository/maven-folio'
       FOLIO_MD_REGISTRY: ''
-      MODULE_DESCRIPTOR: "target/ModuleDescriptor.json"
+      MOD_DESCRIPTOR: "target/ModuleDescriptor.json"
       PUBLISH_MOD_DESCRIPTOR: 'true'
 
 
@@ -51,9 +51,9 @@ jobs:
       - name: Generate Module Descriptor
         if : ${{ env.PUBLISH_MOD_DESCRIPTOR  == 'true' }}
         run: >
-          if test -f "${{ env.MODULE_DESCRIPTOR }}"; then
+          if test -f "${{ env.MOD_DESCRIPTOR }}"; then
             echo "ModuleDescriptor.json found!!!"
-            mv $MOD_DESCRIPTOR $MOD_DESCRIPTOR.orig
+            mv ${{ env.MOD_DESCRIPTOR }} MOD_DESCRIPTOR.orig
           else
             echo "ModuleDescriptor.json not found.."
           fi
