@@ -57,6 +57,7 @@ jobs:
       - name: Run SonarCloud scan
         run: >
           mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:${{ env.SONAR_MVN_PLUGIN_VER }}:sonar
+          -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.organization=folio-org
           -Dsonar.projectKey=org.folio:${{ github.event.repository.name }}
           -Dsonar.projectName=${{ github.event.repository.name }}
