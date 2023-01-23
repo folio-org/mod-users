@@ -2,7 +2,6 @@
 # run unit tests,deploy the code, perform a Sonarqube scan, and publish docker images from master/main.
 
 # Common FOLIO configurable environment variables to set:
-# - SQ_ROOT_DIR (root SQ directory to scan relative to top-level directory)
 # - PUBLISH_MOD_DESCRIPTOR (boolean 'true' or 'false')
 
 
@@ -20,6 +19,7 @@ jobs:
       PUBLISH_MOD_DESCRIPTOR: "true"
       SQ_XML_REPORT: 'target/site/jacoco/jacoco.xml'
       SONAR_MVN_PLUGIN_VER: '3.9.1.2184'
+      SQ_HOST: 'https://sonarcloud.io'
 
 
     runs-on: ubuntu-latest
@@ -56,7 +56,7 @@ jobs:
       - name: Run SonarCloud scan
         run: >
           mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:${{ env.SONAR_MVN_PLUGIN_VER }}:sonar
-          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.host.url=${{ env.SQ_HOST }}
           -Dsonar.organization=folio-org
           -Dsonar.projectKey=org.folio:${{ github.event.repository.name }}
           -Dsonar.projectName=${{ github.event.repository.name }}
@@ -112,4 +112,4 @@ jobs:
           customHeaders: '{ "Accept": "application/json; charset=utf-8" }'
           data: ${{ steps.moduleDescriptor.outputs.content }}
           username: ${{ secrets.FOLIO_REGISTRY_USERNAME }}
-          password: ${{ secrets.FOLIO_REGISTRY_PASSWORD }} 
+          password: ${{ secrets.FOLIO_REGISTRY_PASSWORD }}
