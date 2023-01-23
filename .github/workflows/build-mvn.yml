@@ -13,7 +13,6 @@ jobs:
   github-actions-ci:
     env:
       JAVA_VERSION: 17
-      SQ_ROOT_DIR: "./src"
       DOCKER_REPOSITORY: "folioci"
       FOLIO_MAVEN_REPOSITORY: "https://repository.folio.org/repository/maven-folio"
       FOLIO_MD_REGISTRY: "https://folio-registry.dev.folio.org"
@@ -21,6 +20,7 @@ jobs:
       PUBLISH_MOD_DESCRIPTOR: "true"
       HEALTH_CHECK: "true"
       SQ_XML_REPORT: 'target/site/jacoco/jacoco.xml'
+      SONAR_MVN_PLUGIN_VER: '3.9.1.2184'
 
 
     runs-on: ubuntu-latest
@@ -55,14 +55,12 @@ jobs:
         run: git fetch --no-tags ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} +refs/heads/${{ env.DEFAULT_BRANCH }}:refs/remotes/origin/${{ env.DEFAULT_BRANCH }}
       
       - name: Run SonarCloud scan
-        uses: sonarsource/sonarcloud-github-action@master
-        with:
-          args: >
-            -Dsonar.organization=folio-org
-            -Dsonar.projectKey=org.folio:${{ github.event.repository.name }}
-            -Dsonar.projectName=${{ github.event.repository.name }}
-            -Dsonar.sources=${{ env.SQ_ROOT_DIR }}
-            -Dsonar.coverage.jacoco.xmlReportPaths=${{ env.SQ_XML_REPORT }}
+        run: >
+          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:${{ env.SONAR_MVN_PLUGIN_VER }}:sonar
+          -Dsonar.organization=folio-org
+          -Dsonar.projectKey=org.folio:${{ github.event.repository.name }}
+          -Dsonar.projectName=${{ github.event.repository.name }}
+          -Dsonar.coverage.jacoco.xmlReportPaths=${{ env.SQ_XML_REPORT }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
