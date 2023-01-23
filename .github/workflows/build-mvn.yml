@@ -4,7 +4,7 @@
 # Common FOLIO configurable environment variables to set:
 # - SQ_ROOT_DIR (root SQ directory to scan relative to top-level directory)
 # - PUBLISH_MOD_DESCRIPTOR (boolean 'true' or 'false')
-# - HEALTH_CHECK (run health check on the image container prior to publishing, boolean 'true' or 'false')
+
 
 name: build-mvn snapshot
 on: [push, pull_request]
@@ -18,7 +18,6 @@ jobs:
       FOLIO_MD_REGISTRY: "https://folio-registry.dev.folio.org"
       MOD_DESCRIPTOR: "target/ModuleDescriptor.json"
       PUBLISH_MOD_DESCRIPTOR: "true"
-      HEALTH_CHECK: "true"
       SQ_XML_REPORT: 'target/site/jacoco/jacoco.xml'
       SONAR_MVN_PLUGIN_VER: '3.9.1.2184'
 
@@ -78,18 +77,8 @@ jobs:
             echo "ModuleDescriptor.json not found.."
           fi
 
-      - name: Read Module Descriptor
-        if : ${{ env.PUBLISH_MOD_DESCRIPTOR == 'true' }}
-        id: moduleDescriptor
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: ./module-descriptor.json
-
-      - name: Docker build and health check
-        if : ${{ env.HEALTH_CHECK  == 'true' }}
-        run: |
-          docker build --pull=true --no-cache=true -t ${{ env.MODULE_NAME }}:${{ env.MODULE_VERSION }} .
-          curl -sS --fail -o /dev/null  http://localhost:8081/apidocs/ || exit 1
+      - name: Docker build stage
+        run: docker build --pull=true --no-cache=true -t ${{ env.MODULE_NAME }}:${{ env.MODULE_VERSION }} .
 
       - name: Docker publish
         if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
@@ -101,8 +90,16 @@ jobs:
           docker push ${{ env.DOCKER_REPOSITORY }}/${{ env.MODULE_NAME }}:${{ env.MODULE_VERSION }}
           docker push ${{ env.DOCKER_REPOSITORY }}/${{ env.MODULE_NAME }}:latest
 
-      #- name: Maven deploy Stage
-       # if: 
+      - name: Maven deploy Stage
+        if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
+        run: mvn -DskipTests clean deploy
+
+      - name: Read Module Descriptor
+        if : ${{ env.PUBLISH_MOD_DESCRIPTOR == 'true' }}
+        id: moduleDescriptor
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./module-descriptor.json
 
       - name: Publish Module Descriptor
         if : ${{ env.PUBLISH_MOD_DESCRIPTOR  == 'true' &&  github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main'}}
