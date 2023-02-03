@@ -1,6 +1,6 @@
 ## 19.1.0 IN-PROGRESS
 
-* Added custom fields index in users table to make user search faster (MODUSERS-)
+* Added custom fields index in users table to make user search faster (MODUSERS-338)
 
 ## 19.0.0 2022-10-18
 
