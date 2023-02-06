@@ -196,6 +196,10 @@
         {
           "fieldName" : "patronGroup",
           "tOps" : "ADD"
+        },
+        {
+          "fieldName": "customFields",
+          "tOps":"ADD"
         }
       ]
     },
