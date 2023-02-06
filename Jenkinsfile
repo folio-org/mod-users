@@ -5,10 +5,6 @@ buildMvn {
   doKubeDeploy = true
   buildNode = 'jenkins-agent-java11'
 
-  doApiDoc = true
-  apiTypes = 'RAML'
-  apiDirectories = 'ramls'
-
   doDocker = {
     buildJavaDocker {
       publishMaster = tue
