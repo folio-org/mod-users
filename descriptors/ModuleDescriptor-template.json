@@ -209,7 +209,7 @@
         },
         {
           "methods": [ "POST" ],
-          "pathPattern": "/patron-pin/validate",
+          "pathPattern": "/patron-pin/verify",
           "permissionsRequired": [ "patron-pin.validate" ]
         }
       ]
