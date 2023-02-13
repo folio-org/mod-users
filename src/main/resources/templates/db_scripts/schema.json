@@ -224,7 +224,7 @@
           "tOps" : "ADD"
         }
       ],
-      "fullTextIndex" : [
+      "index" : [
         {
           "fieldName" : "proxyUserId",
           "tOps" : "ADD"
