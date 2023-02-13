@@ -1,4 +1,4 @@
-## 19.1.0 2022-02-13
+## 19.1.0 2023-02-13
 
 * Added custom fields index in users table to make user search faster (MODUSERS-338)
 
