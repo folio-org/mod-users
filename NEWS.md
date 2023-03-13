@@ -1,3 +1,7 @@
+## 19.1.0 2023-02-13
+
+* Added custom fields index in users table to make user search faster (MODUSERS-338)
+
 ## 19.0.0 2022-10-18
 
 * Upgraded RMB to 35.0.0 (MODUSERS-330)

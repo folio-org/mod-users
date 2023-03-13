@@ -196,6 +196,10 @@
         {
           "fieldName" : "patronGroup",
           "tOps" : "ADD"
+        },
+        {
+          "fieldName": "customFields",
+          "tOps":"ADD"
         }
       ]
     },
@@ -220,7 +224,7 @@
           "tOps" : "ADD"
         }
       ],
-      "fullTextIndex" : [
+      "index" : [
         {
           "fieldName" : "proxyUserId",
           "tOps" : "ADD"
