@@ -9,6 +9,9 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
+    paths-ignore:
+      - "**/*.[mM][dD]"
+      - "**/*.[tT][xX][tT]"
 
 jobs:
   github-actions-ci:
@@ -33,9 +36,9 @@ jobs:
       - name: Use Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: ${{ env.JAVA_VERSION }}
-          cache: 'maven'
+          cache: "maven"
 
       - name: Set module name and version
         run: |
@@ -87,7 +90,7 @@ jobs:
           images: ${{ env.DOCKER_REPOSITORY }}/${{ env.MODULE_NAME }}
 
       - name: Docker build and publish stage
-        if : ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
+        if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -110,7 +113,7 @@ jobs:
       - name: Publish Module Descriptor
         if: ${{ env.PUBLISH_MOD_DESCRIPTOR  == 'true' &&  github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main'}}
         id: moduleDescriptorPost
-        uses: fjogeleit/http-request-action@master
+        uses: fjogeleit/http-request-action@v1
         with:
           url: ${{ env.FOLIO_MD_REGISTRY }}/_/proxy/modules
           method: "POST"

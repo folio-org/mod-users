@@ -5,7 +5,15 @@
 # - PUBLISH_MOD_DESCRIPTOR (boolean 'true' or 'false')
 
 name: build-mvn snapshot
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - "**/*.[mM][dD]"
+      - "**/*.[tT][xX][tT]"
+  pull_request:
+    paths-ignore:
+      - "**/*.[mM][dD]"
+      - "**/*.[tT][xX][tT]"
 
 jobs:
   github-actions-ci:
@@ -83,7 +91,7 @@ jobs:
           images: ${{ env.DOCKER_REPOSITORY }}/${{ env.MODULE_NAME }}
 
       - name: Docker build and publish stage
-        if : ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
+        if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
         uses: docker/build-push-action@v3
         with:
           context: .
