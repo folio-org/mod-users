@@ -2,7 +2,7 @@
 # run unit tests,deploy the code, perform a Sonarqube scan, and publish docker images from master/main.
 
 # Common FOLIO configurable environment variables to set:
-# - PUBLISH_MOD_DESCRIPTOR (boolean 'true' or 'false')
+# - PUBLISH_MOD_DESCRIPTOR (boolean 'true' or 'false'
 
 name: build-mvn release
 on:
