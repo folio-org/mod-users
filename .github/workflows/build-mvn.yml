@@ -20,7 +20,7 @@ jobs:
     env:
       JAVA_VERSION: 11
       DOCKER_REPOSITORY: "folioci"
-      FOLIO_MAVEN_REPOSITORY: "https://repository.folio.org/repository/maven-folio"
+      FOLIO_MAVEN_REPOSITORY: "https://repository.folio.org/repository/maven-snapshots/"
       FOLIO_MD_REGISTRY: "https://folio-registry.dev.folio.org"
       MOD_DESCRIPTOR: "target/ModuleDescriptor.json"
       PUBLISH_MOD_DESCRIPTOR: "true"
@@ -108,7 +108,14 @@ jobs:
 
       - name: Maven deploy Stage
         if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
-        run: mvn -DskipTests clean deploy
+        uses: sonatype-nexus-community/nexus-repo-github-action@master
+        with:
+          serverUrl: ${{ env.FOLIO_MAVEN_REPOSITORY }}
+          username: admin
+          password: ${{ secrets.FOLIO_NEXUS_NPM_TOKEN }}
+          format: maven2
+          repository: ${{ env.MODULE_NAME }}
+          coordinates: artifactId=app version=${{ env.MODULE_VERSION }}
 
       - name: Read Module Descriptor
         if: ${{ env.PUBLISH_MOD_DESCRIPTOR == 'true' }}
