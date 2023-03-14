@@ -1,0 +1,124 @@
+# This workflow will do a clean install of maven dependencies, build the source code,
+# run unit tests,deploy the code, perform a Sonarqube scan, and publish docker images from master/main.
+
+# Common FOLIO configurable environment variables to set:
+# - PUBLISH_MOD_DESCRIPTOR (boolean 'true' or 'false')
+
+name: build-mvn release
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+    paths-ignore:
+      - "**/*.[mM][dD]"
+      - "**/*.[tT][xX][tT]"
+
+jobs:
+  github-actions-ci:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    env:
+      JAVA_VERSION: 11
+      DOCKER_REPOSITORY: "folioci"
+      FOLIO_MAVEN_REPOSITORY: "https://repository.folio.org/repository/maven-folio"
+      FOLIO_MD_REGISTRY: "https://folio-registry.dev.folio.org"
+      MOD_DESCRIPTOR: "target/ModuleDescriptor.json"
+      PUBLISH_MOD_DESCRIPTOR: "true"
+      SQ_XML_REPORT: "target/site/jacoco/jacoco.xml"
+      SONAR_MVN_PLUGIN_VER: "3.9.1.2184"
+      SQ_HOST: "https://sonarcloud.io"
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.REF }}
+
+      - name: Use Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: "maven"
+
+      - name: Set module name and version
+        run: |
+          echo "MODULE_NAME=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
+          echo "MODULE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      - run: git rev-parse HEAD
+      - run: git config remote.origin.url
+      - run: java --version
+
+      - name: Maven Build Stage
+        run: |
+          mvn dependency:list | { grep -i snapshot || true; }
+          mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install org.jacoco:jacoco-maven-plugin:report
+
+      - name: Set Default branch as env variable
+        run: echo "DEFAULT_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+
+      - name: Fetch branches for SonarCloud Scan
+        run: git fetch --no-tags ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} +refs/heads/${{ env.DEFAULT_BRANCH }}:refs/remotes/origin/${{ env.DEFAULT_BRANCH }}
+
+      - name: Run SonarCloud scan
+        run: >
+          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:${{ env.SONAR_MVN_PLUGIN_VER }}:sonar
+          -Dsonar.host.url=${{ env.SQ_HOST }}
+          -Dsonar.organization=folio-org
+          -Dsonar.projectKey=org.folio:${{ github.event.repository.name }}
+          -Dsonar.projectName=${{ github.event.repository.name }}
+          -Dsonar.coverage.jacoco.xmlReportPaths=${{ env.SQ_XML_REPORT }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Check for Module Descriptor
+        if: ${{ env.PUBLISH_MOD_DESCRIPTOR  == 'true' }}
+        run: >
+          if test -f "${{ env.MOD_DESCRIPTOR }}"; then
+            echo "ModuleDescriptor.json found"
+            mv ${{ env.MOD_DESCRIPTOR }} ./module-descriptor.json
+            cat module-descriptor.json
+          else
+            echo "ModuleDescriptor.json not found !!!"
+          fi
+
+      - name: Set docker image name
+        id: image
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.DOCKER_REPOSITORY }}/${{ env.MODULE_NAME }}
+
+      - name: Docker build and publish stage
+        if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.DOCKER_REPOSITORY }}/${{ env.MODULE_NAME }}:${{ env.MODULE_VERSION }},
+            ${{ env.DOCKER_REPOSITORY }}/${{ env.MODULE_NAME }}:latest
+
+      - name: Maven deploy Stage
+        if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
+        run: mvn -DskipTests clean deploy
+
+      - name: Read Module Descriptor
+        if: ${{ env.PUBLISH_MOD_DESCRIPTOR == 'true' }}
+        id: moduleDescriptor
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./module-descriptor.json
+
+      - name: Publish Module Descriptor
+        if: ${{ env.PUBLISH_MOD_DESCRIPTOR  == 'true' &&  github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main'}}
+        id: moduleDescriptorPost
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ env.FOLIO_MD_REGISTRY }}/_/proxy/modules
+          method: "POST"
+          contentType: "application/json; charset=utf-8"
+          customHeaders: '{ "Accept": "application/json; charset=utf-8" }'
+          data: ${{ steps.moduleDescriptor.outputs.content }}
+          username: ${{ secrets.FOLIO_REGISTRY_USERNAME }}
+          password: ${{ secrets.FOLIO_REGISTRY_PASSWORD }}
