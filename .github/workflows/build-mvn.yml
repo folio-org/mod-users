@@ -108,14 +108,9 @@ jobs:
 
       - name: Maven deploy Stage
         if: ${{ github.ref == 'refs/heads/master' || github.ref  == 'refs/heads/main' }}
-        uses: sonatype-nexus-community/nexus-repo-github-action@master
-        with:
-          serverUrl: ${{ env.FOLIO_MAVEN_REPOSITORY }}
-          username: admin
-          password: ${{ secrets.FOLIO_NEXUS_NPM_TOKEN }}
-          format: maven2
-          repository: ${{ env.MODULE_NAME }}
-          coordinates: artifactId=app version=${{ env.MODULE_VERSION }}
+        run: mvn -DskipTests clean deploy
+        env:
+          NEXUS_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Read Module Descriptor
         if: ${{ env.PUBLISH_MOD_DESCRIPTOR == 'true' }}
