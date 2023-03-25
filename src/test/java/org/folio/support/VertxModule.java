@@ -44,12 +44,40 @@ public class VertxModule {
       headers.getTenantId(), headers.getToken(), webClient);
 
     TenantAttributes ta = new TenantAttributes();
-    ta.setModuleTo("mod-users-1.0.0");
+    ta.setModuleTo("mod-users-999999.0.0");
 
     List<Parameter> parameters = new LinkedList<>();
 
     parameters.add(parameter("loadReference", loadReferenceData));
     parameters.add(parameter("loadSample", loadSampleData));
+
+    ta.setParameters(parameters);
+
+    return TenantInit.init(tenantClient, ta);
+  }
+
+  public Future<Void> purgeModule(@NonNull OkapiHeaders headers) {
+    final var tenantClient = new TenantClient(headers.getOkapiUrl(),
+        headers.getTenantId(), headers.getToken(), webClient);
+
+    TenantAttributes ta = new TenantAttributes()
+        .withPurge(true)
+        .withModuleFrom("0.0.0");
+    return TenantInit.init(tenantClient, ta);
+  }
+
+  public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom) {
+    final var tenantClient = new TenantClient(headers.getOkapiUrl(),
+        headers.getTenantId(), headers.getToken(), webClient);
+
+    TenantAttributes ta = new TenantAttributes();
+    ta.setModuleTo("999999.0.0");
+    ta.setModuleFrom(versionFrom);
+
+    List<Parameter> parameters = new LinkedList<>();
+
+    parameters.add(parameter("loadReference", true));
+    parameters.add(parameter("loadSample", true));
 
     ta.setParameters(parameters);
 

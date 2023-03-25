@@ -6,6 +6,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.dbschema.Versioned;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.tools.utils.TenantLoading;
@@ -26,16 +27,35 @@ public class TenantRefAPI extends TenantAPI {
           TenantLoading tl = new TenantLoading();
 
           tl.withKey("loadReference").withLead("ref-data");
-          tl.withIdContent();
-          tl.add("groups");
-          tl.withIdContent();
-          tl.add("addresstypes");
+          if (isNew(attributes, "15.4.0")) {
+            tl.withIdContent().add("addresstypes-15.4.0", "addresstypes");
+          }
+          if (isNew(attributes, "17.3.0")) {
+            tl.withIdContent().add("groups-17.3.0", "groups");
+          }
 
           tl.withKey("loadSample").withLead("sample-data");
-          tl.withIdContent();
-          tl.add("users");
+          if (isNew(attributes, "15.4.0")) {
+            tl.withIdContent().add("users-15.4.0", "users");
+          }
+          if (isNew(attributes, "17.3.0")) {
+            tl.withIdContent().add("users-17.3.0", "users");
+          }
 
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
         });
+  }
+
+  /**
+   * Returns attributes.getModuleFrom() < featureVersion or attributes.getModuleFrom() is null.
+   */
+  private static boolean isNew(TenantAttributes attributes, String featureVersion) {
+    if (attributes.getModuleFrom() == null) {
+      return true;
+    }
+    var since = new Versioned() {
+    };
+    since.setFromModuleVersion(featureVersion);
+    return since.isNewForThisInstall(attributes.getModuleFrom());
   }
 }
