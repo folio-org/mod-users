@@ -70,7 +70,7 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
   ValidatableResponse attemptToGetRecords(String cqlQuery) {
     return initialSpecification()
       .when()
-      .queryParam("query", cqlQuery)
+      .queryParams("query", cqlQuery, "limit", Integer.MAX_VALUE)
       .get()
       .then();
   }
