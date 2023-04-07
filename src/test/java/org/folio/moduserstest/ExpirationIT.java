@@ -3,11 +3,13 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.ZonedDateTime;
 
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -18,6 +20,7 @@ import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -31,9 +34,15 @@ import lombok.SneakyThrows;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 class ExpirationIT {
+  private static final String KAFKA_ENV_VALUE = "test-env";
+  private static final String KAFKA_HOST = "KAFKA_HOST";
+  private static final String KAFKA_PORT = "KAFKA_PORT";
+  private static final String KAFKA_ENV = "ENV";
+
   private final static String TENANT = "expirationit";
   private static UsersClient usersClient;
   private static ExpirationClient expirationClient;
+  private static EmbeddedKafkaCluster kafkaCluster;
 
   @BeforeAll
   @SneakyThrows
@@ -44,6 +53,13 @@ class ExpirationIT {
 
     final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, TENANT, "token");
+
+    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
+    kafkaCluster.start();
+    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
+    System.setProperty(KAFKA_HOST, hostAndPort[0]);
+    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
     usersClient = new UsersClient(okapiUrl, headers);
     expirationClient = new ExpirationClient(okapiUrl, headers);
@@ -106,5 +122,10 @@ class ExpirationIT {
   void cannotTriggerExpirationForUnknownTenant() {
     expirationClient.attemptToTriggerExpiration("made-up-tenant")
       .statusCode(is(HTTP_INTERNAL_ERROR));
+  }
+
+  @AfterAll
+  public static void after() {
+    kafkaCluster.stop();
   }
 }

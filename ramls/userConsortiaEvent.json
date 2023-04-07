@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "User consortia event",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "UUID of the event",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "action": {
+      "description": "Action for user (Create, Edit or Delete)",
+      "type": "string",
+      "enum": [
+        "Create",
+        "Edit",
+        "Delete"
+      ]
+    },
+    "userId": {
+      "description": "UUID of the user",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "performedBy": {
+      "description": "UUID of the user who performed the action",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "eventDate": {
+      "description": "Date time when event triggered",
+      "format": "date-time",
+      "type": "string"
+    },
+    "actionDate": {
+      "description": "Date time when user action occurred",
+      "format": "date-time",
+      "type": "string"
+    },
+    "userSnapshot": {
+      "description": "Full snapshot of the user",
+      "type": "object",
+      "$ref": "userdata.json"
+    }
+  },
+  "additionalProperties": false
+}

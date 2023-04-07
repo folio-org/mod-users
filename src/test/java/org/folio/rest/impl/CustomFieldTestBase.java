@@ -1,6 +1,7 @@
 package org.folio.rest.impl;
 
 import static io.restassured.RestAssured.given;
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 
@@ -16,9 +17,12 @@ import java.util.Arrays;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.core.json.Json;
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFields;
@@ -34,12 +38,28 @@ public class CustomFieldTestBase extends TestBase {
   private static final String USERS_ENDPOINT = "users";
   private static final String CUSTOM_FIELDS_ENDPOINT = "custom-fields";
 
+  private static final String KAFKA_ENV_VALUE = "test-env";
+  private static final String KAFKA_HOST = "KAFKA_HOST";
+  private static final String KAFKA_PORT = "KAFKA_PORT";
+  private static final String KAFKA_ENV = "ENV";
+
   private static final String USER_JSON_PATH = "users/user8.json";
   private static final String SHORT_TEXT_FIELD_JSON_PATH = "fields/shortTextField.json";
   private static final String SINGLE_CHECKBOX_FIELD_JSON_PATH = "fields/singleCheckbox.json";
   private static final String MULTI_SELECT_FIELD_JSON_PATH = "fields/multiSelectField.json";
 
   protected User testUser;
+  private static EmbeddedKafkaCluster kafkaCluster;
+
+  @BeforeClass
+  public static void setUpClass() {
+    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
+    kafkaCluster.start();
+    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
+    System.setProperty(KAFKA_HOST, hostAndPort[0]);
+    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
+  }
 
   @Before
   public void setUp() {
@@ -51,6 +71,12 @@ public class CustomFieldTestBase extends TestBase {
     CustomFieldsDBTestUtil.deleteAllCustomFields(vertx);
     deleteWithNoContent(USERS_ENDPOINT + "/" + testUser.getId());
   }
+
+  @AfterClass
+  public static void tearDownClass() {
+    kafkaCluster.stop();
+  }
+
 
   protected String cfEndpoint() {
     return CUSTOM_FIELDS_ENDPOINT;

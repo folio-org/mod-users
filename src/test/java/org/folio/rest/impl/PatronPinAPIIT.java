@@ -2,8 +2,10 @@
 package org.folio.rest.impl;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.hamcrest.CoreMatchers.is;
 
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -15,6 +17,7 @@ import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
 import org.folio.test.util.DBTestUtil;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,9 +35,15 @@ import lombok.SneakyThrows;
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class PatronPinAPIIT {
+  private static final String KAFKA_ENV_VALUE = "test-env";
+  private static final String KAFKA_HOST = "KAFKA_HOST";
+  private static final String KAFKA_PORT = "KAFKA_PORT";
+  private static final String KAFKA_ENV = "ENV";
+
   private static final String TENANT = "patron_pin_integration_tests";
   private static UsersClient usersClient;
   private static PatronPinClient patronPinClient;
+  private static EmbeddedKafkaCluster kafkaCluster;
 
   @BeforeAll
   @SneakyThrows
@@ -47,6 +56,13 @@ class PatronPinAPIIT {
 
     final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, TENANT, token);
+
+    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
+    kafkaCluster.start();
+    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
+    System.setProperty(KAFKA_HOST, hostAndPort[0]);
+    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
     usersClient = new UsersClient(okapiUrl, headers);
     patronPinClient = new PatronPinClient(okapiUrl.asURI(), headers);
@@ -130,5 +146,10 @@ class PatronPinAPIIT {
 
   private void deleteAllPatronPins(Vertx vertx) {
     DBTestUtil.deleteFromTable(vertx, "patronpin", TENANT);
+  }
+
+  @AfterAll
+  public static void after() {
+    kafkaCluster.stop();
   }
 }

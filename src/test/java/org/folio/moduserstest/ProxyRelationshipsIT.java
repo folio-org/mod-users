@@ -4,6 +4,7 @@ import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -12,6 +13,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -22,6 +24,7 @@ import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.ProxiesClient;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -41,7 +44,13 @@ import lombok.SneakyThrows;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
 class ProxyRelationshipsIT {
+  private static final String KAFKA_ENV_VALUE = "test-env";
+  private static final String KAFKA_HOST = "KAFKA_HOST";
+  private static final String KAFKA_PORT = "KAFKA_PORT";
+  private static final String KAFKA_ENV = "ENV";
+
   private static ProxiesClient proxiesClient;
+  private static EmbeddedKafkaCluster kafkaCluster;
 
   @BeforeAll
   @SneakyThrows
@@ -53,6 +62,13 @@ class ProxyRelationshipsIT {
     final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
     final var tenant = "proxyrelationshipsit";
     final var headers = new OkapiHeaders(okapiUrl, tenant, "token");
+
+    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
+    kafkaCluster.start();
+    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
+    System.setProperty(KAFKA_HOST, hostAndPort[0]);
+    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
     proxiesClient = new ProxiesClient(okapiUrl, headers);
 
@@ -274,5 +290,10 @@ class ProxyRelationshipsIT {
 
   private static String generateId() {
     return UUID.randomUUID().toString();
+  }
+
+  @AfterAll
+  public static void after() {
+    kafkaCluster.stop();
   }
 }

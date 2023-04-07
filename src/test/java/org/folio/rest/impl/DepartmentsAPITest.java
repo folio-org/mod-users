@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
@@ -28,10 +29,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
+import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -49,13 +54,28 @@ public class DepartmentsAPITest extends TestBase {
 
   private static final String DEPARTMENTS_ENDPOINT = "departments";
   private static final String USERS_ENDPOINT = "users";
-
   private static final String USER_JSON_PATH = "users/user8.json";
+
+  private static final String KAFKA_ENV_VALUE = "test-env";
+  private static final String KAFKA_HOST = "KAFKA_HOST";
+  private static final String KAFKA_PORT = "KAFKA_PORT";
+  private static final String KAFKA_ENV = "ENV";
+  private static EmbeddedKafkaCluster kafkaCluster;
 
   private static final String USER_ID = "88888888-8888-4888-8888-888888888888";
   private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
 
   protected User testUser;
+
+  @BeforeClass
+  public static void setUpClass() {
+    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
+    kafkaCluster.start();
+    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
+    System.setProperty(KAFKA_HOST, hostAndPort[0]);
+    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
+  }
 
   @Before
   public void setUp() {
@@ -66,6 +86,11 @@ public class DepartmentsAPITest extends TestBase {
   public void tearDown() {
     deleteWithNoContent(USERS_ENDPOINT + "/" + testUser.getId());
     DBTestUtil.deleteFromTable(vertx, "departments");
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    kafkaCluster.stop();
   }
 
   @Test

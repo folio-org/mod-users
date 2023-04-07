@@ -3,11 +3,13 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Map;
 
+import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
@@ -21,6 +23,7 @@ import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,8 +38,14 @@ import lombok.SneakyThrows;
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 public class CustomFieldIT {
+  private static final String KAFKA_ENV_VALUE = "test-env";
+  private static final String KAFKA_HOST = "KAFKA_HOST";
+  private static final String KAFKA_PORT = "KAFKA_PORT";
+  private static final String KAFKA_ENV = "ENV";
+
   private static UsersClient usersClient;
   private static CustomFieldsClient customFieldsClient;
+  private static EmbeddedKafkaCluster kafkaCluster;
 
   @BeforeAll
   @SneakyThrows
@@ -50,6 +59,13 @@ public class CustomFieldIT {
 
     final var okapiUrl = new OkapiUrl("http://localhost:" + port);
     final var headers = new OkapiHeaders(okapiUrl, tenant, token);
+
+    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
+    kafkaCluster.start();
+    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
+    System.setProperty(KAFKA_HOST, hostAndPort[0]);
+    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
     usersClient = new UsersClient(okapiUrl, headers);
     customFieldsClient = new CustomFieldsClient(okapiUrl, headers);
@@ -287,5 +303,10 @@ public class CustomFieldIT {
       .type("TEXTBOX_SHORT")
       .order(1)
       .build();
+  }
+
+  @AfterAll
+  public static void after() {
+    kafkaCluster.stop();
   }
 }
