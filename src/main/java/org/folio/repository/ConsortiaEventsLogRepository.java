@@ -8,6 +8,7 @@ import io.vertx.sqlclient.Tuple;
 import org.folio.rest.jaxrs.model.OutboxEventLog;
 import org.folio.rest.persist.Conn;
 
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -50,7 +51,8 @@ public class ConsortiaEventsLogRepository {
    */
   public Future<Boolean> saveEventLog(Conn conn, OutboxEventLog eventLog, String tenantId) {
     String query = String.format(INSERT_SQL, convertToPsqlStandard(tenantId), OUTBOX_TABLE_NAME);
-    Tuple queryParams = Tuple.of(eventLog.getEventId(), eventLog.getEntityType().value(), eventLog.getAction(), eventLog.getActionDate(), eventLog.getPayload());
+    Tuple queryParams = Tuple.of(eventLog.getEventId(), eventLog.getEntityType().value(), eventLog.getAction(),
+      eventLog.getActionDate().toInstant().atOffset(ZoneOffset.UTC), eventLog.getPayload());
     return conn.execute(query, queryParams).map(resultSet -> resultSet.size() == 1);
   }
 
