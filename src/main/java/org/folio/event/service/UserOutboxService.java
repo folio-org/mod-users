@@ -66,7 +66,7 @@ public class UserOutboxService {
             if (CollectionUtils.isNotEmpty(eventIds)) {
               return outboxRepository.deleteBatch(conn, eventIds, tenantId)
                 .onSuccess(rowsCount -> logger.info("{} logs have been deleted from outbox table", rowsCount))
-                .onFailure(ex -> logger.error("Logs deletion filed", ex));
+                .onFailure(ex -> logger.error("Logs deletion failed", ex));
             }
             return Future.succeededFuture(0);
           });
