@@ -80,8 +80,10 @@ class ProxyRelationshipsIT {
   }
 
   @BeforeEach
-  public void beforeEach() {
+  public void beforeEach(VertxTestContext context) {
     proxiesClient.deleteAllProxies();
+
+    context.completeNow();
   }
 
   @Test
@@ -293,7 +295,9 @@ class ProxyRelationshipsIT {
   }
 
   @AfterAll
-  public static void after() {
+  public static void after(VertxTestContext context) {
     kafkaCluster.stop();
+
+    context.completeNow();
   }
 }

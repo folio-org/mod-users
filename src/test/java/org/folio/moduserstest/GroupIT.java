@@ -78,9 +78,11 @@ class GroupIT {
   }
 
   @BeforeEach
-  public void beforeEach() {
+  public void beforeEach(VertxTestContext context) {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
+
+    context.completeNow();
   }
 
   @Test
@@ -388,7 +390,9 @@ class GroupIT {
   }
 
   @AfterAll
-  public static void after() {
+  public static void after(VertxTestContext context) {
     kafkaCluster.stop();
+
+    context.completeNow();
   }
 }

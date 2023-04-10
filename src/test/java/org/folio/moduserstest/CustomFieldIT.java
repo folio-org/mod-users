@@ -78,9 +78,11 @@ public class CustomFieldIT {
   }
 
   @BeforeEach
-  public void beforeEach() {
+  public void beforeEach(VertxTestContext context) {
     usersClient.deleteAllUsers();
     customFieldsClient.deleteAllCustomFields();
+
+    context.completeNow();
   }
 
   @Test
@@ -306,7 +308,9 @@ public class CustomFieldIT {
   }
 
   @AfterAll
-  public static void after() {
+  public static void after(VertxTestContext context) {
     kafkaCluster.stop();
+
+    context.completeNow();
   }
 }

@@ -32,7 +32,7 @@ import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
-@Timeout(value = 50, unit = SECONDS)
+@Timeout(value = 20, unit = SECONDS)
 class ExpirationIT {
   private static final String KAFKA_ENV_VALUE = "test-env";
   private static final String KAFKA_HOST = "KAFKA_HOST";
@@ -125,7 +125,9 @@ class ExpirationIT {
   }
 
   @AfterAll
-  public static void after() {
+  public static void after(VertxTestContext context) {
     kafkaCluster.stop();
+
+    context.completeNow();
   }
 }
