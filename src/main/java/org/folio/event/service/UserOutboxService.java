@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Date;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -111,6 +112,7 @@ public class UserOutboxService {
     OutboxEventLog log = new OutboxEventLog()
       .withEventId(UUID.randomUUID().toString())
       .withAction(action)
+      .withActionDate(new Date())
       .withEntityType(entityType)
       .withPayload(entity);
 

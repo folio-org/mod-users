@@ -51,7 +51,7 @@ public class ConsortiaEventProducer {
     event.setAction(eventAction);
     event.setUserId(user.getId());
     event.setEventDate(new Date());
-    event.setUser(user);
+    event.setUser(user.withPersonal(null));
     if (UserConsortiaEvent.Action.CREATE == eventAction) {
       event.setUserId(user.getMetadata().getCreatedByUserId());
       event.setActionDate(user.getMetadata().getCreatedDate());

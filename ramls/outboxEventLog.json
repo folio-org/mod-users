@@ -19,6 +19,11 @@
       "description": "Action for entity",
       "type": "string"
     },
+    "actionDate": {
+      "description": "Date time when outbox action occurred",
+      "format": "date-time",
+      "type": "string"
+    },
     "payload": {
       "description": "Event payload to send to Kafka",
       "type": "string"

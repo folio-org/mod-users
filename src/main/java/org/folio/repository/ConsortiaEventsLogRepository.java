@@ -23,8 +23,8 @@ public class ConsortiaEventsLogRepository {
   private static final String ENTITY_TYPE_FIELD = "entity_type";
   private static final String ACTION_FIELD = "action";
   private static final String PAYLOAD_FIELD = "payload";
-  private static final String INSERT_SQL = "INSERT INTO %s.%s (event_id, entity_type, action, payload) VALUES ($1, $2, $3, $4)";
-  private static final String SELECT_EVENT_LOGS = "SELECT * FROM %s.%s LIMIT 1000";
+  private static final String INSERT_SQL = "INSERT INTO %s.%s (event_id, entity_type, action, action_date, payload) VALUES ($1, $2, $3, $4, $5)";
+  private static final String SELECT_EVENT_LOGS = "SELECT * FROM %s.%s ORDER BY action_date LIMIT 1000";
   public static final String DELETE_SQL = "DELETE from %s.%s where event_id = ANY ($1)";
 
   /**
@@ -50,7 +50,7 @@ public class ConsortiaEventsLogRepository {
    */
   public Future<Boolean> saveEventLog(Conn conn, OutboxEventLog eventLog, String tenantId) {
     String query = String.format(INSERT_SQL, convertToPsqlStandard(tenantId), OUTBOX_TABLE_NAME);
-    Tuple queryParams = Tuple.of(eventLog.getEventId(), eventLog.getEntityType().value(), eventLog.getAction(), eventLog.getPayload());
+    Tuple queryParams = Tuple.of(eventLog.getEventId(), eventLog.getEntityType().value(), eventLog.getAction(), eventLog.getActionDate(), eventLog.getPayload());
     return conn.execute(query, queryParams).map(resultSet -> resultSet.size() == 1);
   }
 
