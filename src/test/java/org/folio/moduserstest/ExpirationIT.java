@@ -123,14 +123,11 @@ class ExpirationIT {
   void cannotTriggerExpirationForUnknownTenant() {
     expirationClient.attemptToTriggerExpiration("made-up-tenant")
       .statusCode(is(HTTP_INTERNAL_ERROR));
-
-    Awaitility.await().atMost(3, SECONDS).until(() -> true);
   }
 
   @AfterAll
   public static void after(VertxTestContext context) {
-    kafkaCluster.stop();
-
     context.completeNow();
+    kafkaCluster.stop();
   }
 }
