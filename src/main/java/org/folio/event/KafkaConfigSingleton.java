@@ -15,7 +15,7 @@ public enum KafkaConfigSingleton {
     String kafkaHost = getPropertyValue("KAFKA_HOST", "kafka");
     String okapiUrl = getPropertyValue("OKAPI_URL", "http://okapi:9130");
     int replicationFactor = Integer.parseInt(getPropertyValue("REPLICATION_FACTOR", "1"));
-    int maxRequestSize = Integer.parseInt(getPropertyValue("MAX_REQUEST_SIZE", "4000000"));
+    int maxRequestSize = Integer.parseInt(getPropertyValue("MAX_REQUEST_SIZE", "1048576"));
 
     kafkaConfig = KafkaConfig.builder()
       .envId(envId)
