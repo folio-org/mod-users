@@ -30,6 +30,7 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
@@ -122,6 +123,8 @@ class ExpirationIT {
   void cannotTriggerExpirationForUnknownTenant() {
     expirationClient.attemptToTriggerExpiration("made-up-tenant")
       .statusCode(is(HTTP_INTERNAL_ERROR));
+
+    Awaitility.await().atMost(3, SECONDS).until(() -> true);
   }
 
   @AfterAll
