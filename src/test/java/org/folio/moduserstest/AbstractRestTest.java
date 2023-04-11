@@ -51,7 +51,6 @@ public abstract class AbstractRestTest {
     System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
-//    System.out.println("Kafka Bootstrap Server Port: " + kafkaBootstrapServerPort);
 
     module = new VertxModule(vertx);
 
