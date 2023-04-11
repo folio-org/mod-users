@@ -9,11 +9,11 @@ import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.OutboxEventLog;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserConsortiaEvent;
+import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.persist.Conn;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
-import org.folio.repository.ConsortiaEventsLogRepository;
+import org.folio.repository.UserEventsLogRepository;
 import org.folio.repository.InternalLockRepository;
 
 import java.util.ArrayList;
@@ -27,18 +27,18 @@ import java.util.stream.Collectors;
 public class UserOutboxService {
 
   private static final Logger logger = LogManager.getLogger(UserOutboxService.class);
-  private static final String OUTBOX_LOCK_NAME = "consortia_outbox";
+  private static final String OUTBOX_LOCK_NAME = "user_outbox";
 
-  private final ConsortiaEventProducer producer;
+  private final UserEventProducer producer;
   private final InternalLockRepository lockRepository;
-  private final ConsortiaEventsLogRepository outboxRepository;
+  private final UserEventsLogRepository outboxRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
 
   public UserOutboxService() {
-    producer = new ConsortiaEventProducer();
+    producer = new UserEventProducer();
     lockRepository = new InternalLockRepository();
     pgClientFactory = PostgresClient::getInstance;
-    outboxRepository = new ConsortiaEventsLogRepository();
+    outboxRepository = new UserEventsLogRepository();
   }
 
   /**
@@ -83,7 +83,7 @@ public class UserOutboxService {
    * @param okapiHeaders okapi headers
    * @return future with saved outbox log in the same transaction
    */
-  public Future<Boolean> saveUserOutboxLog(Conn conn, User entity, UserConsortiaEvent.Action action, Map<String, String> okapiHeaders) {
+  public Future<Boolean> saveUserOutboxLog(Conn conn, User entity, UserEvent.Action action, Map<String, String> okapiHeaders) {
     String user = Json.encode(entity);
     return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
       .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
@@ -95,7 +95,7 @@ public class UserOutboxService {
     for (OutboxEventLog log : logs) {
       if (OutboxEventLog.EntityType.USER == log.getEntityType()) {
         User user = Json.decodeValue(log.getPayload(), User.class);
-        UserConsortiaEvent.Action userAction = UserConsortiaEvent.Action.fromValue(log.getAction());
+        UserEvent.Action userAction = UserEvent.Action.fromValue(log.getAction());
         futures.add(producer.sendUserCreatedEvent(user, userAction, okapiHeaders));
       }
     }

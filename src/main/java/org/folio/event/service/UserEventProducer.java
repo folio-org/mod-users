@@ -10,12 +10,12 @@ import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.event.KafkaConfigSingleton;
-import org.folio.event.UserConsortiaEventType;
+import org.folio.event.UserEventType;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaHeaderUtils;
 import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserConsortiaEvent;
+import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.tools.utils.TenantTool;
 
 import java.util.Date;
@@ -23,46 +23,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class ConsortiaEventProducer {
-  private static final Logger logger = LogManager.getLogger(ConsortiaEventProducer.class);
+public class UserEventProducer {
+  private static final Logger logger = LogManager.getLogger(UserEventProducer.class);
 
   private final KafkaConfig kafkaConfig;
 
-  public ConsortiaEventProducer() {
+  public UserEventProducer() {
     this(KafkaConfigSingleton.INSTANCE.getKafkaConfig());
   }
 
-  public ConsortiaEventProducer(KafkaConfig kafkaConfig) {
+  public UserEventProducer(KafkaConfig kafkaConfig) {
     this.kafkaConfig = kafkaConfig;
   }
 
   public Future<Boolean> sendUserCreatedEvent(User user,
-                                              UserConsortiaEvent.Action eventAction,
+                                              UserEvent.Action eventAction,
                                               Map<String, String> okapiHeaders) {
-    UserConsortiaEvent event = getUserConsortiaEvent(user, eventAction);
+    UserEvent event = getUserEvent(user, eventAction);
     logger.info("Starting to send event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
     String eventPayload = Json.encode(event);
-    return sendToKafka(UserConsortiaEventType.USER_CREATED, eventPayload, okapiHeaders, event.getUserId());
+    return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, event.getUserId());
   }
 
-  private UserConsortiaEvent getUserConsortiaEvent(User user, UserConsortiaEvent.Action eventAction) {
-    UserConsortiaEvent event = new UserConsortiaEvent();
+  private UserEvent getUserEvent(User user, UserEvent.Action eventAction) {
+    UserEvent event = new UserEvent();
     event.setId(UUID.randomUUID().toString());
     event.setAction(eventAction);
     event.setUserId(user.getId());
     event.setEventDate(new Date());
     event.setUser(user.withPersonal(null));
-    if (UserConsortiaEvent.Action.CREATE == eventAction) {
+    if (UserEvent.Action.CREATE == eventAction) {
       event.setUserId(user.getMetadata().getCreatedByUserId());
       event.setActionDate(user.getMetadata().getCreatedDate());
-    } else if (UserConsortiaEvent.Action.EDIT == eventAction) {
+    } else if (UserEvent.Action.EDIT == eventAction) {
       event.setUserId(user.getMetadata().getUpdatedByUserId());
       event.setActionDate(user.getMetadata().getUpdatedDate());
     }
     return event;
   }
 
-  private Future<Boolean> sendToKafka(UserConsortiaEventType eventType,
+  private Future<Boolean> sendToKafka(UserEventType eventType,
                                       String eventPayload,
                                       Map<String, String> okapiHeaders,
                                       String key) {

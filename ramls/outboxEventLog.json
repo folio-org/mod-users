@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "An transactional outbox event log",
+  "description": "A transactional outbox event log",
   "type": "object",
   "properties": {
     "eventId": {

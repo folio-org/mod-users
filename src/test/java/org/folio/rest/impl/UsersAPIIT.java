@@ -4,7 +4,6 @@ package org.folio.rest.impl;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -14,77 +13,39 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import java.util.List;
 import java.util.UUID;
 
-import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
-import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.moduserstest.AbstractRestTest;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
 import org.folio.support.Personal;
 import org.folio.support.TagList;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
-import org.folio.support.VertxModule;
 import org.folio.support.http.AddressTypesClient;
-import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.GroupsClient;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class UsersAPIIT {
-  private static final String KAFKA_ENV_VALUE = "test-env";
-  private static final String KAFKA_HOST = "KAFKA_HOST";
-  private static final String KAFKA_PORT = "KAFKA_PORT";
-  private static final String KAFKA_ENV = "ENV";
+class UsersAPIIT extends AbstractRestTest {
 
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
   private static AddressTypesClient addressTypesClient;
-  private static EmbeddedKafkaCluster kafkaCluster;
 
   @BeforeAll
   @SneakyThrows
-  static void beforeAll(Vertx vertx, VertxTestContext context) {
-    final var tenant = "usersapiit";
-    final var token = new FakeTokenGenerator().generateToken();
-
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
-
-    final var port = NetworkUtils.nextFreePort();
-
-    final var okapiUrl = new OkapiUrl("http://localhost:" + port);
-    final var headers = new OkapiHeaders(okapiUrl, tenant, token);
-
-    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
-    kafkaCluster.start();
-    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
-    System.setProperty(KAFKA_HOST, hostAndPort[0]);
-    System.setProperty(KAFKA_PORT, hostAndPort[1]);
-    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
-
-    usersClient = new UsersClient(okapiUrl, headers);
-    groupsClient = new GroupsClient(okapiUrl, headers);
-    addressTypesClient = new AddressTypesClient(okapiUrl, headers);
-
-    final var module = new VertxModule(vertx);
-
-    module.deployModule(port)
-      .compose(res -> module.enableModule(headers))
-      .onComplete(context.succeedingThenComplete());
+  static void beforeAll() {
+    usersClient = new UsersClient(okapiUrl, okapiHeaders);
+    groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
+    addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
@@ -506,8 +467,4 @@ class UsersAPIIT {
     usersClient.deleteUsers("username == \"" + username + "\"");
   }
 
-  @AfterAll
-  public static void after() {
-    kafkaCluster.stop();
-  }
 }

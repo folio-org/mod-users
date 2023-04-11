@@ -34,7 +34,7 @@ import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
-import org.folio.rest.jaxrs.model.UserConsortiaEvent;
+import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -247,7 +247,7 @@ public class UsersAPI implements Users {
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
     pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserConsortiaEvent.Action.CREATE, okapiHeaders)
+      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders)
         .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
         .map(Response.class::cast))
       .onComplete(reply -> {

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
-public class ConsortiaEventsLogRepository {
+public class UserEventsLogRepository {
 
   private static final String OUTBOX_TABLE_NAME = "outbox_event_log";
   private static final String EVENT_ID_FIELD = "event_id";

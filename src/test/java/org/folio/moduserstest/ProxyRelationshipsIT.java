@@ -4,7 +4,6 @@ import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -13,27 +12,16 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
-import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.ProxyRelationship;
 import org.folio.support.ValidationErrors;
-import org.folio.support.VertxModule;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.ProxiesClient;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
-import lombok.SneakyThrows;
 
 /**
  * At the moment, proxy relationships do not require the user to exist
@@ -43,47 +31,18 @@ import lombok.SneakyThrows;
  */
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-class ProxyRelationshipsIT {
-  private static final String KAFKA_ENV_VALUE = "test-env";
-  private static final String KAFKA_HOST = "KAFKA_HOST";
-  private static final String KAFKA_PORT = "KAFKA_PORT";
-  private static final String KAFKA_ENV = "ENV";
+class ProxyRelationshipsIT extends AbstractRestTest {
 
   private static ProxiesClient proxiesClient;
-  private static EmbeddedKafkaCluster kafkaCluster;
 
   @BeforeAll
-  @SneakyThrows
-  public static void beforeAll(Vertx vertx, VertxTestContext context) {
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
-
-    int port = NetworkUtils.nextFreePort();
-
-    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var tenant = "proxyrelationshipsit";
-    final var headers = new OkapiHeaders(okapiUrl, tenant, "token");
-
-    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
-    kafkaCluster.start();
-    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
-    System.setProperty(KAFKA_HOST, hostAndPort[0]);
-    System.setProperty(KAFKA_PORT, hostAndPort[1]);
-    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
-
-    proxiesClient = new ProxiesClient(okapiUrl, headers);
-
-    final var module = new VertxModule(vertx);
-
-    module.deployModule(port)
-      .compose(res -> module.enableModule(headers))
-      .onComplete(context.succeedingThenComplete());
+  public static void beforeAll() {
+    proxiesClient = new ProxiesClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
-  public void beforeEach(VertxTestContext context) {
+  public void beforeEach() {
     proxiesClient.deleteAllProxies();
-
-    context.completeNow();
   }
 
   @Test
@@ -292,12 +251,5 @@ class ProxyRelationshipsIT {
 
   private static String generateId() {
     return UUID.randomUUID().toString();
-  }
-
-  @AfterAll
-  public static void after(VertxTestContext context) {
-    kafkaCluster.stop();
-
-    context.completeNow();
   }
 }

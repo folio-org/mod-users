@@ -1,11 +1,11 @@
 package org.folio.event;
 
-public enum UserConsortiaEventType {
+public enum UserEventType {
   USER_CREATED("USER_CREATED");
 
   private final String topicName;
 
-  UserConsortiaEventType(String topicName) {
+  UserEventType(String topicName) {
     this.topicName = topicName;
   }
 

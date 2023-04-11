@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "User consortia event",
+  "description": "User event",
   "type": "object",
   "properties": {
     "id": {
