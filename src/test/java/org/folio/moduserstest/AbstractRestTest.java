@@ -4,7 +4,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
-import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -12,24 +11,28 @@ import org.folio.support.VertxModule;
 import org.folio.support.http.*;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
-import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
+import java.util.List;
 
 public abstract class AbstractRestTest {
 
+  public static final String KAFKA_ENV = "ENV";
   public static final String TENANT_NAME = "diku";
+  public static final String KAFKA_HOST = "KAFKA_HOST";
+  public static final String KAFKA_PORT = "KAFKA_PORT";
+  public static final String KAFKA_ENV_VALUE = "test-env";
+  public static final List<String> KAFKA_CONTAINER_PORTS = List.of("11541:2181", "11542:9092", "11543:9093");
 
   protected static boolean LOAD_SAMPLE_DATA = false;
   protected static boolean LOAD_REFERENCE_DATA = false;
-  private static final String KAFKA_ENV_VALUE = "test-env";
-  private static final String KAFKA_HOST = "KAFKA_HOST";
-  private static final String KAFKA_PORT = "KAFKA_PORT";
-  private static final String KAFKA_ENV = "ENV";
 
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
   protected static OkapiHeaders okapiHeaders;
-  private static EmbeddedKafkaCluster kafkaCluster;
+  private static final KafkaContainer kafkaContainer =
+    new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
   @BeforeAll
   @SneakyThrows
@@ -43,12 +46,12 @@ public abstract class AbstractRestTest {
     okapiUrl = new OkapiUrl("http://localhost:" + port);
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
-    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
-    kafkaCluster.start();
-    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
-    System.setProperty(KAFKA_HOST, hostAndPort[0]);
-    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+    kafkaContainer.start();
+    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
+    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
+//    System.out.println("Kafka Bootstrap Server Port: " + kafkaBootstrapServerPort);
 
     module = new VertxModule(vertx);
 
@@ -61,7 +64,7 @@ public abstract class AbstractRestTest {
   public static void after(VertxTestContext context) {
     module.purgeModule(okapiHeaders)
       .compose(v -> {
-        kafkaCluster.stop();
+        kafkaContainer.stop();
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
       })

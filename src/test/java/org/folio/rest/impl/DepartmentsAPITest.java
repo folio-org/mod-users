@@ -1,10 +1,11 @@
 package org.folio.rest.impl;
 
-import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.folio.moduserstest.AbstractRestTest.*;
+import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -30,7 +31,6 @@ import java.util.stream.Collectors;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,6 +47,8 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.DBTestUtil;
 import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @RunWith(VertxUnitRunner.class)
 public class DepartmentsAPITest extends TestBase {
@@ -55,24 +57,19 @@ public class DepartmentsAPITest extends TestBase {
   private static final String USERS_ENDPOINT = "users";
   private static final String USER_JSON_PATH = "users/user8.json";
 
-  private static final String KAFKA_ENV_VALUE = "test-env";
-  private static final String KAFKA_HOST = "KAFKA_HOST";
-  private static final String KAFKA_PORT = "KAFKA_PORT";
-  private static final String KAFKA_ENV = "ENV";
-  private static EmbeddedKafkaCluster kafkaCluster;
-
   private static final String USER_ID = "88888888-8888-4888-8888-888888888888";
   private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
 
   protected User testUser;
+  private static final KafkaContainer kafkaContainer = new KafkaContainer(
+    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
   @BeforeClass
   public static void setUpClass() {
-    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
-    kafkaCluster.start();
-    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
-    System.setProperty(KAFKA_HOST, hostAndPort[0]);
-    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+    kafkaContainer.start();
+    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
+    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
   }
 
@@ -89,7 +86,7 @@ public class DepartmentsAPITest extends TestBase {
 
   @AfterClass
   public static void tearDownClass() {
-    kafkaCluster.stop();
+    kafkaContainer.stop();
   }
 
   @Test

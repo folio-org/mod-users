@@ -1,10 +1,10 @@
 package org.folio.rest.impl;
 
 import static io.restassured.RestAssured.given;
-import static net.mguenther.kafka.junit.EmbeddedKafkaClusterConfig.defaultClusterConfig;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 
+import static org.folio.moduserstest.AbstractRestTest.*;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.test.util.TestUtil.mockGetWithBody;
 import static org.folio.test.util.TestUtil.readFile;
@@ -17,7 +17,6 @@ import java.util.Arrays;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.core.json.Json;
-import net.mguenther.kafka.junit.EmbeddedKafkaCluster;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,6 +28,8 @@ import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 public class CustomFieldTestBase extends TestBase {
   protected static final String USER_ID = "88888888-8888-4888-8888-888888888888";
@@ -38,26 +39,21 @@ public class CustomFieldTestBase extends TestBase {
   private static final String USERS_ENDPOINT = "users";
   private static final String CUSTOM_FIELDS_ENDPOINT = "custom-fields";
 
-  private static final String KAFKA_ENV_VALUE = "test-env";
-  private static final String KAFKA_HOST = "KAFKA_HOST";
-  private static final String KAFKA_PORT = "KAFKA_PORT";
-  private static final String KAFKA_ENV = "ENV";
-
   private static final String USER_JSON_PATH = "users/user8.json";
   private static final String SHORT_TEXT_FIELD_JSON_PATH = "fields/shortTextField.json";
   private static final String SINGLE_CHECKBOX_FIELD_JSON_PATH = "fields/singleCheckbox.json";
   private static final String MULTI_SELECT_FIELD_JSON_PATH = "fields/multiSelectField.json";
 
   protected User testUser;
-  private static EmbeddedKafkaCluster kafkaCluster;
+  private static final KafkaContainer kafkaContainer = new KafkaContainer(
+    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
   @BeforeClass
   public static void setUpClass() {
-    kafkaCluster = EmbeddedKafkaCluster.provisionWith(defaultClusterConfig());
-    kafkaCluster.start();
-    String[] hostAndPort = kafkaCluster.getBrokerList().split(":");
-    System.setProperty(KAFKA_HOST, hostAndPort[0]);
-    System.setProperty(KAFKA_PORT, hostAndPort[1]);
+    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+    kafkaContainer.start();
+    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
+    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
   }
 
@@ -74,7 +70,7 @@ public class CustomFieldTestBase extends TestBase {
 
   @AfterClass
   public static void tearDownClass() {
-    kafkaCluster.stop();
+    kafkaContainer.stop();
   }
 
 
