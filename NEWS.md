@@ -1,3 +1,7 @@
+## 20.0.0 Unreleased
+
+* Integrated Kafka for real-time event processing and messaging (MODUSERS-347)
+
 ## 19.1.0 2023-02-13
 
 * Added custom fields index in users table to make user search faster (MODUSERS-338)

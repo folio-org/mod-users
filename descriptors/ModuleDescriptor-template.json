@@ -241,7 +241,7 @@
           "methods" : [ "POST" ],
           "pathPattern" : "/users/users-outbox/process",
           "unit" : "minute",
-          "delay" : "1"
+          "delay" : "30"
         }
       ]
     }
