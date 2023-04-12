@@ -102,7 +102,7 @@ public abstract class AbstractRestTest {
 
   public void commitAllMessagesInTopic(String tenant, String eventType) {
     kafkaConsumer.subscribe(Collections.singletonList(formatToKafkaTopicName(tenant, eventType)));
-    kafkaConsumer.poll(Duration.ofMillis(500));
+    kafkaConsumer.poll(Duration.ofMillis(1000));
   }
 
   private static String formatToKafkaTopicName(String tenant, String eventType) {

@@ -58,6 +58,8 @@ class UsersAPIIT extends AbstractRestTest {
 
   @BeforeEach
   public void beforeEach() {
+    LOAD_SAMPLE_DATA = false;
+    LOAD_REFERENCE_DATA = false;
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();

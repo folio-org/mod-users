@@ -43,6 +43,8 @@ public class UserOutboxProcessIT extends AbstractRestTest {
 
   @BeforeAll
   public static void beforeAll() {
+    LOAD_SAMPLE_DATA = false;
+    LOAD_REFERENCE_DATA = false;
     userEventsLogRepository = new UserEventsLogRepository();
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }
@@ -56,6 +58,7 @@ public class UserOutboxProcessIT extends AbstractRestTest {
 
   @Test
   void shouldSendUserEventToKafkaAfterTrigger() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     timerInterfaceClient.attemptToTriggerUsersOutboxProcess(TENANT_NAME)
       .statusCode(is(HTTP_OK));
     List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());

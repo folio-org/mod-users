@@ -3,10 +3,13 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.event.UserEventType.USER_CREATED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.folio.support.User;
 import org.folio.support.http.TimerInterfaceClient;
@@ -28,6 +31,8 @@ class ExpirationIT extends AbstractRestTest {
 
   @BeforeAll
   public static void beforeAll() {
+    LOAD_SAMPLE_DATA = false;
+    LOAD_REFERENCE_DATA = false;
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }
@@ -65,6 +70,8 @@ class ExpirationIT extends AbstractRestTest {
 
   @Test
   void unexpiredUsersAreNotDisabled() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+
     final var unexpiredUser = usersClient.createUser(User.builder()
       .username("some-user")
       .active(true)
@@ -76,6 +83,9 @@ class ExpirationIT extends AbstractRestTest {
 
     final var fetchedUser = usersClient.getUser(unexpiredUser.getId());
 
+    List<String> eventValues = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+
+    assertEquals(1, eventValues.size());
     assertThat(fetchedUser.getActive(), is(true));
   }
 
