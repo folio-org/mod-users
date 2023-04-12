@@ -65,6 +65,8 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canCreateUser() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+
     final var userToCreate = User.builder()
       .username("juliab")
       .active(true)

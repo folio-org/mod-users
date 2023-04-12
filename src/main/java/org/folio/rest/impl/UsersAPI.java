@@ -424,7 +424,7 @@ public class UsersAPI implements Users {
   }
 
   @Override
-  public void postUsersUsersOutboxProcess(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void postUsersOutboxProcess(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders)
       .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(Response.status(Response.Status.OK).build())))
       .onFailure(cause -> {

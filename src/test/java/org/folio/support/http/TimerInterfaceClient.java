@@ -21,7 +21,7 @@ public class TimerInterfaceClient {
     return configuration.initialSpecification()
       .header("X-Okapi-Tenant", tenantId)
       .when()
-      .post("/users/users-outbox/process")
+      .post("/users/outbox/process")
       .then();
   }
 }

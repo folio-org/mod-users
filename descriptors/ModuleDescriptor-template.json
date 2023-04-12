@@ -239,7 +239,7 @@
         },
         {
           "methods" : [ "POST" ],
-          "pathPattern" : "/users/users-outbox/process",
+          "pathPattern" : "/users/outbox/process",
           "unit" : "minute",
           "delay" : "30"
         }
