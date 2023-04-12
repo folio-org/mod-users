@@ -4,6 +4,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
+import org.apache.commons.collections4.IteratorUtils;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -14,7 +19,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
+
+import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
 
 public abstract class AbstractRestTest {
 
@@ -69,5 +80,28 @@ public abstract class AbstractRestTest {
       })
       .onComplete(future -> context.completeNow())
       .onFailure(context::failNow);
+  }
+
+  public static List<String> checkKafkaEventSent(String tenant, String eventType) {
+    String bootstrapServers = kafkaContainer.getBootstrapServers();
+
+    Properties properties = new Properties();
+    properties.put("bootstrap.servers", bootstrapServers);
+    properties.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    properties.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    properties.put("group.id", "test-group");
+    properties.put("auto.offset.reset", "earliest");
+
+    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties)) {
+      consumer.subscribe(Collections.singletonList(formatToKafkaTopicName(tenant, eventType)));
+      consumer.seekToBeginning(consumer.assignment());
+      ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(3000));
+      return IteratorUtils.toList(records.iterator()).stream()
+        .map(ConsumerRecord::value).collect(Collectors.toList());
+    }
+  }
+
+  private static String formatToKafkaTopicName(String tenant, String eventType) {
+    return KafkaTopicNameHelper.formatTopicName(KAFKA_ENV_VALUE, getDefaultNameSpace(), tenant, eventType);
   }
 }

@@ -9,7 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.ZonedDateTime;
 
 import org.folio.support.User;
-import org.folio.support.http.ExpirationClient;
+import org.folio.support.http.TimerInterfaceClient;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +24,12 @@ import io.vertx.junit5.VertxExtension;
 class ExpirationIT extends AbstractRestTest {
 
   private static UsersClient usersClient;
-  private static ExpirationClient expirationClient;
+  private static TimerInterfaceClient timerInterfaceClient;
 
   @BeforeAll
   public static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
-    expirationClient = new ExpirationClient(okapiUrl, okapiHeaders);
+    timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
@@ -51,7 +51,7 @@ class ExpirationIT extends AbstractRestTest {
       .expirationDate(ZonedDateTime.now().minusDays(15))
       .build());
 
-    expirationClient.attemptToTriggerExpiration(TENANT_NAME)
+    timerInterfaceClient.attemptToTriggerExpiration(TENANT_NAME)
       .statusCode(is(HTTP_NO_CONTENT));
 
     final var firstFetchedUser = usersClient.getUser(firstExpiredUser.getId());
@@ -71,7 +71,7 @@ class ExpirationIT extends AbstractRestTest {
       .expirationDate(ZonedDateTime.now().plusHours(3))
       .build());
 
-    expirationClient.attemptToTriggerExpiration(TENANT_NAME)
+    timerInterfaceClient.attemptToTriggerExpiration(TENANT_NAME)
       .statusCode(is(HTTP_NO_CONTENT));
 
     final var fetchedUser = usersClient.getUser(unexpiredUser.getId());
@@ -81,7 +81,7 @@ class ExpirationIT extends AbstractRestTest {
 
   @Test
   void cannotTriggerExpirationForUnknownTenant() {
-    expirationClient.attemptToTriggerExpiration("made-up-tenant")
+    timerInterfaceClient.attemptToTriggerExpiration("made-up-tenant")
       .statusCode(is(HTTP_INTERNAL_ERROR));
   }
 }

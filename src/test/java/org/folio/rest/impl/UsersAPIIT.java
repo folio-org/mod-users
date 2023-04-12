@@ -4,16 +4,24 @@ package org.folio.rest.impl;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.event.UserEventType.USER_CREATED;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.UUID;
 
+import io.vertx.core.json.Json;
 import org.folio.moduserstest.AbstractRestTest;
+import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
 import org.folio.support.Personal;
@@ -70,19 +78,31 @@ class UsersAPIIT extends AbstractRestTest {
 
     final var createdUser = usersClient.createUser(userToCreate);
 
+    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
+    var userFromEventPayload = userEvent.getUser();
+
+    assertEquals(1, usersList.size());
+    assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
+
     assertThat(createdUser.getId(), is(notNullValue()));
-    assertThat(createdUser.getUsername(), is("juliab"));
-    assertThat(createdUser.getActive(), is(true));
+    assertThat(createdUser.getUsername(), allOf(is("juliab"), equalTo(userFromEventPayload.getUsername())));
+    assertThat(createdUser.getActive(), allOf(is(true), equalTo(userFromEventPayload.getActive())));
 
     final var personal = createdUser.getPersonal();
 
     assertThat(personal.getLastName(), is("brockhurst"));
     assertThat(personal.getFirstName(), is("julia"));
     assertThat(personal.getPreferredFirstName(), is("jules"));
+    assertThat(userFromEventPayload.getPersonal(), is(nullValue()));
 
     assertThat(createdUser.getTags().getTagList(),
       containsInAnyOrder("foo", "bar"));
+    assertThat(userFromEventPayload.getTags().getTagList(),
+      containsInAnyOrder("foo", "bar"));
 
+    assertNotNull(userFromEventPayload.getMetadata().getCreatedDate());
+    assertNotNull(userFromEventPayload.getMetadata().getUpdatedDate());
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
   }
