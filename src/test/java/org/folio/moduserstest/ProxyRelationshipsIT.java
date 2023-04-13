@@ -12,14 +12,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.ProxyRelationship;
 import org.folio.support.ValidationErrors;
-import org.folio.support.VertxModule;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.ProxiesClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,10 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
-import lombok.SneakyThrows;
 
 /**
  * At the moment, proxy relationships do not require the user to exist
@@ -40,27 +31,13 @@ import lombok.SneakyThrows;
  */
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-class ProxyRelationshipsIT {
+class ProxyRelationshipsIT extends AbstractRestTest {
+
   private static ProxiesClient proxiesClient;
 
   @BeforeAll
-  @SneakyThrows
-  public static void beforeAll(Vertx vertx, VertxTestContext context) {
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
-
-    int port = NetworkUtils.nextFreePort();
-
-    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var tenant = "proxyrelationshipsit";
-    final var headers = new OkapiHeaders(okapiUrl, tenant, "token");
-
-    proxiesClient = new ProxiesClient(okapiUrl, headers);
-
-    final var module = new VertxModule(vertx);
-
-    module.deployModule(port)
-      .compose(res -> module.enableModule(headers))
-      .onComplete(context.succeedingThenComplete());
+  public static void beforeAll() {
+    proxiesClient = new ProxiesClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach

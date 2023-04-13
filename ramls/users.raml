@@ -10,6 +10,8 @@ documentation:
 types:
   user: !include userdata.json
   userdataCollection: !include userdataCollection.json
+  outboxEventLog: !include outboxEventLog.json
+  userEvent: !include userEvent.json
   errors: !include raml-util/schemas/errors.schema
 
 traits:
@@ -81,3 +83,6 @@ resourceTypes:
           description: Internal error
           body:
             text/plain:
+  /outbox/process:
+    post:
+      description: Read audit events from DB and send them to Kafka

@@ -6,56 +6,33 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
-import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.support.VertxModule;
+import org.folio.moduserstest.AbstractRestTest;
 import org.folio.support.http.AddressTypesClient;
-import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.GroupsClient;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
-import lombok.SneakyThrows;
 
 // Loading the reference and sample data can take a long time
 @Timeout(value = 30, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class ReferenceAndSampleDataIT {
+class ReferenceAndSampleDataIT extends AbstractRestTest {
+
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
   private static AddressTypesClient addressTypesClient;
 
   @BeforeAll
-  @SneakyThrows
-  static void beforeAll(Vertx vertx, VertxTestContext context) {
-    final var tenant = "referenceandsampledatait";
-    final var token = new FakeTokenGenerator().generateToken();
-
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
-
-    final var port = NetworkUtils.nextFreePort();
-
-    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var headers = new OkapiHeaders(okapiUrl, tenant, token);
-
-    usersClient = new UsersClient(okapiUrl, headers);
-    groupsClient = new GroupsClient(okapiUrl, headers);
-    addressTypesClient = new AddressTypesClient(okapiUrl, headers);
-
-    final var module = new VertxModule(vertx);
-
-    module.deployModule(port)
-      .compose(res -> module.enableModule(headers, true, true))
-      .onComplete(context.succeedingThenComplete());
+  static void beforeAll() {
+    LOAD_SAMPLE_DATA = true;
+    LOAD_REFERENCE_DATA = true;
+    usersClient = new UsersClient(okapiUrl, okapiHeaders);
+    groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
+    addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
   }
 
   @Test

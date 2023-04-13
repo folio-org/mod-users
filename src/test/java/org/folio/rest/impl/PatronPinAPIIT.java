@@ -4,14 +4,8 @@ package org.folio.rest.impl;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 
-import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.moduserstest.AbstractRestTest;
 import org.folio.support.User;
-import org.folio.support.VertxModule;
-import org.folio.support.http.FakeTokenGenerator;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
 import org.folio.test.util.DBTestUtil;
@@ -27,35 +21,18 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import lombok.SneakyThrows;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class PatronPinAPIIT {
-  private static final String TENANT = "patron_pin_integration_tests";
+class PatronPinAPIIT extends AbstractRestTest {
+
   private static UsersClient usersClient;
   private static PatronPinClient patronPinClient;
 
   @BeforeAll
-  @SneakyThrows
-  static void beforeAll(Vertx vertx, VertxTestContext context) {
-    final var token = new FakeTokenGenerator().generateToken();
-
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
-
-    final var port = NetworkUtils.nextFreePort();
-
-    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var headers = new OkapiHeaders(okapiUrl, TENANT, token);
-
-    usersClient = new UsersClient(okapiUrl, headers);
-    patronPinClient = new PatronPinClient(okapiUrl.asURI(), headers);
-
-    final var module = new VertxModule(vertx);
-
-    module.deployModule(port)
-      .compose(res -> module.enableModule(headers)
-      .onComplete(context.succeedingThenComplete()));
+  static void beforeAll() {
+    usersClient = new UsersClient(okapiUrl, okapiHeaders);
+    patronPinClient = new PatronPinClient(okapiUrl.asURI(), okapiHeaders);
   }
 
   @BeforeEach
@@ -129,6 +106,7 @@ class PatronPinAPIIT {
   }
 
   private void deleteAllPatronPins(Vertx vertx) {
-    DBTestUtil.deleteFromTable(vertx, "patronpin", TENANT);
+    DBTestUtil.deleteFromTable(vertx, "patronpin", TENANT_NAME);
   }
+
 }

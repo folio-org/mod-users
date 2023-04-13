@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A transactional outbox event log",
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "description": "The unique id of the event id",
+      "$ref": "raml-util/schemas/uuid.schema",
+      "example": "b8298ddc-7721-46f3-a03a-24938cba44c4"
+    },
+    "entityType": {
+      "description": "Entity type of the event",
+      "type": "string",
+      "enum": [
+        "User"
+      ]
+    },
+    "action": {
+      "description": "Action for entity",
+      "type": "string"
+    },
+    "actionDate": {
+      "description": "Date time when outbox action occurred",
+      "format": "date-time",
+      "type": "string"
+    },
+    "payload": {
+      "description": "Event payload to send to Kafka",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

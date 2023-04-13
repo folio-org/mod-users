@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.UUID;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import io.vertx.pgclient.PgException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
@@ -32,11 +34,13 @@ import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
+import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
 import org.folio.rest.persist.Criteria.Offset;
+import org.folio.rest.persist.PgExceptionUtil;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
@@ -45,6 +49,7 @@ import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
+import org.folio.event.service.UserOutboxService;
 import org.folio.support.FailureHandler;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
@@ -54,7 +59,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.ext.web.RoutingContext;
 
 @Path("users")
@@ -66,6 +70,12 @@ public class UsersAPI implements Users {
   private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(UsersAPI.class);
 
+  // Used when RMB instantiates this class
+  private final UserOutboxService userOutboxService;
+
+  public UsersAPI() {
+    this.userOutboxService = new UserOutboxService();
+  }
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
    * master users table. this can be optimized in the future to check if there is really a need
@@ -205,7 +215,7 @@ public class UsersAPI implements Users {
                 "You cannot add addresses with non-existent address types")));
           } else {
             validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
-                    handler -> saveUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
+                    handler -> saveUser(entity, okapiHeaders, postgresClient.getValue(), asyncResultHandler, vertxContext));
           }
           return succeededFuture();
         })
@@ -228,40 +238,47 @@ public class UsersAPI implements Users {
     }
   }
 
-  private void saveUser(User entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
+  private void saveUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
-    PgUtil.post(TABLE_NAME_USERS, entity, okapiHeaders, vertxContext, PostUsersResponse.class, reply -> {
-      if (isDuplicateIdError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-            ValidationHelper.createValidationErrorMessage(
-              "id", entity.getId(),
-              "User with this id already exists"))));
-        return;
-      }
-      if (isDuplicateUsernameError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-            ValidationHelper.createValidationErrorMessage(
-              "username", entity.getUsername(),
-              "User with this username already exists"))));
-        return;
-      }
-      if (isDuplicateBarcodeError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-            ValidationHelper.createValidationErrorMessage(
-              "barcode", entity.getBarcode(),
-              "This barcode has already been taken"))));
-        return;
-      }
-      logger.debug("Save successful");
-      asyncResultHandler.handle(reply);
-    });
+    String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
+
+    pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
+      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders)
+        .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
+        .map(Response.class::cast))
+      .onComplete(reply -> {
+        if (isDuplicateIdError(reply)) {
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+              ValidationHelper.createValidationErrorMessage(
+                "id", entity.getId(),
+                "User with this id already exists"))));
+          return;
+        }
+        if (isDuplicateUsernameError(reply)) {
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+              ValidationHelper.createValidationErrorMessage(
+                "username", entity.getUsername(),
+                "User with this username already exists"))));
+          return;
+        }
+        if (isDuplicateBarcodeError(reply)) {
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+              ValidationHelper.createValidationErrorMessage(
+                "barcode", entity.getBarcode(),
+                "This barcode has already been taken"))));
+          return;
+        }
+        logger.debug("Save successful");
+        userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+        asyncResultHandler.handle(reply);
+      }));
   }
 
   private boolean isDuplicateIdError(AsyncResult<Response> reply) {
@@ -285,6 +302,8 @@ public class UsersAPI implements Users {
         String msg = ((Errors)reply.result().getEntity()).getErrors().iterator().next().getMessage();
         return msg.matches(errMsg);
       }
+    } else if (reply.cause() instanceof PgException) {
+      return PgExceptionUtil.get(reply.cause(), 'D').matches(errMsg);
     }
     return false;
   }
@@ -402,6 +421,16 @@ public class UsersAPI implements Users {
             succeededFuture(PostUsersExpireTimerResponse.respond204())))
         .onFailure(cause -> asyncResultHandler.handle(
             succeededFuture(PostUsersExpireTimerResponse.respond500WithTextPlain(cause.getMessage()))));
+  }
+
+  @Override
+  public void postUsersOutboxProcess(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders)
+      .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(Response.status(Response.Status.OK).build())))
+      .onFailure(cause -> {
+        logger.warn("Processing of outbox events table has been failed", cause);
+        asyncResultHandler.handle(Future.failedFuture(cause));
+      });
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders,

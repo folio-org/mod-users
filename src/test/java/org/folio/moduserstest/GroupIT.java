@@ -10,16 +10,10 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.UUID;
 
-import org.folio.postgres.testing.PostgresTesterContainer;
-import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.Group;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
-import org.folio.support.VertxModule;
 import org.folio.support.http.GroupsClient;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,36 +23,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
-import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-class GroupIT {
+class GroupIT extends AbstractRestTest{
+
   private static GroupsClient groupsClient;
   private static UsersClient usersClient;
 
   @BeforeAll
-  @SneakyThrows
-  public static void beforeAll(Vertx vertx, VertxTestContext context) {
-    PostgresClient.setPostgresTester(new PostgresTesterContainer());
-
-    int port = NetworkUtils.nextFreePort();
-
-    final var okapiUrl = new OkapiUrl( "http://localhost:" + port);
-    final var tenant = "groupit";
-    final var headers = new OkapiHeaders(okapiUrl, tenant, "token");
-
-    groupsClient = new GroupsClient(okapiUrl, headers);
-    usersClient = new UsersClient(okapiUrl, headers);
-
-    final var module = new VertxModule(vertx);
-
-    module.deployModule(port)
-      .compose(res -> module.enableModule(headers))
-      .onComplete(context.succeedingThenComplete());
+  public static void beforeAll() {
+    groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
+    usersClient = new UsersClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach

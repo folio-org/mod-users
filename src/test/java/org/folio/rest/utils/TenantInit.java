@@ -14,6 +14,9 @@ public class TenantInit {
   public static Future<Void> init(TenantClient tenantClient, TenantAttributes ta) {
     return tenantClient.postTenant(ta)
         .compose(res -> {
+          if (res.statusCode() == 204) {
+            return Future.succeededFuture();
+          }
           assertThat("tenant POST status", res.statusCode(), is(201));
           assertThat("tenant POST error", res.bodyAsJsonObject().getString("error"), is(nullValue()));
           var jsonObject = res.bodyAsJsonObject();
