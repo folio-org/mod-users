@@ -55,19 +55,24 @@ public class UserOutboxService {
       .compose(retrievedCount -> outboxRepository.fetchEventLogs(conn, tenantId))
       .compose(logs -> {
         if (CollectionUtils.isEmpty(logs)) {
+          System.out.println("Hello----------- 1");
           return Future.succeededFuture(0);
         }
-
+        System.out.println("Hello----------- 2");
         logger.info("Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
+        System.out.println("Hello----------- 3");
         return GenericCompositeFuture.join(futures)
           .map(logs.stream().map(OutboxEventLog::getEventId).collect(Collectors.toList()))
           .compose(eventIds -> {
+            System.out.println("Hello----------- 4");
             if (CollectionUtils.isNotEmpty(eventIds)) {
+              System.out.println("Hello----------- 5");
               return outboxRepository.deleteBatch(conn, eventIds, tenantId)
                 .onSuccess(rowsCount -> logger.info("{} logs have been deleted from outbox table", rowsCount))
                 .onFailure(ex -> logger.error("Logs deletion failed", ex));
             }
+            System.out.println("Hello----------- 6");
             return Future.succeededFuture(0);
           });
       })
@@ -88,6 +93,10 @@ public class UserOutboxService {
     return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
       .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
       .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
+  }
+
+  public void saveUsersListOutboxLog(Conn conn, List<User> entityList, UserEvent.Action action, Map<String, String> okapiHeaders) {
+    entityList.stream().map(user -> saveUserOutboxLog(conn, user, action, okapiHeaders)).collect(Collectors.toList());
   }
 
   private List<Future<Boolean>> getKafkaFutures(List<OutboxEventLog> logs, Map<String, String> okapiHeaders) {

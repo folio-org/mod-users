@@ -29,12 +29,7 @@ import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Validate;
-import org.folio.rest.jaxrs.model.Address;
-import org.folio.rest.jaxrs.model.AddressType;
-import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UsersGetOrder;
-import org.folio.rest.jaxrs.model.UserEvent;
+import org.folio.rest.jaxrs.model.*;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -65,6 +60,7 @@ import io.vertx.ext.web.RoutingContext;
 public class UsersAPI implements Users {
 
   public static final String TABLE_NAME_USERS = "users";
+  public static final Integer DEFAULT_LIMIT = 10000;
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private static final Messages messages = Messages.getInstance();
@@ -326,8 +322,17 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext,
-      DeleteUsersByUserIdResponse.class, asyncResultHandler);
+    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
+    postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
+
+    postgresClient.getValue()
+      .withTrans(conn -> conn.getById(TABLE_NAME_USERS, userId, User.class)
+        .compose(user ->  {
+          PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext, DeleteUsersByUserIdResponse.class, asyncResultHandler);
+          userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
+          userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+          return null;
+        }));
   }
 
   @Validate
@@ -337,8 +342,23 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext,
-        DeleteUsersResponse.class, asyncResultHandler);
+    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
+    try {
+      CQLWrapper wrapper = getCQL(query, DEFAULT_LIMIT, 0);
+
+      postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
+      postgresClient.getValue().withTrans(conn ->
+        conn.get(TABLE_NAME_USERS, User.class, wrapper)
+          .compose(users -> {
+            PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext, DeleteUsersResponse.class, asyncResultHandler);
+            userOutboxService.saveUsersListOutboxLog(conn, users.getResults(), UserEvent.Action.DELETE, okapiHeaders);
+            userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+            return null;
+          })
+      );
+    } catch (CQL2PgJSONException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Validate
