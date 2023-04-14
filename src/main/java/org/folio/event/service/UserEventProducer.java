@@ -42,14 +42,13 @@ public class UserEventProducer {
     UserEvent event = getUserEvent(user, eventAction);
     logger.info("Starting to send event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
     String eventPayload = Json.encode(event);
-    return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, event.getUserId());
+    return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
   }
 
   private UserEvent getUserEvent(User user, UserEvent.Action eventAction) {
     UserEvent event = new UserEvent();
     event.setId(UUID.randomUUID().toString());
     event.setAction(eventAction);
-    event.setUserId(user.getId());
     event.setEventDate(new Date());
     event.setUser(user.withPersonal(null));
     if (UserEvent.Action.CREATE == eventAction) {
