@@ -16,11 +16,7 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.repository.UserEventsLogRepository;
 import org.folio.repository.InternalLockRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.Date;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -90,9 +86,14 @@ public class UserOutboxService {
    */
   public Future<Boolean> saveUserOutboxLog(Conn conn, User entity, UserEvent.Action action, Map<String, String> okapiHeaders) {
     String user = Json.encode(entity);
-    return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
-      .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
-      .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
+    if (Objects.nonNull(user)) {
+      return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
+        .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
+        .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
+    }
+    else {
+      throw new RuntimeException("User Not found");
+    }
   }
 
   public void saveUsersListOutboxLog(Conn conn, List<User> entityList, UserEvent.Action action, Map<String, String> okapiHeaders) {

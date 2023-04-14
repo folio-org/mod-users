@@ -327,11 +327,22 @@ public class UsersAPI implements Users {
 
     postgresClient.getValue()
       .withTrans(conn -> conn.getById(TABLE_NAME_USERS, userId, User.class)
-        .onSuccess(user ->  {
-          PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext, DeleteUsersByUserIdResponse.class, asyncResultHandler);
-          userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
-          userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
-        }));
+        .compose(user ->  {
+          if (Objects.nonNull(user)) {
+            PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext, DeleteUsersByUserIdResponse.class, asyncResultHandler);
+            userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
+            userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+          }
+          else {
+            asyncResultHandler.handle(
+              succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(
+                ValidationHelper.createValidationErrorMessage(
+                  "userId", userId,
+                  "This userId is not availible in system"))));
+          }
+          return succeededFuture();
+        })
+      );
   }
 
   @Validate
@@ -348,15 +359,20 @@ public class UsersAPI implements Users {
       postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
       postgresClient.getValue().withTrans(conn ->
         conn.get(TABLE_NAME_USERS, User.class, wrapper)
-          .onSuccess(users -> {
-            PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext, DeleteUsersResponse.class, asyncResultHandler);
-            userOutboxService.saveUsersListOutboxLog(conn, users.getResults(), UserEvent.Action.DELETE, okapiHeaders);
-            userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+          .compose(users -> {
+            if(Objects.nonNull(users)) {
+              PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext, DeleteUsersResponse.class, asyncResultHandler);
+              userOutboxService.saveUsersListOutboxLog(conn, users.getResults(), UserEvent.Action.DELETE, okapiHeaders);
+              userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+            }
+            return succeededFuture();
           })
       );
     } catch (CQL2PgJSONException e) {
       throw new RuntimeException(e);
     }
+
+
   }
 
   @Validate
