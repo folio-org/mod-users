@@ -3,7 +3,6 @@ package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.event.UserEventType.USER_CREATED;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -16,7 +15,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,14 +31,19 @@ import org.folio.support.ValidationErrors;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 
-@Timeout(value = 40, timeUnit = SECONDS)
+@Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UsersAPIIT extends AbstractRestTest {
@@ -70,9 +73,9 @@ class UsersAPIIT extends AbstractRestTest {
   @Order(1)
   void canCreateUser() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+
     final var userToCreate = User.builder()
       .username("juliab")
-      .id(UUID.randomUUID().toString())
       .active(true)
       .personal(Personal.builder()
         .firstName("julia")
@@ -81,10 +84,13 @@ class UsersAPIIT extends AbstractRestTest {
         .build())
       .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
       .build();
+
     final var createdUser = usersClient.createUser(userToCreate);
+
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
     var userFromEventPayload = userEvent.getUser();
+
     assertEquals(1, usersList.size());
     assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
 

@@ -16,7 +16,11 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.repository.UserEventsLogRepository;
 import org.folio.repository.InternalLockRepository;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
