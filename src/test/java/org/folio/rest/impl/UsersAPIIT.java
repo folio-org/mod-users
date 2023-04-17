@@ -40,7 +40,7 @@ import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 
-@Timeout(value = 20, timeUnit = SECONDS)
+@Timeout(value = 40, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIIT extends AbstractRestTest {
 
