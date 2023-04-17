@@ -14,6 +14,7 @@ import org.folio.event.UserEventType;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaHeaderUtils;
 import org.folio.kafka.KafkaTopicNameHelper;
+import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.tools.utils.TenantTool;
@@ -39,27 +40,23 @@ public class UserEventProducer {
   public Future<Boolean> sendUserCreatedEvent(User user,
                                               UserEvent.Action eventAction,
                                               Map<String, String> okapiHeaders) {
-    UserEvent event = getUserEvent(user, eventAction);
+    String tenantId = okapiHeaders.get("x-okapi-tenant");
+    UserEvent event = getUserEvent(user, tenantId, eventAction);
     logger.info("Starting to send event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
     String eventPayload = Json.encode(event);
-    return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, event.getUserId());
+    return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
   }
 
-  private UserEvent getUserEvent(User user, UserEvent.Action eventAction) {
-    UserEvent event = new UserEvent();
-    event.setId(UUID.randomUUID().toString());
-    event.setAction(eventAction);
-    event.setUserId(user.getId());
-    event.setEventDate(new Date());
-    event.setUser(user.withPersonal(null));
-    if (UserEvent.Action.CREATE == eventAction) {
-      event.setUserId(user.getMetadata().getCreatedByUserId());
-      event.setActionDate(user.getMetadata().getCreatedDate());
-    } else if (UserEvent.Action.EDIT == eventAction) {
-      event.setUserId(user.getMetadata().getUpdatedByUserId());
-      event.setActionDate(user.getMetadata().getUpdatedDate());
-    }
-    return event;
+  private UserEvent getUserEvent(User user, String tenantId, UserEvent.Action eventAction) {
+    Metadata metadata = user.getMetadata();
+    return new UserEvent()
+      .withId(UUID.randomUUID().toString())
+      .withAction(eventAction)
+      .withEventDate(new Date())
+      .withTenantId(tenantId)
+      .withActionDate(metadata.getCreatedDate())
+      .withPerformedBy(metadata.getUpdatedByUserId())
+      .withUserDto(user.withPersonal(null).withMetadata(null));
   }
 
   private Future<Boolean> sendToKafka(UserEventType eventType,

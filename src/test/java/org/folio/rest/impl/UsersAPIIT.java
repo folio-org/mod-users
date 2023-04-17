@@ -14,7 +14,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +30,7 @@ import org.folio.support.ValidationErrors;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,6 +86,8 @@ class UsersAPIIT extends AbstractRestTest {
     var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
     var userFromEventPayload = userEvent.getUser();
 
+    assertEquals(TENANT_NAME, userEvent.getTenantId());
+
     assertEquals(1, usersList.size());
     assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
 
@@ -105,8 +107,7 @@ class UsersAPIIT extends AbstractRestTest {
     assertThat(userFromEventPayload.getTags().getTagList(),
       containsInAnyOrder("foo", "bar"));
 
-    assertNotNull(userFromEventPayload.getMetadata().getCreatedDate());
-    assertNotNull(userFromEventPayload.getMetadata().getUpdatedDate());
+    Assertions.assertNull(userFromEventPayload.getMetadata());
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
   }
