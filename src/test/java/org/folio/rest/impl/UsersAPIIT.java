@@ -266,24 +266,24 @@ class UsersAPIIT extends AbstractRestTest {
       .statusCode(is(404));
   }
 
-//  @Test
-//  void cannotUpdateAUserWithUsernameThatAlreadyExists() {
-//    usersClient.createUser(User.builder()
-//      .username("a-username")
-//      .build());
-//
-//    final var anotherUser = usersClient.createUser(User.builder()
-//      .username("another-username")
-//      .build());
-//
-//    usersClient.attemptToUpdateUser(
-//      User.builder()
-//        .id(anotherUser.getId())
-//        .username("a-username")
-//        .build())
-//      .statusCode(is(400))
-//      .body(is("User with this username already exists"));
-//  }
+  @Test
+  void cannotUpdateAUserWithUsernameThatAlreadyExists() {
+    usersClient.createUser(User.builder()
+      .username("a-username")
+      .build());
+
+    final var anotherUser = usersClient.createUser(User.builder()
+      .username("another-username")
+      .build());
+
+    usersClient.attemptToUpdateUser(
+      User.builder()
+        .id(anotherUser.getId())
+        .username("a-username")
+        .build())
+      .statusCode(is(400))
+      .body(is("User with this username already exists"));
+  }
 
   @Test
   void cannotUpdateAUserWithBarcodeThatAlreadyExists() {
