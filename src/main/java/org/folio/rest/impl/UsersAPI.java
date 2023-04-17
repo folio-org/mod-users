@@ -364,6 +364,9 @@ public class UsersAPI implements Users {
             if(Objects.nonNull(users)) {
               PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext, DeleteUsersResponse.class, asyncResultHandler);
               userOutboxService.saveUsersListOutboxLog(conn, users.getResults(), UserEvent.Action.DELETE, okapiHeaders);
+              System.out.println("USERS ARE---"+users.getResults().size());
+              System.out.println("USERSNAME ARE---");
+              users.getResults().stream().forEach(System.out::println);
               userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
             }
             return succeededFuture();

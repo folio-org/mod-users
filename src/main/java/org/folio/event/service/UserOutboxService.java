@@ -44,17 +44,15 @@ public class UserOutboxService {
    * @param okapiHeaders the okapi headers
    * @return future with integer how many records have been processed
    */
-  public Future<Integer> processOutboxEventLogs(Vertx vertx, Map<String, String> okapiHeaders) {
+  public Future<Future<Integer>> processOutboxEventLogs(Vertx vertx, Map<String, String> okapiHeaders) {
     String tenantId = TenantTool.tenantId(okapiHeaders);
     PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
     return pgClient.withTrans(conn -> lockRepository.selectWithLocking(conn, OUTBOX_LOCK_NAME, tenantId)
       .compose(retrievedCount -> outboxRepository.fetchEventLogs(conn, tenantId))
-      .compose(logs -> {
+      .map(logs -> {
         if (CollectionUtils.isEmpty(logs)) {
-          System.out.println("Hello----------- 1");
           return Future.succeededFuture(0);
         }
-        System.out.println("Hello----------- 2");
         logger.info("Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
         System.out.println("Hello----------- 3");
