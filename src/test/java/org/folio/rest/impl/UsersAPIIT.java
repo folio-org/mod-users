@@ -71,6 +71,7 @@ class UsersAPIIT extends AbstractRestTest {
 
     final var userToCreate = User.builder()
       .username("juliab")
+      .id(UUID.randomUUID().toString())
       .active(true)
       .personal(Personal.builder()
         .firstName("julia")
