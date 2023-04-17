@@ -16,9 +16,9 @@
         "Delete"
       ]
     },
-    "userId": {
-      "description": "UUID of the user",
-      "$ref": "raml-util/schemas/uuid.schema"
+    "tenantId": {
+      "description": "The name of the user's tenant",
+      "type": "string"
     },
     "performedBy": {
       "description": "UUID of the user who performed the action",
@@ -34,7 +34,7 @@
       "format": "date-time",
       "type": "string"
     },
-    "userSnapshot": {
+    "userDto": {
       "description": "Full snapshot of the user",
       "type": "object",
       "$ref": "userdata.json"
