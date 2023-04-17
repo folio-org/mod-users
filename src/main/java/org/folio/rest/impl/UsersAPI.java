@@ -352,7 +352,6 @@ public class UsersAPI implements Users {
     MutableObject<PostgresClient> postgresClient = new MutableObject<>();
     try {
       CQLWrapper wrapper = getCQL(query, DEFAULT_LIMIT, 0);
-
       postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
       postgresClient.getValue().withTrans(conn ->
         conn.get(TABLE_NAME_USERS, User.class, wrapper)
