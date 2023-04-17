@@ -328,6 +328,7 @@ public class UsersAPI implements Users {
     postgresClient.getValue()
       .withTrans(conn -> conn.getById(TABLE_NAME_USERS, userId, User.class)
         .compose(user ->  {
+
           if (Objects.nonNull(user)) {
             PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext, DeleteUsersByUserIdResponse.class, asyncResultHandler);
             userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
