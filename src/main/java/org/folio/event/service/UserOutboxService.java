@@ -48,12 +48,12 @@ public class UserOutboxService {
    * @param okapiHeaders the okapi headers
    * @return future with integer how many records have been processed
    */
-  public Future<Future<Integer>> processOutboxEventLogs(Vertx vertx, Map<String, String> okapiHeaders) {
+  public Future<Integer> processOutboxEventLogs(Vertx vertx, Map<String, String> okapiHeaders) {
     String tenantId = TenantTool.tenantId(okapiHeaders);
     PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
     return pgClient.withTrans(conn -> lockRepository.selectWithLocking(conn, OUTBOX_LOCK_NAME, tenantId)
       .compose(retrievedCount -> outboxRepository.fetchEventLogs(conn, tenantId))
-      .map(logs -> {
+      .compose(logs -> {
         if (CollectionUtils.isEmpty(logs)) {
           return Future.succeededFuture(0);
         }
@@ -84,13 +84,13 @@ public class UserOutboxService {
    */
   public Future<Boolean> saveUserOutboxLog(Conn conn, User entity, UserEvent.Action action, Map<String, String> okapiHeaders) {
     String user = Json.encode(entity);
-      return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
-        .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
-        .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
+    return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
+      .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
+      .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
   }
 
-  public void saveUsersListOutboxLog(Conn conn, List<User> entityList, UserEvent.Action action, Map<String, String> okapiHeaders) {
-    entityList.forEach(user -> saveUserOutboxLog(conn, user, action, okapiHeaders));
+  public Future<List<Future<Boolean>>> saveUsersListOutboxLog(Conn conn, List<User> entityList, UserEvent.Action action, Map<String, String> okapiHeaders) {
+    return Future.succeededFuture(entityList.stream().map(user -> saveUserOutboxLog(conn, user, action, okapiHeaders)).collect(Collectors.toList()));
   }
 
   private List<Future<Boolean>> getKafkaFutures(List<OutboxEventLog> logs, Map<String, String> okapiHeaders) {

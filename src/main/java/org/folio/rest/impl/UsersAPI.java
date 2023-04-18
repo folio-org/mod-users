@@ -330,21 +330,25 @@ public class UsersAPI implements Users {
     MutableObject<PostgresClient> postgresClient = new MutableObject<>();
     postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
 
-    postgresClient.getValue()
-      .withTrans(conn -> conn.getById(TABLE_NAME_USERS, userId, User.class)
-        .compose(user -> {
-          if (Objects.nonNull(user)) {
-            PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext, DeleteUsersByUserIdResponse.class, asyncResultHandler);
-            userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
-            userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
-          } else {
-              asyncResultHandler.handle(
-                succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(
-                  ValidationHelper.createValidationErrorMessage("userId", userId,"UserId is not available in system"))));
-          }
-          return succeededFuture();
-        })
-      );
+    PgUtil.getById(getTableName(null), User.class, userId, okapiHeaders, vertxContext, GetUsersByUserIdResponse.class)
+      .compose(response -> {
+        if (response.getEntity() instanceof User) {
+          User user = (User) response.getEntity();
+          postgresClient.getValue()
+            .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
+              .compose(aVoid ->
+                userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders)
+                .map(aVoid1 -> DeleteUsersByUserIdResponse.respond204())
+                .map(Response.class::cast))
+              .onComplete(reply -> {
+                userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+                asyncResultHandler.handle(reply);
+              }));
+        } else {
+          asyncResultHandler.handle(succeededFuture(response));
+        }
+        return succeededFuture(response);
+      });
   }
 
   @Validate
@@ -358,15 +362,19 @@ public class UsersAPI implements Users {
     try {
       CQLWrapper wrapper = getCQL(query, DEFAULT_LIMIT, 0);
       postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
-      postgresClient.getValue().withTrans(conn ->
-        conn.get(TABLE_NAME_USERS, User.class, wrapper)
-          .compose(users -> {
-            if(Objects.nonNull(users)) {
-              PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext, DeleteUsersResponse.class, asyncResultHandler);
-              userOutboxService.saveUsersListOutboxLog(conn, users.getResults(), UserEvent.Action.DELETE, okapiHeaders);
-              userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
-            }
-            return succeededFuture();
+      postgresClient.getValue().withTrans(conn -> conn.get(TABLE_NAME_USERS, User.class, wrapper)
+        .compose(users -> {
+          if(Objects.nonNull(users)) {
+            conn.delete(TABLE_NAME_USERS, wrapper)
+              .compose(aVoid -> userOutboxService.saveUsersListOutboxLog(conn, users.getResults(), UserEvent.Action.DELETE, okapiHeaders)
+                .map(aVoid1 -> DeleteUsersByUserIdResponse.respond204())
+                .map(Response.class::cast))
+              .onComplete(reply -> {
+                userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+                asyncResultHandler.handle(reply);
+                });
+          }
+          return succeededFuture();
           })
       );
     } catch (CQL2PgJSONException e) {
