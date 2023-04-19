@@ -49,14 +49,17 @@ public class UserEventProducer {
 
   private UserEvent getUserEvent(User user, String tenantId, UserEvent.Action eventAction) {
     Metadata metadata = user.getMetadata();
-    return new UserEvent()
-      .withId(UUID.randomUUID().toString())
-      .withAction(eventAction)
-      .withEventDate(new Date())
-      .withTenantId(tenantId)
-      .withActionDate(metadata.getCreatedDate())
-      .withPerformedBy(metadata.getUpdatedByUserId())
-      .withUserDto(user.withPersonal(null).withMetadata(null));
+    UserEvent event = new UserEvent();
+    event.setId(UUID.randomUUID().toString());
+    event.setAction(eventAction);
+    event.setEventDate(new Date());
+    event.setTenantId(tenantId);
+    if (!event.getAction().equals(UserEvent.Action.DELETE)) {
+      event.setActionDate(metadata.getCreatedDate());
+      event.setPerformedBy(metadata.getUpdatedByUserId());
+      event.setUser(user.withPersonal(null).withMetadata(null));
+    }
+    return event;
   }
 
   private Future<Boolean> sendToKafka(UserEventType eventType,

@@ -89,10 +89,6 @@ public class UserOutboxService {
       .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
   }
 
-  public Future<List<Future<Boolean>>> saveUsersListOutboxLog(Conn conn, List<User> entityList, UserEvent.Action action, Map<String, String> okapiHeaders) {
-    return Future.succeededFuture(entityList.stream().map(user -> saveUserOutboxLog(conn, user, action, okapiHeaders)).collect(Collectors.toList()));
-  }
-
   private List<Future<Boolean>> getKafkaFutures(List<OutboxEventLog> logs, Map<String, String> okapiHeaders) {
     List<Future<Boolean>> futures = new ArrayList<>();
     for (OutboxEventLog log : logs) {

@@ -452,9 +452,15 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canDeleteAUser() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     final var user = createUser("joannek");
 
     usersClient.deleteUser(user.getId());
+    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
+
+    assertEquals(TENANT_NAME, userEvent.getTenantId());
+    assertEquals(2, usersList.size());
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
@@ -471,11 +477,17 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canDeleteMultipleUsersUsingCQL() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     final var user1 = createUser("1234");
     final var user2 = createUser("201");
     final var user3 = createUser("1999");
 
     deleteUsersByUsername("1*");
+    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
+
+    assertEquals(TENANT_NAME, userEvent.getTenantId());
+    assertEquals(5, usersList.size());
 
     usersClient.attemptToGetUser(user2.getId())
       .statusCode(200);
