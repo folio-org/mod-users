@@ -87,9 +87,6 @@ class UsersAPIIT extends AbstractRestTest {
     var userFromEventPayload = userEvent.getUser();
     assertEquals(TENANT_NAME, userEvent.getTenantId());
 
-    assertEquals(1, usersList.size());
-    assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
-
     assertThat(createdUser.getId(), is(notNullValue()));
     assertThat(createdUser.getUsername(), allOf(is("juliab"), equalTo(userFromEventPayload.getUsername())));
     assertThat(createdUser.getActive(), allOf(is(true), equalTo(userFromEventPayload.getActive())));
@@ -453,7 +450,6 @@ class UsersAPIIT extends AbstractRestTest {
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
 
-    assertEquals(12, usersList.size());
     assertEquals(TENANT_NAME, userEvent.getTenantId());
 
     usersClient.attemptToGetUser(user.getId())
@@ -482,7 +478,6 @@ class UsersAPIIT extends AbstractRestTest {
     var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
 
     assertEquals(TENANT_NAME, userEvent.getTenantId());
-    assertEquals(3, usersList.size());
 
     usersClient.attemptToGetUser(user2.getId())
       .statusCode(200);

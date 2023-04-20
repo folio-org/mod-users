@@ -368,7 +368,7 @@ public class UsersAPI implements Users {
             User user = new User().withId(row.getUUID(USER_ID).toString());
             userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
           });
-          return succeededFuture();
+        return succeededFuture();
         })
         .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
         .map(Response.class::cast)
