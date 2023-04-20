@@ -31,7 +31,7 @@ public enum KafkaConfigSingleton {
     return kafkaConfig;
   }
 
-  private static String getPropertyValue(String propertyName, String defaultValue) {
+  public static String getPropertyValue(String propertyName, String defaultValue) {
     return Optional.ofNullable(System.getProperty(propertyName))
       .or(() -> Optional.ofNullable(System.getenv(propertyName)))
       .orElse(defaultValue);

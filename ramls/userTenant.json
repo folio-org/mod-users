@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "User tenant",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "UUID of the user tenant",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userId": {
+      "description": "UUID of the user",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userName": {
+      "description": "The user name",
+      "type": "string"
+    },
+    "tenantId": {
+      "description": "UUID of the tenant",
+      "type": "string"
+    },
+    "tenantName": {
+      "description": "The tenant name",
+      "type": "string"
+    },
+    "isPrimary": {
+      "description": "A flag to determine if a affiliation primary",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "userId",
+    "tenantId"
+  ]
+}

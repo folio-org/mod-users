@@ -215,6 +215,17 @@
       ]
     },
     {
+      "id": "user-tenants",
+      "version": "1.0",
+      "handlers" : [
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/user-tenants",
+          "permissionsRequired": [ "user-tenants.collection.get" ]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "2.0",
       "interfaceType" : "system",
@@ -408,6 +419,11 @@
       "description": "Permission to validate patron pin"
     },
     {
+      "permissionName" : "user-tenants.collection.get",
+      "displayName" : "Permission to retrieve primary affiliation for the user",
+      "description" : "Get a list of user-tenants records"
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -442,8 +458,8 @@
         "departments.item.delete",
         "patron-pin.set",
         "patron-pin.delete",
-        "patron-pin.validate"
-      ]
+        "patron-pin.validate",
+        "user-tenants.collection.get"      ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
       "displayName": "User Custom Fields - get collection",

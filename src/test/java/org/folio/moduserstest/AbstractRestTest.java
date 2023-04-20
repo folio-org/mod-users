@@ -5,9 +5,16 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
@@ -26,6 +33,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
+import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 public abstract class AbstractRestTest {
 
@@ -43,6 +51,7 @@ public abstract class AbstractRestTest {
   protected static OkapiUrl okapiUrl;
   protected static OkapiHeaders okapiHeaders;
   protected static KafkaConsumer<String, String> kafkaConsumer;
+  protected static KafkaProducer<String, String> kafkaProducer;
   private static final KafkaContainer kafkaContainer =
     new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
@@ -64,14 +73,20 @@ public abstract class AbstractRestTest {
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
-    Properties properties = new Properties();
-    properties.put("bootstrap.servers", kafkaContainer.getBootstrapServers());
-    properties.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    properties.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    properties.put("group.id", "test-group");
-    properties.put("auto.offset.reset", "earliest");
-    kafkaConsumer = new KafkaConsumer<>(properties);
+    Properties consumerProperties = new Properties();
+    consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
+    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    kafkaConsumer = new KafkaConsumer<>(consumerProperties);
     kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
+
+    Properties producerProperties = new Properties();
+    producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    kafkaProducer = new KafkaProducer<>(producerProperties);
 
     module = new VertxModule(vertx);
 
@@ -84,6 +99,7 @@ public abstract class AbstractRestTest {
   public static void after(VertxTestContext context) {
     module.purgeModule(okapiHeaders)
       .compose(v -> {
+        kafkaProducer.close();
         kafkaConsumer.close();
         kafkaContainer.stop();
         PostgresClient.stopPostgresTester();
@@ -98,6 +114,14 @@ public abstract class AbstractRestTest {
     ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(3000));
     return IteratorUtils.toList(records.iterator()).stream()
         .map(ConsumerRecord::value).collect(Collectors.toList());
+  }
+
+  @SneakyThrows
+  public RecordMetadata sendEvent(String tenantId, String topic, String key, String value) {
+    String topicName = formatToKafkaTopicName(tenantId, topic);
+    ProducerRecord<String, String> record = new ProducerRecord<>(topicName, key, value);
+    record.headers().add(OKAPI_TENANT_HEADER, TENANT_NAME.getBytes());
+    return kafkaProducer.send(record).get();
   }
 
   public void commitAllMessagesInTopic(String tenant, String eventType) {

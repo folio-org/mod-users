@@ -1,0 +1,60 @@
+#%RAML 1.0
+title: User tenants
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users User tenants API
+    content: This documents the API calls that can be made to query primary users affiliation
+
+types:
+  userTenant: !include userTenant.json
+  userTenantCollection: !include userTenantCollection.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  pageable: !include raml-util/traits/pageable.raml
+  validate: !include raml-util/traits/validation.raml
+  language: !include raml-util/traits/language.raml
+
+resourceTypes:
+  collection-get: !include raml-util/rtypes/collection-get.raml
+  collection-item-get: !include raml-util/rtypes/item-collection-get.raml
+
+/user-tenants:
+  type:
+    collection-get:
+      exampleCollection: !include examples/userTenantCollection.sample
+      exampleItem: !include examples/userTenant.sample
+      schemaCollection: userTenantCollection
+      schemaItem: userTenant
+  get:
+    is: [
+      pageable
+    ]
+    description: Return a list of user tenants
+    queryParameters:
+      userId:
+        description: Filter by user id
+        type: string
+        example: 11484f66-5121-43ea-81e7-6d9e3711495f
+        required: false
+      username:
+        description: Filter by user name
+        type: string
+        example: folio_user
+        required: false
+      tenantId:
+        description: Filter by tenant id
+        type: string
+        example: sfs000
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            type: userTenantCollection
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
