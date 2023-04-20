@@ -33,10 +33,7 @@ import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.junit5.Timeout;
@@ -45,7 +42,6 @@ import lombok.SneakyThrows;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UsersAPIIT extends AbstractRestTest {
 
   private static UsersClient usersClient;
@@ -70,10 +66,8 @@ class UsersAPIIT extends AbstractRestTest {
   }
 
   @Test
-  @Order(1)
   void canCreateUser() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-
     final var userToCreate = User.builder()
       .username("juliab")
       .active(true)
@@ -89,8 +83,8 @@ class UsersAPIIT extends AbstractRestTest {
 
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
-    var userFromEventPayload = userEvent.getUser();
 
+    var userFromEventPayload = userEvent.getUser();
     assertEquals(TENANT_NAME, userEvent.getTenantId());
 
     assertEquals(1, usersList.size());
@@ -459,8 +453,8 @@ class UsersAPIIT extends AbstractRestTest {
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
 
-    assertEquals(TENANT_NAME, userEvent.getTenantId());
     assertEquals(2, usersList.size());
+    assertEquals(TENANT_NAME, userEvent.getTenantId());
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
@@ -478,6 +472,7 @@ class UsersAPIIT extends AbstractRestTest {
   @Test
   void canDeleteMultipleUsersUsingCQL() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+
     final var user1 = createUser("1234");
     final var user2 = createUser("201");
     final var user3 = createUser("1999");

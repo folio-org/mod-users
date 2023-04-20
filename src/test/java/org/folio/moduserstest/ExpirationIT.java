@@ -16,10 +16,7 @@ import org.folio.support.http.TimerInterfaceClient;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -27,7 +24,6 @@ import io.vertx.junit5.VertxExtension;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ExpirationIT extends AbstractRestTest {
 
   private static UsersClient usersClient;
@@ -73,7 +69,6 @@ class ExpirationIT extends AbstractRestTest {
   }
 
   @Test
-  @Order(1)
   void unexpiredUsersAreNotDisabled() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
 

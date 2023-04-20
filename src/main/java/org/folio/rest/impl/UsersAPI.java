@@ -24,7 +24,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.pgclient.PgException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -336,10 +335,16 @@ public class UsersAPI implements Users {
     postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
     postgresClient.getValue()
       .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
-        .compose(aVoid ->
-          userOutboxService.saveUserOutboxLog(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
-            .map(aVoid1 -> DeleteUsersByUserIdResponse.respond204())
-            .map(Response.class::cast))
+        .compose(aVoid -> {
+          if (aVoid.rowCount() != 0) {
+            return userOutboxService.saveUserOutboxLog(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
+              .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
+              .map(Response.class::cast);
+          }
+          else {
+            return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
+          }
+        })
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
           asyncResultHandler.handle(reply);
@@ -359,13 +364,11 @@ public class UsersAPI implements Users {
       postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
       postgresClient.getValue().withTrans(conn -> conn.execute(createDeleteQuery(wrapper, okapiHeaders))
         .compose(users -> {
-          Promise<Void> promise = Promise.promise();
           users.iterator().forEachRemaining(row -> {
             User user = new User().withId(row.getUUID(USER_ID).toString());
             userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
-            });
-          promise.complete();
-          return promise.future();
+          });
+          return succeededFuture();
         })
         .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
         .map(Response.class::cast)
