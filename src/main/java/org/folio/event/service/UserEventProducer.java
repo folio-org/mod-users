@@ -22,6 +22,7 @@ import org.folio.rest.tools.utils.TenantTool;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class UserEventProducer {
@@ -54,11 +55,12 @@ public class UserEventProducer {
     event.setAction(eventAction);
     event.setEventDate(new Date());
     event.setTenantId(tenantId);
-    if (!event.getAction().equals(UserEvent.Action.DELETE)) {
+    if (Objects.nonNull(metadata)) {
       event.setActionDate(metadata.getCreatedDate());
       event.setPerformedBy(metadata.getUpdatedByUserId());
-      event.setUser(user.withPersonal(null).withMetadata(null));
     }
+    event.setUser(user.withPersonal(null).withMetadata(null));
+
     return event;
   }
 

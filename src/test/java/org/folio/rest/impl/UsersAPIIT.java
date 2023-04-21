@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import io.vertx.core.json.Json;
 import org.folio.moduserstest.AbstractRestTest;
@@ -71,6 +72,7 @@ class UsersAPIIT extends AbstractRestTest {
     final var userToCreate = User.builder()
       .username("juliab")
       .active(true)
+      .id("999fd1a4-1865-4991-ae9d-6c9f75d4b043")
       .personal(Personal.builder()
         .firstName("julia")
         .preferredFirstName("jules")
@@ -82,10 +84,18 @@ class UsersAPIIT extends AbstractRestTest {
     final var createdUser = usersClient.createUser(userToCreate);
 
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
+    usersList.iterator().forEachRemaining(s -> {
+      UserEvent userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
 
+      if (userEvent.getUser().getUsername().equals("juliab")) {
+        assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
+        assertEquals(TENANT_NAME, userEvent.getTenantId());
+      }
+
+    });
+
+    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
     var userFromEventPayload = userEvent.getUser();
-    assertEquals(TENANT_NAME, userEvent.getTenantId());
 
     assertThat(createdUser.getId(), is(notNullValue()));
     assertThat(createdUser.getUsername(), allOf(is("juliab"), equalTo(userFromEventPayload.getUsername())));
@@ -106,6 +116,7 @@ class UsersAPIIT extends AbstractRestTest {
     Assertions.assertNull(userFromEventPayload.getMetadata());
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
   }
 
   @Test
@@ -443,14 +454,27 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canDeleteAUser() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    final var user = createUser("joannek");
+    final var userToCreate = User.builder()
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
 
     usersClient.deleteUser(user.getId());
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
 
-    assertEquals(TENANT_NAME, userEvent.getTenantId());
+    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+    List<UserEvent> userEventList = usersList.stream().map(s -> Json.decodeValue(s, UserEvent.class)).collect(Collectors.toList());
+
+    UserEvent userDeleteEvent = userEventList.stream().findFirst().get();
+    assertThat(UserEvent.Action.DELETE, is(userDeleteEvent.getAction()));
+    assertEquals(TENANT_NAME, userDeleteEvent.getTenantId());
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
@@ -472,12 +496,12 @@ class UsersAPIIT extends AbstractRestTest {
     final var user1 = createUser("1234");
     final var user2 = createUser("201");
     final var user3 = createUser("1999");
-
     deleteUsersByUsername("1*");
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
 
-    assertEquals(TENANT_NAME, userEvent.getTenantId());
+    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+    List<UserEvent> userEventList = usersList.stream().map(s -> Json.decodeValue(s, UserEvent.class)).collect(Collectors.toList());
+
+    assertEquals(2, userEventList.stream().filter(userEvent -> userEvent.getAction().equals(UserEvent.Action.DELETE)).collect(Collectors.toList()).size());
 
     usersClient.attemptToGetUser(user2.getId())
       .statusCode(200);

@@ -57,6 +57,7 @@ public class UserOutboxService {
         if (CollectionUtils.isEmpty(logs)) {
           return Future.succeededFuture(0);
         }
+
         logger.info("Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
         return GenericCompositeFuture.join(futures)

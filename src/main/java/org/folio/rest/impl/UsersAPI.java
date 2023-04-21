@@ -24,7 +24,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
@@ -60,8 +62,6 @@ import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
 
-import io.vertx.ext.web.RoutingContext;
-
 @Path("users")
 public class UsersAPI implements Users {
 
@@ -69,7 +69,6 @@ public class UsersAPI implements Users {
   public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
   public static final String USER_ID = "id";
   public static final String TABLE_NAME_USERS = "users";
-  public static final Integer DEFAULT_LIMIT = 10000;
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private static final Messages messages = Messages.getInstance();
@@ -77,7 +76,6 @@ public class UsersAPI implements Users {
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
-
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
   }
@@ -252,7 +250,7 @@ public class UsersAPI implements Users {
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
     pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders)
+      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders))
         .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
         .map(Response.class::cast))
       .onComplete(reply -> {
@@ -283,7 +281,7 @@ public class UsersAPI implements Users {
         logger.debug("Save successful");
         userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
-      }));
+      });
   }
 
   private boolean isDuplicateIdError(AsyncResult<Response> reply) {
@@ -331,12 +329,10 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
-    postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
-    postgresClient.getValue()
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
-        .compose(aVoid -> {
-          if (aVoid.rowCount() != 0) {
+        .compose(rows -> {
+          if (rows.rowCount() != 0) {
             return userOutboxService.saveUserOutboxLog(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
               .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
               .map(Response.class::cast);
@@ -344,11 +340,11 @@ public class UsersAPI implements Users {
           else {
             return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
           }
-        })
+        }))
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
           asyncResultHandler.handle(reply);
-        }));
+        });
   }
 
   @Validate
@@ -358,26 +354,26 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
     try {
-      CQLWrapper wrapper = getCQL(query, DEFAULT_LIMIT, 0);
-      postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
-      postgresClient.getValue().withTrans(conn -> conn.execute(createDeleteQuery(wrapper, okapiHeaders))
-        .compose(users -> {
-          users.iterator().forEachRemaining(row -> {
-            User user = new User().withId(row.getUUID(USER_ID).toString());
-            userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
-          });
+      CQLWrapper wrapper = getCQL(query, -1, -1);
+      PgUtil.postgresClient(vertxContext, okapiHeaders).withTrans(conn -> conn.execute(createDeleteQuery(wrapper, okapiHeaders))
+        .compose(rows -> {
+          if (rows.rowCount() != 0) {
+            rows.iterator().forEachRemaining(row -> {
+              User user = new User().withId(row.getUUID(USER_ID).toString());
+              userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
+            });
+          }
         return succeededFuture();
-        })
+        }))
         .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
         .map(Response.class::cast)
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
           asyncResultHandler.handle(reply);
-        }));
+        });
     } catch (CQL2PgJSONException e) {
-      throw new IllegalArgumentException(e);
+      throw new IllegalArgumentException("Invalid query", e);
     }
   }
 
