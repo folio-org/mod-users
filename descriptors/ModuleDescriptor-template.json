@@ -459,7 +459,8 @@
         "patron-pin.set",
         "patron-pin.delete",
         "patron-pin.validate",
-        "user-tenants.collection.get"      ]
+        "user-tenants.collection.get"
+      ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
       "displayName": "User Custom Fields - get collection",
