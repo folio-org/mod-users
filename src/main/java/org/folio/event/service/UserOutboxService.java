@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 public class UserOutboxService {
@@ -32,12 +31,10 @@ public class UserOutboxService {
   private final UserEventProducer producer;
   private final InternalLockRepository lockRepository;
   private final UserEventsLogRepository outboxRepository;
-  private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
 
   public UserOutboxService() {
     producer = new UserEventProducer();
     lockRepository = new InternalLockRepository();
-    pgClientFactory = PostgresClient::getInstance;
     outboxRepository = new UserEventsLogRepository();
   }
 
@@ -50,7 +47,7 @@ public class UserOutboxService {
    */
   public Future<Integer> processOutboxEventLogs(Vertx vertx, Map<String, String> okapiHeaders) {
     String tenantId = TenantTool.tenantId(okapiHeaders);
-    PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
+    PostgresClient pgClient = PostgresClient.getInstance(vertx, tenantId);
     return pgClient.withTrans(conn -> lockRepository.selectWithLocking(conn, OUTBOX_LOCK_NAME, tenantId)
       .compose(retrievedCount -> outboxRepository.fetchEventLogs(conn, tenantId))
       .compose(logs -> {
