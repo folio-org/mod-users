@@ -105,8 +105,7 @@ public abstract class AbstractRestTest {
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
       })
-      .onComplete(future -> context.completeNow())
-      .onFailure(context::failNow);
+      .onComplete(context.succeedingThenComplete());
   }
 
   public List<String> checkKafkaEventSent(String tenant, String eventType) {

@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @ExtendWith(VertxExtension.class)
-class UserTenantITTest extends AbstractRestTest {
+class UserTenantIT extends AbstractRestTest {
 
   private static UserTenantClient userTenantClient;
   private static final UserTenant USER_AFFILIATION =  new UserTenant()
@@ -44,12 +44,8 @@ class UserTenantITTest extends AbstractRestTest {
 
   @Test
   void canCreateUserTenant() {
-    //given
-    String eventPayload = Json.encode(USER_AFFILIATION);
     //when
-    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
-      USER_AFFILIATION.getId(), eventPayload);
-    awaitHandlingEvent();
+    sendAffiliationCreatedEvent();
     //then
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
     Assertions.assertEquals(1, collection.getTotalRecords());
@@ -66,17 +62,28 @@ class UserTenantITTest extends AbstractRestTest {
   void canSearchByUserName() {
     //given
     String username = USER_AFFILIATION.getUserName();
-    String eventPayload = Json.encode(USER_AFFILIATION);
     Map<String, String> params = Map.of("username", username);
     //when
-    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
-      USER_AFFILIATION.getId(), eventPayload);
-    awaitHandlingEvent();
+    sendAffiliationCreatedEvent();
     //then
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
     UserTenant userTenant = collection.getUserTenants().iterator().next();
     Assertions.assertEquals(1, collection.getTotalRecords());
     Assertions.assertEquals(username, userTenant.getUserName());
+  }
+
+  @Test
+  void canSearchByUserId() {
+    //given
+    String userId = USER_AFFILIATION.getUserId();
+    Map<String, String> params = Map.of("userId", userId);
+    //when
+    sendAffiliationCreatedEvent();
+    //then
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    Assertions.assertEquals(1, collection.getTotalRecords());
+    Assertions.assertEquals(userId, userTenant.getUserId());
   }
 
   @Test
@@ -87,11 +94,8 @@ class UserTenantITTest extends AbstractRestTest {
     Map<String, String> params = Map.of(
       "username", username,
       "tenantId", tenantId);
-    String eventPayload = Json.encode(USER_AFFILIATION);
     //when
-    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
-      USER_AFFILIATION.getId(), eventPayload);
-    awaitHandlingEvent();
+    sendAffiliationCreatedEvent();
     //then
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
     Assertions.assertEquals(1, collection.getTotalRecords());
@@ -108,5 +112,12 @@ class UserTenantITTest extends AbstractRestTest {
         UserTenantCollection collection = userTenantClient.getAllUsersTenants();
         return CollectionUtils.isNotEmpty(collection.getUserTenants());
       });
+  }
+
+  private void sendAffiliationCreatedEvent() {
+    String eventPayload = Json.encode(USER_AFFILIATION);
+    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
+      USER_AFFILIATION.getId(), eventPayload);
+    awaitHandlingEvent();
   }
 }
