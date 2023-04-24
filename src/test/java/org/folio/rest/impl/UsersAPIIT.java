@@ -61,7 +61,7 @@ class UsersAPIIT extends AbstractRestTest {
   public void beforeEach() {
     LOAD_SAMPLE_DATA = false;
     LOAD_REFERENCE_DATA = false;
-    usersClient.deleteAllUsers();
+    //usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
   }
@@ -492,7 +492,7 @@ class UsersAPIIT extends AbstractRestTest {
 
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     List<UserEvent> userEventList = usersList.stream().map(s -> Json.decodeValue(s, UserEvent.class)).collect(Collectors.toList());
-    assertEquals(2, userEventList.stream().filter(userEvent -> userEvent.getAction().equals(UserEvent.Action.DELETE)).collect(Collectors.toList()).size());
+    assertEquals(1, userEventList.stream().filter(userEvent -> userEvent.getAction().equals(UserEvent.Action.DELETE) && userEvent.getUser().getId().equals(user1.getId())).collect(Collectors.toList()).size());
 
     usersClient.attemptToGetUser(user2.getId())
       .statusCode(200);
