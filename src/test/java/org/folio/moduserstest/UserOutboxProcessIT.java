@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 10, unit = SECONDS)
-public class UserOutboxProcessIT extends AbstractRestTest {
+public class UserOutboxProcessIT extends AbstractRestTestNoData {
 
   private static final OutboxEventLog OUTBOX_EVENT_LOG = new OutboxEventLog()
     .withEventId(UUID.randomUUID().toString())
@@ -43,8 +43,6 @@ public class UserOutboxProcessIT extends AbstractRestTest {
 
   @BeforeAll
   public static void beforeAll() {
-    LOAD_SAMPLE_DATA = false;
-    LOAD_REFERENCE_DATA = false;
     userEventsLogRepository = new UserEventsLogRepository();
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }

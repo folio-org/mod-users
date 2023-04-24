@@ -5,7 +5,7 @@ import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.event.ConsortiumEventType;
-import org.folio.moduserstest.AbstractRestTest;
+import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
 import org.folio.support.http.UserTenantClient;
@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @ExtendWith(VertxExtension.class)
-class UserTenantIT extends AbstractRestTest {
+class UserTenantIT extends AbstractRestTestNoData {
 
   private static UserTenantClient userTenantClient;
   private static final UserTenant USER_AFFILIATION =  new UserTenant()
@@ -34,12 +34,6 @@ class UserTenantIT extends AbstractRestTest {
   @SneakyThrows
   static void beforeAll() {
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
-  }
-
-  @BeforeEach
-  public void beforeEach() {
-    LOAD_SAMPLE_DATA = false;
-    LOAD_REFERENCE_DATA = false;
   }
 
   @Test

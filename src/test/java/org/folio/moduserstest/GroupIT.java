@@ -27,7 +27,7 @@ import io.vertx.junit5.VertxExtension;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-class GroupIT extends AbstractRestTest{
+class GroupIT extends AbstractRestTestNoData {
 
   private static GroupsClient groupsClient;
   private static UsersClient usersClient;
