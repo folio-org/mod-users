@@ -84,19 +84,12 @@ class UsersAPIIT extends AbstractRestTest {
     final var createdUser = usersClient.createUser(userToCreate);
 
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-    usersList.iterator().forEachRemaining(s -> {
-      UserEvent userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
-
-      if (userEvent.getUser().getUsername().equals("juliab")) {
-        assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
-        assertEquals(TENANT_NAME, userEvent.getTenantId());
-      }
-
-    });
-
     var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
     var userFromEventPayload = userEvent.getUser();
 
+    assertEquals(TENANT_NAME, userEvent.getTenantId());
+    assertEquals(1, usersList.size());
+    assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
     assertThat(createdUser.getId(), is(notNullValue()));
     assertThat(createdUser.getUsername(), allOf(is("juliab"), equalTo(userFromEventPayload.getUsername())));
     assertThat(createdUser.getActive(), allOf(is(true), equalTo(userFromEventPayload.getActive())));
@@ -491,7 +484,6 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canDeleteMultipleUsersUsingCQL() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
 
     final var user1 = createUser("1234");
     final var user2 = createUser("201");
@@ -500,7 +492,6 @@ class UsersAPIIT extends AbstractRestTest {
 
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     List<UserEvent> userEventList = usersList.stream().map(s -> Json.decodeValue(s, UserEvent.class)).collect(Collectors.toList());
-
     assertEquals(2, userEventList.stream().filter(userEvent -> userEvent.getAction().equals(UserEvent.Action.DELETE)).collect(Collectors.toList()).size());
 
     usersClient.attemptToGetUser(user2.getId())

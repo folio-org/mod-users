@@ -336,8 +336,7 @@ public class UsersAPI implements Users {
             return userOutboxService.saveUserOutboxLog(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
               .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
               .map(Response.class::cast);
-          }
-          else {
+          } else {
             return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
           }
         }))
@@ -364,7 +363,7 @@ public class UsersAPI implements Users {
               userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
             });
           }
-        return succeededFuture();
+          return succeededFuture();
         }))
         .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
         .map(Response.class::cast)
