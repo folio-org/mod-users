@@ -93,7 +93,7 @@ public class UserOutboxService {
       if (OutboxEventLog.EntityType.USER == log.getEntityType()) {
         User user = Json.decodeValue(log.getPayload(), User.class);
         UserEvent.Action userAction = UserEvent.Action.fromValue(log.getAction());
-        futures.add(producer.sendUserCreatedEvent(user, userAction, okapiHeaders));
+        futures.add(producer.sendUserEvent(user, userAction, okapiHeaders));
       }
     }
     return futures;

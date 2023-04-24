@@ -5,6 +5,7 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.event.UserEventType.USER_CREATED;
+import static org.folio.event.UserEventType.USER_DELETED;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.folio.event.UserEventType;
 import io.vertx.core.json.Json;
 import org.folio.moduserstest.AbstractRestTest;
 import org.folio.rest.jaxrs.model.UserEvent;
@@ -447,7 +449,9 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canDeleteAUser() {
+    String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
+      .id(userId)
       .username("joannek")
       .active(true)
       .personal(Personal.builder()
@@ -462,12 +466,14 @@ class UsersAPIIT extends AbstractRestTest {
 
     usersClient.deleteUser(user.getId());
 
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-    List<UserEvent> userEventList = usersList.stream().map(s -> Json.decodeValue(s, UserEvent.class)).collect(Collectors.toList());
+    List<UserEvent> userCreatedEvents = getUserEvents(USER_CREATED, userId);
+    List<UserEvent> userDeletedEvents = getUserEvents(USER_DELETED, userId);
 
-    UserEvent userDeleteEvent = userEventList.stream().findFirst().get();
-    assertThat(UserEvent.Action.DELETE, is(userDeleteEvent.getAction()));
-    assertEquals(TENANT_NAME, userDeleteEvent.getTenantId());
+    assertEquals(1, userCreatedEvents.size());
+    assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, user.getId());
+
+    assertEquals(1, userDeletedEvents.size());
+    assertEventContent(userDeletedEvents.get(0), UserEvent.Action.DELETE, user.getId());
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
@@ -514,4 +520,17 @@ class UsersAPIIT extends AbstractRestTest {
     usersClient.deleteUsers("username == \"" + username + "\"");
   }
 
+  private List<UserEvent> getUserEvents(UserEventType eventType, String userId) {
+    List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.getTopicName());
+    return usersList.stream()
+      .map(s -> Json.decodeValue(s, UserEvent.class))
+      .filter(userEvent -> userId.equals(userEvent.getUser().getId()))
+      .collect(Collectors.toList());
+  }
+
+  private void assertEventContent(UserEvent userEvent, UserEvent.Action action, String userId) {
+    assertEquals(action, userEvent.getAction());
+    assertEquals(TENANT_NAME, userEvent.getTenantId());
+    assertEquals(userId, userEvent.getUser().getId());
+  }
 }

@@ -95,14 +95,14 @@ public abstract class AbstractRestTest {
 
   public List<String> checkKafkaEventSent(String tenant, String eventType) {
     kafkaConsumer.subscribe(Collections.singletonList(formatToKafkaTopicName(tenant, eventType)));
-    ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(5000));
+    ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(3000));
     return IteratorUtils.toList(records.iterator()).stream()
         .map(ConsumerRecord::value).collect(Collectors.toList());
   }
 
   public void commitAllMessagesInTopic(String tenant, String eventType) {
     kafkaConsumer.subscribe(Collections.singletonList(formatToKafkaTopicName(tenant, eventType)));
-    kafkaConsumer.poll(Duration.ofMillis(3000));
+    kafkaConsumer.poll(Duration.ofMillis(1000));
   }
 
   private static String formatToKafkaTopicName(String tenant, String eventType) {
