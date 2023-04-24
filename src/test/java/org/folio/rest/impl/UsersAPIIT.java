@@ -444,6 +444,8 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canDeleteAUser() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
@@ -522,7 +524,6 @@ class UsersAPIIT extends AbstractRestTest {
 
     assertEquals(1, userDeletedEventsForUser3.size());
     assertEventContent(userDeletedEventsForUser3.get(0), UserEvent.Action.DELETE, user3.getId());
-
 
     usersClient.attemptToGetUser(user2.getId())
       .statusCode(200);
