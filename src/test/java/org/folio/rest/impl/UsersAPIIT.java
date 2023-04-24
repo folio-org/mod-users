@@ -85,13 +85,10 @@ class UsersAPIIT extends AbstractRestTest {
 
     final var createdUser = usersClient.createUser(userToCreate);
 
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-    var userEvent = Json.decodeValue(usersList.iterator().next(), UserEvent.class);
-    var userFromEventPayload = userEvent.getUser();
+    List<UserEvent> usersList = getUserEvents(USER_CREATED, createdUser.getId());
+    var userFromEventPayload = usersList.get(0).getUser();
 
-    assertEquals(TENANT_NAME, userEvent.getTenantId());
     assertEquals(1, usersList.size());
-    assertThat(UserEvent.Action.CREATE, is(userEvent.getAction()));
     assertThat(createdUser.getId(), is(notNullValue()));
     assertThat(createdUser.getUsername(), allOf(is("juliab"), equalTo(userFromEventPayload.getUsername())));
     assertThat(createdUser.getActive(), allOf(is(true), equalTo(userFromEventPayload.getActive())));
@@ -490,15 +487,36 @@ class UsersAPIIT extends AbstractRestTest {
 
   @Test
   void canDeleteMultipleUsersUsingCQL() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     final var user1 = createUser("1234");
     final var user2 = createUser("201");
     final var user3 = createUser("1999");
+    String userId1 = user1.getId();
+    String userId2 = user2.getId();
+    String userId3 = user3.getId();
+
     deleteUsersByUsername("1*");
 
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-    List<UserEvent> userEventList = usersList.stream().map(s -> Json.decodeValue(s, UserEvent.class)).collect(Collectors.toList());
-    assertEquals(2, (int) userEventList.stream().filter(userEvent -> userEvent.getAction().equals(UserEvent.Action.DELETE)).count());
+    List<UserEvent> userCreatedEventsForUser1 = getUserEvents(USER_CREATED, userId1);
+    List<UserEvent> userCreatedEventsForUser2 = getUserEvents(USER_CREATED, userId2);
+    List<UserEvent> userCreatedEventsForUser3 = getUserEvents(USER_CREATED, userId3);
+    List<UserEvent> userDeletedEventsForUser1 = getUserEvents(USER_DELETED, userId1);
+    List<UserEvent> userDeletedEventsForUser3 = getUserEvents(USER_DELETED, userId3);
+
+    assertEquals(1, userCreatedEventsForUser1.size());
+    assertEventContent(userCreatedEventsForUser1.get(0), UserEvent.Action.CREATE, user1.getId());
+
+    assertEquals(1, userCreatedEventsForUser2.size());
+    assertEventContent(userCreatedEventsForUser2.get(0), UserEvent.Action.CREATE, user2.getId());
+
+    assertEquals(1, userCreatedEventsForUser3.size());
+    assertEventContent(userCreatedEventsForUser3.get(0), UserEvent.Action.CREATE, user3.getId());
+
+    assertEquals(1, userDeletedEventsForUser1.size());
+    assertEventContent(userDeletedEventsForUser1.get(0), UserEvent.Action.DELETE, user1.getId());
+
+    assertEquals(1, userDeletedEventsForUser3.size());
+    assertEventContent(userDeletedEventsForUser3.get(0), UserEvent.Action.DELETE, user3.getId());
+
 
     usersClient.attemptToGetUser(user2.getId())
       .statusCode(200);
