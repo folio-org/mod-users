@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
+import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +20,13 @@ import java.util.stream.Collectors;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
@@ -33,8 +40,8 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.model.UserEvent;
+import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -55,15 +62,12 @@ import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.ext.web.RoutingContext;
-
 @Path("users")
 public class UsersAPI implements Users {
 
+  public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
+  public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
+  public static final String USER_ID = "id";
   public static final String TABLE_NAME_USERS = "users";
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
@@ -72,7 +76,6 @@ public class UsersAPI implements Users {
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
-
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
   }
@@ -247,7 +250,7 @@ public class UsersAPI implements Users {
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
     pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders)
+      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders))
         .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
         .map(Response.class::cast))
       .onComplete(reply -> {
@@ -278,7 +281,7 @@ public class UsersAPI implements Users {
         logger.debug("Save successful");
         userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
-      }));
+      });
   }
 
   private boolean isDuplicateIdError(AsyncResult<Response> reply) {
@@ -326,8 +329,21 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    PgUtil.deleteById(getTableName(null), userId, okapiHeaders, vertxContext,
-      DeleteUsersByUserIdResponse.class, asyncResultHandler);
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
+        .compose(rows -> {
+          if (rows.rowCount() != 0) {
+            return userOutboxService.saveUserOutboxLog(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
+              .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
+              .map(Response.class::cast);
+          } else {
+            return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
+          }
+        }))
+        .onComplete(reply -> {
+          userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+          asyncResultHandler.handle(reply);
+        });
   }
 
   @Validate
@@ -337,8 +353,27 @@ public class UsersAPI implements Users {
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
-    PgUtil.delete(getTableName(null), query, okapiHeaders, vertxContext,
-        DeleteUsersResponse.class, asyncResultHandler);
+    try {
+      CQLWrapper wrapper = getCQL(query, -1, -1);
+      PgUtil.postgresClient(vertxContext, okapiHeaders).withTrans(conn -> conn.execute(createDeleteQuery(wrapper, okapiHeaders))
+        .compose(rows -> {
+          if (rows.rowCount() != 0) {
+            rows.iterator().forEachRemaining(row -> {
+              User user = new User().withId(row.getUUID(USER_ID).toString());
+              userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
+            });
+          }
+          return succeededFuture();
+        }))
+        .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
+        .map(Response.class::cast)
+        .onComplete(reply -> {
+          userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+          asyncResultHandler.handle(reply);
+        });
+    } catch (CQL2PgJSONException e) {
+      throw new IllegalArgumentException("Invalid query", e);
+    }
   }
 
   @Validate
@@ -546,4 +581,9 @@ public class UsersAPI implements Users {
     }
     return entity.getCustomFields().getAdditionalProperties();
   }
+
+  private static String createDeleteQuery(CQLWrapper wrapper, Map<String, String> okapiHeaders) {
+    return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);
+  }
+
 }
