@@ -22,7 +22,6 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.VertxModule;
 import org.folio.support.http.*;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -52,7 +51,6 @@ public abstract class AbstractRestTest {
   private static final KafkaContainer kafkaContainer =
     new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
-  @BeforeAll
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
     final var token = new FakeTokenGenerator().generateToken();
