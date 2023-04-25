@@ -17,7 +17,6 @@ import java.util.Arrays;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.core.json.Json;
-import io.vertx.ext.unit.TestContext;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,13 +49,9 @@ public class CustomFieldTestBase extends TestBase {
     DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
   @BeforeClass
-  public static void setUpClass(TestContext context) {
+  public static void beforeClass() {
     kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
     kafkaContainer.start();
-    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
-    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
-    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
-    TestBase.setUpClass(context);
   }
 
   @Before
@@ -161,5 +156,11 @@ public class CustomFieldTestBase extends TestBase {
       Assert.fail(e.getMessage());
       return null;
     }
+  }
+
+  static {
+    System.setProperty(KAFKA_HOST, "localhost");
+    System.setProperty(KAFKA_PORT, "11543");
+    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
   }
 }
