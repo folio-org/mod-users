@@ -5,6 +5,7 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.event.UserEventType.USER_CREATED;
+import org.folio.moduserstest.AbstractRestTestNoData;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.UUID;
 
 import io.vertx.core.json.Json;
-import org.folio.moduserstest.AbstractRestTest;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
@@ -42,7 +42,7 @@ import lombok.SneakyThrows;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class UsersAPIIT extends AbstractRestTest {
+class UsersAPIIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
