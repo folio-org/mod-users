@@ -1,10 +1,12 @@
 package org.folio.rest.impl;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.event.ConsortiumEventType;
+import org.folio.event.service.UserTenantService;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.util.Map;
@@ -24,11 +27,19 @@ import java.util.concurrent.TimeUnit;
 class UserTenantIT extends AbstractRestTestNoData {
 
   private static UserTenantClient userTenantClient;
+  @Autowired
+  private static UserTenantService userTenantService = new UserTenantService();
   private static final UserTenant USER_AFFILIATION =  new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
     .withUserName("folio_user")
     .withTenantId("folio_tenant");
+  private static final UserTenant USER_AFFILIATION_TO_DELETE =  new UserTenant()
+    .withId(UUID.randomUUID().toString())
+    .withUserId(UUID.randomUUID().toString())
+    .withUserName("folio_user")
+    .withTenantId("folio_tenant");
+
 
   @BeforeAll
   @SneakyThrows
@@ -51,6 +62,24 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(USER_AFFILIATION.getUserName(), userTenant.getUserName());
     Assertions.assertEquals(USER_AFFILIATION.getTenantId(), userTenant.getTenantId());
   }
+
+//  @Test
+//  void canDeleteUserTenant() {
+////    String id = UUID.randomUUID().toString();
+////    UserTenant userTenant = createUserTenant(id, "dddd");
+////    userTenantService.saveUserTenant(userTenant, "diku", Vertx.vertx())
+////      .onSuccess(aBoolean -> System.out.println("CCCCCCCCC"));
+////    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+////    Assertions.assertEquals(1, collection.getTotalRecords());
+////    UserTenant userTenant1 = collection.getUserTenants().iterator().next();
+////    System.out.println("USER ids are:--"+userTenant1.getUserId()+"-----"+id);
+//    sendAffiliationDeletedEvent();
+//    UserTenantCollection collection1 = userTenantClient.getAllUsersTenants();
+//    Assertions.assertEquals(1, collection1.getTotalRecords());
+//
+//
+//
+//  }
 
   @Test
   void canSearchByUserName() {
@@ -111,6 +140,22 @@ class UserTenantIT extends AbstractRestTestNoData {
   private void sendAffiliationCreatedEvent() {
     String eventPayload = Json.encode(USER_AFFILIATION);
     sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
+      USER_AFFILIATION.getId(), eventPayload);
+    awaitHandlingEvent();
+  }
+
+  public UserTenant createUserTenant(String id, String userName) {
+    return new UserTenant()
+      .withUserName("Test1")
+      .withIsPrimary(false)
+      .withId(UUID.randomUUID().toString())
+      .withUserId(id)
+      .withTenantId("folio_tenant");
+  }
+
+  private void sendAffiliationDeletedEvent() {
+    String eventPayload = Json.encode(USER_AFFILIATION_TO_DELETE);
+    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED.getTopicName(),
       USER_AFFILIATION.getId(), eventPayload);
     awaitHandlingEvent();
   }

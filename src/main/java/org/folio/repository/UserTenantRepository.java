@@ -29,6 +29,7 @@ public class UserTenantRepository {
   private static final String ID_FIELD = "id";
   private static final String TOTAL_COUNT_FIELD = "total_count";
   private static final String INSERT_SQL = "INSERT INTO %s.%s (id, user_id, username, tenant_id, creation_date) VALUES ($1, $2, $3, $4, $5)";
+  private static final String DELETE_SQL = "DELETE FROM %s.%s WHERE user_id = $1 AND tenant_id = $2";
   private static final String SELECT_USER_TENANTS = "WITH cte AS (SELECT count(*) AS total_count FROM %1$s.%2$s %3$s) " +
     "SELECT j.*, cte.* FROM %1$s.%2$s j LEFT JOIN cte ON true " +
     "%3$s LIMIT %4$d OFFSET %5$d";
@@ -49,6 +50,13 @@ public class UserTenantRepository {
     String query = String.format(INSERT_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
     Tuple queryParams = Tuple.of(userTenant.getId(), userTenant.getUserId(), userTenant.getUserName(),
       userTenant.getTenantId(), OffsetDateTime.now(Clock.systemUTC()));
+    return conn.execute(query, queryParams).map(resultSet -> resultSet.size() == 1)
+      .recover(throwable -> handleFailures(throwable, userTenant.getId()));
+  }
+
+  public Future<Boolean> deleteUserTenant(Conn conn, UserTenant userTenant, String tenantId) {
+    String query = String.format(DELETE_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
+    Tuple queryParams = Tuple.of(userTenant.getUserId(), userTenant.getTenantId());
     return conn.execute(query, queryParams).map(resultSet -> resultSet.size() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }

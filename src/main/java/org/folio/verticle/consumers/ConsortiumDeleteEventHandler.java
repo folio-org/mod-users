@@ -17,14 +17,14 @@ import org.folio.rest.utils.OkapiConnectionParams;
 
 import java.util.List;
 
-public class ConsortiumEventsHandler implements AsyncRecordHandler<String, String> {
+public class ConsortiumDeleteEventHandler implements AsyncRecordHandler<String, String> {
 
-  private static final Logger logger = LogManager.getLogger(ConsortiumEventsHandler.class);
+  private static final Logger logger = LogManager.getLogger(ConsortiumDeleteEventHandler.class);
 
   private final Vertx vertx;
   private final UserTenantService userTenantService;
 
-  public ConsortiumEventsHandler(Vertx vertx) {
+  public ConsortiumDeleteEventHandler(Vertx vertx) {
     this.vertx = vertx;
     this.userTenantService = new UserTenantService();
   }
@@ -35,25 +35,20 @@ public class ConsortiumEventsHandler implements AsyncRecordHandler<String, Strin
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
     UserTenant event = new JsonObject(record.value()).mapTo(UserTenant.class);
-    logger.info("Trying to save of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {}",
+    logger.info("Trying to delete of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {}",
       event.getId(), event.getUserId(), event.getTenantId());
 
-    userTenantService.saveUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
+    userTenantService.deleteUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
       .onSuccess(ar -> {
-        logger.info("User primary affiliation event with consortium id: {} has been saved for user id: {} with tenant id: {}",
+        logger.info("User primary affiliation event with consortium id: {} has been deleted for user id: {} with tenant id: {}",
           event.getId(), event.getUserId(), event.getTenantId());
         result.complete(event.getId());
       })
       .onFailure(e -> {
-        if (e instanceof DuplicateEventException) {
-          logger.info("Duplicate user primary affiliation event with consortium id: {} for user id: {} with tenant id: {} received, skipped processing",
-            event.getId(), event.getUserId(), event.getTenantId());
-          result.complete(event.getId());
-        } else {
-          logger.error("Trying to save of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {} has been failed",
-            event.getId(), event.getUserId(), event.getTenantId(), e);
-          result.fail(e);
-        }
+        logger.error("Trying to delete of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {} has been failed",
+          event.getId(), event.getUserId(), event.getTenantId(), e);
+        result.fail(e);
+
       });
 
     return result.future();

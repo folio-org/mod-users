@@ -3,8 +3,12 @@ package org.folio.rest.impl;
 import io.vertx.core.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.resource.interfaces.InitAPI;
-import org.folio.verticle.ConsortiumEventConsumersVerticle;
+import org.folio.verticle.ConsortiumCreateEventConsumerVerticle;
+import org.folio.verticle.ConsortiumDeletedEventConsumerVerticle;
+
+import java.util.Arrays;
 
 import static org.folio.event.KafkaConfigSingleton.getPropertyValue;
 
@@ -28,11 +32,21 @@ public class InitAPIs implements InitAPI {
 
   private Future<?> deployConsumersVerticles(Vertx vertx) {
     int usersConsortiumConsumerInstancesNumber = Integer.parseInt(getPropertyValue("users.consortium.kafka.consumer.instancesNumber", "1"));
+    Promise<String> deployCreateConsumer = Promise.promise();
+    Promise<String> deployDeleteConsumer = Promise.promise();
 
-    return vertx.deployVerticle((ConsortiumEventConsumersVerticle.class.getName()),
+    vertx.deployVerticle((ConsortiumDeletedEventConsumerVerticle.class.getName()),
       new DeploymentOptions()
         .setWorker(true)
-        .setInstances(usersConsortiumConsumerInstancesNumber));
+        .setInstances(usersConsortiumConsumerInstancesNumber), deployCreateConsumer);
+
+    vertx.deployVerticle((ConsortiumCreateEventConsumerVerticle.class.getName()),
+      new DeploymentOptions()
+        .setWorker(true)
+        .setInstances(usersConsortiumConsumerInstancesNumber), deployDeleteConsumer);
+
+    return GenericCompositeFuture.all(Arrays.asList(deployCreateConsumer.future(),
+      deployDeleteConsumer.future()));
   }
 
 }
