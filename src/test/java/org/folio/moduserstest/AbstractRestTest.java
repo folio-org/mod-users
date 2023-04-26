@@ -49,7 +49,7 @@ public abstract class AbstractRestTest {
   protected static KafkaConsumer<String, String> kafkaConsumer;
   protected static KafkaProducer<String, String> kafkaProducer;
   private static final KafkaContainer kafkaContainer =
-    new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
+    new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.0.3"));
 
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
