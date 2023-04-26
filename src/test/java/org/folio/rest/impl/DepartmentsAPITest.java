@@ -61,13 +61,9 @@ public class DepartmentsAPITest extends TestBase {
   private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
 
   protected User testUser;
-  private static final KafkaContainer kafkaContainer = new KafkaContainer(
-    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
   @BeforeClass
   public static void beforeClass() {
-    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
-    kafkaContainer.start();
   }
 
   @Before
@@ -79,11 +75,6 @@ public class DepartmentsAPITest extends TestBase {
   public void tearDown() {
     deleteWithNoContent(USERS_ENDPOINT + "/" + testUser.getId());
     DBTestUtil.deleteFromTable(vertx, "departments");
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    kafkaContainer.stop();
   }
 
   @Test
