@@ -3,7 +3,6 @@ package org.folio.rest.impl;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
-import org.apache.commons.collections4.CollectionUtils;
 import org.folio.event.ConsortiumEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserTenant;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -24,11 +24,23 @@ import java.util.concurrent.TimeUnit;
 class UserTenantIT extends AbstractRestTestNoData {
 
   private static UserTenantClient userTenantClient;
-  private static final UserTenant USER_AFFILIATION =  new UserTenant()
+
+  private static final String USER_A = "user_a";
+  private static final String USER_B = "user_b";
+  private static final String TENANT_X = "tenant_x";
+  private static final String TENANT_Y = "tenant_y";
+  private static final UserTenant FIRST_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName("folio_user")
-    .withTenantId("folio_tenant");
+    .withUserName(USER_A).withTenantId(TENANT_X);
+  private static final UserTenant SECOND_AFFILIATION = new UserTenant()
+    .withId(UUID.randomUUID().toString())
+    .withUserId(UUID.randomUUID().toString())
+    .withUserName(USER_B).withTenantId(TENANT_X);
+  private static final UserTenant THIRD_AFFILIATION = new UserTenant()
+    .withId(UUID.randomUUID().toString())
+    .withUserId(UUID.randomUUID().toString())
+    .withUserName(USER_A).withTenantId(TENANT_Y);
 
   @BeforeAll
   @SneakyThrows
@@ -36,82 +48,74 @@ class UserTenantIT extends AbstractRestTestNoData {
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
   }
 
-  @Test
-  void canCreateUserTenant() {
-    //when
+  @BeforeEach
+  public void beforeEach() {
     sendAffiliationCreatedEvent();
-    //then
-    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
-    Assertions.assertEquals(1, collection.getTotalRecords());
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
-    Assertions.assertNull(userTenant.getIsPrimary());
-    Assertions.assertNull(userTenant.getTenantName());
-    Assertions.assertEquals(USER_AFFILIATION.getId(), userTenant.getId());
-    Assertions.assertEquals(USER_AFFILIATION.getUserId(), userTenant.getUserId());
-    Assertions.assertEquals(USER_AFFILIATION.getUserName(), userTenant.getUserName());
-    Assertions.assertEquals(USER_AFFILIATION.getTenantId(), userTenant.getTenantId());
+    awaitHandlingEvent(3);
   }
 
   @Test
-  void canSearchByUserName() {
-    //given
-    String username = USER_AFFILIATION.getUserName();
-    Map<String, String> params = Map.of("username", username);
-    //when
-    sendAffiliationCreatedEvent();
-    //then
-    UserTenantCollection collection = userTenantClient.getUserTenants(params);
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
-    Assertions.assertEquals(1, collection.getTotalRecords());
-    Assertions.assertEquals(username, userTenant.getUserName());
+  void canRetrieveAllUserTenants() {
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(3, collection.getTotalRecords());
   }
 
   @Test
   void canSearchByUserId() {
-    //given
-    String userId = USER_AFFILIATION.getUserId();
+    String userId = SECOND_AFFILIATION.getUserId();
     Map<String, String> params = Map.of("userId", userId);
-    //when
-    sendAffiliationCreatedEvent();
-    //then
+
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
+
     UserTenant userTenant = collection.getUserTenants().iterator().next();
     Assertions.assertEquals(1, collection.getTotalRecords());
     Assertions.assertEquals(userId, userTenant.getUserId());
   }
 
   @Test
+  void canSearchByUserName() {
+    Map<String, String> params = Map.of("username", USER_A);
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+
+    List<UserTenant> userTenants = collection.getUserTenants();
+    Assertions.assertEquals(2, collection.getTotalRecords());
+    userTenants.forEach(userTenant -> Assertions.assertEquals(USER_A, userTenant.getUserName()));
+  }
+
+  @Test
   void canSearchByUserNameAndTenantId() {
-    //given
-    String username = USER_AFFILIATION.getUserName();
-    String tenantId = USER_AFFILIATION.getTenantId();
+    String username = THIRD_AFFILIATION.getUserName();
+    String tenantId = THIRD_AFFILIATION.getTenantId();
     Map<String, String> params = Map.of(
       "username", username,
       "tenantId", tenantId);
-    //when
-    sendAffiliationCreatedEvent();
-    //then
+
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
+
     Assertions.assertEquals(1, collection.getTotalRecords());
     UserTenant userTenant = collection.getUserTenants().iterator().next();
     Assertions.assertEquals(username, userTenant.getUserName());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
   }
 
-  private void awaitHandlingEvent() {
+  private void awaitHandlingEvent(int expectedSize) {
     Awaitility.await()
       .atMost(1, TimeUnit.MINUTES)
       .pollInterval(5, TimeUnit.SECONDS)
       .until(() -> {
         UserTenantCollection collection = userTenantClient.getAllUsersTenants();
-        return CollectionUtils.isNotEmpty(collection.getUserTenants());
+        return collection.getTotalRecords() == expectedSize;
       });
   }
 
   private void sendAffiliationCreatedEvent() {
-    String eventPayload = Json.encode(USER_AFFILIATION);
-    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
-      USER_AFFILIATION.getId(), eventPayload);
-    awaitHandlingEvent();
+    for (UserTenant userTenant : List.of(FIRST_AFFILIATION, SECOND_AFFILIATION, THIRD_AFFILIATION)) {
+      String eventPayload = Json.encode(userTenant);
+      sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
+        userTenant.getId(), eventPayload);
+    }
+    awaitHandlingEvent(3);
   }
 }
