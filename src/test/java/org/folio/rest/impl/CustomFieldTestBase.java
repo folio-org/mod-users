@@ -11,12 +11,15 @@ import static org.folio.test.util.TestUtil.readFile;
 import static org.folio.test.util.TestUtil.toJson;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.core.json.Json;
+import org.folio.event.KafkaConfigSingleton;
+import org.folio.kafka.KafkaConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,9 +58,9 @@ public class CustomFieldTestBase extends TestBase {
     protected void before() {
       kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
       kafkaContainer.start();
-      System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
-      System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
-      System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
+      updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
+      updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
+      updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
     }
 
     @Override
@@ -164,6 +167,23 @@ public class CustomFieldTestBase extends TestBase {
     } catch (IOException | URISyntaxException e) {
       Assert.fail(e.getMessage());
       return null;
+    }
+  }
+
+  public static void updateKafkaConfigField(String fieldName, String newValue) {
+    try {
+      KafkaConfigSingleton instance = KafkaConfigSingleton.INSTANCE;
+      Field kafkaConfigField = KafkaConfigSingleton.class.getDeclaredField("kafkaConfig");
+      kafkaConfigField.setAccessible(true);
+
+      KafkaConfig kafkaConfig = (KafkaConfig) kafkaConfigField.get(instance);
+      Field envIdField = KafkaConfig.class.getDeclaredField(fieldName);
+      envIdField.setAccessible(true);
+      envIdField.set(kafkaConfig, newValue);
+
+      kafkaConfigField.set(instance, kafkaConfig);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      e.printStackTrace();
     }
   }
 }

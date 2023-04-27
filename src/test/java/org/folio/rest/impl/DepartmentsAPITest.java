@@ -6,6 +6,7 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.moduserstest.AbstractRestTest.*;
 import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
+import static org.folio.rest.impl.CustomFieldTestBase.updateKafkaConfigField;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -71,9 +72,9 @@ public class DepartmentsAPITest extends TestBase {
     protected void before() {
       kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
       kafkaContainer.start();
-      System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
-      System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
-      System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
+      updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
+      updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
+      updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
     }
 
     @Override
