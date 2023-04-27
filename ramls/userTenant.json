@@ -18,14 +18,6 @@
     "tenantId": {
       "description": "UUID of the tenant",
       "type": "string"
-    },
-    "tenantName": {
-      "description": "The tenant name",
-      "type": "string"
-    },
-    "isPrimary": {
-      "description": "A flag to determine if a affiliation primary",
-      "type": "boolean"
     }
   },
   "additionalProperties": false,
