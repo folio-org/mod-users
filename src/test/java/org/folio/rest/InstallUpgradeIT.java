@@ -18,16 +18,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.nio.file.Path;
 
-/**
- * Check the shaded fat uber jar and Dockerfile.
- *
- * <p>Test /admin/health.
- *
- * <p>Test that logging works.
- *
- * <p>Test installation and migration with smoke test.
- *
- */
 public class InstallUpgradeIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(InstallUpgradeIT.class);

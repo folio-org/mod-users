@@ -1,10 +1,10 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
-  "description": "Collection of user tenants",
+  "description": "Collection of primary tenant records",
   "properties": {
     "userTenants": {
-      "description": "List of user tenants",
+      "description": "List of primary tenant records",
       "type": "array",
       "id": "userTenants",
       "items": {
