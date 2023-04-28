@@ -221,7 +221,7 @@
         {
           "methods": [ "GET" ],
           "pathPattern": "/user-tenants",
-          "permissionsRequired": [ "user-tenants.collection.get" ]
+          "permissionsRequired": []
         }
       ]
     },
