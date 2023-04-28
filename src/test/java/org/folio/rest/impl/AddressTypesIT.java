@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.hasSize;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.moduserstest.AbstractRestTest;
+import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
 import org.folio.support.Personal;
@@ -32,7 +32,7 @@ import io.vertx.junit5.VertxExtension;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class AddressTypesIT extends AbstractRestTest {
+class AddressTypesIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;

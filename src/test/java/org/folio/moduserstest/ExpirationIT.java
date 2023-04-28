@@ -24,15 +24,13 @@ import io.vertx.junit5.VertxExtension;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-class ExpirationIT extends AbstractRestTest {
+class ExpirationIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static TimerInterfaceClient timerInterfaceClient;
 
   @BeforeAll
   public static void beforeAll() {
-    LOAD_SAMPLE_DATA = false;
-    LOAD_REFERENCE_DATA = false;
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }

@@ -16,13 +16,13 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.folio.moduserstest.AbstractRestTestNoData;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.folio.event.UserEventType;
 import io.vertx.core.json.Json;
-import org.folio.moduserstest.AbstractRestTest;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
@@ -45,7 +45,7 @@ import lombok.SneakyThrows;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class UsersAPIIT extends AbstractRestTest {
+class UsersAPIIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
@@ -61,8 +61,6 @@ class UsersAPIIT extends AbstractRestTest {
 
   @BeforeEach
   public void beforeEach() {
-    LOAD_SAMPLE_DATA = false;
-    LOAD_REFERENCE_DATA = false;
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Primary tenant of a user used for single-sign-on",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "UUID of the user tenant",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userId": {
+      "description": "UUID of the user",
+      "$ref": "raml-util/schemas/uuid.schema"
+    },
+    "userName": {
+      "description": "The user name",
+      "type": "string"
+    },
+    "tenantId": {
+      "description": "Primary tenant of the user for single-sign-on",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "userId",
+    "tenantId"
+  ]
+}

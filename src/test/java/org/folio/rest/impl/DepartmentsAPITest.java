@@ -6,6 +6,7 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.moduserstest.AbstractRestTest.*;
 import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
+import static org.folio.rest.impl.CustomFieldTestBase.updateKafkaConfigField;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -32,11 +33,13 @@ import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import org.folio.rest.jaxrs.model.Department;
@@ -64,14 +67,24 @@ public class DepartmentsAPITest extends TestBase {
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
     DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
-  @BeforeClass
-  public static void setUpClass() {
-    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
-    kafkaContainer.start();
-    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
-    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
-    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
-  }
+  private static final ExternalResource resource = new ExternalResource() {
+    @Override
+    protected void before() {
+      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+      kafkaContainer.start();
+      updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
+      updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
+      updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
+    }
+
+    @Override
+    protected void after() {
+      kafkaContainer.stop();
+    }
+  };
+
+  @ClassRule
+  public static final TestRule rules = RuleChain.outerRule(resource);
 
   @Before
   public void setUp() {
@@ -82,11 +95,6 @@ public class DepartmentsAPITest extends TestBase {
   public void tearDown() {
     deleteWithNoContent(USERS_ENDPOINT + "/" + testUser.getId());
     DBTestUtil.deleteFromTable(vertx, "departments");
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    kafkaContainer.stop();
   }
 
   @Test
@@ -421,5 +429,4 @@ public class DepartmentsAPITest extends TestBase {
 
     return user;
   }
-
 }

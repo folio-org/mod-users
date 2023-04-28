@@ -6,7 +6,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
-import org.folio.moduserstest.AbstractRestTest;
+import org.folio.moduserstest.AbstractRestTestWithData;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
@@ -20,7 +20,7 @@ import io.vertx.junit5.VertxExtension;
 // Loading the reference and sample data can take a long time
 @Timeout(value = 30, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class ReferenceAndSampleDataIT extends AbstractRestTest {
+class ReferenceAndSampleDataIT extends AbstractRestTestWithData {
 
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
@@ -28,8 +28,6 @@ class ReferenceAndSampleDataIT extends AbstractRestTest {
 
   @BeforeAll
   static void beforeAll() {
-    LOAD_SAMPLE_DATA = true;
-    LOAD_REFERENCE_DATA = true;
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);

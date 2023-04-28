@@ -5,7 +5,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.folio.moduserstest.AbstractRestTest;
+import org.folio.moduserstest.AbstractRestTestWithData;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
@@ -20,7 +20,7 @@ import lombok.SneakyThrows;
 
 @Timeout(value = 30, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class ReferenceAndSampleDataMigrationIT extends AbstractRestTest {
+class ReferenceAndSampleDataMigrationIT extends AbstractRestTestWithData {
 
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
@@ -29,8 +29,6 @@ class ReferenceAndSampleDataMigrationIT extends AbstractRestTest {
   @BeforeAll
   @SneakyThrows
   static void beforeAll() {
-    LOAD_SAMPLE_DATA = true;
-    LOAD_REFERENCE_DATA = true;
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
