@@ -62,6 +62,17 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canDeleteAllUserTenants() {
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(3, collection.getTotalRecords());
+    sendAffiliationDeletedEvent();
+    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(0, collection2.getTotalRecords());
+  }
+
+  @Test
   void canSearchByUserId() {
     String userId = SECOND_AFFILIATION.getUserId();
     Map<String, String> params = Map.of("userId", userId);
@@ -117,5 +128,14 @@ class UserTenantIT extends AbstractRestTestNoData {
         userTenant.getId(), eventPayload);
     }
     awaitHandlingEvent(3);
+  }
+
+  private void sendAffiliationDeletedEvent() {
+    for (UserTenant userTenant : List.of(FIRST_AFFILIATION, SECOND_AFFILIATION, THIRD_AFFILIATION)) {
+      String eventPayload = Json.encode(userTenant);
+      sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED.getTopicName(),
+        userTenant.getId(), eventPayload);
+    }
+    awaitHandlingEvent(0);
   }
 }

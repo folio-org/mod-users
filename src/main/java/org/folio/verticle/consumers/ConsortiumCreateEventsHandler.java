@@ -17,14 +17,14 @@ import org.folio.rest.utils.OkapiConnectionParams;
 
 import java.util.List;
 
-public class ConsortiumEventsHandler implements AsyncRecordHandler<String, String> {
+public class ConsortiumCreateEventsHandler implements AsyncRecordHandler<String, String> {
 
-  private static final Logger logger = LogManager.getLogger(ConsortiumEventsHandler.class);
+  private static final Logger logger = LogManager.getLogger(ConsortiumCreateEventsHandler.class);
 
   private final Vertx vertx;
   private final UserTenantService userTenantService;
 
-  public ConsortiumEventsHandler(Vertx vertx) {
+  public ConsortiumCreateEventsHandler(Vertx vertx) {
     this.vertx = vertx;
     this.userTenantService = new UserTenantService();
   }
