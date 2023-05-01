@@ -38,7 +38,7 @@ public class ConsortiumCreateEventsHandler implements AsyncRecordHandler<String,
     logger.info("Trying to save of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {}",
       event.getId(), event.getUserId(), event.getTenantId());
 
-    userTenantService.saveUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
+    userTenantService.saveUserTenant(event, event.getTenantId(), okapiConnectionParams.getVertx())
       .onSuccess(ar -> {
         logger.info("User primary affiliation event with consortium id: {} has been saved for user id: {} with tenant id: {}",
           event.getId(), event.getUserId(), event.getTenantId());

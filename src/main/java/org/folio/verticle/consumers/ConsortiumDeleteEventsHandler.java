@@ -37,7 +37,7 @@ public class ConsortiumDeleteEventsHandler implements AsyncRecordHandler<String,
     logger.info("Trying to delete of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {}",
       event.getId(), event.getUserId(), event.getTenantId());
 
-    userTenantService.deleteUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
+    userTenantService.deleteUserTenant(event, event.getTenantId(), okapiConnectionParams.getVertx())
       .onSuccess(ar -> {
         logger.info("User primary affiliation event with consortium id: {} has been deleted for user id: {} with tenant id: {}",
           event.getId(), event.getUserId(), event.getTenantId());
