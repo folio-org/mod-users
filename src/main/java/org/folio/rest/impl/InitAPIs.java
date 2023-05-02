@@ -34,7 +34,7 @@ public class InitAPIs implements InitAPI {
     int usersConsortiumConsumerInstancesNumber = Integer.parseInt(getPropertyValue("users.consortium.kafka.consumer.instancesNumber", "1"));
 
     Promise<String> consortiumCreateEventConsumer = Promise.promise();
-    Promise<String> consortiumDeleteEventConsumers = Promise.promise();
+    Promise<String> consortiumDeleteEventConsumer = Promise.promise();
 
     vertx.deployVerticle((ConsortiumCreateEventConsumersVerticle.class.getName()),
       new DeploymentOptions()
@@ -44,11 +44,11 @@ public class InitAPIs implements InitAPI {
     vertx.deployVerticle((ConsortiumDeleteEventConsumersVerticle.class.getName()),
       new DeploymentOptions()
         .setWorker(true)
-        .setInstances(usersConsortiumConsumerInstancesNumber), consortiumDeleteEventConsumers);
+        .setInstances(usersConsortiumConsumerInstancesNumber), consortiumDeleteEventConsumer);
 
     return GenericCompositeFuture.all(Arrays.asList(
       consortiumCreateEventConsumer.future(),
-      consortiumDeleteEventConsumers.future()
+      consortiumDeleteEventConsumer.future()
     ));
   }
 
