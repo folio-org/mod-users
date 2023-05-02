@@ -35,22 +35,22 @@ public class ConsortiumCreateEventsHandler implements AsyncRecordHandler<String,
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
     UserTenant event = new JsonObject(record.value()).mapTo(UserTenant.class);
-    logger.info("Trying to save of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {}",
+    logger.info("Trying to save of user primary affiliation event with event id: {} for user id: {} with tenant id: {}",
       event.getId(), event.getUserId(), event.getTenantId());
 
     userTenantService.saveUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
       .onSuccess(ar -> {
-        logger.info("User primary affiliation event with consortium id: {} has been saved for user id: {} with tenant id: {}",
+        logger.info("User primary affiliation event with event id: {} has been saved for user id: {} with tenant id: {}",
           event.getId(), event.getUserId(), event.getTenantId());
         result.complete(event.getId());
       })
       .onFailure(e -> {
         if (e instanceof DuplicateEventException) {
-          logger.info("Duplicate user primary affiliation event with consortium id: {} for user id: {} with tenant id: {} received, skipped processing",
+          logger.info("Duplicate user primary affiliation event with event id: {} for user id: {} with tenant id: {} received, skipped processing",
             event.getId(), event.getUserId(), event.getTenantId());
           result.complete(event.getId());
         } else {
-          logger.error("Trying to save of user primary affiliation event with consortium id: {} for user id: {} with tenant id: {} has been failed",
+          logger.error("Trying to save of user primary affiliation event with event id: {} for user id: {} with tenant id: {} has been failed",
             event.getId(), event.getUserId(), event.getTenantId(), e);
           result.fail(e);
         }

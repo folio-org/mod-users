@@ -66,7 +66,7 @@ class UserTenantIT extends AbstractRestTestNoData {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(3, collection.getTotalRecords());
-    sendAffiliationDeletedEvent();
+    sendAffiliationDeletedEvents();
     UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(0, collection2.getTotalRecords());
@@ -130,7 +130,7 @@ class UserTenantIT extends AbstractRestTestNoData {
     awaitHandlingEvent(3);
   }
 
-  private void sendAffiliationDeletedEvent() {
+  private void sendAffiliationDeletedEvents() {
     for (UserTenant userTenant : List.of(FIRST_AFFILIATION, SECOND_AFFILIATION, THIRD_AFFILIATION)) {
       String eventPayload = Json.encode(userTenant);
       sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED.getTopicName(),
