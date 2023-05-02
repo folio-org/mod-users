@@ -50,14 +50,16 @@ public class UserTenantRepository {
     String query = String.format(INSERT_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
     Tuple queryParams = Tuple.of(userTenant.getId(), userTenant.getUserId(), userTenant.getUserName(),
       userTenant.getTenantId(), OffsetDateTime.now(Clock.systemUTC()));
-    return conn.execute(query, queryParams).map(resultSet -> resultSet.size() == 1)
+    return conn.execute(query, queryParams)
+      .map(resultSet -> resultSet.size() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
   public Future<Boolean> deleteUserTenant(Conn conn, UserTenant userTenant, String tenantId) {
     String query = String.format(DELETE_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
     Tuple queryParams = Tuple.of(userTenant.getUserId(), userTenant.getTenantId());
-    return conn.execute(query, queryParams).map(resultSet -> resultSet.size() == 1)
+    return conn.execute(query, queryParams)
+      .map(resultSet -> resultSet.size() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
