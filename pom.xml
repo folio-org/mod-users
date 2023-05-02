@@ -61,7 +61,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-kafka-wrapper</artifactId>
-      <version>2.6.0</version>
+      <version>2.7.1</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -111,6 +111,10 @@
        <groupId>io.vertx</groupId>
        <artifactId>vertx-junit5</artifactId>
        <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-kafka-client</artifactId>
     </dependency>
     <dependency>
       <groupId>io.rest-assured</groupId>
