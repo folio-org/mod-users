@@ -39,7 +39,7 @@ public class ConsortiumDeleteEventsHandler implements AsyncRecordHandler<String,
       .map(event.getId())
       .onSuccess(x -> logger.info("User primary affiliation event with event id: {} has been deleted for user id: {} with tenant id: {}",
         event.getId(), event.getUserId(), event.getTenantId()))
-      .onFailure(e -> logger.error("Trying to delete of user primary affiliation event with event id: {} for user id: {} with tenant id: {} has been failed",
+      .onFailure(e -> logger.error("Failed to delete user primary affiliation event with event id: {} for user id: {} with tenant id: {}",
         event.getId(), event.getUserId(), event.getTenantId(), e));
   }
 }

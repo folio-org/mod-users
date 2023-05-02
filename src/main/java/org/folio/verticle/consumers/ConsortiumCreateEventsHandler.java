@@ -50,7 +50,7 @@ public class ConsortiumCreateEventsHandler implements AsyncRecordHandler<String,
             event.getId(), event.getUserId(), event.getTenantId());
           result.complete(event.getId());
         } else {
-          logger.error("Trying to save of user primary affiliation event with event id: {} for user id: {} with tenant id: {} has been failed",
+          logger.error("Failed to save user primary affiliation event with event id: {} for user id: {} with tenant id: {}",
             event.getId(), event.getUserId(), event.getTenantId(), e);
           result.fail(e);
         }
