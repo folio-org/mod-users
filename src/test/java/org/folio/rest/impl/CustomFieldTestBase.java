@@ -11,23 +11,28 @@ import static org.folio.test.util.TestUtil.readFile;
 import static org.folio.test.util.TestUtil.toJson;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.core.json.Json;
+import org.folio.event.KafkaConfigSingleton;
+import org.folio.kafka.KafkaConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
+import org.junit.ClassRule;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -48,14 +53,24 @@ public class CustomFieldTestBase extends TestBase {
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
     DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
-  @BeforeClass
-  public static void setUpClass() {
-    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
-    kafkaContainer.start();
-    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
-    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
-    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
-  }
+  private static final ExternalResource resource = new ExternalResource() {
+    @Override
+    protected void before() {
+      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+      kafkaContainer.start();
+      updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
+      updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
+      updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
+    }
+
+    @Override
+    protected void after() {
+      kafkaContainer.stop();
+    }
+  };
+
+  @ClassRule
+  public static final TestRule rules = RuleChain.outerRule(resource);
 
   @Before
   public void setUp() {
@@ -67,12 +82,6 @@ public class CustomFieldTestBase extends TestBase {
     CustomFieldsDBTestUtil.deleteAllCustomFields(vertx);
     deleteWithNoContent(USERS_ENDPOINT + "/" + testUser.getId());
   }
-
-  @AfterClass
-  public static void tearDownClass() {
-    kafkaContainer.stop();
-  }
-
 
   protected String cfEndpoint() {
     return CUSTOM_FIELDS_ENDPOINT;
@@ -158,6 +167,23 @@ public class CustomFieldTestBase extends TestBase {
     } catch (IOException | URISyntaxException e) {
       Assert.fail(e.getMessage());
       return null;
+    }
+  }
+
+  public static void updateKafkaConfigField(String fieldName, String newValue) {
+    try {
+      KafkaConfigSingleton instance = KafkaConfigSingleton.INSTANCE;
+      Field kafkaConfigField = KafkaConfigSingleton.class.getDeclaredField("kafkaConfig");
+      kafkaConfigField.setAccessible(true);
+
+      KafkaConfig kafkaConfig = (KafkaConfig) kafkaConfigField.get(instance);
+      Field envIdField = KafkaConfig.class.getDeclaredField(fieldName);
+      envIdField.setAccessible(true);
+      envIdField.set(kafkaConfig, newValue);
+
+      kafkaConfigField.set(instance, kafkaConfig);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      e.printStackTrace();
     }
   }
 }

@@ -24,7 +24,7 @@ import io.vertx.junit5.VertxExtension;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-public class CustomFieldIT extends AbstractRestTest {
+public class CustomFieldIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static CustomFieldsClient customFieldsClient;

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "User tenant",
+  "description": "Primary tenant of a user used for single-sign-on",
   "type": "object",
   "properties": {
     "id": {
@@ -16,16 +16,8 @@
       "type": "string"
     },
     "tenantId": {
-      "description": "UUID of the tenant",
+      "description": "Primary tenant of the user for single-sign-on",
       "type": "string"
-    },
-    "tenantName": {
-      "description": "The tenant name",
-      "type": "string"
-    },
-    "isPrimary": {
-      "description": "A flag to determine if a affiliation primary",
-      "type": "boolean"
     }
   },
   "additionalProperties": false,

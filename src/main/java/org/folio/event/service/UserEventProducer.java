@@ -22,6 +22,7 @@ import org.folio.rest.tools.utils.TenantTool;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class UserEventProducer {
@@ -37,26 +38,42 @@ public class UserEventProducer {
     this.kafkaConfig = kafkaConfig;
   }
 
-  public Future<Boolean> sendUserCreatedEvent(User user,
-                                              UserEvent.Action eventAction,
-                                              Map<String, String> okapiHeaders) {
+  public Future<Boolean> sendUserEvent(User user,
+                                       UserEvent.Action eventAction,
+                                       Map<String, String> okapiHeaders) {
     String tenantId = okapiHeaders.get("x-okapi-tenant");
     UserEvent event = getUserEvent(user, tenantId, eventAction);
-    logger.info("Starting to send event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
     String eventPayload = Json.encode(event);
-    return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
+
+    switch (eventAction) {
+      case CREATE:
+        logger.info("Starting to send user created event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
+        return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
+      case DELETE:
+        logger.info("Starting to send user deleted event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
+        return sendToKafka(UserEventType.USER_DELETED, eventPayload, okapiHeaders, user.getId());
+      case EDIT:
+        logger.warn("Events for user's edit have not implemented yet, eventId: {} for userId: {} was skipped", event.getId(), user.getId());
+        return Future.succeededFuture(false);
+      default:
+        throw new IllegalStateException("Unexpected value: " + eventAction);
+    }
   }
 
   private UserEvent getUserEvent(User user, String tenantId, UserEvent.Action eventAction) {
     Metadata metadata = user.getMetadata();
-    return new UserEvent()
-      .withId(UUID.randomUUID().toString())
-      .withAction(eventAction)
-      .withEventDate(new Date())
-      .withTenantId(tenantId)
-      .withActionDate(metadata.getCreatedDate())
-      .withPerformedBy(metadata.getUpdatedByUserId())
-      .withUserDto(user.withPersonal(null).withMetadata(null));
+    UserEvent event = new UserEvent();
+    event.setId(UUID.randomUUID().toString());
+    event.setAction(eventAction);
+    event.setEventDate(new Date());
+    event.setTenantId(tenantId);
+    if (Objects.nonNull(metadata)) {
+      event.setActionDate(metadata.getCreatedDate());
+      event.setPerformedBy(metadata.getUpdatedByUserId());
+    }
+    event.setUser(user.withPersonal(null).withMetadata(null));
+
+    return event;
   }
 
   private Future<Boolean> sendToKafka(UserEventType eventType,

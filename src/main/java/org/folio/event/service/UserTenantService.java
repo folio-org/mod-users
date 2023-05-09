@@ -29,4 +29,9 @@ public class UserTenantService {
     PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
     return pgClient.withConn(conn -> tenantRepository.saveUserTenant(conn, userTenant, tenantId));
   }
+
+  public Future<Boolean> deleteUserTenant(UserTenant userTenant, String tenantId, Vertx vertx) {
+    PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
+    return pgClient.withConn(conn -> tenantRepository.deleteUserTenant(conn, userTenant, tenantId));
+  }
 }

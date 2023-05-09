@@ -4,7 +4,7 @@ package org.folio.rest.impl;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 
-import org.folio.moduserstest.AbstractRestTest;
+import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.support.User;
 import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
@@ -24,7 +24,7 @@ import io.vertx.junit5.VertxTestContext;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class PatronPinAPIIT extends AbstractRestTest {
+class PatronPinAPIIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static PatronPinClient patronPinClient;

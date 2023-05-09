@@ -31,7 +31,7 @@ import io.vertx.junit5.VertxExtension;
  */
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
-class ProxyRelationshipsIT extends AbstractRestTest {
+class ProxyRelationshipsIT extends AbstractRestTestNoData {
 
   private static ProxiesClient proxiesClient;
 

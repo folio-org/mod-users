@@ -22,7 +22,6 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.VertxModule;
 import org.folio.support.http.*;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -44,9 +43,6 @@ public abstract class AbstractRestTest {
   public static final String KAFKA_ENV_VALUE = "test-env";
   public static final List<String> KAFKA_CONTAINER_PORTS = List.of("11541:2181", "11542:9092", "11543:9093");
 
-  protected static boolean LOAD_SAMPLE_DATA = false;
-  protected static boolean LOAD_REFERENCE_DATA = false;
-
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
   protected static OkapiHeaders okapiHeaders;
@@ -55,9 +51,8 @@ public abstract class AbstractRestTest {
   private static final KafkaContainer kafkaContainer =
     new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
-  @BeforeAll
   @SneakyThrows
-  public static void beforeAll(Vertx vertx, VertxTestContext context) {
+  public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
     final var token = new FakeTokenGenerator().generateToken();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
@@ -91,7 +86,7 @@ public abstract class AbstractRestTest {
     module = new VertxModule(vertx);
 
     module.deployModule(port)
-      .compose(res -> module.enableModule(okapiHeaders, LOAD_REFERENCE_DATA, LOAD_SAMPLE_DATA))
+      .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
       .onComplete(context.succeedingThenComplete());
   }
 
@@ -105,8 +100,7 @@ public abstract class AbstractRestTest {
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
       })
-      .onComplete(future -> context.completeNow())
-      .onFailure(context::failNow);
+      .onComplete(context.succeedingThenComplete());
   }
 
   public List<String> checkKafkaEventSent(String tenant, String eventType) {
