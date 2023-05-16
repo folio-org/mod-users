@@ -149,16 +149,20 @@ public class UsersAPI implements Users {
       String lang, RoutingContext routingContext, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
-
+    logger.info("getUsers:: parameters query {}, orderBy : {}, order : {}, offset : {}, limit :{}, lang : {}", query, orderBy, order.name(), offset, limit, lang);
     try {
-      logger.debug("Getting users");
+      logger.info("getUsers:: Getting users");
       // note that orderBy is NOT used
       String tableName = getTableName(query);
-      CQLWrapper cql = getCQL(query, limit, offset);
+      logger.info("getUsers:: tableName : {}", tableName);
 
+      CQLWrapper cql = getCQL(query, limit, offset);
+      logger.info("getUsers:: cql Wrapper {}",cql.toString());
       PgUtil.streamGet(tableName, User.class, cql, emptyList(), TABLE_NAME_USERS,
         routingContext, okapiHeaders, vertxContext);
+      logger.info("getUsers:: pgUtil.stresmGet");
     } catch (Exception e) {
+      logger.info("query:{} message:{}",query.toString(), e.getMessage());
       logger.error(query, e);
       Response response = response(query, e, lang,
         GetUsersResponse::respond400WithTextPlain,
