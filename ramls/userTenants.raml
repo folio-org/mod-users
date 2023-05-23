@@ -17,12 +17,12 @@ traits:
   language: !include raml-util/traits/language.raml
 
 resourceTypes:
-  collection-get: !include raml-util/rtypes/collection-get.raml
-  collection-item-get: !include raml-util/rtypes/item-collection-get.raml
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
 
 /user-tenants:
   type:
-    collection-get:
+    collection:
       exampleCollection: !include examples/userTenantCollection.sample
       exampleItem: !include examples/userTenant.sample
       schemaCollection: userTenantCollection
@@ -53,6 +53,17 @@ resourceTypes:
         body:
           application/json:
             type: userTenantCollection
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
+  post:
+    is: [ validate ]
+    description: Create a user tenant
+    responses:
+      204:
+        description: "No content"
       500:
         description: "Internal server error"
         body:

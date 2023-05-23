@@ -5,6 +5,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.event.service.UserTenantService;
+import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.resource.UserTenants;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -41,6 +42,18 @@ public class UserTenantsAPI implements UserTenants {
         succeededFuture(GetUserTenantsResponse.respond200WithApplicationJson(res))))
       .onFailure(cause -> asyncResultHandler.handle(
         succeededFuture(GetUserTenantsResponse.respond500WithTextPlain(cause.getMessage()))));
+  }
+
+  @Override
+  public void postUserTenants(String lang, UserTenant userTenant, Map<String, String> okapiHeaders,
+                              Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    String okapiTenantId = TenantTool.tenantId(okapiHeaders);
+
+    userTenantService.saveUserTenant(userTenant, okapiTenantId, vertxContext.owner())
+      .onSuccess(res -> asyncResultHandler.handle(
+        succeededFuture(Response.noContent().build())))
+      .onFailure(cause -> asyncResultHandler.handle(
+        succeededFuture(PostUserTenantsResponse.respond500WithTextPlain(cause.getMessage()))));
   }
 
   private void addWhereClauseArgumentsToCriterion(String userId, String username, String tenantId, Criterion criterion) {
