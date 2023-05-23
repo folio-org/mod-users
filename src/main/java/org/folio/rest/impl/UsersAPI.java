@@ -153,8 +153,8 @@ public class UsersAPI implements Users {
       logger.info("getUsers:: parameters query {}, orderBy : {}, order : {}, offset : {}, limit :{}, lang : {}", query, orderBy, order.name(), offset, limit, lang);
       logger.info("getUsers:: Getting users");
       // note that orderBy is NOT used
-      if(query.equals("(tags.tagList=\"\"\")")){
-        query = "(tags.tagList=\"\\\"\")";
+      if(query.startsWith("(tags.tagList=\"\"\")")){
+        query = query.replace("(tags.tagList=\"\"\")","(tags.tagList=\"\\\"\")");
       }
       String tableName = getTableName(query);
       logger.info("getUsers:: tableName : {}", tableName);
