@@ -41,6 +41,10 @@ class UserTenantIT extends AbstractRestTestNoData {
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
     .withUserName(USER_A).withTenantId(TENANT_Y);
+  private static final UserTenant FOURTH_AFFILIATION = new UserTenant()
+    .withId(UUID.randomUUID().toString())
+    .withUserId(UUID.randomUUID().toString())
+    .withUserName(USER_B).withTenantId(TENANT_Y);
 
   @BeforeAll
   @SneakyThrows
@@ -66,7 +70,8 @@ class UserTenantIT extends AbstractRestTestNoData {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(3, collection.getTotalRecords());
-    sendAffiliationDeletedEvents();
+
+    sendAffiliationDeletedEvents(collection.getUserTenants());
     UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(0, collection2.getTotalRecords());
@@ -111,6 +116,21 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
   }
 
+  @Test
+  void canCreateAUserTenant() {
+    UserTenantCollection collection1 = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(3, collection1.getTotalRecords());
+    Assertions.assertFalse(collection1.getUserTenants().contains(FOURTH_AFFILIATION));
+
+    userTenantClient.saveUserTenant(FOURTH_AFFILIATION);
+    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(4, collection2.getTotalRecords());
+    Assertions.assertTrue(collection2.getUserTenants().contains(FOURTH_AFFILIATION));
+    sendAffiliationDeletedEvents(collection2.getUserTenants());
+  }
+
   private void awaitHandlingEvent(int expectedSize) {
     Awaitility.await()
       .atMost(1, TimeUnit.MINUTES)
@@ -130,8 +150,8 @@ class UserTenantIT extends AbstractRestTestNoData {
     awaitHandlingEvent(3);
   }
 
-  private void sendAffiliationDeletedEvents() {
-    for (UserTenant userTenant : List.of(FIRST_AFFILIATION, SECOND_AFFILIATION, THIRD_AFFILIATION)) {
+  private void sendAffiliationDeletedEvents(List<UserTenant> userTenants) {
+    for (UserTenant userTenant : userTenants) {
       String eventPayload = Json.encode(userTenant);
       sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED.getTopicName(),
         userTenant.getId(), eventPayload);
