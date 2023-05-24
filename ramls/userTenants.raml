@@ -60,10 +60,10 @@ resourceTypes:
             example: "Internal server error"
   post:
     is: [ validate ]
-    description: Create a user tenant
+    description: Create a user-tenant
     responses:
-      204:
-        description: "No content"
+      201:
+        description: "Returns only 201 status code without body"
       500:
         description: "Internal server error"
         body:

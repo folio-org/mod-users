@@ -6,7 +6,7 @@ import org.folio.rest.jaxrs.model.UserTenantCollection;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_CREATED;
 
 public class UserTenantClient {
   private final RestAssuredConfiguration configuration;
@@ -40,6 +40,6 @@ public class UserTenantClient {
       .body(userTenant)
       .post()
       .then()
-      .statusCode(HTTP_NO_CONTENT);
+      .statusCode(HTTP_CREATED);
   }
 }
