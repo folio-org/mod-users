@@ -43,15 +43,12 @@ public class UserTenantsAPI implements UserTenants {
 
     userTenantService.fetchUserTenants(okapiTenantId, criterion, vertxContext.owner())
       .onSuccess(res -> {
-        logger.info("Number of existing user-tenant records: {}.", res.getTotalRecords());
-        asyncResultHandler.handle(
-          succeededFuture(GetUserTenantsResponse.respond200WithApplicationJson(res)));
+        logger.debug("Number of existing user-tenant records: {}.", res.getTotalRecords());
+        asyncResultHandler.handle(succeededFuture(GetUserTenantsResponse.respond200WithApplicationJson(res)));
       })
       .onFailure(cause -> {
-        String message = cause.getLocalizedMessage();
-        logger.error(message, cause);
-        asyncResultHandler.handle(
-          succeededFuture(GetUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
+        logger.error("Could not get user-tenant records", cause);
+        asyncResultHandler.handle(succeededFuture(GetUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
       });
   }
 
@@ -66,14 +63,11 @@ public class UserTenantsAPI implements UserTenants {
       .onSuccess(res -> {
         logger.info("user-tenant with id: {}, userId: {}, userName: {}, tenantId: {} has been saved successfully.",
           userTenant.getId(), userTenant.getUserId(), userTenant.getUserName(), userTenant.getTenantId());
-        asyncResultHandler.handle(
-          succeededFuture(Response.status(201).build()));
+        asyncResultHandler.handle(succeededFuture(Response.status(201).build()));
       })
       .onFailure(cause -> {
-        String message = cause.getLocalizedMessage();
-        logger.error(message, cause);
-        asyncResultHandler.handle(
-          succeededFuture(PostUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
+        logger.error("Could not save user-tenant record", cause);
+        asyncResultHandler.handle(succeededFuture(PostUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
       });
   }
 
