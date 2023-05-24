@@ -109,6 +109,7 @@ public class UsersAPI implements Users {
 
   public static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
     if (query != null && query.contains("patronGroup.")) {
+      logger.info("getCQL:: if part");
       query = convertQuery(query);
       List<String> fields = new LinkedList<>();
       fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".jsonb");
@@ -116,6 +117,7 @@ public class UsersAPI implements Users {
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(fields);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     } else {
+      logger.info("getCQL:: else part");
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS+".jsonb");
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     }
@@ -152,13 +154,17 @@ public class UsersAPI implements Users {
 
     try {
       logger.debug("Getting users");
+      logger.info("getUsers:: parameters query {}, orderBy : {}, order : {}, offset : {}, limit :{}, lang : {}", query, orderBy, order.name(), offset, limit, lang);
+      logger.info("getUsers:: Getting users");
       // note that orderBy is NOT used
       String tableName = getTableName(query);
+      logger.info("getUsers:: tableName : {}", tableName);
       CQLWrapper cql = getCQL(query, limit, offset);
-
+      logger.info("getUsers:: cql Wrapper {}",cql.toString());
       PgUtil.streamGet(tableName, User.class, cql, emptyList(), TABLE_NAME_USERS,
         routingContext, okapiHeaders, vertxContext);
     } catch (Exception e) {
+      logger.info("getUsers:: query:{} message:{}",query, e.getMessage());
       logger.error(query, e);
       Response response = response(query, e, lang,
         GetUsersResponse::respond400WithTextPlain,
