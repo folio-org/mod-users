@@ -64,6 +64,12 @@ resourceTypes:
     responses:
       201:
         description: "Returns only 201 status code without body"
+      400:
+        description: "Bad request, e.g. malformed request body. Details of the error provided in the response."
+      401:
+        description: "Not authorized to perform requested action"
+      422:
+        description: "Validation error, e.g. missing required field. Details of the error provided in the response."
       500:
         description: "Internal server error"
         body:

@@ -118,17 +118,35 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   @Test
   void canCreateAUserTenant() {
-    UserTenantCollection collection1 = userTenantClient.getAllUsersTenants();
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
-    Assertions.assertEquals(3, collection1.getTotalRecords());
-    Assertions.assertFalse(collection1.getUserTenants().contains(FOURTH_AFFILIATION));
+    Assertions.assertEquals(3, collection.getTotalRecords());
+    Assertions.assertFalse(collection.getUserTenants().contains(FOURTH_AFFILIATION));
 
-    userTenantClient.saveUserTenant(FOURTH_AFFILIATION);
-    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+    userTenantClient.attemptToSaveUserTenant(FOURTH_AFFILIATION, 201);
+    collection = userTenantClient.getAllUsersTenants();
 
-    Assertions.assertEquals(4, collection2.getTotalRecords());
-    Assertions.assertTrue(collection2.getUserTenants().contains(FOURTH_AFFILIATION));
-    sendAffiliationDeletedEvents(collection2.getUserTenants());
+    Assertions.assertEquals(4, collection.getTotalRecords());
+    Assertions.assertTrue(collection.getUserTenants().contains(FOURTH_AFFILIATION));
+    sendAffiliationDeletedEvents(collection.getUserTenants());
+  }
+
+  @Test
+  void shouldGet422ForMissingRequiredFields() {
+    userTenantClient.attemptToSaveUserTenant(new UserTenant(), 422);
+  }
+
+  @Test
+  void shouldGet500WhenTryingToSaveAlreadyExistingRecord() {
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(3, collection.getTotalRecords());
+    Assertions.assertTrue(collection.getUserTenants().contains(FIRST_AFFILIATION));
+
+    userTenantClient.attemptToSaveUserTenant(FIRST_AFFILIATION, 500);
+    collection = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(3, collection.getTotalRecords());
   }
 
   private void awaitHandlingEvent(int expectedSize) {

@@ -5,9 +5,6 @@ import org.folio.rest.jaxrs.model.UserTenantCollection;
 
 import java.util.Map;
 
-import static io.restassured.http.ContentType.JSON;
-import static java.net.HttpURLConnection.HTTP_CREATED;
-
 public class UserTenantClient {
   private final RestAssuredConfiguration configuration;
 
@@ -33,13 +30,13 @@ public class UserTenantClient {
       .extract().as(UserTenantCollection.class);
   }
 
-  public void saveUserTenant(UserTenant userTenant) {
+  public void attemptToSaveUserTenant(UserTenant userTenant, int expectedStatusCode) {
     configuration.initialSpecification()
-      .contentType(JSON)
+      .contentType("application/json")
       .when()
       .body(userTenant)
       .post()
       .then()
-      .statusCode(HTTP_CREATED);
+      .statusCode(expectedStatusCode);
   }
 }
