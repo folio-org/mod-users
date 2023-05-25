@@ -4,7 +4,10 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.event.service.UserTenantService;
+import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.resource.UserTenants;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -21,6 +24,7 @@ import static org.folio.repository.UserTenantRepository.USERNAME_FIELD;
 import static org.folio.repository.UserTenantRepository.TENANT_ID_FIELD;
 
 public class UserTenantsAPI implements UserTenants {
+  private static final Logger logger = LogManager.getLogger(UserTenantsAPI.class);
 
   private final UserTenantService userTenantService;
 
@@ -35,12 +39,36 @@ public class UserTenantsAPI implements UserTenants {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(limit)).setOffset(new Offset(offset));
     addWhereClauseArgumentsToCriterion(userId, username, tenantId, criterion);
+    logger.debug("Trying to get user-tenant records with criterion: {}.", criterion);
 
     userTenantService.fetchUserTenants(okapiTenantId, criterion, vertxContext.owner())
-      .onSuccess(res -> asyncResultHandler.handle(
-        succeededFuture(GetUserTenantsResponse.respond200WithApplicationJson(res))))
-      .onFailure(cause -> asyncResultHandler.handle(
-        succeededFuture(GetUserTenantsResponse.respond500WithTextPlain(cause.getMessage()))));
+      .onSuccess(res -> {
+        logger.debug("Number of existing user-tenant records: {}.", res.getTotalRecords());
+        asyncResultHandler.handle(succeededFuture(GetUserTenantsResponse.respond200WithApplicationJson(res)));
+      })
+      .onFailure(cause -> {
+        logger.error("Could not get user-tenant records", cause);
+        asyncResultHandler.handle(succeededFuture(GetUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
+      });
+  }
+
+  @Override
+  public void postUserTenants(String lang, UserTenant userTenant, Map<String, String> okapiHeaders,
+                              Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    String okapiTenantId = TenantTool.tenantId(okapiHeaders);
+    logger.debug("Trying to save user-tenant with id: {}, userId: {}, userName: {}, tenantId: {}.",
+      userTenant.getId(), userTenant.getUserId(), userTenant.getUserName(), userTenant.getTenantId());
+
+    userTenantService.saveUserTenant(userTenant, okapiTenantId, vertxContext.owner())
+      .onSuccess(res -> {
+        logger.info("user-tenant with id: {}, userId: {}, userName: {}, tenantId: {} has been saved successfully.",
+          userTenant.getId(), userTenant.getUserId(), userTenant.getUserName(), userTenant.getTenantId());
+        asyncResultHandler.handle(succeededFuture(Response.status(201).build()));
+      })
+      .onFailure(cause -> {
+        logger.error("Could not save user-tenant record", cause);
+        asyncResultHandler.handle(succeededFuture(PostUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
+      });
   }
 
   private void addWhereClauseArgumentsToCriterion(String userId, String username, String tenantId, Criterion criterion) {
