@@ -123,7 +123,9 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(3, collection.getTotalRecords());
     Assertions.assertFalse(collection.getUserTenants().contains(FOURTH_AFFILIATION));
 
-    userTenantClient.attemptToSaveUserTenant(FOURTH_AFFILIATION, 201);
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(FOURTH_AFFILIATION);
+    Assertions.assertEquals(201, actualStatusCode);
+
     collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(4, collection.getTotalRecords());
@@ -133,7 +135,8 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   @Test
   void shouldGet422ForMissingRequiredFields() {
-    userTenantClient.attemptToSaveUserTenant(new UserTenant(), 422);
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(new UserTenant());
+    Assertions.assertEquals(422, actualStatusCode);
   }
 
   @Test
@@ -143,7 +146,9 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(3, collection.getTotalRecords());
     Assertions.assertTrue(collection.getUserTenants().contains(FIRST_AFFILIATION));
 
-    userTenantClient.attemptToSaveUserTenant(FIRST_AFFILIATION, 500);
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(FIRST_AFFILIATION);
+    Assertions.assertEquals(500, actualStatusCode);
+
     collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(3, collection.getTotalRecords());

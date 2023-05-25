@@ -30,13 +30,13 @@ public class UserTenantClient {
       .extract().as(UserTenantCollection.class);
   }
 
-  public void attemptToSaveUserTenant(UserTenant userTenant, int expectedStatusCode) {
-    configuration.initialSpecification()
+  public int attemptToSaveUserTenant(UserTenant userTenant) {
+    return configuration.initialSpecification()
       .contentType("application/json")
       .when()
       .body(userTenant)
       .post()
       .then()
-      .statusCode(expectedStatusCode);
+      .extract().statusCode();
   }
 }
