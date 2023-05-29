@@ -222,6 +222,11 @@
           "methods": [ "GET" ],
           "pathPattern": "/user-tenants",
           "permissionsRequired": [ "user-tenants.collection.get" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/user-tenants",
+          "permissionsRequired": [ "user-tenants.item.post" ]
         }
       ]
     },
@@ -424,6 +429,11 @@
       "description" : "Get a list of user-tenants records"
     },
     {
+      "permissionName" : "user-tenants.item.post",
+      "displayName" : "user-tenants item post",
+      "description" : "Create a new user-tenant record"
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -459,7 +469,8 @@
         "patron-pin.set",
         "patron-pin.delete",
         "patron-pin.validate",
-        "user-tenants.collection.get"
+        "user-tenants.collection.get",
+        "user-tenants.item.post"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",

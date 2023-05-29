@@ -1,5 +1,6 @@
 package org.folio.support.http;
 
+import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
 
 import java.util.Map;
@@ -29,4 +30,13 @@ public class UserTenantClient {
       .extract().as(UserTenantCollection.class);
   }
 
+  public int attemptToSaveUserTenant(UserTenant userTenant) {
+    return configuration.initialSpecification()
+      .contentType("application/json")
+      .when()
+      .body(userTenant)
+      .post()
+      .then()
+      .extract().statusCode();
+  }
 }
