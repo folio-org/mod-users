@@ -11,7 +11,7 @@
       "description": "UUID of the user",
       "$ref": "raml-util/schemas/uuid.schema"
     },
-    "userName": {
+    "username": {
       "description": "The user name",
       "type": "string"
     },

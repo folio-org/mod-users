@@ -32,19 +32,19 @@ class UserTenantIT extends AbstractRestTestNoData {
   private static final UserTenant FIRST_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_A).withTenantId(TENANT_X);
+    .withUsername(USER_A).withTenantId(TENANT_X);
   private static final UserTenant SECOND_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_B).withTenantId(TENANT_X);
+    .withUsername(USER_B).withTenantId(TENANT_X);
   private static final UserTenant THIRD_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_A).withTenantId(TENANT_Y);
+    .withUsername(USER_A).withTenantId(TENANT_Y);
   private static final UserTenant FOURTH_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_B).withTenantId(TENANT_Y);
+    .withUsername(USER_B).withTenantId(TENANT_Y);
 
   @BeforeAll
   @SneakyThrows
@@ -97,12 +97,12 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     List<UserTenant> userTenants = collection.getUserTenants();
     Assertions.assertEquals(2, collection.getTotalRecords());
-    userTenants.forEach(userTenant -> Assertions.assertEquals(USER_A, userTenant.getUserName()));
+    userTenants.forEach(userTenant -> Assertions.assertEquals(USER_A, userTenant.getUsername()));
   }
 
   @Test
   void canSearchByUserNameAndTenantId() {
-    String username = THIRD_AFFILIATION.getUserName();
+    String username = THIRD_AFFILIATION.getUsername();
     String tenantId = THIRD_AFFILIATION.getTenantId();
     Map<String, String> params = Map.of(
       "username", username,
@@ -112,7 +112,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     Assertions.assertEquals(1, collection.getTotalRecords());
     UserTenant userTenant = collection.getUserTenants().iterator().next();
-    Assertions.assertEquals(username, userTenant.getUserName());
+    Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
   }
 

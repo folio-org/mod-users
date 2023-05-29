@@ -48,7 +48,7 @@ public class UserTenantRepository {
 
   public Future<Boolean> saveUserTenant(Conn conn, UserTenant userTenant, String tenantId) {
     String query = String.format(INSERT_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
-    Tuple queryParams = Tuple.of(userTenant.getId(), userTenant.getUserId(), userTenant.getUserName(),
+    Tuple queryParams = Tuple.of(userTenant.getId(), userTenant.getUserId(), userTenant.getUsername(),
       userTenant.getTenantId(), OffsetDateTime.now(Clock.systemUTC()));
     return conn.execute(query, queryParams)
       .map(resultSet -> resultSet.size() == 1)
@@ -82,7 +82,7 @@ public class UserTenantRepository {
     return new UserTenant()
       .withId(row.getValue(ID_FIELD).toString())
       .withUserId(row.getValue(USER_ID_FIELD).toString())
-      .withUserName(row.getString(USERNAME_FIELD))
+      .withUsername(row.getString(USERNAME_FIELD))
       .withTenantId(row.getString(TENANT_ID_FIELD));
   }
 }
