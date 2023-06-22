@@ -21,7 +21,7 @@
       "type": "integer"
     },
     "source": {
-      "description": "origin of the group record, i.e. 'System' or 'User'",
+      "description": "Origin of the group record, i.e. 'System' or 'User'",
       "type": "string"
     },
     "metadata": {

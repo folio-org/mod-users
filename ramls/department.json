@@ -27,7 +27,7 @@
       "readonly": true
     },
     "source": {
-      "description": "origin of the department record, i.e. 'System' or 'User'",
+      "description": "Origin of the department record, i.e. 'System' or 'User'",
       "type": "string"
     },
     "metadata": {
