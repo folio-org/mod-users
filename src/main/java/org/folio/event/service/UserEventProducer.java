@@ -18,6 +18,7 @@ import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.service.UserService;
 
 import java.util.Date;
 import java.util.List;
@@ -53,8 +54,8 @@ public class UserEventProducer {
         logger.info("Starting to send user deleted event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
         return sendToKafka(UserEventType.USER_DELETED, eventPayload, okapiHeaders, user.getId());
       case EDIT:
-        logger.warn("Events for user's edit have not implemented yet, eventId: {} for userId: {} was skipped", event.getId(), user.getId());
-        return Future.succeededFuture(false);
+        logger.warn("Starting to send user edit event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
+        return sendToKafka(UserEventType.USER_UPDATED, eventPayload, okapiHeaders, user.getId());
       default:
         throw new IllegalStateException("Unexpected value: " + eventAction);
     }
@@ -71,7 +72,7 @@ public class UserEventProducer {
       event.setActionDate(metadata.getCreatedDate());
       event.setPerformedBy(metadata.getUpdatedByUserId());
     }
-    event.setUser(user.withPersonal(null).withMetadata(null));
+    event.setUser(UserService.getConsortiumUserDto(user));
 
     return event;
   }

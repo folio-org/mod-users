@@ -27,6 +27,7 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
@@ -57,6 +58,7 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.event.service.UserOutboxService;
+import org.folio.service.UserService;
 import org.folio.support.FailureHandler;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
@@ -76,8 +78,10 @@ public class UsersAPI implements Users {
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
+  private final UserService userService;
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
+    this.userService = new UserService();
   }
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -420,7 +424,7 @@ public class UsersAPI implements Users {
                     "All addresses types defined for users must be existing")));
               } else {
                 validatePatronGroup(entity.getPatronGroup(), postgresClient, asyncResultHandler,
-                  handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
+                  handler -> updateUser(entity, okapiHeaders, postgresClient, asyncResultHandler, vertxContext));
               }
               return succeededFuture();
             });
@@ -468,30 +472,53 @@ public class UsersAPI implements Users {
       });
   }
 
-  private void updateUser(User entity, Map<String, String> okapiHeaders,
+  private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
-    PgUtil.put(TABLE_NAME_USERS, entity, entity.getId(), okapiHeaders, vertxContext, PutUsersByUserIdResponse.class, reply -> {
-      if (isDuplicateUsernameError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PutUsersByUserIdResponse
-            .respond400WithTextPlain(
-              "User with this username already exists")));
-        return;
-      }
-      if (isDuplicateBarcodeError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PutUsersByUserIdResponse
-            .respond400WithTextPlain(
-              "This barcode has already been taken")));
-        return;
-      }
-      logger.debug("Save successful");
-      asyncResultHandler.handle(reply);
-    });
+
+    pgClient.withTrans(conn -> userService.getUserById(conn, entity.getId())
+        .compose(userFromStorage -> {
+          boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(entity, userFromStorage);
+
+          return userService.updateUser(conn, entity)
+            .compose(user -> {
+              if (isConsortiaFieldsUpdated) {
+                return userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
+              }
+              return Future.succeededFuture();
+            });
+        })
+        .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(entity.getId())))
+        .map(Response.class::cast))
+      .onComplete(reply -> {
+        if (isDuplicateUsernameError(reply)) {
+          asyncResultHandler.handle(
+            succeededFuture(PutUsersByUserIdResponse
+              .respond400WithTextPlain(
+                "User with this username already exists")));
+          return;
+        }
+        if (isDuplicateBarcodeError(reply)) {
+          asyncResultHandler.handle(
+            succeededFuture(PutUsersByUserIdResponse
+              .respond400WithTextPlain(
+                "This barcode has already been taken")));
+          return;
+        }
+        logger.debug("Save successful");
+        userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+        asyncResultHandler.handle(reply);
+      });
+  }
+
+  private boolean isConsortiumUserFieldsUpdated(User entity, User userFromStorage) {
+    return ObjectUtils.notEqual(userFromStorage.getUsername(), entity.getUsername())
+      || ObjectUtils.notEqual(userFromStorage.getPersonal().getEmail(), entity.getPersonal().getEmail())
+      || ObjectUtils.notEqual(userFromStorage.getPersonal().getPhone(), entity.getPersonal().getPhone())
+      || ObjectUtils.notEqual(userFromStorage.getPersonal().getMobilePhone(), entity.getPersonal().getMobilePhone());
   }
 
   private Future<Boolean> patronGroupExists(String patronGroupId,
