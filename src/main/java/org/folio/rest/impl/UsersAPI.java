@@ -75,6 +75,8 @@ public class UsersAPI implements Users {
 
   private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(UsersAPI.class);
+  public static final String USERNAME_ALREADY_EXISTS = "users_username_idx_unique";
+  public static final String BARCODE_ALREADY_EXISTS = "users_barcode_idx_unique";
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
@@ -296,6 +298,14 @@ public class UsersAPI implements Users {
     return isDesiredError(reply, ".*username.*already exists.*");
   }
 
+  private boolean isDuplicateUsernameError(String errorMessage) {
+    return errorMessage.contains(USERNAME_ALREADY_EXISTS);
+  }
+
+  private boolean isDuplicateBarcodeError(String errorMessage) {
+    return errorMessage.contains(BARCODE_ALREADY_EXISTS);
+  }
+
   private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
     return isDesiredError(reply, ".*barcode.*already exists.*");
   }
@@ -481,6 +491,9 @@ public class UsersAPI implements Users {
 
     pgClient.withTrans(conn -> userService.getUserById(conn, entity.getId())
         .compose(userFromStorage -> {
+          if (userFromStorage == null) {
+            return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
+          }
           boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(entity, userFromStorage);
 
           return userService.updateUser(conn, entity)
@@ -489,29 +502,37 @@ public class UsersAPI implements Users {
                 return userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
               }
               return Future.succeededFuture();
+            })
+            .map(aVoid -> PutUsersByUserIdResponse.respond204())
+            .map(Response.class::cast)
+            .onFailure(t -> {
+              if (t.getCause() != null) {
+                String errorMessage = t.getCause().getMessage();
+                if (isDuplicateUsernameError(errorMessage)) {
+                  asyncResultHandler.handle(
+                    succeededFuture(PutUsersByUserIdResponse
+                      .respond400WithTextPlain(
+                        "User with this username already exists")));
+                  return;
+                }
+
+                if (isDuplicateBarcodeError(errorMessage)) {
+                  asyncResultHandler.handle(
+                    succeededFuture(PutUsersByUserIdResponse
+                      .respond400WithTextPlain(
+                        "This barcode has already been taken")));
+                  return;
+                }
+              }
+              asyncResultHandler.handle(
+                succeededFuture(PutUsersByUserIdResponse
+                  .respond400WithTextPlain(Future.failedFuture(t))));
             });
         })
-        .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(entity.getId())))
-        .map(Response.class::cast))
       .onComplete(reply -> {
-        if (isDuplicateUsernameError(reply)) {
-          asyncResultHandler.handle(
-            succeededFuture(PutUsersByUserIdResponse
-              .respond400WithTextPlain(
-                "User with this username already exists")));
-          return;
-        }
-        if (isDuplicateBarcodeError(reply)) {
-          asyncResultHandler.handle(
-            succeededFuture(PutUsersByUserIdResponse
-              .respond400WithTextPlain(
-                "This barcode has already been taken")));
-          return;
-        }
-        logger.debug("Save successful");
         userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
-      });
+      }));
   }
 
   private boolean isConsortiumUserFieldsUpdated(User entity, User userFromStorage) {

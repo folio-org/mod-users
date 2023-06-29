@@ -15,7 +15,6 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.repository.UserEventsLogRepository;
 import org.folio.repository.InternalLockRepository;
-import org.folio.service.UserService;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -82,9 +81,7 @@ public class UserOutboxService {
    * @return future with saved outbox log in the same transaction
    */
   public Future<Boolean> saveUserOutboxLog(Conn conn, User entity, UserEvent.Action action, Map<String, String> okapiHeaders) {
-
-    User userDto = UserService.getConsortiumUserDto(entity);
-    String user = Json.encode(userDto);
+    String user = Json.encode(entity);
     return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
       .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
       .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));

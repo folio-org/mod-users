@@ -25,6 +25,7 @@ public class UserService {
       .onComplete(ar -> {
         if (ar.failed()) {
           logger.error("getUserById(conn, user) failed, userId={}", userId, ar.cause());
+          promise.fail(ar.cause());
         } else {
           promise.complete(ar.result());
         }
@@ -44,7 +45,7 @@ public class UserService {
         } else {
           if (ar.result().rowCount() == 0) {
             logger.error("updateUser(conn, user): no line was updated");
-            promise.fail(new HttpException(Response.Status.NOT_FOUND.getStatusCode(), Response.Status.NOT_FOUND.getReasonPhrase()));
+            promise.fail(new HttpException(Response.Status.NOT_FOUND.getStatusCode(), String.format("User with id %s was not found", user.getId())));
           } else {
             logger.info("updateUser(conn, user) complete, userId={}", user.getId());
             promise.complete(user);
@@ -55,12 +56,19 @@ public class UserService {
   }
 
   public static User getConsortiumUserDto(User user) {
-    return new User()
+    User userDto = new User()
+      .withId(user.getId())
       .withUsername(user.getUsername())
-      .withPersonal(new Personal()
-        .withEmail(user.getPersonal().getEmail())
-        .withPhone(user.getPersonal().getPhone())
-        .withMobilePhone(user.getPersonal().getMobilePhone())
-      );
+      .withActive(user.getActive());
+
+      if (user.getPersonal() != null) {
+        user.withPersonal(new Personal()
+          .withLastName(user.getPersonal().getLastName())
+          .withEmail(user.getPersonal().getEmail())
+          .withPhone(user.getPersonal().getPhone())
+          .withMobilePhone(user.getPersonal().getMobilePhone())
+        );
+      }
+      return userDto;
   }
 }

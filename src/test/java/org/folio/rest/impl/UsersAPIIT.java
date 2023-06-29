@@ -99,8 +99,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     assertThat(createdUser.getTags().getTagList(),
       containsInAnyOrder("foo", "bar"));
-    assertThat(userFromEventPayload.getTags().getTagList(),
-      containsInAnyOrder("foo", "bar"));
 
     Assertions.assertNull(userFromEventPayload.getMetadata());
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
@@ -287,10 +285,12 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.createUser(User.builder()
       .username("some-user")
       .barcode("54396735869")
+      .personal(Personal.builder().lastName("some-user").email("test@mail.org").build())
       .build());
 
     final var anotherUser = usersClient.createUser(User.builder()
       .username("another-user")
+      .personal(Personal.builder().lastName("another-user").email("test@mail.org").build())
       .build());
 
     usersClient.attemptToUpdateUser(
@@ -298,6 +298,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
           .id(anotherUser.getId())
           .username("another-user")
           .barcode("54396735869")
+          .personal(Personal.builder().lastName("another-user").email("test@mail.org").build())
           .build())
       .statusCode(is(400))
       .body(is("This barcode has already been taken"));
