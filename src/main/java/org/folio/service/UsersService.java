@@ -14,9 +14,9 @@ import javax.ws.rs.core.Response;
 
 import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
 
-public class UserService {
+public class UsersService {
 
-  private static final Logger logger = LogManager.getLogger(UserService.class);
+  private static final Logger logger = LogManager.getLogger(UsersService.class);
 
   public Future<User> getUserById(Conn conn, String userId) {
     Promise<User> promise = Promise.promise();
@@ -41,7 +41,7 @@ public class UserService {
         if (ar.failed()) {
           logger.error("updateUser(conn, user) failed, user={}",
             JsonObject.mapFrom(user).encodePrettily(), ar.cause());
-          promise.fail(new HttpException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), ar.cause()));
+          promise.fail(ar.cause());
         } else {
           if (ar.result().rowCount() == 0) {
             logger.error("updateUser(conn, user): no line was updated");

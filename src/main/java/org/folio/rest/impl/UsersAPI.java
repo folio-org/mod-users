@@ -58,7 +58,7 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.event.service.UserOutboxService;
-import org.folio.service.UserService;
+import org.folio.service.UsersService;
 import org.folio.support.FailureHandler;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
@@ -80,10 +80,10 @@ public class UsersAPI implements Users {
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
-  private final UserService userService;
+  private final UsersService usersService;
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
-    this.userService = new UserService();
+    this.usersService = new UsersService();
   }
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -489,14 +489,14 @@ public class UsersAPI implements Users {
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
 
-    pgClient.withTrans(conn -> userService.getUserById(conn, entity.getId())
+    pgClient.withTrans(conn -> usersService.getUserById(conn, entity.getId())
         .compose(userFromStorage -> {
           if (userFromStorage == null) {
             return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
           }
           boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(entity, userFromStorage);
 
-          return userService.updateUser(conn, entity)
+          return usersService.updateUser(conn, entity)
             .compose(user -> {
               if (isConsortiaFieldsUpdated) {
                 return userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
@@ -504,35 +504,49 @@ public class UsersAPI implements Users {
               return Future.succeededFuture();
             })
             .map(aVoid -> PutUsersByUserIdResponse.respond204())
-            .map(Response.class::cast)
-            .onFailure(t -> {
-              if (t.getCause() != null) {
-                String errorMessage = t.getCause().getMessage();
-                if (isDuplicateUsernameError(errorMessage)) {
-                  asyncResultHandler.handle(
-                    succeededFuture(PutUsersByUserIdResponse
-                      .respond400WithTextPlain(
-                        "User with this username already exists")));
-                  return;
-                }
-
-                if (isDuplicateBarcodeError(errorMessage)) {
-                  asyncResultHandler.handle(
-                    succeededFuture(PutUsersByUserIdResponse
-                      .respond400WithTextPlain(
-                        "This barcode has already been taken")));
-                  return;
-                }
-              }
-              asyncResultHandler.handle(
-                succeededFuture(PutUsersByUserIdResponse
-                  .respond400WithTextPlain(Future.failedFuture(t))));
-            });
+            .map(Response.class::cast);
         })
       .onComplete(reply -> {
+
+        if (reply.cause() != null) {
+          handleUpdateUserFailures(asyncResultHandler, reply);
+          return;
+        }
+
         userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
       }));
+  }
+
+  private void handleUpdateUserFailures(Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
+    String errorMessage = reply.cause().getMessage();
+    if (isDuplicateUsernameError(errorMessage)) {
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(
+            "User with this username already exists")));
+      return;
+    }
+
+    if (isDuplicateBarcodeError(errorMessage)) {
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(
+            "This barcode has already been taken")));
+      return;
+    }
+
+    if (reply.cause() instanceof PgException) {
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(((PgException) reply.cause()).getDetail())));
+      return;
+    }
+
+    asyncResultHandler.handle(
+      succeededFuture(PutUsersByUserIdResponse
+        .respond400WithTextPlain(errorMessage))
+    );
   }
 
   private boolean isConsortiumUserFieldsUpdated(User entity, User userFromStorage) {

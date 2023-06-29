@@ -18,7 +18,7 @@ import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.tools.utils.TenantTool;
-import org.folio.service.UserService;
+import org.folio.service.UsersService;
 
 import java.util.Date;
 import java.util.List;
@@ -72,7 +72,7 @@ public class UserEventProducer {
       event.setActionDate(metadata.getCreatedDate());
       event.setPerformedBy(metadata.getUpdatedByUserId());
     }
-    event.setUser(UserService.getConsortiumUserDto(user));
+    event.setUser(UsersService.getConsortiumUserDto(user));
 
     return event;
   }
