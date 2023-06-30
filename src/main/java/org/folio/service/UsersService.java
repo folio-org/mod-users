@@ -62,7 +62,7 @@ public class UsersService {
       .withActive(user.getActive());
 
       if (user.getPersonal() != null) {
-        user.withPersonal(new Personal()
+        userDto.withPersonal(new Personal()
           .withLastName(user.getPersonal().getLastName())
           .withEmail(user.getPersonal().getEmail())
           .withPhone(user.getPersonal().getPhone())

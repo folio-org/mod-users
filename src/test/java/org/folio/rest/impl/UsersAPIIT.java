@@ -12,7 +12,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -95,7 +94,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     assertThat(personal.getLastName(), is("brockhurst"));
     assertThat(personal.getFirstName(), is("julia"));
     assertThat(personal.getPreferredFirstName(), is("jules"));
-    assertThat(userFromEventPayload.getPersonal(), is(nullValue()));
+    assertThat(userFromEventPayload.getPersonal(), is(notNullValue()));
 
     assertThat(createdUser.getTags().getTagList(),
       containsInAnyOrder("foo", "bar"));
