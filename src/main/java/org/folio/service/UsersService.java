@@ -61,14 +61,14 @@ public class UsersService {
       .withUsername(user.getUsername())
       .withActive(user.getActive());
 
-      if (user.getPersonal() != null) {
-        userDto.withPersonal(new Personal()
-          .withLastName(user.getPersonal().getLastName())
-          .withEmail(user.getPersonal().getEmail())
-          .withPhone(user.getPersonal().getPhone())
-          .withMobilePhone(user.getPersonal().getMobilePhone())
-        );
-      }
-      return userDto;
+    if (user.getPersonal() != null) {
+      userDto.withPersonal(new Personal()
+        .withLastName(user.getPersonal().getLastName())
+        .withEmail(user.getPersonal().getEmail())
+        .withPhone(user.getPersonal().getPhone())
+        .withMobilePhone(user.getPersonal().getMobilePhone())
+      );
+    }
+    return userDto;
   }
 }
