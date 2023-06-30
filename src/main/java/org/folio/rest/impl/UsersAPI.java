@@ -549,11 +549,22 @@ public class UsersAPI implements Users {
     );
   }
 
-  private boolean isConsortiumUserFieldsUpdated(User entity, User userFromStorage) {
-    return ObjectUtils.notEqual(userFromStorage.getUsername(), entity.getUsername())
-      || ObjectUtils.notEqual(userFromStorage.getPersonal().getEmail(), entity.getPersonal().getEmail())
-      || ObjectUtils.notEqual(userFromStorage.getPersonal().getPhone(), entity.getPersonal().getPhone())
-      || ObjectUtils.notEqual(userFromStorage.getPersonal().getMobilePhone(), entity.getPersonal().getMobilePhone());
+  private boolean isConsortiumUserFieldsUpdated(User updatedUser, User userFromStorage) {
+    if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())) {
+      return true;
+    }
+
+    if ((userFromStorage.getPersonal() != null && updatedUser.getPersonal() == null)
+      || (userFromStorage.getPersonal() == null && updatedUser.getPersonal() != null)) {
+      return true;
+    }
+
+    if (userFromStorage.getPersonal() != null && updatedUser.getPersonal() != null) {
+      return ObjectUtils.notEqual(userFromStorage.getPersonal().getEmail(), updatedUser.getPersonal().getEmail())
+        || ObjectUtils.notEqual(userFromStorage.getPersonal().getPhone(), updatedUser.getPersonal().getPhone())
+        || ObjectUtils.notEqual(userFromStorage.getPersonal().getMobilePhone(), updatedUser.getPersonal().getMobilePhone());
+    }
+    return false;
   }
 
   private Future<Boolean> patronGroupExists(String patronGroupId,
