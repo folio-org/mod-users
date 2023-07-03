@@ -16,7 +16,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
@@ -73,6 +72,8 @@ public class UsersAPI implements Users {
 
   private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(UsersAPI.class);
+  @SuppressWarnings("deprecation")  // RAML requires Date
+  private static final Date year1 = new Date(1 - 1900, 0 /* 0 .. 11 */, 1 /* 1 .. 31 */);
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
@@ -188,6 +189,13 @@ public class UsersAPI implements Users {
       PostUsersResponse::respond500WithTextPlain);
 
     try {
+      var dateOfBirthError = validateDateOfBirth(entity);
+      if (dateOfBirthError != null) {
+        asyncResultHandler.handle(succeededFuture(
+            PostUsersResponse.respond400WithTextPlain(dateOfBirthError)));
+        return;
+      }
+
       final var addressValidator = new AddressValidator();
 
       if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
@@ -250,10 +258,17 @@ public class UsersAPI implements Users {
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
     pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders))
+        .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders))
         .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
         .map(Response.class::cast))
       .onComplete(reply -> {
+        if (reply.succeeded()) {
+          logger.debug("Save successful");
+          userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+          asyncResultHandler.handle(reply);
+          return;
+        }
+
         if (isDuplicateIdError(reply)) {
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
@@ -278,9 +293,8 @@ public class UsersAPI implements Users {
                 "This barcode has already been taken"))));
           return;
         }
-        logger.debug("Save successful");
-        userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
-        asyncResultHandler.handle(reply);
+        logger.error("saveUser failed: {}", reply.cause().getMessage(), reply.cause());
+        ValidationHelper.handleError(reply.cause(), asyncResultHandler);
       });
   }
 
@@ -388,6 +402,13 @@ public class UsersAPI implements Users {
       PutUsersByUserIdResponse::respond500WithTextPlain);
 
     try {
+      var dateOfBirthError = validateDateOfBirth(entity);
+      if (dateOfBirthError != null) {
+        asyncResultHandler.handle(succeededFuture(
+            PutUsersByUserIdResponse.respond400WithTextPlain(dateOfBirthError)));
+        return;
+      }
+
       succeededFuture()
         .compose(o -> {
           removeCustomFieldIfEmpty(entity);
@@ -492,6 +513,19 @@ public class UsersAPI implements Users {
       logger.debug("Save successful");
       asyncResultHandler.handle(reply);
     });
+  }
+
+  private String validateDateOfBirth(User user) {
+    // manual test needed because RAML's minimum constraint supports numbers only, not dates
+
+    if (user.getPersonal() == null) {
+      return null;
+    }
+    var dateOfBirth = user.getPersonal().getDateOfBirth();
+    if (dateOfBirth == null || dateOfBirth.compareTo(year1) >= 0) {
+      return null;
+    }
+    return "dateOfBirth must be at least 0001-01-01";
   }
 
   private Future<Boolean> patronGroupExists(String patronGroupId,

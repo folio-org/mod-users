@@ -20,10 +20,12 @@ import org.folio.moduserstest.AbstractRestTestNoData;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import java.util.stream.Stream;
 import org.folio.event.UserEventType;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.folio.rest.jaxrs.model.UserEvent;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
 import org.folio.support.Personal;
@@ -38,7 +40,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
@@ -206,6 +210,41 @@ class UsersAPIIT extends AbstractRestTestNoData {
       is("User with this id already exists"));
   }
 
+  static Stream<Arguments> dateOfBirth() {
+    return Stream.of(
+        Arguments.of("0000-01-01", false),
+        Arguments.of("0000-12-31", false),
+        Arguments.of("0001-01-01", true),
+        Arguments.of("1900-01-01", true),
+        Arguments.of("2000-01-01", true),
+        Arguments.of("1-1-1", false)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("dateOfBirth")
+  void dateOfBirthPost(String dateOfBirth, boolean successExpected) {
+    var user = User.builder()
+        .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
+        .build();
+    usersClient.attemptToCreateUser(user)
+    .statusCode(is(successExpected ? 201 : 400));
+  }
+
+  @ParameterizedTest
+  @MethodSource("dateOfBirth")
+  void dateOfBirthPut(String dateOfBirth, boolean successExpected) {
+    var id = UUID.randomUUID().toString();
+    usersClient.attemptToCreateUser(User.builder().id(id).build())
+    .statusCode(201);
+    var user = User.builder()
+        .id(id)
+        .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
+        .build();
+    usersClient.attemptToUpdateUser(user)
+    .statusCode(is(successExpected ? 204 : 400));
+  }
+
   @Test
   void cannotCreateUserWithAddressButNoAddressType() {
     final var addressWithoutId = Address.builder().build();
@@ -230,6 +269,17 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     usersClient.attemptToCreateUser(userToCreate)
       .statusCode(is(422));
+  }
+
+  @Test
+  @SneakyThrows
+  void canHandleDatabaseException() {
+    var id = UUID.randomUUID().toString();
+    PostgresClient.getInstance(Vertx.vertx())
+    .execute("ALTER TABLE " + TENANT_NAME + "_mod_users.users ADD CHECK (id <> '" + id + "')")
+    .toCompletionStage().toCompletableFuture().get(5, SECONDS);
+    usersClient.attemptToCreateUser(User.builder().id(id).build())
+    .statusCode(is(500));
   }
 
   @Test
