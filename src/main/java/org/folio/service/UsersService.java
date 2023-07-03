@@ -18,41 +18,22 @@ public class UsersService {
 
   private static final Logger logger = LogManager.getLogger(UsersService.class);
 
-  public Future<User> getUserById(Conn conn, String userId) {
-    Promise<User> promise = Promise.promise();
-
-    conn.getById(TABLE_NAME_USERS, userId, User.class)
-      .onComplete(ar -> {
-        if (ar.failed()) {
-          logger.error("getUserById(conn, user) failed, userId={}", userId, ar.cause());
-          promise.fail(ar.cause());
-        } else {
-          promise.complete(ar.result());
-        }
-      });
-    return promise.future();
+  public Future<User> getUserByIdForUpdate(Conn conn, String userId) {
+    return conn.getByIdForUpdate(TABLE_NAME_USERS, userId, User.class)
+      .onFailure(t -> logger.error("getUserByIdForUpdate failed, userId={}", userId, t));
   }
 
   public Future<User> updateUser(Conn conn, User user) {
-    Promise<User> promise = Promise.promise();
-
-    conn.update(TABLE_NAME_USERS, user, user.getId())
-      .onComplete(ar -> {
-        if (ar.failed()) {
-          logger.error("updateUser(conn, user) failed, user={}",
-            JsonObject.mapFrom(user).encodePrettily(), ar.cause());
-          promise.fail(ar.cause());
-        } else {
-          if (ar.result().rowCount() == 0) {
-            logger.error("updateUser(conn, user): no line was updated");
-            promise.fail(new HttpException(Response.Status.NOT_FOUND.getStatusCode(), String.format("User with id %s was not found", user.getId())));
-          } else {
-            logger.info("updateUser(conn, user) complete, userId={}", user.getId());
-            promise.complete(user);
-          }
+    return conn.update(TABLE_NAME_USERS, user, user.getId())
+      .compose(rowSet -> {
+        if (rowSet.rowCount() == 0) {
+          String errorMsg = String.format("User with id %s was not found", user.getId());
+          return Future.failedFuture(new HttpException(Response.Status.NOT_FOUND.getStatusCode(), errorMsg));
         }
-      });
-    return promise.future();
+        return Future.succeededFuture(user);
+      })
+      .onSuccess(x -> logger.info("updateUser complete, userId={}", user.getId()))
+      .onFailure(e -> logger.error("updateUser failed, userId={}", user.getId(), e));
   }
 
   public static User getConsortiumUserDto(User user) {

@@ -20,7 +20,7 @@
       "type": "string"
     },
     "centralTenantId": {
-      "description": "Central tenant of the user",
+      "description": "Central tenant id in the consortium",
       "type": "string"
     },
     "phoneNumber": {

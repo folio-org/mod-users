@@ -40,6 +40,7 @@ import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
@@ -489,7 +490,7 @@ public class UsersAPI implements Users {
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
 
-    pgClient.withTrans(conn -> usersService.getUserById(conn, entity.getId())
+    pgClient.withTrans(conn -> usersService.getUserByIdForUpdate(conn, entity.getId())
         .compose(userFromStorage -> {
           if (userFromStorage == null) {
             return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
@@ -509,7 +510,7 @@ public class UsersAPI implements Users {
       .onComplete(reply -> {
 
         if (reply.cause() != null) {
-          handleUpdateUserFailures(asyncResultHandler, reply);
+          handleUpdateUserFailures(entity, asyncResultHandler, reply);
           return;
         }
 
@@ -518,9 +519,10 @@ public class UsersAPI implements Users {
       }));
   }
 
-  private void handleUpdateUserFailures(Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
+  private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
     String errorMessage = reply.cause().getMessage();
     if (isDuplicateUsernameError(errorMessage)) {
+      logger.error("User with this username {} already exists", user.getUsername());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
@@ -529,6 +531,7 @@ public class UsersAPI implements Users {
     }
 
     if (isDuplicateBarcodeError(errorMessage)) {
+      logger.error("This barcode {} has already been taken", user.getBarcode());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
@@ -537,12 +540,15 @@ public class UsersAPI implements Users {
     }
 
     if (reply.cause() instanceof PgException) {
+      String errorMsg = ((PgException) reply.cause()).getDetail();
+      logger.error(errorMsg);
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
-          .respond400WithTextPlain(((PgException) reply.cause()).getDetail())));
+          .respond400WithTextPlain(errorMsg)));
       return;
     }
 
+    logger.error(errorMessage);
     asyncResultHandler.handle(
       succeededFuture(PutUsersByUserIdResponse
         .respond400WithTextPlain(errorMessage))
@@ -551,20 +557,26 @@ public class UsersAPI implements Users {
 
   private boolean isConsortiumUserFieldsUpdated(User updatedUser, User userFromStorage) {
     if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())) {
+      logger.info("The username has been updated to " + updatedUser.getUsername());
       return true;
     }
 
-    if ((userFromStorage.getPersonal() != null && updatedUser.getPersonal() == null)
-      || (userFromStorage.getPersonal() == null && updatedUser.getPersonal() != null)) {
+    Personal oldPersonal = userFromStorage.getPersonal();
+    Personal newPersonal = updatedUser.getPersonal();
+
+    if (oldPersonal == null && newPersonal == null) {
+      logger.info("Personal fields have not been updated");
+      return false;
+    }
+
+    if ((oldPersonal != null && newPersonal == null) || (oldPersonal == null && newPersonal != null)) {
+      logger.info("Personal fields have been updated");
       return true;
     }
 
-    if (userFromStorage.getPersonal() != null && updatedUser.getPersonal() != null) {
-      return ObjectUtils.notEqual(userFromStorage.getPersonal().getEmail(), updatedUser.getPersonal().getEmail())
-        || ObjectUtils.notEqual(userFromStorage.getPersonal().getPhone(), updatedUser.getPersonal().getPhone())
-        || ObjectUtils.notEqual(userFromStorage.getPersonal().getMobilePhone(), updatedUser.getPersonal().getMobilePhone());
-    }
-    return false;
+    return ObjectUtils.notEqual(oldPersonal.getEmail(), newPersonal.getEmail())
+      || ObjectUtils.notEqual(oldPersonal.getPhone(), newPersonal.getPhone())
+      || ObjectUtils.notEqual(oldPersonal.getMobilePhone(), newPersonal.getMobilePhone());
   }
 
   private Future<Boolean> patronGroupExists(String patronGroupId,
