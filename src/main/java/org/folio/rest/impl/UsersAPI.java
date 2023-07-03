@@ -557,7 +557,7 @@ public class UsersAPI implements Users {
 
   private boolean isConsortiumUserFieldsUpdated(User updatedUser, User userFromStorage) {
     if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())) {
-      logger.info("The username has been updated to " + updatedUser.getUsername());
+      logger.info("The username has been updated to {}", updatedUser.getUsername());
       return true;
     }
 
@@ -569,7 +569,7 @@ public class UsersAPI implements Users {
       return false;
     }
 
-    if ((oldPersonal != null && newPersonal == null) || (oldPersonal == null && newPersonal != null)) {
+    if ((oldPersonal != null & newPersonal == null) || oldPersonal == null) {
       logger.info("Personal fields have been updated");
       return true;
     }
