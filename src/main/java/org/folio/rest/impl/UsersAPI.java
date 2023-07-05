@@ -233,10 +233,10 @@ public class UsersAPI implements Users {
           return succeededFuture();
         })
         .otherwise(e -> {
-          if (e instanceof CustomFieldValidationException) {
+          if (e instanceof CustomFieldValidationException customFieldValidationException) {
             asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond422WithApplicationJson(
-                ((CustomFieldValidationException) e).getErrors())));
+                customFieldValidationException.getErrors())));
           } else {
             logger.error(e.getMessage(), e);
             asyncResultHandler.handle(succeededFuture(
@@ -445,10 +445,10 @@ public class UsersAPI implements Users {
         })
         .otherwise(e -> {
           logger.error(e.getMessage(), e);
-          if (e instanceof CustomFieldValidationException) {
+          if (e instanceof CustomFieldValidationException customFieldValidationException) {
             asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond422WithApplicationJson(
-                ((CustomFieldValidationException) e).getErrors())));
+                customFieldValidationException.getErrors())));
           } else {
             asyncResultHandler.handle(succeededFuture(
               PutUsersByUserIdResponse.respond500WithTextPlain(
@@ -547,8 +547,8 @@ public class UsersAPI implements Users {
       return;
     }
 
-    if (reply.cause() instanceof PgException) {
-      String errorMsg = ((PgException) reply.cause()).getDetail();
+    if (reply.cause() instanceof PgException pgException) {
+      String errorMsg = pgException.getDetail();
       logger.error("DB error thrown with message: {}", errorMsg);
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
@@ -577,7 +577,7 @@ public class UsersAPI implements Users {
       return false;
     }
 
-    if ((oldPersonal != null && newPersonal == null) || (oldPersonal == null && newPersonal != null)) {
+    if (oldPersonal == null || newPersonal == null) {
       logger.info("Personal fields have been updated");
       return true;
     }
@@ -657,7 +657,7 @@ public class UsersAPI implements Users {
     final var addressTypes = user.getPersonal().getAddresses()
       .stream()
       .map(Address::getAddressTypeId)
-      .collect(Collectors.toList());
+      .toList();
 
     addressTypes.forEach(addressTypeId -> futureList.add(
       checkAddressTypeValid(addressTypeId, postgresClient)));
