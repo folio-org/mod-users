@@ -110,7 +110,6 @@ public class UserOutboxService {
       });
   }
 
-
   /**
    * Saves user outbox log.
    *
