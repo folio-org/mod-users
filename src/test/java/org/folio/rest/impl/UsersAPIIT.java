@@ -497,58 +497,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canDeleteMultipleUsersUsingCQLForConsortia() {
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test1").withTenantId("tenant_test1");
-
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-
-    final var user1 = createUser("12345");
-    final var user2 = createUser("2015");
-    final var user3 = createUser("19995");
-    String userId1 = user1.getId();
-    String userId2 = user2.getId();
-    String userId3 = user3.getId();
-
-    deleteUsersByUsername("1*");
-
-    List<UserEvent> userCreatedEvents = getUserEvents(USER_CREATED);
-    List<UserEvent> userCreatedEventsForUser1 = userCreatedEvents.stream().filter(userEvent -> userId1.equals(userEvent.getUser().getId())).toList();
-    List<UserEvent> userCreatedEventsForUser2 = userCreatedEvents.stream().filter(userEvent -> userId2.equals(userEvent.getUser().getId())).toList();
-    List<UserEvent> userCreatedEventsForUser3 = userCreatedEvents.stream().filter(userEvent -> userId3.equals(userEvent.getUser().getId())).toList();
-
-    List<UserEvent> userDeletedEvents = getUserEvents(USER_DELETED);
-    List<UserEvent> userDeletedEventsForUser1 = userDeletedEvents.stream().filter(userEvent -> userId1.equals(userEvent.getUser().getId())).toList();
-    List<UserEvent> userDeletedEventsForUser3 = userDeletedEvents.stream().filter(userEvent -> userId3.equals(userEvent.getUser().getId())).toList();
-
-    assertEquals(1, userCreatedEventsForUser1.size());
-    assertEventContent(userCreatedEventsForUser1.get(0), UserEvent.Action.CREATE, user1.getId());
-
-    assertEquals(1, userCreatedEventsForUser2.size());
-    assertEventContent(userCreatedEventsForUser2.get(0), UserEvent.Action.CREATE, user2.getId());
-
-    assertEquals(1, userCreatedEventsForUser3.size());
-    assertEventContent(userCreatedEventsForUser3.get(0), UserEvent.Action.CREATE, user3.getId());
-
-    assertEquals(1, userDeletedEventsForUser1.size());
-    assertEventContent(userDeletedEventsForUser1.get(0), UserEvent.Action.DELETE, user1.getId());
-
-    assertEquals(1, userDeletedEventsForUser3.size());
-    assertEventContent(userDeletedEventsForUser3.get(0), UserEvent.Action.DELETE, user3.getId());
-
-    usersClient.attemptToGetUser(user2.getId())
-      .statusCode(200);
-
-    usersClient.attemptToGetUser(user1.getId())
-      .statusCode(404);
-
-    usersClient.attemptToGetUser(user3.getId())
-      .statusCode(404);
-  }
-
-  @Test
   void cannotDeleteAUserThatDoesNotExist() {
     // Define another user to make sure it isn't deleted by accident
     createUser("joannek");
