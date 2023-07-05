@@ -5,9 +5,14 @@ import io.vertx.core.Vertx;
 import org.folio.repository.UserTenantRepository;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
+import org.folio.rest.persist.Conn;
 import org.folio.rest.persist.Criteria.Criterion;
+import org.folio.rest.persist.Criteria.Limit;
+import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.TenantTool;
 
+import java.util.Map;
 import java.util.function.BiFunction;
 
 public class UserTenantService {
@@ -23,6 +28,13 @@ public class UserTenantService {
   public Future<UserTenantCollection> fetchUserTenants(String tenantId, Criterion criterion, Vertx vertx) {
     PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
     return pgClient.withConn(conn -> tenantRepository.fetchUserTenants(conn, tenantId, criterion));
+  }
+
+  public Future<Boolean> isConsortiaTenant(Conn conn, Map<String, String> okapiHeaders) {
+    String okapiTenantId = TenantTool.tenantId(okapiHeaders);
+    Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
+    return tenantRepository.fetchUserTenants(conn, okapiTenantId, criterion)
+      .map(res -> res.getTotalRecords() > 0);
   }
 
   public Future<Boolean> saveUserTenant(UserTenant userTenant, String tenantId, Vertx vertx) {

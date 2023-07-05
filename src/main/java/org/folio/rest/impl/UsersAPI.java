@@ -26,7 +26,6 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
@@ -35,12 +34,10 @@ import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.okapi.common.GenericCompositeFuture;
-import org.folio.repository.UserTenantRepository;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
@@ -82,11 +79,10 @@ public class UsersAPI implements Users {
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
   private final UsersService usersService;
-  private final UserTenantRepository userTenantRepository;
+
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
     this.usersService = new UsersService();
-    this.userTenantRepository = new UserTenantRepository();
   }
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -259,7 +255,7 @@ public class UsersAPI implements Users {
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
     pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-      .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders))
+      .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
         .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
         .map(Response.class::cast))
       .onComplete(reply -> {
@@ -350,7 +346,7 @@ public class UsersAPI implements Users {
       .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
         .compose(rows -> {
           if (rows.rowCount() != 0) {
-            return userOutboxService.saveUserOutboxLog(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
+            return userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
               .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
               .map(Response.class::cast);
           } else {
@@ -375,12 +371,11 @@ public class UsersAPI implements Users {
       PgUtil.postgresClient(vertxContext, okapiHeaders).withTrans(conn -> conn.execute(createDeleteQuery(wrapper, okapiHeaders))
         .compose(rows -> {
           if (rows.rowCount() != 0) {
-            rows.iterator().forEachRemaining(row -> {
-              User user = new User().withId(row.getUUID(USER_ID).toString());
-              userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
-            });
+            List<User> users = new ArrayList<>();
+            rows.iterator().forEachRemaining(row -> users.add(new User().withId(row.getUUID(USER_ID).toString())));
+            return userOutboxService.saveUserOutboxLogForDeleteUsers(conn, users, okapiHeaders, vertxContext);
           }
-          return succeededFuture();
+          return Future.succeededFuture();
         }))
         .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
         .map(Response.class::cast)
@@ -493,27 +488,15 @@ public class UsersAPI implements Users {
     entity.setUpdatedDate(now);
 
     pgClient.withTrans(conn -> usersService.getUserByIdForUpdate(conn, entity.getId())
-        .compose(userFromStorage -> {
-          if (userFromStorage == null) {
-            return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
-          }
+      .compose(userFromStorage -> {
+        if (userFromStorage == null) {
+          return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
+        }
 
-          String okapiTenantId = TenantTool.tenantId(okapiHeaders);
-          Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
-          return userTenantRepository.fetchUserTenants(conn, okapiTenantId, criterion)
-            .compose(res -> {
-              boolean isConsortiaTenant = res.getTotalRecords() > 0;
-              boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(entity, userFromStorage);
-              return usersService.updateUser(conn, entity)
-                .compose(user -> {
-                  if (isConsortiaTenant && isConsortiaFieldsUpdated) {
-                    return userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
-                  }
-                  return Future.succeededFuture();
-                })
-                .map(aVoid -> PutUsersByUserIdResponse.respond204())
-                .map(Response.class::cast);
-            });
+        return usersService.updateUser(conn, entity)
+          .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
+          .map(aVoid -> PutUsersByUserIdResponse.respond204())
+          .map(Response.class::cast);
         })
       .onComplete(reply -> {
         if (reply.cause() != null) {
@@ -560,30 +543,6 @@ public class UsersAPI implements Users {
       succeededFuture(PutUsersByUserIdResponse
         .respond400WithTextPlain(errorMessage))
     );
-  }
-
-  private boolean isConsortiumUserFieldsUpdated(User updatedUser, User userFromStorage) {
-    if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())) {
-      logger.info("The username has been updated to {}", updatedUser.getUsername());
-      return true;
-    }
-
-    Personal oldPersonal = userFromStorage.getPersonal();
-    Personal newPersonal = updatedUser.getPersonal();
-
-    if (oldPersonal == null && newPersonal == null) {
-      logger.info("Personal fields have not been updated");
-      return false;
-    }
-
-    if (oldPersonal == null || newPersonal == null) {
-      logger.info("Personal fields have been updated");
-      return true;
-    }
-
-    return ObjectUtils.notEqual(oldPersonal.getEmail(), newPersonal.getEmail())
-      || ObjectUtils.notEqual(oldPersonal.getPhone(), newPersonal.getPhone())
-      || ObjectUtils.notEqual(oldPersonal.getMobilePhone(), newPersonal.getMobilePhone());
   }
 
   private Future<Boolean> patronGroupExists(String patronGroupId,
