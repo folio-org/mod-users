@@ -54,7 +54,7 @@ public class UserEventProducer {
         logger.info("Starting to send user deleted event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
         return sendToKafka(UserEventType.USER_DELETED, eventPayload, okapiHeaders, user.getId());
       case EDIT:
-        logger.warn("Starting to send user edit event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
+        logger.info("Starting to send user edit event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
         return sendToKafka(UserEventType.USER_UPDATED, eventPayload, okapiHeaders, user.getId());
       default:
         throw new IllegalStateException("Unexpected value: " + eventAction);

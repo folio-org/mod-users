@@ -36,6 +36,7 @@ import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.okapi.common.GenericCompositeFuture;
+import org.folio.repository.UserTenantRepository;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
@@ -82,9 +83,11 @@ public class UsersAPI implements Users {
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
   private final UsersService usersService;
+  private final UserTenantRepository userTenantRepository;
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
     this.usersService = new UsersService();
+    this.userTenantRepository = new UserTenantRepository();
   }
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -495,20 +498,25 @@ public class UsersAPI implements Users {
           if (userFromStorage == null) {
             return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
           }
-          boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(entity, userFromStorage);
 
-          return usersService.updateUser(conn, entity)
-            .compose(user -> {
-              if (isConsortiaFieldsUpdated) {
-                return userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
-              }
-              return Future.succeededFuture();
-            })
-            .map(aVoid -> PutUsersByUserIdResponse.respond204())
-            .map(Response.class::cast);
+          String okapiTenantId = TenantTool.tenantId(okapiHeaders);
+          Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
+          return userTenantRepository.fetchUserTenants(conn, okapiTenantId, criterion)
+            .compose(res -> {
+              boolean isConsortiaTenant = res.getTotalRecords() > 0;
+              boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(entity, userFromStorage);
+              return usersService.updateUser(conn, entity)
+                .compose(user -> {
+                  if (isConsortiaTenant && isConsortiaFieldsUpdated) {
+                    return userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
+                  }
+                  return Future.succeededFuture();
+                })
+                .map(aVoid -> PutUsersByUserIdResponse.respond204())
+                .map(Response.class::cast);
+            });
         })
       .onComplete(reply -> {
-
         if (reply.cause() != null) {
           handleUpdateUserFailures(entity, asyncResultHandler, reply);
           return;
@@ -522,7 +530,7 @@ public class UsersAPI implements Users {
   private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
     String errorMessage = reply.cause().getMessage();
     if (isDuplicateUsernameError(errorMessage)) {
-      logger.error("User with this username {} already exists", user.getUsername());
+      logger.info("User with this username {} already exists", user.getUsername());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
@@ -531,7 +539,7 @@ public class UsersAPI implements Users {
     }
 
     if (isDuplicateBarcodeError(errorMessage)) {
-      logger.error("This barcode {} has already been taken", user.getBarcode());
+      logger.info("This barcode {} has already been taken", user.getBarcode());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
@@ -541,7 +549,7 @@ public class UsersAPI implements Users {
 
     if (reply.cause() instanceof PgException) {
       String errorMsg = ((PgException) reply.cause()).getDetail();
-      logger.error(errorMsg);
+      logger.error("DB error thrown with message: {}", errorMsg);
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(errorMsg)));
@@ -569,7 +577,7 @@ public class UsersAPI implements Users {
       return false;
     }
 
-    if ((oldPersonal != null & newPersonal == null) || oldPersonal == null) {
+    if ((oldPersonal != null && newPersonal == null) || (oldPersonal == null && newPersonal != null)) {
       logger.info("Personal fields have been updated");
       return true;
     }
