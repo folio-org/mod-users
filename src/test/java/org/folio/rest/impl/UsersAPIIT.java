@@ -501,7 +501,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     UserTenant userTenant = new UserTenant()
       .withId(UUID.randomUUID().toString())
       .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test");
+      .withUsername("user_test1").withTenantId("tenant_test1");
 
     userTenantClient.attemptToSaveUserTenant(userTenant);
 
