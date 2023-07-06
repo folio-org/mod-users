@@ -373,7 +373,7 @@ public class UsersAPI implements Users {
           if (rows.rowCount() != 0) {
             List<User> users = new ArrayList<>();
             rows.iterator().forEachRemaining(row -> users.add(new User().withId(row.getUUID(USER_ID).toString())));
-            return userOutboxService.saveUserOutboxLogForDeleteUsers(conn, users, okapiHeaders, vertxContext);
+            return userOutboxService.saveUserOutboxLogForDeleteUsers(conn, users, okapiHeaders);
           }
           return Future.succeededFuture();
         }))

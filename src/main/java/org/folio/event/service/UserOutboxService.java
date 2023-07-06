@@ -1,6 +1,5 @@
 package org.folio.event.service;
 
-import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -96,7 +95,7 @@ public class UserOutboxService {
       });
   }
 
-  public Future<Boolean> saveUserOutboxLogForDeleteUsers(Conn conn, List<User> users, Map<String, String> okapiHeaders, Context context) {
+  public Future<Boolean> saveUserOutboxLogForDeleteUsers(Conn conn, List<User> users, Map<String, String> okapiHeaders) {
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         if (isConsortiaTenant) {
