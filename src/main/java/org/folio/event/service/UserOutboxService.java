@@ -18,14 +18,12 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.repository.UserEventsLogRepository;
 import org.folio.repository.InternalLockRepository;
-import org.folio.utils.HelperUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class UserOutboxService {
 
@@ -64,7 +62,7 @@ public class UserOutboxService {
         logger.info("Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
         return GenericCompositeFuture.join(futures)
-          .map(logs.stream().map(OutboxEventLog::getEventId).collect(Collectors.toList()))
+          .map(logs.stream().map(OutboxEventLog::getEventId).toList())
           .compose(eventIds -> {
             if (CollectionUtils.isNotEmpty(eventIds)) {
               return outboxRepository.deleteBatch(conn, eventIds, tenantId)
@@ -102,11 +100,15 @@ public class UserOutboxService {
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         if (isConsortiaTenant) {
-          return HelperUtils.executeWithSemaphores(users,
-            user -> saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders), context)
-            .map(res -> null);
+          List<Future<Boolean>> resultFuture = new ArrayList<>();
+          Future<Boolean> lineFuture = Future.succeededFuture();
+          for (User user : users) {
+            lineFuture = lineFuture.compose(v -> saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders));
+            resultFuture.add(lineFuture);
+          }
+          return Future.succeededFuture(resultFuture.size() == users.size());
         }
-        return Future.succeededFuture();
+        return Future.succeededFuture(false);
       });
   }
 
