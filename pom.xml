@@ -80,18 +80,6 @@
       <artifactId>commons-lang3</artifactId>
       <version>3.12.0</version>
     </dependency>
-    <dependency>
-      <groupId>com.github.rworsnop</groupId>
-      <artifactId>vertx-concurrent</artifactId>
-      <version>1.0.0</version>
-    </dependency>
-    <!--vertx-rx-java required for vertx-concurrent-1.0.0 -->
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-rx-java</artifactId>
-      <version>${vertx.version}</version>
-      <scope>provided</scope>
-    </dependency>
 
     <!-- test dependencies -->
 
