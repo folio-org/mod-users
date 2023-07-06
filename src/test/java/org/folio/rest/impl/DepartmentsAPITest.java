@@ -171,7 +171,7 @@ public class DepartmentsAPITest extends TestBase {
     String notExistedId = UUID.randomUUID().toString();
     Department department = post(createDepartment(null, "name1", "code"));
     String errorMessage = assignDepartmentWithError(testUser, department.getId(), notExistedId);
-    assertThat(errorMessage, containsString("Cannot set users.departments = " + notExistedId));
+    assertThat(errorMessage, containsString("Key (departments)=(" + notExistedId + ") is not present"));
   }
 
   @Test

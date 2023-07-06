@@ -17,4 +17,7 @@ public class Personal {
   String firstName;
   String preferredFirstName;
   List<Address> addresses;
+  String email;
+  String phone;
+  String mobilePhone;
 }

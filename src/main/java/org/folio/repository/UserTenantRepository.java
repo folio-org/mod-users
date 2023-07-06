@@ -23,6 +23,10 @@ public class UserTenantRepository {
   public static final String USER_ID_FIELD = "user_id";
   public static final String USERNAME_FIELD = "username";
   public static final String TENANT_ID_FIELD = "tenant_id";
+  public static final String CENTRAL_TENANT_ID = "central_tenant_id";
+  public static final String PHONE_NUMBER = "phone_number";
+  public static final String MOBILE_PHONE_NUMBER = "mobile_phone_number";
+  public static final String EMAIL = "email";
   public static final String UNIQUE_CONSTRAINT_VIOLATION_CODE = "23505";
 
   private static final String USER_TENANT_TABLE_NAME = "user_tenant";
@@ -73,7 +77,7 @@ public class UserTenantRepository {
   }
 
   private <T> Future<T> handleFailures(Throwable throwable, String id) {
-    return (throwable instanceof PgException && ((PgException) throwable).getCode().equals(UNIQUE_CONSTRAINT_VIOLATION_CODE)) ?
+    return (throwable instanceof PgException pgException && pgException.getCode().equals(UNIQUE_CONSTRAINT_VIOLATION_CODE)) ?
       Future.failedFuture(new DuplicateEventException(String.format("Event with Id=%s is already processed.", id))) :
       Future.failedFuture(throwable);
   }
@@ -83,6 +87,10 @@ public class UserTenantRepository {
       .withId(row.getValue(ID_FIELD).toString())
       .withUserId(row.getValue(USER_ID_FIELD).toString())
       .withUsername(row.getString(USERNAME_FIELD))
-      .withTenantId(row.getString(TENANT_ID_FIELD));
+      .withTenantId(row.getString(TENANT_ID_FIELD))
+      .withEmail(row.getString(EMAIL))
+      .withPhoneNumber(row.getString(PHONE_NUMBER))
+      .withMobilePhoneNumber(row.getString(MOBILE_PHONE_NUMBER))
+      .withCentralTenantId(row.getString(CENTRAL_TENANT_ID));
   }
 }

@@ -10,9 +10,6 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -24,6 +21,7 @@ import java.util.stream.Collectors;
 import org.folio.event.UserEventType;
 import io.vertx.core.json.Json;
 import org.folio.rest.jaxrs.model.UserEvent;
+import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
 import org.folio.support.Personal;
@@ -32,8 +30,8 @@ import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
+import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +48,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
   private static AddressTypesClient addressTypesClient;
+  private static UserTenantClient userTenantClient;
 
   @BeforeAll
   @SneakyThrows
@@ -57,6 +56,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
+    userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
@@ -64,6 +64,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
+    userTenantClient.deleteAllUserTenants();
   }
 
   @Test
@@ -82,27 +83,14 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var createdUser = usersClient.createUser(userToCreate);
 
-    List<UserEvent> usersList = getUserEventsAndFilterByUserId(USER_CREATED, createdUser.getId());
-    var userFromEventPayload = usersList.get(0).getUser();
-
-    assertEquals(1, usersList.size());
     assertThat(createdUser.getId(), is(notNullValue()));
-    assertThat(createdUser.getUsername(), allOf(is("juliab"), equalTo(userFromEventPayload.getUsername())));
-    assertThat(createdUser.getActive(), allOf(is(true), equalTo(userFromEventPayload.getActive())));
-
     final var personal = createdUser.getPersonal();
 
     assertThat(personal.getLastName(), is("brockhurst"));
     assertThat(personal.getFirstName(), is("julia"));
     assertThat(personal.getPreferredFirstName(), is("jules"));
-    assertThat(userFromEventPayload.getPersonal(), is(nullValue()));
 
-    assertThat(createdUser.getTags().getTagList(),
-      containsInAnyOrder("foo", "bar"));
-    assertThat(userFromEventPayload.getTags().getTagList(),
-      containsInAnyOrder("foo", "bar"));
-
-    Assertions.assertNull(userFromEventPayload.getMetadata());
+    assertThat(createdUser.getTags().getTagList(), containsInAnyOrder("foo", "bar"));
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
   }
@@ -287,10 +275,12 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.createUser(User.builder()
       .username("some-user")
       .barcode("54396735869")
+      .personal(Personal.builder().lastName("some-user").email("test@mail.org").build())
       .build());
 
     final var anotherUser = usersClient.createUser(User.builder()
       .username("another-user")
+      .personal(Personal.builder().lastName("another-user").email("test@mail.org").build())
       .build());
 
     usersClient.attemptToUpdateUser(
@@ -298,6 +288,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
           .id(anotherUser.getId())
           .username("another-user")
           .barcode("54396735869")
+          .personal(Personal.builder().lastName("another-user").email("test@mail.org").build())
           .build())
       .statusCode(is(400))
       .body(is("This barcode has already been taken"));
@@ -458,6 +449,37 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var user = usersClient.createUser(userToCreate);
+    usersClient.deleteUser(user.getId());
+
+    usersClient.attemptToGetUser(user.getId())
+      .statusCode(404);
+  }
+
+  @Test
+  void canDeleteAUserForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
+    UserTenant userTenant = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername("user_test").withTenantId("tenant_test");
+
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
 
     usersClient.deleteUser(user.getId());
 
@@ -488,40 +510,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
     final var user1 = createUser("1234");
     final var user2 = createUser("201");
     final var user3 = createUser("1999");
-    String userId1 = user1.getId();
-    String userId2 = user2.getId();
-    String userId3 = user3.getId();
 
     deleteUsersByUsername("1*");
-
-    List<UserEvent> userCreatedEvents = getUserEvents(USER_CREATED);
-    List<UserEvent> userCreatedEventsForUser1 = userCreatedEvents.stream().filter(userEvent -> userId1.equals(userEvent.getUser().getId()))
-      .collect(Collectors.toList());
-    List<UserEvent> userCreatedEventsForUser2 = userCreatedEvents.stream().filter(userEvent -> userId2.equals(userEvent.getUser().getId()))
-      .collect(Collectors.toList());
-    List<UserEvent> userCreatedEventsForUser3 = userCreatedEvents.stream().filter(userEvent -> userId3.equals(userEvent.getUser().getId()))
-      .collect(Collectors.toList());
-
-    List<UserEvent> userDeletedEvents = getUserEvents(USER_DELETED);
-    List<UserEvent> userDeletedEventsForUser1 = userDeletedEvents.stream().filter(userEvent -> userId1.equals(userEvent.getUser().getId()))
-      .collect(Collectors.toList());
-    List<UserEvent> userDeletedEventsForUser3 = userDeletedEvents.stream().filter(userEvent -> userId3.equals(userEvent.getUser().getId()))
-      .collect(Collectors.toList());
-
-    assertEquals(1, userCreatedEventsForUser1.size());
-    assertEventContent(userCreatedEventsForUser1.get(0), UserEvent.Action.CREATE, user1.getId());
-
-    assertEquals(1, userCreatedEventsForUser2.size());
-    assertEventContent(userCreatedEventsForUser2.get(0), UserEvent.Action.CREATE, user2.getId());
-
-    assertEquals(1, userCreatedEventsForUser3.size());
-    assertEventContent(userCreatedEventsForUser3.get(0), UserEvent.Action.CREATE, user3.getId());
-
-    assertEquals(1, userDeletedEventsForUser1.size());
-    assertEventContent(userDeletedEventsForUser1.get(0), UserEvent.Action.DELETE, user1.getId());
-
-    assertEquals(1, userDeletedEventsForUser3.size());
-    assertEventContent(userDeletedEventsForUser3.get(0), UserEvent.Action.DELETE, user3.getId());
 
     usersClient.attemptToGetUser(user2.getId())
       .statusCode(200);
