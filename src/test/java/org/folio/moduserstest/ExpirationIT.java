@@ -80,10 +80,6 @@ class ExpirationIT extends AbstractRestTestNoData {
       .statusCode(is(HTTP_NO_CONTENT));
 
     final var fetchedUser = usersClient.getUser(unexpiredUser.getId());
-
-    List<String> eventValues = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
-
-    assertEquals(1, eventValues.size());
     assertThat(fetchedUser.getActive(), is(true));
   }
 

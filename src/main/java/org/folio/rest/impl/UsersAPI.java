@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
@@ -56,6 +55,7 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.event.service.UserOutboxService;
+import org.folio.service.UsersService;
 import org.folio.support.FailureHandler;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
@@ -74,11 +74,16 @@ public class UsersAPI implements Users {
   private static final Logger logger = LogManager.getLogger(UsersAPI.class);
   @SuppressWarnings("deprecation")  // RAML requires Date
   private static final Date year1 = new Date(1 - 1900, 0 /* 0 .. 11 */, 1 /* 1 .. 31 */);
+  public static final String USERNAME_ALREADY_EXISTS = "users_username_idx_unique";
+  public static final String BARCODE_ALREADY_EXISTS = "users_barcode_idx_unique";
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
+  private final UsersService usersService;
+
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
+    this.usersService = new UsersService();
   }
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -231,10 +236,10 @@ public class UsersAPI implements Users {
           return succeededFuture();
         })
         .otherwise(e -> {
-          if (e instanceof CustomFieldValidationException) {
+          if (e instanceof CustomFieldValidationException customFieldValidationException) {
             asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond422WithApplicationJson(
-                ((CustomFieldValidationException) e).getErrors())));
+                customFieldValidationException.getErrors())));
           } else {
             logger.error(e.getMessage(), e);
             asyncResultHandler.handle(succeededFuture(
@@ -258,7 +263,7 @@ public class UsersAPI implements Users {
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
     pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-        .compose(user -> userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.CREATE, okapiHeaders))
+        .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
         .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
         .map(Response.class::cast))
       .onComplete(reply -> {
@@ -306,6 +311,14 @@ public class UsersAPI implements Users {
     return isDesiredError(reply, ".*username.*already exists.*");
   }
 
+  private boolean isDuplicateUsernameError(String errorMessage) {
+    return errorMessage.contains(USERNAME_ALREADY_EXISTS);
+  }
+
+  private boolean isDuplicateBarcodeError(String errorMessage) {
+    return errorMessage.contains(BARCODE_ALREADY_EXISTS);
+  }
+
   private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
     return isDesiredError(reply, ".*barcode.*already exists.*");
   }
@@ -347,7 +360,7 @@ public class UsersAPI implements Users {
       .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
         .compose(rows -> {
           if (rows.rowCount() != 0) {
-            return userOutboxService.saveUserOutboxLog(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
+            return userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
               .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
               .map(Response.class::cast);
           } else {
@@ -372,12 +385,11 @@ public class UsersAPI implements Users {
       PgUtil.postgresClient(vertxContext, okapiHeaders).withTrans(conn -> conn.execute(createDeleteQuery(wrapper, okapiHeaders))
         .compose(rows -> {
           if (rows.rowCount() != 0) {
-            rows.iterator().forEachRemaining(row -> {
-              User user = new User().withId(row.getUUID(USER_ID).toString());
-              userOutboxService.saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders);
-            });
+            List<User> users = new ArrayList<>();
+            rows.iterator().forEachRemaining(row -> users.add(new User().withId(row.getUUID(USER_ID).toString())));
+            return userOutboxService.saveUserOutboxLogForDeleteUsers(conn, users, okapiHeaders);
           }
-          return succeededFuture();
+          return Future.succeededFuture();
         }))
         .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
         .map(Response.class::cast)
@@ -441,17 +453,17 @@ public class UsersAPI implements Users {
                     "All addresses types defined for users must be existing")));
               } else {
                 validatePatronGroup(entity.getPatronGroup(), postgresClient, asyncResultHandler,
-                  handler -> updateUser(entity, okapiHeaders, asyncResultHandler, vertxContext));
+                  handler -> updateUser(entity, okapiHeaders, postgresClient, asyncResultHandler, vertxContext));
               }
               return succeededFuture();
             });
         })
         .otherwise(e -> {
           logger.error(e.getMessage(), e);
-          if (e instanceof CustomFieldValidationException) {
+          if (e instanceof CustomFieldValidationException customFieldValidationException) {
             asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond422WithApplicationJson(
-                ((CustomFieldValidationException) e).getErrors())));
+                customFieldValidationException.getErrors())));
           } else {
             asyncResultHandler.handle(succeededFuture(
               PutUsersByUserIdResponse.respond500WithTextPlain(
@@ -489,30 +501,69 @@ public class UsersAPI implements Users {
       });
   }
 
-  private void updateUser(User entity, Map<String, String> okapiHeaders,
+  private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
-    PgUtil.put(TABLE_NAME_USERS, entity, entity.getId(), okapiHeaders, vertxContext, PutUsersByUserIdResponse.class, reply -> {
-      if (isDuplicateUsernameError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PutUsersByUserIdResponse
-            .respond400WithTextPlain(
-              "User with this username already exists")));
-        return;
-      }
-      if (isDuplicateBarcodeError(reply)) {
-        asyncResultHandler.handle(
-          succeededFuture(PutUsersByUserIdResponse
-            .respond400WithTextPlain(
-              "This barcode has already been taken")));
-        return;
-      }
-      logger.debug("Save successful");
-      asyncResultHandler.handle(reply);
-    });
+
+    pgClient.withTrans(conn -> usersService.getUserByIdForUpdate(conn, entity.getId())
+      .compose(userFromStorage -> {
+        if (userFromStorage == null) {
+          return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
+        }
+
+        return usersService.updateUser(conn, entity)
+          .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
+          .map(aVoid -> PutUsersByUserIdResponse.respond204())
+          .map(Response.class::cast);
+        })
+      .onComplete(reply -> {
+        if (reply.cause() != null) {
+          handleUpdateUserFailures(entity, asyncResultHandler, reply);
+          return;
+        }
+
+        userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+        asyncResultHandler.handle(reply);
+      }));
+  }
+
+  private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
+    String errorMessage = reply.cause().getMessage();
+    if (isDuplicateUsernameError(errorMessage)) {
+      logger.info("User with this username {} already exists", user.getUsername());
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(
+            "User with this username already exists")));
+      return;
+    }
+
+    if (isDuplicateBarcodeError(errorMessage)) {
+      logger.info("This barcode {} has already been taken", user.getBarcode());
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(
+            "This barcode has already been taken")));
+      return;
+    }
+
+    if (reply.cause() instanceof PgException pgException) {
+      String errorMsg = pgException.getDetail();
+      logger.error("DB error thrown with message: {}", errorMsg);
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(errorMsg)));
+      return;
+    }
+
+    logger.error(errorMessage);
+    asyncResultHandler.handle(
+      succeededFuture(PutUsersByUserIdResponse
+        .respond400WithTextPlain(errorMessage))
+    );
   }
 
   private String validateDateOfBirth(User user) {
@@ -598,7 +649,7 @@ public class UsersAPI implements Users {
     final var addressTypes = user.getPersonal().getAddresses()
       .stream()
       .map(Address::getAddressTypeId)
-      .collect(Collectors.toList());
+      .toList();
 
     addressTypes.forEach(addressTypeId -> futureList.add(
       checkAddressTypeValid(addressTypeId, postgresClient)));

@@ -18,6 +18,22 @@
     "tenantId": {
       "description": "Primary tenant of the user for single-sign-on",
       "type": "string"
+    },
+    "centralTenantId": {
+      "description": "Central tenant id in the consortium",
+      "type": "string"
+    },
+    "phoneNumber": {
+      "description": "The user's primary phone number",
+      "type": "string"
+    },
+    "mobilePhoneNumber": {
+      "description": "The user's mobile phone number",
+      "type": "string"
+    },
+    "email": {
+      "description": "The user's email address",
+      "type": "string"
     }
   },
   "additionalProperties": false,

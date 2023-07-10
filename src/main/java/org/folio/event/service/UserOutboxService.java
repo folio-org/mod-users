@@ -4,10 +4,12 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.OutboxEventLog;
+import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.persist.Conn;
@@ -21,7 +23,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class UserOutboxService {
 
@@ -31,11 +32,13 @@ public class UserOutboxService {
   private final UserEventProducer producer;
   private final InternalLockRepository lockRepository;
   private final UserEventsLogRepository outboxRepository;
+  private final UserTenantService userTenantService;
 
   public UserOutboxService() {
     producer = new UserEventProducer();
     lockRepository = new InternalLockRepository();
     outboxRepository = new UserEventsLogRepository();
+    userTenantService = new UserTenantService();
   }
 
   /**
@@ -58,7 +61,7 @@ public class UserOutboxService {
         logger.info("Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
         return GenericCompositeFuture.join(futures)
-          .map(logs.stream().map(OutboxEventLog::getEventId).collect(Collectors.toList()))
+          .map(logs.stream().map(OutboxEventLog::getEventId).toList())
           .compose(eventIds -> {
             if (CollectionUtils.isNotEmpty(eventIds)) {
               return outboxRepository.deleteBatch(conn, eventIds, tenantId)
@@ -69,6 +72,43 @@ public class UserOutboxService {
           });
       })
     );
+  }
+
+  public Future<Boolean> saveUserOutboxLogForCreateOrDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
+      return userTenantService.isConsortiaTenant(conn, okapiHeaders)
+        .compose(isConsortiaTenant -> {
+          if (isConsortiaTenant) {
+            return saveUserOutboxLog(conn, user, action, okapiHeaders);
+          }
+          return Future.succeededFuture();
+        });
+  }
+
+  public Future<Boolean> saveUserOutboxLogForUpdateUser(Conn conn, User user, User userFromStorage, Map<String, String> okapiHeaders) {
+    return userTenantService.isConsortiaTenant(conn, okapiHeaders)
+      .compose(isConsortiaTenant -> {
+        boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
+        if (isConsortiaTenant && isConsortiaFieldsUpdated) {
+          return saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
+        }
+        return Future.succeededFuture();
+      });
+  }
+
+  public Future<Boolean> saveUserOutboxLogForDeleteUsers(Conn conn, List<User> users, Map<String, String> okapiHeaders) {
+    return userTenantService.isConsortiaTenant(conn, okapiHeaders)
+      .compose(isConsortiaTenant -> {
+        if (isConsortiaTenant) {
+          List<Future<Boolean>> resultFuture = new ArrayList<>();
+          Future<Boolean> lineFuture = Future.succeededFuture();
+          for (User user : users) {
+            lineFuture = lineFuture.compose(v -> saveUserOutboxLog(conn, user, UserEvent.Action.DELETE, okapiHeaders));
+            resultFuture.add(lineFuture);
+          }
+          return Future.succeededFuture(resultFuture.size() == users.size());
+        }
+        return Future.succeededFuture(false);
+      });
   }
 
   /**
@@ -114,5 +154,29 @@ public class UserOutboxService {
       .withPayload(entity);
 
     return outboxRepository.saveEventLog(conn, log, tenantId);
+  }
+
+  private boolean isConsortiumUserFieldsUpdated(User updatedUser, User userFromStorage) {
+    if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())) {
+      logger.info("The username has been updated to {}", updatedUser.getUsername());
+      return true;
+    }
+
+    Personal oldPersonal = userFromStorage.getPersonal();
+    Personal newPersonal = updatedUser.getPersonal();
+
+    if (oldPersonal == null && newPersonal == null) {
+      logger.info("Personal fields have not been updated");
+      return false;
+    }
+
+    if (oldPersonal == null || newPersonal == null) {
+      logger.info("Personal fields have been updated");
+      return true;
+    }
+
+    return ObjectUtils.notEqual(oldPersonal.getEmail(), newPersonal.getEmail())
+      || ObjectUtils.notEqual(oldPersonal.getPhone(), newPersonal.getPhone())
+      || ObjectUtils.notEqual(oldPersonal.getMobilePhone(), newPersonal.getMobilePhone());
   }
 }
