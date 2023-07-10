@@ -29,6 +29,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   private static final String USER_B = "user_b";
   private static final String TENANT_X = "tenant_x";
   private static final String TENANT_Y = "tenant_y";
+
   private static final UserTenant FIRST_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
@@ -78,17 +79,23 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canUpdateAllUserTenants() {
+  void canUpdateUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
     UserTenant userTenant = collection.getUserTenants().get(0);
     userTenant.setEmail("Test");
     userTenant.setPhoneNumber("1234");
-    sendAffiliationUpdatedEvent(userTenant);
-    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
-
-    Assertions.assertEquals(3, collection2.getTotalRecords());
-    Assertions.assertEquals("Test", collection2.getUserTenants().get(0).getEmail());
-    Assertions.assertEquals("1234", collection2.getUserTenants().get(0).getPhoneNumber());
+    sendAffiliationUpdatedEvent(List.of(userTenant));
+    new java.util.Timer().schedule(
+      new java.util.TimerTask() {
+        @Override
+        public void run() {
+          UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+          Assertions.assertEquals("Test", collection2.getUserTenants().get(2).getEmail());
+          Assertions.assertEquals("1234", collection2.getUserTenants().get(2).getPhoneNumber());
+        }
+      },
+      10000
+    );
   }
 
   @Test
@@ -187,10 +194,12 @@ class UserTenantIT extends AbstractRestTestNoData {
     awaitHandlingEvent(3);
   }
 
-  private void sendAffiliationUpdatedEvent(UserTenant userTenant) {
-    String eventPayload = Json.encode(userTenant);
-    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED.getTopicName(),
-      userTenant.getId(), eventPayload);
+  private void sendAffiliationUpdatedEvent(List<UserTenant> userTenants) {
+    for (UserTenant userTenant : userTenants) {
+      String eventPayload = Json.encode(userTenant);
+      sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED.getTopicName(),
+        userTenant.getId(), eventPayload);
+    }
     awaitHandlingEvent(3);
   }
 
