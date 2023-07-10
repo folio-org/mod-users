@@ -165,9 +165,9 @@ class UserTenantIT extends AbstractRestTestNoData {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(3, collection.getTotalRecords());
-    Assertions.assertTrue(collection.getUserTenants().contains(FIRST_AFFILIATION));
+    Assertions.assertTrue(collection.getUserTenants().contains(SECOND_AFFILIATION));
 
-    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(FIRST_AFFILIATION);
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(SECOND_AFFILIATION);
     Assertions.assertEquals(500, actualStatusCode);
 
     collection = userTenantClient.getAllUsersTenants();
