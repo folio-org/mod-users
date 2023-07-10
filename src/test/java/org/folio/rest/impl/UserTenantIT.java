@@ -78,6 +78,20 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canUpdateAllUserTenants() {
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+    UserTenant userTenant = collection.getUserTenants().get(0);
+    userTenant.setEmail("Test");
+    userTenant.setPhoneNumber("1234");
+    sendAffiliationUpdatedEvent(userTenant);
+    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(3, collection2.getTotalRecords());
+    Assertions.assertEquals("Test", collection2.getUserTenants().get(0).getEmail());
+    Assertions.assertEquals("1234", collection2.getUserTenants().get(0).getPhoneNumber());
+  }
+
+  @Test
   void canSearchByUserId() {
     String userId = SECOND_AFFILIATION.getUserId();
     Map<String, String> params = Map.of("userId", userId);
@@ -170,6 +184,13 @@ class UserTenantIT extends AbstractRestTestNoData {
       sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
         userTenant.getId(), eventPayload);
     }
+    awaitHandlingEvent(3);
+  }
+
+  private void sendAffiliationUpdatedEvent(UserTenant userTenant) {
+    String eventPayload = Json.encode(userTenant);
+    sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED.getTopicName(),
+      userTenant.getId(), eventPayload);
     awaitHandlingEvent(3);
   }
 

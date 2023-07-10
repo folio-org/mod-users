@@ -19,9 +19,12 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 import static io.vertx.core.Future.succeededFuture;
-import static org.folio.repository.UserTenantRepository.USER_ID_FIELD;
-import static org.folio.repository.UserTenantRepository.USERNAME_FIELD;
+import static org.folio.repository.UserTenantRepository.EMAIL;
+import static org.folio.repository.UserTenantRepository.MOBILE_PHONE_NUMBER;
+import static org.folio.repository.UserTenantRepository.PHONE_NUMBER;
 import static org.folio.repository.UserTenantRepository.TENANT_ID_FIELD;
+import static org.folio.repository.UserTenantRepository.USERNAME_FIELD;
+import static org.folio.repository.UserTenantRepository.USER_ID_FIELD;
 
 public class UserTenantsAPI implements UserTenants {
   private static final Logger logger = LogManager.getLogger(UserTenantsAPI.class);
@@ -33,12 +36,12 @@ public class UserTenantsAPI implements UserTenants {
   }
 
   @Override
-  public void getUserTenants(String userId, String username, String tenantId, int offset, int limit, String lang,
+  public void getUserTenants(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber, int offset, int limit, String lang,
                              Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
                              Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(limit)).setOffset(new Offset(offset));
-    addWhereClauseArgumentsToCriterion(userId, username, tenantId, criterion);
+    addWhereClauseArgumentsToCriterion(userId, username, tenantId, email, phoneNumber, mobilePhoneNumber, criterion);
     logger.debug("Trying to get user-tenant records with criterion: {}.", criterion);
 
     userTenantService.fetchUserTenants(okapiTenantId, criterion, vertxContext.owner())
@@ -71,12 +74,15 @@ public class UserTenantsAPI implements UserTenants {
       });
   }
 
-  private void addWhereClauseArgumentsToCriterion(String userId, String username, String tenantId, Criterion criterion) {
+  private void addWhereClauseArgumentsToCriterion(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber, Criterion criterion) {
     Map<String, String> fields = Map.of(
       USER_ID_FIELD, StringUtils.defaultString(userId),
       USERNAME_FIELD, StringUtils.defaultString(username),
-      TENANT_ID_FIELD, StringUtils.defaultString(tenantId)
-    );
+      TENANT_ID_FIELD, StringUtils.defaultString(tenantId),
+      EMAIL, StringUtils.defaultString(email),
+      PHONE_NUMBER, StringUtils.defaultString(phoneNumber),
+      MOBILE_PHONE_NUMBER, StringUtils.defaultString(mobilePhoneNumber)
+      );
 
     fields.entrySet().stream()
       .filter(entry -> StringUtils.isNotBlank(entry.getValue()))
