@@ -11,10 +11,7 @@ import org.folio.support.http.UserTenantClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -23,8 +20,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 @ExtendWith(VertxExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserTenantIT extends AbstractRestTestNoData {
 
   private static UserTenantClient userTenantClient;
@@ -64,7 +63,6 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(9)
   void canRetrieveAllUserTenants() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -72,7 +70,6 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(7)
   void canDeleteAllUserTenants() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -85,7 +82,6 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(8)
   void canUpdateUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
     UserTenant userTenant = collection.getUserTenants().get(0);
@@ -94,23 +90,19 @@ class UserTenantIT extends AbstractRestTestNoData {
     userTenant.setUsername("testUser");
     userTenant.setMobilePhoneNumber("000000");
     sendAffiliationUpdatedEvent(List.of(userTenant));
-    new java.util.Timer().schedule(
-      new java.util.TimerTask() {
-        @Override
-        public void run() {
-          UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
-          Assertions.assertEquals("Test", collection2.getUserTenants().get(2).getEmail());
-          Assertions.assertEquals("1234", collection2.getUserTenants().get(2).getPhoneNumber());
-          Assertions.assertEquals("testUser", collection2.getUserTenants().get(2).getUsername());
-          Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
-        }
-      },
-      10000
-    );
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+        Assertions.assertEquals("Test", collection2.getUserTenants().get(2).getEmail());
+        Assertions.assertEquals("1234", collection2.getUserTenants().get(2).getPhoneNumber());
+        Assertions.assertEquals("testUser", collection2.getUserTenants().get(2).getUsername());
+        Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
+      });
   }
 
   @Test
-  @Order(6)
   void canSearchByUserId() {
     String userId = SECOND_AFFILIATION.getUserId();
     Map<String, String> params = Map.of("userId", userId);
@@ -123,7 +115,6 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(5)
   void canSearchByUserName() {
     Map<String, String> params = Map.of("username", USER_A);
 
@@ -135,10 +126,9 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(4)
   void canSearchByUserNameAndTenantId() {
-    String username = FIRST_AFFILIATION.getUsername();
-    String tenantId = FIRST_AFFILIATION.getTenantId();
+    String username = THIRD_AFFILIATION.getUsername();
+    String tenantId = THIRD_AFFILIATION.getTenantId();
     Map<String, String> params = Map.of(
       "username", username,
       "tenantId", tenantId);
@@ -151,7 +141,6 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(3)
   void canCreateAUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -169,21 +158,19 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(2)
   void shouldGet422ForMissingRequiredFields() {
     int actualStatusCode = userTenantClient.attemptToSaveUserTenant(new UserTenant());
     Assertions.assertEquals(422, actualStatusCode);
   }
 
   @Test
-  @Order(1)
   void shouldGet500WhenTryingToSaveAlreadyExistingRecord() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(3, collection.getTotalRecords());
-    Assertions.assertTrue(collection.getUserTenants().contains(SECOND_AFFILIATION));
+    Assertions.assertTrue(collection.getUserTenants().contains(THIRD_AFFILIATION));
 
-    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(SECOND_AFFILIATION);
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(THIRD_AFFILIATION);
     Assertions.assertEquals(500, actualStatusCode);
 
     collection = userTenantClient.getAllUsersTenants();
@@ -194,7 +181,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   private void awaitHandlingEvent(int expectedSize) {
     Awaitility.await()
       .atMost(1, TimeUnit.MINUTES)
-      .pollInterval(5, TimeUnit.SECONDS)
+      .pollInterval(5, SECONDS)
       .until(() -> {
         UserTenantCollection collection = userTenantClient.getAllUsersTenants();
         return collection.getTotalRecords() == expectedSize;
