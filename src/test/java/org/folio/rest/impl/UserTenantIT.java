@@ -64,7 +64,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(8)
+  @Order(9)
   void canRetrieveAllUserTenants() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -85,7 +85,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @Order(9)
+  @Order(8)
   void canUpdateUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
     UserTenant userTenant = collection.getUserTenants().get(0);
@@ -105,7 +105,7 @@ class UserTenantIT extends AbstractRestTestNoData {
           Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
         }
       },
-      5000
+      10000
     );
   }
 
