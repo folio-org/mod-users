@@ -11,7 +11,10 @@ import org.folio.support.http.UserTenantClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -21,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @ExtendWith(VertxExtension.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserTenantIT extends AbstractRestTestNoData {
 
   private static UserTenantClient userTenantClient;
@@ -60,6 +64,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(8)
   void canRetrieveAllUserTenants() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -67,6 +72,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(7)
   void canDeleteAllUserTenants() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -79,6 +85,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(9)
   void canUpdateUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
     UserTenant userTenant = collection.getUserTenants().get(0);
@@ -103,6 +110,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(6)
   void canSearchByUserId() {
     String userId = SECOND_AFFILIATION.getUserId();
     Map<String, String> params = Map.of("userId", userId);
@@ -115,6 +123,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(5)
   void canSearchByUserName() {
     Map<String, String> params = Map.of("username", USER_A);
 
@@ -126,6 +135,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(4)
   void canSearchByUserNameAndTenantId() {
     String username = FIRST_AFFILIATION.getUsername();
     String tenantId = FIRST_AFFILIATION.getTenantId();
@@ -134,7 +144,6 @@ class UserTenantIT extends AbstractRestTestNoData {
       "tenantId", tenantId);
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
-
     Assertions.assertEquals(1, collection.getTotalRecords());
     UserTenant userTenant = collection.getUserTenants().iterator().next();
     Assertions.assertEquals(username, userTenant.getUsername());
@@ -142,6 +151,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(3)
   void canCreateAUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -159,12 +169,14 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  @Order(2)
   void shouldGet422ForMissingRequiredFields() {
     int actualStatusCode = userTenantClient.attemptToSaveUserTenant(new UserTenant());
     Assertions.assertEquals(422, actualStatusCode);
   }
 
   @Test
+  @Order(1)
   void shouldGet500WhenTryingToSaveAlreadyExistingRecord() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
