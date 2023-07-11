@@ -35,7 +35,7 @@ public class UserTenantRepository {
   private static final String INSERT_SQL = "INSERT INTO %s.%s (id, user_id, username, tenant_id, creation_date, central_tenant_id, email, mobile_phone_number, phone_number)" +
     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)";
   private static final String DELETE_SQL = "DELETE FROM %s.%s WHERE user_id = $1 AND tenant_id = $2";
-  private static final String UPDATE_SQL = "UPDATE %s.%s SET central_tenant_id = $1, email = $2, mobile_phone_number = $3, phone_number = $4 WHERE user_id = $5";
+  private static final String UPDATE_SQL = "UPDATE %s.%s SET username = $1, email = $2, mobile_phone_number = $3, phone_number = $4 WHERE user_id = $5";
 
   private static final String SELECT_USER_TENANTS = "WITH cte AS (SELECT count(*) AS total_count FROM %1$s.%2$s %3$s) " +
     "SELECT j.*, cte.* FROM %1$s.%2$s j LEFT JOIN cte ON true " +
@@ -65,7 +65,7 @@ public class UserTenantRepository {
 
   public Future<Boolean> updateUserTenant(Conn conn, UserTenant userTenant, String tenantId) {
     String query = String.format(UPDATE_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
-    Tuple queryParams = Tuple.of(userTenant.getCentralTenantId(), userTenant.getEmail(), userTenant.getMobilePhoneNumber(),
+    Tuple queryParams = Tuple.of(userTenant.getUsername(), userTenant.getEmail(), userTenant.getMobilePhoneNumber(),
       userTenant.getPhoneNumber(), userTenant.getUserId());
     return conn.execute(query, queryParams)
       .map(resultSet -> resultSet.size() == 1)

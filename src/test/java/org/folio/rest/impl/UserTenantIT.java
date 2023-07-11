@@ -84,6 +84,8 @@ class UserTenantIT extends AbstractRestTestNoData {
     UserTenant userTenant = collection.getUserTenants().get(0);
     userTenant.setEmail("Test");
     userTenant.setPhoneNumber("1234");
+    userTenant.setUsername("testUser");
+    userTenant.setMobilePhoneNumber("000000");
     sendAffiliationUpdatedEvent(List.of(userTenant));
     new java.util.Timer().schedule(
       new java.util.TimerTask() {
@@ -92,9 +94,11 @@ class UserTenantIT extends AbstractRestTestNoData {
           UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
           Assertions.assertEquals("Test", collection2.getUserTenants().get(2).getEmail());
           Assertions.assertEquals("1234", collection2.getUserTenants().get(2).getPhoneNumber());
+          Assertions.assertEquals("testUser", collection2.getUserTenants().get(2).getUsername());
+          Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
         }
       },
-      10000
+      5000
     );
   }
 
@@ -123,8 +127,8 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   @Test
   void canSearchByUserNameAndTenantId() {
-    String username = THIRD_AFFILIATION.getUsername();
-    String tenantId = THIRD_AFFILIATION.getTenantId();
+    String username = FIRST_AFFILIATION.getUsername();
+    String tenantId = FIRST_AFFILIATION.getTenantId();
     Map<String, String> params = Map.of(
       "username", username,
       "tenantId", tenantId);

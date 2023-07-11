@@ -1,7 +1,6 @@
 package org.folio.verticle.consumers;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
@@ -30,25 +29,17 @@ public class ConsortiumUpdateEventsHandler implements AsyncRecordHandler<String,
 
   @Override
   public Future<String> handle(KafkaConsumerRecord<String, String> record) {
-    Promise<String> result = Promise.promise();
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
     UserTenant event = new JsonObject(record.value()).mapTo(UserTenant.class);
-    logger.info("Trying to update of user primary affiliation event with event id: {} for user id: {} with tenant id: {}",
+    logger.info("Trying to update of user primary affiliation with event id: {} for user id: {} with tenant id: {}",
       event.getId(), event.getUserId(), event.getTenantId());
 
-    userTenantService.updateUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
-      .onSuccess(ar -> {
-        logger.info("User primary affiliation event with event id: {} has been updated for user id: {} with tenant id: {}",
-          event.getId(), event.getUserId(), event.getTenantId());
-        result.complete(event.getId());
-      })
-      .onFailure(e -> {
-          logger.error("Failed to update user primary affiliation event with event id: {} for user id: {} with tenant id: {}",
-            event.getId(), event.getUserId(), event.getTenantId(), e);
-          result.fail(e);
-      });
-
-    return result.future();
+    return userTenantService.updateUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
+      .map(event.getId())
+      .onSuccess(x -> logger.info("User primary affiliation with event id: {} has been updated for user id: {} with tenant id: {}",
+        event.getId(), event.getUserId(), event.getTenantId()))
+      .onFailure(e -> logger.error("Failed to update user primary affiliation with event id: {} for user id: {} with tenant id: {}",
+        event.getId(), event.getUserId(), event.getTenantId(), e));
   }
 }
