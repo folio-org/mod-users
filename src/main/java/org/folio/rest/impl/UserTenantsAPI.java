@@ -87,6 +87,6 @@ public class UserTenantsAPI implements UserTenants {
     fields.entrySet().stream()
       .filter(entry -> StringUtils.isNotBlank(entry.getValue()))
       .map(entry -> new Criteria().addField(entry.getKey()).setOperation("=").setVal(entry.getValue()).setJSONB(false))
-      .forEach(criterion::addCriterion);
+      .forEach(a -> criterion.addCriterion(a, "or"));
   }
 }
