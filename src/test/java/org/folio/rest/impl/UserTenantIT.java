@@ -141,6 +141,19 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canSearchByUserNameAndTenantIdWithOrCriteria() {
+    String username = THIRD_AFFILIATION.getUsername();
+    String tenantId = THIRD_AFFILIATION.getTenantId();
+    Map<String, String> params = Map.of(
+      "username", username,
+      "tenantId", tenantId,
+      "queryCriteria", "or");
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    Assertions.assertEquals(2, collection.getTotalRecords());
+  }
+
+  @Test
   void canCreateAUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 

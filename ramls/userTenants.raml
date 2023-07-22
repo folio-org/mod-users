@@ -63,10 +63,10 @@ resourceTypes:
         type: string
         example: "123456789"
         required: false
-      queryOp:
-        description: Whether to use 'or' in criteria
-        type: boolean
-        default: false
+      queryCriteria:
+        description: Criteria for search query
+        type: string
+        default: "and"
     responses:
       200:
         body:

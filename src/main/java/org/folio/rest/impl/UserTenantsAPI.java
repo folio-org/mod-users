@@ -36,12 +36,12 @@ public class UserTenantsAPI implements UserTenants {
   }
 
   @Override
-  public void getUserTenants(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber, boolean queryOp, int offset, int limit, String lang,
+  public void getUserTenants(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber, String queryCriteria, int offset, int limit, String lang,
                              Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
                              Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(limit)).setOffset(new Offset(offset));
-    addWhereClauseArgumentsToCriterion(userId, username, tenantId, email, phoneNumber, mobilePhoneNumber, queryOp, criterion);
+    addWhereClauseArgumentsToCriterion(userId, username, tenantId, email, phoneNumber, mobilePhoneNumber, queryCriteria, criterion);
     logger.debug("Trying to get user-tenant records with criterion: {}.", criterion);
 
     userTenantService.fetchUserTenants(okapiTenantId, criterion, vertxContext.owner())
@@ -75,7 +75,7 @@ public class UserTenantsAPI implements UserTenants {
   }
 
   private void addWhereClauseArgumentsToCriterion(String userId, String username, String tenantId, String email,
-                                                  String phoneNumber, String mobilePhoneNumber,  boolean queryOp, Criterion criterion) {
+                                                  String phoneNumber, String mobilePhoneNumber, String queryCriteria, Criterion criterion) {
     Map<String, String> fields = Map.of(
       USER_ID_FIELD, StringUtils.defaultString(userId),
       USERNAME_FIELD, StringUtils.defaultString(username),
@@ -88,10 +88,6 @@ public class UserTenantsAPI implements UserTenants {
     fields.entrySet().stream()
       .filter(entry -> StringUtils.isNotBlank(entry.getValue()))
       .map(entry -> new Criteria().addField(entry.getKey()).setOperation("=").setVal(entry.getValue()).setJSONB(false))
-      .forEach(a -> {
-        if (queryOp) {
-          criterion.addCriterion(a, "or");
-        }
-      });
+      .forEach(param -> criterion.addCriterion(param, queryCriteria));
   }
 }
