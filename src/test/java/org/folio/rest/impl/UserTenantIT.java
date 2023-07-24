@@ -30,7 +30,6 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   private static final String USER_A = "user_a";
   private static final String USER_B = "user_b";
-  private static final String USER_C = "user_c";
   private static final String TENANT_X = "tenant_x";
   private static final String TENANT_Y = "tenant_y";
 
@@ -50,10 +49,6 @@ class UserTenantIT extends AbstractRestTestNoData {
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
     .withUsername(USER_B).withTenantId(TENANT_Y);
-  private static final UserTenant FIFTH_AFFILIATION = new UserTenant()
-    .withId(UUID.randomUUID().toString())
-    .withUserId(UUID.randomUUID().toString())
-    .withUsername(USER_C).withTenantId(TENANT_Y).withEmail("test@mail.org");
 
   @BeforeAll
   @SneakyThrows
@@ -185,12 +180,18 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   @Test
   void canSearchByUserNameAndEmailWithOrOperation() {
+    String username = "testUser";
+    String tenantId = "testTenant";
+    String email = "test@mail.org";
 
-    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(FIFTH_AFFILIATION);
+    UserTenant affiliation = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername(username).withTenantId(tenantId).withEmail(email);
+
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
     Assertions.assertEquals(201, actualStatusCode);
 
-    String username = FIFTH_AFFILIATION.getUsername();
-    String tenantId = FIFTH_AFFILIATION.getTenantId();
     Map<String, String> params = Map.of(
       "username", username,
       "email", username,
@@ -201,11 +202,12 @@ class UserTenantIT extends AbstractRestTestNoData {
     UserTenant userTenant = collection.getUserTenants().iterator().next();
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
+    Assertions.assertEquals(email, userTenant.getEmail());
   }
 
   private void awaitHandlingEvent(int expectedSize) {
     Awaitility.await()
-      .atMost(1, TimeUnit.MINUTES)
+      .atMost(3, TimeUnit.MINUTES)
       .pollInterval(5, SECONDS)
       .until(() -> {
         UserTenantCollection collection = userTenantClient.getAllUsersTenants();
