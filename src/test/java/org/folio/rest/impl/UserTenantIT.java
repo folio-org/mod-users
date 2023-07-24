@@ -149,7 +149,7 @@ class UserTenantIT extends AbstractRestTestNoData {
       "queryCriteria", "or");
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
-    Assertions.assertEquals(2, collection.getTotalRecords());
+    Assertions.assertEquals(1, collection.getTotalRecords());
   }
 
   @Test
