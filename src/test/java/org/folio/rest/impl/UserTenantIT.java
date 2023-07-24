@@ -30,6 +30,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   private static final String USER_A = "user_a";
   private static final String USER_B = "user_b";
+  private static final String USER_C = "user_c";
   private static final String TENANT_X = "tenant_x";
   private static final String TENANT_Y = "tenant_y";
 
@@ -49,6 +50,10 @@ class UserTenantIT extends AbstractRestTestNoData {
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
     .withUsername(USER_B).withTenantId(TENANT_Y);
+  private static final UserTenant FIFTH_AFFILIATION = new UserTenant()
+    .withId(UUID.randomUUID().toString())
+    .withUserId(UUID.randomUUID().toString())
+    .withUsername(USER_C).withTenantId(TENANT_Y).withEmail("test@mail.org");
 
   @BeforeAll
   @SneakyThrows
@@ -141,18 +146,6 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canSearchByUserNameAndTenantIdWithOrCriteria() {
-    String username = THIRD_AFFILIATION.getUsername();
-    Map<String, String> params = Map.of(
-      "username", username,
-      "tenantId", username,
-      "queryCriteria", "or");
-
-    UserTenantCollection collection = userTenantClient.getUserTenants(params);
-    Assertions.assertEquals(1, collection.getTotalRecords());
-  }
-
-  @Test
   void canCreateAUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
@@ -188,6 +181,26 @@ class UserTenantIT extends AbstractRestTestNoData {
     collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(3, collection.getTotalRecords());
+  }
+
+  @Test
+  void canSearchByUserNameAndEmailWithOrOperation() {
+
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(FIFTH_AFFILIATION);
+    Assertions.assertEquals(201, actualStatusCode);
+
+    String username = FIFTH_AFFILIATION.getUsername();
+    String tenantId = FIFTH_AFFILIATION.getTenantId();
+    Map<String, String> params = Map.of(
+      "username", username,
+      "email", username,
+      "queryOp", "or");
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    Assertions.assertEquals(1, collection.getTotalRecords());
+    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    Assertions.assertEquals(username, userTenant.getUsername());
+    Assertions.assertEquals(tenantId, userTenant.getTenantId());
   }
 
   private void awaitHandlingEvent(int expectedSize) {
