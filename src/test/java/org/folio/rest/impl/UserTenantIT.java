@@ -180,7 +180,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   @Test
   void canSearchByUserNameAndEmailWithOrOperation() {
-    String username = "testUser";
+    String username = "testCrossTenantUser";
     String tenantId = "testTenant";
     String email = "test@mail.org";
 
