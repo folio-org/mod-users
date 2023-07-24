@@ -207,7 +207,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
   private void awaitHandlingEvent(int expectedSize) {
     Awaitility.await()
-      .atMost(3, TimeUnit.MINUTES)
+      .atMost(1, TimeUnit.MINUTES)
       .pollInterval(5, SECONDS)
       .until(() -> {
         UserTenantCollection collection = userTenantClient.getAllUsersTenants();
