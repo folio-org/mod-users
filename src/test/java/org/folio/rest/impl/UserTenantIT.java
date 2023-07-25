@@ -203,6 +203,10 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
     Assertions.assertEquals(email, userTenant.getEmail());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
   }
 
   private void awaitHandlingEvent(int expectedSize) {
