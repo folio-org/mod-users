@@ -41,8 +41,8 @@ public class UserTenantsAPI implements UserTenants {
                              Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(limit)).setOffset(new Offset(offset));
-    ArgumentsToCriterion argumentsToCriterion = new ArgumentsToCriterion(userId, username, tenantId, email, phoneNumber, mobilePhoneNumber);
-    addWhereClauseArgumentsToCriterion(argumentsToCriterion, queryOp, criterion);
+    ArgumentsHolder argumentsHolder = new ArgumentsHolder(userId, username, tenantId, email, phoneNumber, mobilePhoneNumber);
+    addWhereClauseArgumentsToCriterion(argumentsHolder, queryOp, criterion);
     logger.debug("Trying to get user-tenant records with criterion: {}.", criterion);
 
     userTenantService.fetchUserTenants(okapiTenantId, criterion, vertxContext.owner())
@@ -75,14 +75,14 @@ public class UserTenantsAPI implements UserTenants {
       });
   }
 
-  private void addWhereClauseArgumentsToCriterion(ArgumentsToCriterion argumentsToCriterion, String queryOp, Criterion criterion) {
+  private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {
     Map<String, String> fields = Map.of(
-      USER_ID_FIELD, StringUtils.defaultString(argumentsToCriterion.userId()),
-      USERNAME_FIELD, StringUtils.defaultString(argumentsToCriterion.username()),
-      TENANT_ID_FIELD, StringUtils.defaultString(argumentsToCriterion.tenantId()),
-      EMAIL, StringUtils.defaultString(argumentsToCriterion.email()),
-      PHONE_NUMBER, StringUtils.defaultString(argumentsToCriterion.phoneNumber()),
-      MOBILE_PHONE_NUMBER, StringUtils.defaultString(argumentsToCriterion.mobilePhoneNumber())
+      USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),
+      USERNAME_FIELD, StringUtils.defaultString(argumentsHolder.username()),
+      TENANT_ID_FIELD, StringUtils.defaultString(argumentsHolder.tenantId()),
+      EMAIL, StringUtils.defaultString(argumentsHolder.email()),
+      PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.phoneNumber()),
+      MOBILE_PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.mobilePhoneNumber())
       );
 
     fields.entrySet().stream()
@@ -91,5 +91,5 @@ public class UserTenantsAPI implements UserTenants {
       .forEach(param -> criterion.addCriterion(param, queryOp));
   }
 
-  record ArgumentsToCriterion(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber) {}
+  record ArgumentsHolder(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber) {}
 }
