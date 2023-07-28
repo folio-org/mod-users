@@ -476,9 +476,37 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .active(true)
       .build());
 
-    final var activeUsers = usersClient.getUsers("active=true");
+    final var users = usersClient.getUsers("active=true");
 
-    assertThat(activeUsers.getTotalRecords(), is(2));
+    assertThat(users.getTotalRecords(), is(1));
+  }
+
+  @Test
+  void canFindNotShadowUsers() {
+    final var steve = usersClient.createUser(User.builder()
+      .username("steve")
+      .active(true)
+      .type("shadow")
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("joanne")
+      .active(false)
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("jenna")
+      .active(true)
+      .type("shadow")
+      .build());
+
+    final var foundUser = usersClient.getUser(steve.getId());
+
+    assertThat(foundUser.getUsername(), is("steve"));
+    assertThat(foundUser.getType(), is("shadow"));
+
+    final var users = usersClient.getUsers("limit=10");
+    assertThat(users.getTotalRecords(), is(1));
   }
 
   @Test

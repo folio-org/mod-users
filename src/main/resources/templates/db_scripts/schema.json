@@ -124,6 +124,10 @@
           "tOps" : "ADD"
         },
         {
+          "fieldName" : "type",
+          "tOps" : "ADD"
+        },
+        {
           "fieldName" : "expirationDate",
           "tOps" : "ADD",
           "caseSensitive": true,
@@ -178,6 +182,12 @@
           "tOps": "ADD",
           "caseSensitive": false,
           "removeAccents": true
+        },
+        {
+          "fieldName": "type",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
         }
       ],
       "fullTextIndex" : [
@@ -220,6 +230,10 @@
         {
           "fieldName": "customFields",
           "tOps":"ADD"
+        },
+        {
+          "fieldName" : "type",
+          "tOps" : "ADD"
         }
       ]
     },
