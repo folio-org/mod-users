@@ -204,7 +204,7 @@ public class UsersAPI implements Users {
       if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
         asyncResultHandler.handle(succeededFuture(
           PostUsersResponse.respond400WithTextPlain(
-            "Users are limited to one address per addresstype")));
+            "Users are limited to one address per addressType")));
         return;
       }
 
