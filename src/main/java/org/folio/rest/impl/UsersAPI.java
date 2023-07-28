@@ -69,6 +69,7 @@ public class UsersAPI implements Users {
   public static final String USER_ID = "id";
   public static final String TABLE_NAME_USERS = "users";
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
+
   private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(UsersAPI.class);
   @SuppressWarnings("deprecation")  // RAML requires Date
@@ -160,6 +161,7 @@ public class UsersAPI implements Users {
       // note that orderBy is NOT used
       String tableName = getTableName(query);
       CQLWrapper cql = getCQL(query, limit, offset);
+
       PgUtil.streamGet(tableName, User.class, cql, emptyList(), TABLE_NAME_USERS,
         routingContext, okapiHeaders, vertxContext);
     } catch (Exception e) {
@@ -204,7 +206,7 @@ public class UsersAPI implements Users {
       if (addressValidator.hasMultipleAddressesWithSameType(entity)) {
         asyncResultHandler.handle(succeededFuture(
           PostUsersResponse.respond400WithTextPlain(
-            "Users are limited to one address per addressType")));
+            "Users are limited to one address per addresstype")));
         return;
       }
 

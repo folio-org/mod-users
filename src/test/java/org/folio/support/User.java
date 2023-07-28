@@ -23,6 +23,5 @@ public class User {
   String patronGroup;
   TagList tags;
   Metadata metadata;
-  String type;
   Map<String, String> customFields;
 }
