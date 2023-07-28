@@ -476,9 +476,9 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .active(true)
       .build());
 
-    final var users = usersClient.getUsers("active=true");
+    final var activeUsers = usersClient.getUsers("active=true");
 
-    assertThat(users.getTotalRecords(), is(1));
+    assertThat(activeUsers.getTotalRecords(), is(2));
   }
 
   @Test
