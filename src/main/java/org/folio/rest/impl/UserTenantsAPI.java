@@ -78,7 +78,7 @@ public class UserTenantsAPI implements UserTenants {
   private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {
     Map<String, String> fields = Map.of(
       USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),
-      USERNAME_FIELD, StringUtils.defaultString(argumentsHolder.username()),
+      USERNAME_FIELD, StringUtils.defaultString(argumentsHolder.username().toLowerCase()),
       TENANT_ID_FIELD, StringUtils.defaultString(argumentsHolder.tenantId()),
       EMAIL, StringUtils.defaultString(argumentsHolder.email()),
       PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.phoneNumber()),
