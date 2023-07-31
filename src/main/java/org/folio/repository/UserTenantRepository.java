@@ -24,6 +24,7 @@ public class UserTenantRepository {
   public static final String USERNAME_FIELD = "username";
   public static final String TENANT_ID_FIELD = "tenant_id";
   public static final String CENTRAL_TENANT_ID = "central_tenant_id";
+  public static final String LOWERCASE_WRAPPED_USERNAME = String.format("LOWER(%s)", USERNAME_FIELD);
   public static final String PHONE_NUMBER = "phone_number";
   public static final String MOBILE_PHONE_NUMBER = "mobile_phone_number";
   public static final String EMAIL = "email";
