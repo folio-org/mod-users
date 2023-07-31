@@ -182,12 +182,6 @@
           "tOps": "ADD",
           "caseSensitive": false,
           "removeAccents": true
-        },
-        {
-          "fieldName": "type",
-          "tOps": "ADD",
-          "caseSensitive": false,
-          "removeAccents": true
         }
       ],
       "fullTextIndex" : [
@@ -230,10 +224,6 @@
         {
           "fieldName": "customFields",
           "tOps":"ADD"
-        },
-        {
-          "fieldName" : "type",
-          "tOps" : "ADD"
         }
       ]
     },
