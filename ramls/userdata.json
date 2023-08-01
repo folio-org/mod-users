@@ -26,7 +26,7 @@
       "type": "boolean"
     },
     "type": {
-      "description": "A type field can be used to store type of user as shadow",
+      "description": "The class of user like staff or patron; this is different from patronGroup; it can store shadow user type also",
       "type": "string"
     },
     "patronGroup": {
