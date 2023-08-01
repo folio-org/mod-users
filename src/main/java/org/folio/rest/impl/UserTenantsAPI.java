@@ -23,7 +23,7 @@ import static org.folio.repository.UserTenantRepository.EMAIL;
 import static org.folio.repository.UserTenantRepository.MOBILE_PHONE_NUMBER;
 import static org.folio.repository.UserTenantRepository.PHONE_NUMBER;
 import static org.folio.repository.UserTenantRepository.TENANT_ID_FIELD;
-import static org.folio.repository.UserTenantRepository.USERNAME_FIELD;
+import static org.folio.repository.UserTenantRepository.LOWERCASE_WRAPPED_USERNAME;
 import static org.folio.repository.UserTenantRepository.USER_ID_FIELD;
 
 public class UserTenantsAPI implements UserTenants {
@@ -78,7 +78,7 @@ public class UserTenantsAPI implements UserTenants {
   private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {
     Map<String, String> fields = Map.of(
       USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),
-      USERNAME_FIELD, StringUtils.defaultString(argumentsHolder.username()),
+      LOWERCASE_WRAPPED_USERNAME, StringUtils.defaultString(StringUtils.toRootLowerCase(argumentsHolder.username())),
       TENANT_ID_FIELD, StringUtils.defaultString(argumentsHolder.tenantId()),
       EMAIL, StringUtils.defaultString(argumentsHolder.email()),
       PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.phoneNumber()),
