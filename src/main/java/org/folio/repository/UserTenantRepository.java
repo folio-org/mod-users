@@ -37,10 +37,10 @@ public class UserTenantRepository {
     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)";
   private static final String DELETE_SQL = "DELETE FROM %s.%s WHERE user_id = $1 AND tenant_id = $2";
   private static final String UPDATE_SQL = "UPDATE %s.%s SET username = $1, email = $2, mobile_phone_number = $3, phone_number = $4 WHERE user_id = $5";
-
   private static final String SELECT_USER_TENANTS = "WITH cte AS (SELECT count(*) AS total_count FROM %1$s.%2$s %3$s) " +
     "SELECT j.*, cte.* FROM %1$s.%2$s j LEFT JOIN cte ON true " +
     "%3$s LIMIT %4$d OFFSET %5$d";
+  private static final String IS_USERNAME_ALREADY_EXISTS = "SELECT EXISTS(SELECT 1 FROM %s.%s WHERE username = $1)";
 
   public Future<UserTenantCollection> fetchUserTenants(Conn conn, String tenantId, Criterion criterion) {
     int limit = criterion.getLimit().get();
@@ -52,6 +52,12 @@ public class UserTenantRepository {
     String query = String.format(SELECT_USER_TENANTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME,
       whereClause, limit, offset);
     return conn.execute(query).map(this::mapResultSetToUserTenantCollection);
+  }
+
+  public Future<Boolean> isUserNameAlreadyExists(Conn conn, String username, String tenantId) {
+    String query = String.format(IS_USERNAME_ALREADY_EXISTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
+    Tuple queryParams = Tuple.of(username);
+    return conn.execute(query, queryParams).map(resultSet -> resultSet.iterator().next().getBoolean(0));
   }
 
   public Future<Boolean> saveUserTenant(Conn conn, UserTenant userTenant, String tenantId) {

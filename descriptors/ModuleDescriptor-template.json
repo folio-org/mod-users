@@ -27,12 +27,14 @@
         {
           "methods": [ "POST" ],
           "pathPattern": "/users",
-          "permissionsRequired": [ "users.item.post" ]
+          "permissionsRequired": [ "users.item.post" ],
+          "modulePermissions": [ "user-tenants.collection.get" ]
         },
         {
           "methods": [ "PUT" ],
           "pathPattern": "/users/{id}",
-          "permissionsRequired": [ "users.item.put" ]
+          "permissionsRequired": [ "users.item.put" ],
+          "modulePermissions": [ "user-tenants.collection.get" ]
         },
         {
           "methods": [ "DELETE" ],
