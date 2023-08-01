@@ -209,6 +209,35 @@ class UserTenantIT extends AbstractRestTestNoData {
     sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
   }
 
+  @Test
+  void canSearchByUserNameCaseInsensitive() {
+    String username = "CaSe-InSeNsItIvE";
+    String lowerCaseUsername = "case-insensitive";
+    String tenantId = "testTenant";
+    String email = "test@mail.org";
+
+    UserTenant affiliation = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername(username).withTenantId(tenantId).withEmail(email);
+
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
+    Assertions.assertEquals(201, actualStatusCode);
+
+    Map<String, String> params = Map.of("username", lowerCaseUsername);
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    Assertions.assertEquals(1, collection.getTotalRecords());
+    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    Assertions.assertEquals(username, userTenant.getUsername());
+    Assertions.assertEquals(tenantId, userTenant.getTenantId());
+    Assertions.assertEquals(email, userTenant.getEmail());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
+  }
+
   private void awaitHandlingEvent(int expectedSize) {
     Awaitility.await()
       .atMost(1, TimeUnit.MINUTES)
