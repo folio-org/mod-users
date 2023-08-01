@@ -124,6 +124,10 @@
           "tOps" : "ADD"
         },
         {
+          "fieldName" : "type",
+          "tOps" : "ADD"
+        },
+        {
           "fieldName" : "expirationDate",
           "tOps" : "ADD",
           "caseSensitive": true,
