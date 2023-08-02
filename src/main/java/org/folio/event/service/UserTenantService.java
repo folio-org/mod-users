@@ -69,7 +69,7 @@ public class UserTenantService {
   public Future<Void> isUsernameUnique(Conn conn, String username, String consortiaCentralTenantId) {
     return tenantRepository.isUserNameAlreadyExists(conn, username, consortiaCentralTenantId)
       .compose(isUserNameAlreadyExists -> {
-        if (isUserNameAlreadyExists) {
+        if (Boolean.TRUE.equals(isUserNameAlreadyExists)) {
           String errorMessage = String.format("User with this username %s already exists. Error code: %s", username, USERNAME_ALREADY_EXISTS);
           return Future.failedFuture(errorMessage);
         }
