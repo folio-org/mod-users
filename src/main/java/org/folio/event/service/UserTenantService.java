@@ -36,7 +36,12 @@ public class UserTenantService {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
     return tenantRepository.fetchUserTenants(conn, okapiTenantId, criterion)
-      .map(res -> res.getUserTenants().stream().map(UserTenant::getCentralTenantId).findFirst().orElse(null));
+      .map(res -> {
+        if (res.getTotalRecords() > 0) {
+          return res.getUserTenants().stream().map(UserTenant::getCentralTenantId).findFirst().orElse(null);
+        }
+        return null;
+      });
   }
 
   public Future<Boolean> isConsortiaTenant(Conn conn, Map<String, String> okapiHeaders) {

@@ -543,24 +543,14 @@ public class UsersAPI implements Users {
   }
 
   private Future<Void> isUsernameUpdatedAndUnique(User entity, Map<String, String> okapiHeaders, Conn conn, User userFromStorage) {
-    boolean isUsernameUpdated = ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername());
-    if (isUsernameUpdated) {
-      return isUsernameUnique(entity, okapiHeaders, conn);
-    }
-    return Future.succeededFuture();
+    return ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername()) ? isUsernameUnique(entity, okapiHeaders, conn) : Future.succeededFuture();
   }
 
   private Future<Void> isUsernameUnique(User entity, Map<String, String> okapiHeaders, Conn conn) {
-    return userTenantService.isConsortiaTenant(conn, okapiHeaders)
-      .compose(isConsortiaTenant -> {
-        if (isConsortiaTenant) {
-          return userTenantService.getConsortiaCentralTenantId(conn, okapiHeaders)
-            .compose(consortiaCentralTenantId -> {
-              if (Objects.nonNull(consortiaCentralTenantId)) {
-                return userTenantService.isUsernameUnique(conn, entity.getUsername(), consortiaCentralTenantId);
-              }
-              return Future.succeededFuture();
-            });
+    return userTenantService.getConsortiaCentralTenantId(conn, okapiHeaders)
+      .compose(consortiaCentralTenantId -> {
+        if (Objects.nonNull(consortiaCentralTenantId)) {
+          return userTenantService.isUsernameUnique(conn, entity.getUsername(), consortiaCentralTenantId);
         }
         return Future.succeededFuture();
       });
