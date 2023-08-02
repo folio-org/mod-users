@@ -182,12 +182,13 @@ class UserTenantIT extends AbstractRestTestNoData {
   void canSearchByUserNameAndEmailWithOrOperation() {
     String username = "testCrossTenantUser";
     String tenantId = "testTenant";
+    String centralTenantId = "testTenant";
     String email = "test@mail.org";
 
     UserTenant affiliation = new UserTenant()
       .withId(UUID.randomUUID().toString())
       .withUserId(UUID.randomUUID().toString())
-      .withUsername(username).withTenantId(tenantId).withEmail(email);
+      .withUsername(username).withTenantId(tenantId).withEmail(email).withCentralTenantId(centralTenantId);
 
     int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
     Assertions.assertEquals(201, actualStatusCode);
@@ -214,12 +215,13 @@ class UserTenantIT extends AbstractRestTestNoData {
     String username = "CaSe-InSeNsItIvE";
     String lowerCaseUsername = "case-insensitive";
     String tenantId = "testTenant";
+    String centralTenantId = "testTenant";
     String email = "test@mail.org";
 
     UserTenant affiliation = new UserTenant()
       .withId(UUID.randomUUID().toString())
       .withUserId(UUID.randomUUID().toString())
-      .withUsername(username).withTenantId(tenantId).withEmail(email);
+      .withUsername(username).withTenantId(tenantId).withEmail(email).withCentralTenantId(centralTenantId);
 
     int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
     Assertions.assertEquals(201, actualStatusCode);

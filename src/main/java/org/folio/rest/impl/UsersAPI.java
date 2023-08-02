@@ -551,10 +551,16 @@ public class UsersAPI implements Users {
   }
 
   private Future<Void> isUsernameUnique(User entity, Map<String, String> okapiHeaders, Conn conn) {
-    return userTenantService.getConsortiaCentralTenantId(conn, okapiHeaders)
-      .compose(consortiaCentralTenantId -> {
-        if (Objects.nonNull(consortiaCentralTenantId)) {
-          return userTenantService.isUsernameUnique(conn, entity.getUsername(), consortiaCentralTenantId);
+    return userTenantService.isConsortiaTenant(conn, okapiHeaders)
+      .compose(isConsortiaTenant -> {
+        if (isConsortiaTenant) {
+          return userTenantService.getConsortiaCentralTenantId(conn, okapiHeaders)
+            .compose(consortiaCentralTenantId -> {
+              if (Objects.nonNull(consortiaCentralTenantId)) {
+                return userTenantService.isUsernameUnique(conn, entity.getUsername(), consortiaCentralTenantId);
+              }
+              return Future.succeededFuture();
+            });
         }
         return Future.succeededFuture();
       });
