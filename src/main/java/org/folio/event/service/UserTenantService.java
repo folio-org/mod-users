@@ -7,6 +7,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.repository.UserTenantRepository;
+import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
@@ -17,6 +18,7 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.OkapiConnectionParams;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,6 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
-import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
@@ -94,7 +95,8 @@ public class UserTenantService {
 
   private Future<Void> isUsernameUniqueAcrossTenants(String username, String consortiaCentralTenantId, Map<String, String> okapiHeaders, Context vertxContext) {
     Map<String, String> okapiHeadersForCentralTenant = new HashMap<>(okapiHeaders);
-    okapiHeadersForCentralTenant.put(OKAPI_TENANT_HEADER, consortiaCentralTenantId);
+    okapiHeadersForCentralTenant.put(OkapiConnectionParams.OKAPI_TENANT_HEADER, consortiaCentralTenantId);
+    okapiHeadersForCentralTenant.put(RestVerticle.OKAPI_HEADER_TENANT, consortiaCentralTenantId);
     PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeadersForCentralTenant);
     return postgresClient.withTrans(conn -> tenantRepository.isUsernameAlreadyExists(conn, username, consortiaCentralTenantId)
       .compose(isUsernameAlreadyExists -> {
