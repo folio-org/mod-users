@@ -266,7 +266,7 @@ public class UsersAPI implements Users {
     entity.setUpdatedDate(now);
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
-    pgClient.withTrans(conn -> userTenantService.isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn)
+    pgClient.withTrans(conn -> userTenantService.isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn, vertxContext)
         .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
           .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
           .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
@@ -279,6 +279,8 @@ public class UsersAPI implements Users {
           asyncResultHandler.handle(reply);
           return;
         }
+
+        logger.info("saveUser: error={}", reply.cause().getMessage(), reply.cause());
 
         if (isDuplicateIdError(reply)) {
           asyncResultHandler.handle(
@@ -340,6 +342,7 @@ public class UsersAPI implements Users {
         return msg.matches(errMsg);
       }
     } else if (reply.cause() instanceof PgException) {
+      logger.info(reply.cause());
       return PgExceptionUtil.get(reply.cause(), 'D').matches(errMsg);
     } else if (reply.cause().getMessage() != null) {
       return reply.cause().getMessage().matches(errMsg);
@@ -523,7 +526,7 @@ public class UsersAPI implements Users {
           return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
         }
 
-        return userTenantService.isUsernameUpdatedAndUniqueAcrossTenants(entity, okapiHeaders, conn, userFromStorage)
+        return userTenantService.isUsernameUpdatedAndUniqueAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
           .compose(aVoid -> usersService.updateUser(conn, entity)
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
@@ -542,6 +545,7 @@ public class UsersAPI implements Users {
 
   private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
     String errorMessage = reply.cause().getMessage();
+    logger.info(errorMessage);
     if (isDuplicateUsernameError(errorMessage)) {
       logger.info("User with this username {} already exists", user.getUsername());
       asyncResultHandler.handle(
