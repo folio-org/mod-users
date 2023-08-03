@@ -280,8 +280,6 @@ public class UsersAPI implements Users {
           return;
         }
 
-        logger.info("saveUser: error={}", reply.cause().getMessage(), reply.cause());
-
         if (isDuplicateIdError(reply)) {
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
@@ -291,7 +289,6 @@ public class UsersAPI implements Users {
           return;
         }
         if (isDuplicateUsernameError(reply)) {
-          logger.info("User with this username {} already exists", entity.getUsername());
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
@@ -342,7 +339,6 @@ public class UsersAPI implements Users {
         return msg.matches(errMsg);
       }
     } else if (reply.cause() instanceof PgException) {
-      logger.info(reply.cause());
       return PgExceptionUtil.get(reply.cause(), 'D').matches(errMsg);
     } else if (reply.cause().getMessage() != null) {
       return reply.cause().getMessage().matches(errMsg);
@@ -545,7 +541,6 @@ public class UsersAPI implements Users {
 
   private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
     String errorMessage = reply.cause().getMessage();
-    logger.info(errorMessage);
     if (isDuplicateUsernameError(errorMessage)) {
       logger.info("User with this username {} already exists", user.getUsername());
       asyncResultHandler.handle(

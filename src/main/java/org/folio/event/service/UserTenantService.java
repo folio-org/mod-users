@@ -49,7 +49,6 @@ public class UserTenantService {
     return tenantRepository.fetchUserTenants(conn, okapiTenantId, criterion)
       .map(res -> {
         if (res.getTotalRecords() > 0) {
-          logger.info("getConsortiaCentralTenantId: userTenants= {}", res);
           return res.getUserTenants().stream().map(UserTenant::getCentralTenantId).findFirst().orElse(null);
         }
         return null;
@@ -85,8 +84,8 @@ public class UserTenantService {
   public Future<Void> isUsernameUniqueAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
     return getConsortiaCentralTenantId(conn, okapiHeaders)
       .compose(consortiaCentralTenantId -> {
-        logger.info("isUsernameUniqueAcrossTenants: consortiaCentralTenantId={}", consortiaCentralTenantId);
         if (Objects.nonNull(consortiaCentralTenantId)) {
+          logger.info("Found central tenant id = {}", consortiaCentralTenantId);
           return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
         }
         return Future.succeededFuture();

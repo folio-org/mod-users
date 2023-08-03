@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.event.UserEventType.*;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -43,6 +44,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
@@ -270,7 +272,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canUpdateAUser() throws InterruptedException {
+  void canUpdateAUser() {
     final var user = usersClient.createUser(User.builder()
       .username("julia")
       .build());
@@ -281,11 +283,13 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .build())
       .statusCode(is(204));
 
-    Thread.sleep(3000);
-
-    final var updatedUser = usersClient.getUser(user.getId());
-
-    assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
+    Awaitility.await()
+            .atMost(1, MINUTES)
+            .pollInterval(5, SECONDS)
+            .untilAsserted(() -> {
+              final var updatedUser = usersClient.getUser(user.getId());
+              assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
+            });
   }
 
   @Test
@@ -550,8 +554,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
   @Test
   void cannotUpdateUserWithSameUsernameAsExistingUserForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = new UserTenant()
       .withId(UUID.randomUUID().toString())
       .withUserId(UUID.randomUUID().toString())
@@ -586,9 +588,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
-//    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = new UserTenant()
       .withId(UUID.randomUUID().toString())
       .withUserId(UUID.randomUUID().toString())
