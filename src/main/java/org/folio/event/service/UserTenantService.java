@@ -2,7 +2,9 @@ package org.folio.event.service;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import org.apache.commons.lang3.ObjectUtils;
 import org.folio.repository.UserTenantRepository;
+import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
 import org.folio.rest.persist.Conn;
@@ -13,6 +15,7 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
@@ -66,10 +69,24 @@ public class UserTenantService {
     return pgClient.withConn(conn -> tenantRepository.deleteUserTenant(conn, userTenant, tenantId));
   }
 
-  public Future<Void> isUsernameUnique(Conn conn, String username, String consortiaCentralTenantId) {
-    return tenantRepository.isUserNameAlreadyExists(conn, username, consortiaCentralTenantId)
-      .compose(isUserNameAlreadyExists -> {
-        if (isUserNameAlreadyExists) {
+  public Future<Void> isUsernameUpdatedAndUniqueAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, User userFromStorage) {
+    return ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername()) ? isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn) : Future.succeededFuture();
+  }
+
+  public Future<Void> isUsernameUniqueAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn) {
+    return getConsortiaCentralTenantId(conn, okapiHeaders)
+      .compose(consortiaCentralTenantId -> {
+        if (Objects.nonNull(consortiaCentralTenantId)) {
+          return isUsernameUniqueAcrossTenants(conn, entity.getUsername(), consortiaCentralTenantId);
+        }
+        return Future.succeededFuture();
+      });
+  }
+
+  public Future<Void> isUsernameUniqueAcrossTenants(Conn conn, String username, String consortiaCentralTenantId) {
+    return tenantRepository.isUsernameAlreadyExists(conn, username, consortiaCentralTenantId)
+      .compose(isUsernameAlreadyExists -> {
+        if (isUsernameAlreadyExists) {
           String errorMessage = String.format("User with this username %s already exists. Error code: %s", username, USERNAME_ALREADY_EXISTS);
           return Future.failedFuture(errorMessage);
         }

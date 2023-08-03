@@ -25,7 +25,6 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +42,6 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
-import org.folio.rest.persist.Conn;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.Criteria.Limit;
@@ -268,7 +266,7 @@ public class UsersAPI implements Users {
     entity.setUpdatedDate(now);
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
-    pgClient.withTrans(conn -> isUsernameUnique(entity, okapiHeaders, conn)
+    pgClient.withTrans(conn -> userTenantService.isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn)
         .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
           .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
           .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
@@ -525,7 +523,7 @@ public class UsersAPI implements Users {
           return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
         }
 
-        return isUsernameUpdatedAndUnique(entity, okapiHeaders, conn, userFromStorage)
+        return userTenantService.isUsernameUpdatedAndUniqueAcrossTenants(entity, okapiHeaders, conn, userFromStorage)
           .compose(aVoid -> usersService.updateUser(conn, entity)
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
@@ -540,20 +538,6 @@ public class UsersAPI implements Users {
         userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
       }));
-  }
-
-  private Future<Void> isUsernameUpdatedAndUnique(User entity, Map<String, String> okapiHeaders, Conn conn, User userFromStorage) {
-    return ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername()) ? isUsernameUnique(entity, okapiHeaders, conn) : Future.succeededFuture();
-  }
-
-  private Future<Void> isUsernameUnique(User entity, Map<String, String> okapiHeaders, Conn conn) {
-    return userTenantService.getConsortiaCentralTenantId(conn, okapiHeaders)
-      .compose(consortiaCentralTenantId -> {
-        if (Objects.nonNull(consortiaCentralTenantId)) {
-          return userTenantService.isUsernameUnique(conn, entity.getUsername(), consortiaCentralTenantId);
-        }
-        return Future.succeededFuture();
-      });
   }
 
   private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {

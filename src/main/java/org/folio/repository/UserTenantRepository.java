@@ -54,7 +54,7 @@ public class UserTenantRepository {
     return conn.execute(query).map(this::mapResultSetToUserTenantCollection);
   }
 
-  public Future<Boolean> isUserNameAlreadyExists(Conn conn, String username, String tenantId) {
+  public Future<Boolean> isUsernameAlreadyExists(Conn conn, String username, String tenantId) {
     String query = String.format(IS_USERNAME_ALREADY_EXISTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
     Tuple queryParams = Tuple.of(username);
     return conn.execute(query, queryParams).map(resultSet -> resultSet.iterator().next().getBoolean(0));
