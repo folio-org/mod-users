@@ -43,6 +43,12 @@ public class UserTenantService {
     return pgClient.withConn(conn -> tenantRepository.fetchUserTenants(conn, tenantId, criterion));
   }
 
+  /**
+   * Get the consortia central tenant id, if we are not in consortium mode - we always return null result and it is expected
+   * @param conn connection in transaction
+   * @param okapiHeaders okapi headers
+   * @return For consortia return - consortiaCentralTenantId, for common deployment - null
+   */
   public Future<String> getConsortiaCentralTenantId(Conn conn, Map<String, String> okapiHeaders) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
@@ -115,7 +121,7 @@ public class UserTenantService {
     PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeadersForCentralTenant);
     return postgresClient.withConn(conn -> tenantRepository.isUsernameAlreadyExists(conn, username, consortiaCentralTenantId)
       .compose(isUsernameAlreadyExists -> {
-        if (isUsernameAlreadyExists) {
+        if (Boolean.TRUE.equals(isUsernameAlreadyExists)) {
           logger.error("User with this username {} already exists", username);
           String errorMessage = String.format("User with this username %s already exists. Error code: %s", username, USERNAME_ALREADY_EXISTS);
           return Future.failedFuture(errorMessage);
