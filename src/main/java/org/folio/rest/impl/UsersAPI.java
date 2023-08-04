@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.event.service.UserTenantService;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
@@ -80,10 +81,12 @@ public class UsersAPI implements Users {
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
   private final UsersService usersService;
+  private final UserTenantService userTenantService;
 
   public UsersAPI() {
     this.userOutboxService = new UserOutboxService();
     this.usersService = new UsersService();
+    this.userTenantService = new UserTenantService();
   }
   /**
    * right now, just query the join view if a cql was passed in, otherwise work with the
@@ -262,10 +265,12 @@ public class UsersAPI implements Users {
     entity.setUpdatedDate(now);
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
-    pgClient.withTrans(conn -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-        .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
-        .map(aVoid -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
-        .map(Response.class::cast))
+    pgClient.withTrans(conn -> userTenantService.isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn, vertxContext)
+        .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
+          .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
+          .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
+          .map(Response.class::cast)))
+
       .onComplete(reply -> {
         if (reply.succeeded()) {
           logger.debug("Save successful");
@@ -334,6 +339,8 @@ public class UsersAPI implements Users {
       }
     } else if (reply.cause() instanceof PgException) {
       return PgExceptionUtil.get(reply.cause(), 'D').matches(errMsg);
+    } else if (Objects.nonNull(reply.cause()) && StringUtils.isNotEmpty(reply.cause().getMessage())) {
+      return reply.cause().getMessage().matches(errMsg);
     }
     return false;
   }
@@ -514,10 +521,11 @@ public class UsersAPI implements Users {
           return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
         }
 
-        return usersService.updateUser(conn, entity)
-          .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
-          .map(aVoid -> PutUsersByUserIdResponse.respond204())
-          .map(Response.class::cast);
+        return userTenantService.isUsernameUpdatedAndUniqueAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
+          .compose(aVoid -> usersService.updateUser(conn, entity)
+            .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
+            .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
+            .map(Response.class::cast));
         })
       .onComplete(reply -> {
         if (reply.cause() != null) {

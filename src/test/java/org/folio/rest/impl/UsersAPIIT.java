@@ -3,9 +3,9 @@ package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.USER_CREATED;
-import static org.folio.event.UserEventType.USER_DELETED;
+import static org.folio.event.UserEventType.*;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -44,6 +44,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
@@ -282,9 +283,13 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .build())
       .statusCode(is(204));
 
-    final var updatedUser = usersClient.getUser(user.getId());
-
-    assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        final var updatedUser = usersClient.getUser(user.getId());
+        assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
+      });
   }
 
   @Test
@@ -512,7 +517,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     UserTenant userTenant = new UserTenant()
       .withId(UUID.randomUUID().toString())
       .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test");
+      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
 
     userTenantClient.attemptToSaveUserTenant(userTenant);
 
@@ -544,6 +549,68 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
+  }
+
+  @Test
+  void cannotUpdateUserWithSameUsernameAsExistingUserForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    UserTenant userTenant = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
+
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
+
+    usersClient.attemptToUpdateUser(
+        User.builder()
+          .id(user.getId())
+          .username("user_test")
+          .build())
+      .statusCode(400)
+      .body(is("User with this username already exists"));
+
+  }
+
+  @Test
+  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
+    UserTenant userTenant = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
+
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = User.builder()
+      .id(userId)
+      .username("user_test")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("user")
+        .preferredFirstName("jules")
+        .lastName("test")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(422)
+      .extract().as(ValidationErrors.class);
   }
 
   @Test
