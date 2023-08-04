@@ -55,6 +55,12 @@ public class UserTenantService {
       });
   }
 
+  /**
+   * Check is it consortia tenant or common deployment.
+   * @param conn connection in transaction
+   * @param okapiHeaders okapi headers
+   * @return succeededFuture(true) if it's consortia tenant
+   */
   public Future<Boolean> isConsortiaTenant(Conn conn, Map<String, String> okapiHeaders) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
@@ -81,6 +87,16 @@ public class UserTenantService {
     return ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername()) ? isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn, vertxContext) : Future.succeededFuture();
   }
 
+  /**
+   * This check performing only when we are in consortium mode,
+   * for common deployments we don't need to check crosstenant username uniqueness.
+   * For common deployments always will be return succeeded future.
+   * @param entity the user
+   * @param okapiHeaders okapi headers
+   * @param conn connection in transaction
+   * @param vertxContext The Vertx Context Object
+   * @return succeededFuture if crosstenant username is unique
+   */
   public Future<Void> isUsernameUniqueAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
     return getConsortiaCentralTenantId(conn, okapiHeaders)
       .compose(consortiaCentralTenantId -> {
@@ -97,7 +113,7 @@ public class UserTenantService {
     okapiHeadersForCentralTenant.put(OkapiConnectionParams.OKAPI_TENANT_HEADER, consortiaCentralTenantId);
     okapiHeadersForCentralTenant.put(RestVerticle.OKAPI_HEADER_TENANT, consortiaCentralTenantId);
     PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeadersForCentralTenant);
-    return postgresClient.withTrans(conn -> tenantRepository.isUsernameAlreadyExists(conn, username, consortiaCentralTenantId)
+    return postgresClient.withConn(conn -> tenantRepository.isUsernameAlreadyExists(conn, username, consortiaCentralTenantId)
       .compose(isUsernameAlreadyExists -> {
         if (isUsernameAlreadyExists) {
           logger.error("User with this username {} already exists", username);

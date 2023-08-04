@@ -81,7 +81,6 @@ public class UsersAPI implements Users {
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
   private final UsersService usersService;
-
   private final UserTenantService userTenantService;
 
   public UsersAPI() {
@@ -340,7 +339,7 @@ public class UsersAPI implements Users {
       }
     } else if (reply.cause() instanceof PgException) {
       return PgExceptionUtil.get(reply.cause(), 'D').matches(errMsg);
-    } else if (reply.cause().getMessage() != null) {
+    } else if (Objects.nonNull(reply.cause()) && StringUtils.isNotEmpty(reply.cause().getMessage())) {
       return reply.cause().getMessage().matches(errMsg);
     }
     return false;

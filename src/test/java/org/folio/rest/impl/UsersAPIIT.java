@@ -284,12 +284,12 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(is(204));
 
     Awaitility.await()
-            .atMost(1, MINUTES)
-            .pollInterval(5, SECONDS)
-            .untilAsserted(() -> {
-              final var updatedUser = usersClient.getUser(user.getId());
-              assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
-            });
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        final var updatedUser = usersClient.getUser(user.getId());
+        assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
+      });
   }
 
   @Test
