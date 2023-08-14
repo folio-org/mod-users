@@ -48,6 +48,25 @@ resourceTypes:
         type: string
         example: sfs000
         required: false
+      email:
+        description: Filter by email
+        type: string
+        example: test@mail.com
+        required: false
+      phoneNumber:
+        description: Filter by mobile number
+        type: string
+        example: "12345676"
+        required: false
+      mobilePhoneNumber:
+        description: Filter by mobile phone number
+        type: string
+        example: "123456789"
+        required: false
+      queryOp:
+        description: Query operation for searching
+        type: string
+        default: "and"
     responses:
       200:
         body:

@@ -39,4 +39,16 @@ public class UserTenantClient {
       .then()
       .extract().statusCode();
   }
+
+  public void deleteUserTenant(String id) {
+   configuration.initialSpecification()
+     .when()
+     .delete("/{id}", Map.of("id", id))
+     .then();
+  }
+
+  public void deleteAllUserTenants() {
+    final var usersTenants = getAllUsersTenants();
+    usersTenants.getUserTenants().forEach(addressType -> deleteUserTenant(addressType.getId()));
+  }
 }

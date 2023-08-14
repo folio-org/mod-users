@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 @ExtendWith(VertxExtension.class)
 class UserTenantIT extends AbstractRestTestNoData {
 
@@ -29,22 +32,23 @@ class UserTenantIT extends AbstractRestTestNoData {
   private static final String USER_B = "user_b";
   private static final String TENANT_X = "tenant_x";
   private static final String TENANT_Y = "tenant_y";
+
   private static final UserTenant FIRST_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_A).withTenantId(TENANT_X);
+    .withUsername(USER_A).withTenantId(TENANT_X);
   private static final UserTenant SECOND_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_B).withTenantId(TENANT_X);
+    .withUsername(USER_B).withTenantId(TENANT_X);
   private static final UserTenant THIRD_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_A).withTenantId(TENANT_Y);
+    .withUsername(USER_A).withTenantId(TENANT_Y);
   private static final UserTenant FOURTH_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUserName(USER_B).withTenantId(TENANT_Y);
+    .withUsername(USER_B).withTenantId(TENANT_Y);
 
   @BeforeAll
   @SneakyThrows
@@ -78,6 +82,27 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canUpdateUserTenant() {
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+    UserTenant userTenant = collection.getUserTenants().get(0);
+    userTenant.setEmail("Test");
+    userTenant.setPhoneNumber("1234");
+    userTenant.setUsername("testUser");
+    userTenant.setMobilePhoneNumber("000000");
+    sendAffiliationUpdatedEvent(List.of(userTenant));
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+        Assertions.assertEquals("Test", collection2.getUserTenants().get(2).getEmail());
+        Assertions.assertEquals("1234", collection2.getUserTenants().get(2).getPhoneNumber());
+        Assertions.assertEquals("testUser", collection2.getUserTenants().get(2).getUsername());
+        Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
+      });
+  }
+
+  @Test
   void canSearchByUserId() {
     String userId = SECOND_AFFILIATION.getUserId();
     Map<String, String> params = Map.of("userId", userId);
@@ -97,22 +122,21 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     List<UserTenant> userTenants = collection.getUserTenants();
     Assertions.assertEquals(2, collection.getTotalRecords());
-    userTenants.forEach(userTenant -> Assertions.assertEquals(USER_A, userTenant.getUserName()));
+    userTenants.forEach(userTenant -> Assertions.assertEquals(USER_A, userTenant.getUsername()));
   }
 
   @Test
   void canSearchByUserNameAndTenantId() {
-    String username = THIRD_AFFILIATION.getUserName();
+    String username = THIRD_AFFILIATION.getUsername();
     String tenantId = THIRD_AFFILIATION.getTenantId();
     Map<String, String> params = Map.of(
       "username", username,
       "tenantId", tenantId);
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
-
     Assertions.assertEquals(1, collection.getTotalRecords());
     UserTenant userTenant = collection.getUserTenants().iterator().next();
-    Assertions.assertEquals(username, userTenant.getUserName());
+    Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
   }
 
@@ -144,9 +168,9 @@ class UserTenantIT extends AbstractRestTestNoData {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(3, collection.getTotalRecords());
-    Assertions.assertTrue(collection.getUserTenants().contains(FIRST_AFFILIATION));
+    Assertions.assertTrue(collection.getUserTenants().contains(THIRD_AFFILIATION));
 
-    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(FIRST_AFFILIATION);
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(THIRD_AFFILIATION);
     Assertions.assertEquals(500, actualStatusCode);
 
     collection = userTenantClient.getAllUsersTenants();
@@ -154,10 +178,72 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(3, collection.getTotalRecords());
   }
 
+  @Test
+  void canSearchByUserNameAndEmailWithOrOperation() {
+    String username = "testCrossTenantUser";
+    String tenantId = "testTenant";
+    String centralTenantId = "testTenant";
+    String email = "test@mail.org";
+
+    UserTenant affiliation = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername(username).withTenantId(tenantId).withEmail(email).withCentralTenantId(centralTenantId);
+
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
+    Assertions.assertEquals(201, actualStatusCode);
+
+    Map<String, String> params = Map.of(
+      "username", username,
+      "email", username,
+      "queryOp", "or");
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    Assertions.assertEquals(1, collection.getTotalRecords());
+    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    Assertions.assertEquals(username, userTenant.getUsername());
+    Assertions.assertEquals(tenantId, userTenant.getTenantId());
+    Assertions.assertEquals(email, userTenant.getEmail());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
+  }
+
+  @Test
+  void canSearchByUserNameCaseInsensitive() {
+    String username = "CaSe-InSeNsItIvE";
+    String lowerCaseUsername = "case-insensitive";
+    String tenantId = "testTenant";
+    String centralTenantId = "testTenant";
+    String email = "test@mail.org";
+
+    UserTenant affiliation = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername(username).withTenantId(tenantId).withEmail(email).withCentralTenantId(centralTenantId);
+
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
+    Assertions.assertEquals(201, actualStatusCode);
+
+    Map<String, String> params = Map.of("username", lowerCaseUsername);
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    Assertions.assertEquals(1, collection.getTotalRecords());
+    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    Assertions.assertEquals(username, userTenant.getUsername());
+    Assertions.assertEquals(tenantId, userTenant.getTenantId());
+    Assertions.assertEquals(email, userTenant.getEmail());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
+  }
+
   private void awaitHandlingEvent(int expectedSize) {
     Awaitility.await()
       .atMost(1, TimeUnit.MINUTES)
-      .pollInterval(5, TimeUnit.SECONDS)
+      .pollInterval(5, SECONDS)
       .until(() -> {
         UserTenantCollection collection = userTenantClient.getAllUsersTenants();
         return collection.getTotalRecords() == expectedSize;
@@ -168,6 +254,15 @@ class UserTenantIT extends AbstractRestTestNoData {
     for (UserTenant userTenant : List.of(FIRST_AFFILIATION, SECOND_AFFILIATION, THIRD_AFFILIATION)) {
       String eventPayload = Json.encode(userTenant);
       sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
+        userTenant.getId(), eventPayload);
+    }
+    awaitHandlingEvent(3);
+  }
+
+  private void sendAffiliationUpdatedEvent(List<UserTenant> userTenants) {
+    for (UserTenant userTenant : userTenants) {
+      String eventPayload = Json.encode(userTenant);
+      sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED.getTopicName(),
         userTenant.getId(), eventPayload);
     }
     awaitHandlingEvent(3);

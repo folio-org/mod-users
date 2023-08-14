@@ -13,6 +13,7 @@ import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.resource.interfaces.InitAPI;
 import org.folio.verticle.ConsortiumCreateEventConsumersVerticle;
 import org.folio.verticle.ConsortiumDeleteEventConsumersVerticle;
+import org.folio.verticle.ConsortiumUpdateEventConsumersVerticle;
 
 import java.util.Arrays;
 
@@ -40,12 +41,18 @@ public class InitAPIs implements InitAPI {
     int usersConsortiumConsumerInstancesNumber = Integer.parseInt(getPropertyValue("users.consortium.kafka.consumer.instancesNumber", "1"));
 
     Promise<String> consortiumCreateEventConsumer = Promise.promise();
+    Promise<String> consortiumUpdateEventConsumer = Promise.promise();
     Promise<String> consortiumDeleteEventConsumer = Promise.promise();
 
     vertx.deployVerticle((ConsortiumCreateEventConsumersVerticle.class.getName()),
       new DeploymentOptions()
         .setWorker(true)
         .setInstances(usersConsortiumConsumerInstancesNumber), consortiumCreateEventConsumer);
+
+    vertx.deployVerticle((ConsortiumUpdateEventConsumersVerticle.class.getName()),
+      new DeploymentOptions()
+        .setWorker(true)
+        .setInstances(usersConsortiumConsumerInstancesNumber), consortiumUpdateEventConsumer);
 
     vertx.deployVerticle((ConsortiumDeleteEventConsumersVerticle.class.getName()),
       new DeploymentOptions()
@@ -54,7 +61,8 @@ public class InitAPIs implements InitAPI {
 
     return GenericCompositeFuture.all(Arrays.asList(
       consortiumCreateEventConsumer.future(),
-      consortiumDeleteEventConsumer.future()
+      consortiumDeleteEventConsumer.future(),
+      consortiumUpdateEventConsumer.future()
     ));
   }
 
