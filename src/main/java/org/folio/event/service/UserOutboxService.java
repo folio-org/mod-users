@@ -204,10 +204,12 @@ public class UserOutboxService {
     Personal oldPersonal = userFromStorage.getPersonal();
     Personal newPersonal = updatedUser.getPersonal();
 
-    if (oldPersonal == null || newPersonal == null) {
-      logger.info("Personal fields have been updated");
-      return ObjectUtils.notEqual(oldPersonal.getFirstName(), newPersonal.getFirstName())
-        || ObjectUtils.notEqual(oldPersonal.getLastName(), newPersonal.getLastName());
+    if (oldPersonal != null && newPersonal != null) {
+      if (ObjectUtils.notEqual(oldPersonal.getFirstName(), newPersonal.getFirstName())
+        || ObjectUtils.notEqual(oldPersonal.getLastName(), newPersonal.getLastName())) {
+        logger.info("Personal fields have been updated");
+        return true;
+      }
     }
     return false;
   }
