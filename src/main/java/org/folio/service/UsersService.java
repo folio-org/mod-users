@@ -36,16 +36,13 @@ public class UsersService {
       .onFailure(e -> logger.error("updateUser failed, userId={}", user.getId(), e));
   }
 
-  public static User getConsortiumUserDto(User user, UserEvent.Action eventAction) {
+  public static User getConsortiumUserDto(User user) {
     User userDto = new User()
       .withId(user.getId())
       .withUsername(user.getUsername())
-      .withActive(user.getActive());
-
-    if (ObjectUtils.notEqual(UserEvent.Action.DELETE, eventAction)) {
-      userDto.setBarcode(user.getBarcode());
-      userDto.setExternalSystemId(user.getExternalSystemId());
-    }
+      .withActive(user.getActive())
+      .withBarcode(user.getBarcode())
+      .withExternalSystemId(user.getExternalSystemId());
 
     if (user.getPersonal() != null) {
       userDto.withPersonal(new Personal()

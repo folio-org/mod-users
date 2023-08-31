@@ -76,7 +76,7 @@ public class UserEventProducer {
       event.setActionDate(metadata.getCreatedDate());
       event.setPerformedBy(metadata.getUpdatedByUserId());
     }
-    event.setUser(UsersService.getConsortiumUserDto(user, eventAction));
+    event.setUser(UsersService.getConsortiumUserDto(user));
 
     return event;
   }
