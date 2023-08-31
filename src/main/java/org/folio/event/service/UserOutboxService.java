@@ -89,7 +89,7 @@ public class UserOutboxService {
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
         boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
-        if (isConsortiaTenant && isConsortiaFieldsUpdated) {
+        if (isConsortiaTenant && (isConsortiaFieldsUpdated || isPersonalDataChanged)) {
           return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
         }
         return Future.succeededFuture();
