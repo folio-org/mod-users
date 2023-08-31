@@ -38,7 +38,9 @@ public class UsersService {
     User userDto = new User()
       .withId(user.getId())
       .withUsername(user.getUsername())
-      .withActive(user.getActive());
+      .withActive(user.getActive())
+      .withBarcode(user.getBarcode())
+      .withExternalSystemId(user.getExternalSystemId());
 
     if (user.getPersonal() != null) {
       userDto.withPersonal(new Personal()

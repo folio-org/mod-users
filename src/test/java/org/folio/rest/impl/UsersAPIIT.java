@@ -552,6 +552,67 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canUpdateUserNameForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+    UserTenant userTenant = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
+
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+
+    String userId = UUID.randomUUID().toString();
+
+    final User userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .lastName("brockhurst")
+        .preferredFirstName("jules")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    usersClient.createUser(userToCreate);
+
+    User userToUpdate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("new_julia")
+        .lastName("new_brockhurst")
+        .preferredFirstName("jules")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(204));
+
+    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
+    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
+
+    assertEquals(1, userCreatedEvents.size());
+    assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, userId);
+
+    assertEquals(1, userUpdatedEvents.size());
+    assertEventContent(userUpdatedEvents.get(0), UserEvent.Action.EDIT, userId);
+
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        final var updatedUser = usersClient.getUser(userId);
+        assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
+        assertThat(updatedUser.getPersonal().getLastName(), is("new_brockhurst"));
+      });
+  }
+
+  @Test
   void cannotUpdateUserWithSameUsernameAsExistingUserForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     UserTenant userTenant = new UserTenant()

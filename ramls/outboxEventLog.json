@@ -27,6 +27,10 @@
     "payload": {
       "description": "Event payload to send to Kafka",
       "type": "string"
+    },
+    "isPersonalDataChanged" : {
+      "description": "Is personal data changed",
+      "type": "boolean"
     }
   },
   "additionalProperties": false
