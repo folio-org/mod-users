@@ -28,6 +28,7 @@ public class UserOutboxService {
 
   private static final Logger logger = LogManager.getLogger(UserOutboxService.class);
   private static final String OUTBOX_LOCK_NAME = "user_outbox";
+  private static final String PATRON = "patron";
 
   private final UserEventProducer producer;
   private final InternalLockRepository lockRepository;
@@ -77,7 +78,7 @@ public class UserOutboxService {
   public Future<Boolean> saveUserOutboxLogForCreateOrDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
       return userTenantService.isConsortiaTenant(conn, okapiHeaders)
         .compose(isConsortiaTenant -> {
-          if (isConsortiaTenant) {
+          if (isConsortiaTenant && isNotPatronUserType(user)) {
             return saveUserOutboxLog(conn, user, action, okapiHeaders);
           }
           return Future.succeededFuture();
@@ -88,7 +89,7 @@ public class UserOutboxService {
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
-        if (isConsortiaTenant && isConsortiaFieldsUpdated) {
+        if (isConsortiaTenant && isNotPatronUserType(user) && isConsortiaFieldsUpdated) {
           return saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
         }
         return Future.succeededFuture();
@@ -178,5 +179,9 @@ public class UserOutboxService {
     return ObjectUtils.notEqual(oldPersonal.getEmail(), newPersonal.getEmail())
       || ObjectUtils.notEqual(oldPersonal.getPhone(), newPersonal.getPhone())
       || ObjectUtils.notEqual(oldPersonal.getMobilePhone(), newPersonal.getMobilePhone());
+  }
+
+  private boolean isNotPatronUserType(User user) {
+    return ObjectUtils.notEqual(PATRON, user.getType());
   }
 }

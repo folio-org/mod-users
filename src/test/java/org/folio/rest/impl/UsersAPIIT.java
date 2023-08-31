@@ -511,6 +511,46 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canDeleteAPatronUser() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
+    UserTenant userTenant = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
+
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .type("patron")
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
+
+    usersClient.deleteUser(user.getId());
+
+    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
+    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
+
+    assertEquals(0, userCreatedEvents.size());
+
+    assertEquals(1, userDeletedEvents.size());
+
+    usersClient.attemptToGetUser(user.getId())
+      .statusCode(404);
+  }
+
+  @Test
   void canDeleteAUserForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
