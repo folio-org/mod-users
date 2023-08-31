@@ -217,6 +217,6 @@ public class UserOutboxService {
   }
 
   private boolean isPersonalNotNull(Personal oldPersonal, Personal newPersonal) {
-    return oldPersonal != null && newPersonal != null;
+    return ObjectUtils.allNotNull(oldPersonal, newPersonal);
   }
 }
