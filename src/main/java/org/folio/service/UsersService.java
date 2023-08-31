@@ -2,12 +2,10 @@ package org.folio.service;
 
 import io.vertx.core.Future;
 import io.vertx.ext.web.handler.HttpException;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.persist.Conn;
 
 import javax.ws.rs.core.Response;
