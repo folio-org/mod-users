@@ -39,14 +39,6 @@
       "type": "object",
       "$ref": "userdata.json"
     },
-    "barcode": {
-      "description": "The barcode of the user's",
-      "type": "string"
-    },
-    "externalSystemId": {
-      "description": "The externalSystemId of the user's",
-      "type": "string"
-    },
     "personalDataChanged": {
       "description": "Is the personal data changed for the user",
       "type": "boolean"

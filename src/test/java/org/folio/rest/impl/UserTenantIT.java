@@ -89,6 +89,8 @@ class UserTenantIT extends AbstractRestTestNoData {
     userTenant.setPhoneNumber("1234");
     userTenant.setUsername("testUser");
     userTenant.setMobilePhoneNumber("000000");
+    userTenant.setBarcode("12345");
+    userTenant.setExternalSystemId("54321");
     sendAffiliationUpdatedEvent(List.of(userTenant));
     Awaitility.await()
       .atMost(1, MINUTES)
@@ -99,6 +101,8 @@ class UserTenantIT extends AbstractRestTestNoData {
         Assertions.assertEquals("1234", collection2.getUserTenants().get(2).getPhoneNumber());
         Assertions.assertEquals("testUser", collection2.getUserTenants().get(2).getUsername());
         Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
+        Assertions.assertEquals("12345", collection2.getUserTenants().get(2).getBarcode());
+        Assertions.assertEquals("54321", collection2.getUserTenants().get(2).getExternalSystemId());
       });
   }
 

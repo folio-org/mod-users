@@ -75,7 +75,7 @@ public class UserTenantRepository {
   public Future<Boolean> updateUserTenant(Conn conn, UserTenant userTenant, String tenantId) {
     String query = String.format(UPDATE_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
     Tuple queryParams = Tuple.of(userTenant.getUsername(), userTenant.getEmail(), userTenant.getMobilePhoneNumber(),
-      userTenant.getPhoneNumber(),userTenant.getBarcode(), userTenant.getExternalSystemId(), userTenant.getUserId());
+      userTenant.getPhoneNumber(), userTenant.getBarcode(), userTenant.getExternalSystemId(), userTenant.getUserId());
     return conn.execute(query, queryParams)
       .map(resultSet -> resultSet.size() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));

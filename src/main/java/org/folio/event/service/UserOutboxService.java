@@ -178,7 +178,7 @@ public class UserOutboxService {
     if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())
         || ObjectUtils.notEqual(userFromStorage.getBarcode(), updatedUser.getBarcode())
         || ObjectUtils.notEqual(userFromStorage.getExternalSystemId(), updatedUser.getExternalSystemId())) {
-      logger.info("The user has been updated to {}", updatedUser.getUsername());
+      logger.info("The user with id: {} has been updated", updatedUser.getId());
       return true;
     }
 
@@ -186,12 +186,12 @@ public class UserOutboxService {
     Personal newPersonal = updatedUser.getPersonal();
 
     if (oldPersonal == null && newPersonal == null) {
-      logger.info("Personal fields have not been updated");
+      logger.info("Personal fields have not been updated for user with id: {}", updatedUser.getId());
       return false;
     }
 
     if (oldPersonal == null || newPersonal == null) {
-      logger.info("Personal fields have been updated");
+      logger.info("Personal fields have been updated for user with id: {}", updatedUser.getId());
       return true;
     }
 
@@ -205,7 +205,7 @@ public class UserOutboxService {
     Personal newPersonal = updatedUser.getPersonal();
 
     if (isPersonalNotNull(oldPersonal, newPersonal) && isPersonalNameChanged(oldPersonal, newPersonal)) {
-      logger.info("Personal fields have been updated");
+      logger.info("Personal name have been updated for user with id: {}", updatedUser.getId());
       return true;
     }
     return false;

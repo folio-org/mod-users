@@ -7,7 +7,6 @@ import io.vertx.core.json.Json;
 import io.vertx.kafka.client.producer.KafkaHeader;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.event.KafkaConfigSingleton;
@@ -48,21 +47,21 @@ public class UserEventProducer {
     UserEvent event = getUserEvent(user, tenantId, isPersonalDataChanged, eventAction);
     String eventPayload = Json.encode(event);
 
-      return switch (eventAction) {
-          case CREATE -> {
-              logger.info("Starting to send user created event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-              yield sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
-          }
-          case DELETE -> {
-              logger.info("Starting to send user deleted event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-              yield sendToKafka(UserEventType.USER_DELETED, eventPayload, okapiHeaders, user.getId());
-          }
-          case EDIT -> {
-              logger.info("Starting to send user edit event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-              yield sendToKafka(UserEventType.USER_UPDATED, eventPayload, okapiHeaders, user.getId());
-          }
-          default -> throw new IllegalStateException("Unexpected value: " + eventAction);
-      };
+    return switch (eventAction) {
+      case CREATE -> {
+        logger.info("Starting to send user created event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
+        yield sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
+      }
+      case DELETE -> {
+        logger.info("Starting to send user deleted event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
+        yield sendToKafka(UserEventType.USER_DELETED, eventPayload, okapiHeaders, user.getId());
+      }
+      case EDIT -> {
+        logger.info("Starting to send user edit event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
+        yield sendToKafka(UserEventType.USER_UPDATED, eventPayload, okapiHeaders, user.getId());
+      }
+      default -> throw new IllegalStateException("Unexpected value: " + eventAction);
+    };
   }
 
   private UserEvent getUserEvent(User user, String tenantId, boolean isPersonalDataChanged, UserEvent.Action eventAction) {
@@ -77,11 +76,7 @@ public class UserEventProducer {
       event.setActionDate(metadata.getCreatedDate());
       event.setPerformedBy(metadata.getUpdatedByUserId());
     }
-    event.setUser(UsersService.getConsortiumUserDto(user));
-    if (ObjectUtils.notEqual(UserEvent.Action.DELETE, eventAction)) {
-      event.setBarcode(user.getBarcode());
-      event.setExternalSystemId(user.getExternalSystemId());
-    }
+    event.setUser(UsersService.getConsortiumUserDto(user, eventAction));
 
     return event;
   }
