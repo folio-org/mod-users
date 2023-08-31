@@ -39,7 +39,7 @@
       "type": "object",
       "$ref": "userdata.json"
     },
-    "personalDataChanged": {
+    "isPersonalDataChanged": {
       "description": "Is the personal data changed for the user",
       "type": "boolean"
     }

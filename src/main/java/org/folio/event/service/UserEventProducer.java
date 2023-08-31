@@ -71,7 +71,7 @@ public class UserEventProducer {
     event.setAction(eventAction);
     event.setEventDate(new Date());
     event.setTenantId(tenantId);
-    event.setPersonalDataChanged(isPersonalDataChanged);
+    event.setIsPersonalDataChanged(isPersonalDataChanged);
     if (Objects.nonNull(metadata)) {
       event.setActionDate(metadata.getCreatedDate());
       event.setPerformedBy(metadata.getUpdatedByUserId());
