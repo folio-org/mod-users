@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 
@@ -90,32 +91,14 @@ public class UserTenantService {
     return pgClient.withConn(conn -> tenantRepository.deleteUserTenant(conn, userTenant, tenantId));
   }
 
-  /**
-   * This check performing only when we are in consortium mode,
-   * for common deployments we don't need to check crosstenant username uniqueness and userType.
-   * For common deployments always will be return succeeded future.
-   * @param entity the user
-   * @param userFromStorage the user from storage
-   * @param okapiHeaders okapi headers
-   * @param conn connection in transaction
-   * @param vertxContext The Vertx Context Object
-   * @return succeededFuture if crosstenant username is unique and userType is populated
-   */
   public Future<Void> validateUserAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    return getConsortiaCentralTenantId(conn, okapiHeaders)
-      .compose(consortiaCentralTenantId -> {
-        if (Objects.nonNull(consortiaCentralTenantId)) {
-          logger.info("Found central tenant id = {}", consortiaCentralTenantId);
-          return isUserTypePopulated(entity)
-            .compose(aVoid -> {
-              if (ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername())) {
-                return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
-              }
-              return Future.succeededFuture();
-            });
-        }
-        return Future.succeededFuture();
-      });
+    Predicate<User> predicate = user -> (ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername()));
+    return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
+  }
+
+  public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
+    Predicate<User> predicate = user -> true;
+    return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
   /**
@@ -126,15 +109,21 @@ public class UserTenantService {
    * @param okapiHeaders okapi headers
    * @param conn connection in transaction
    * @param vertxContext The Vertx Context Object
+   * @param predicate condition for name validation
    * @return succeededFuture if crosstenant username is unique and userType is populated
    */
-  public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
+  private Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext, Predicate<User> predicate) {
     return getConsortiaCentralTenantId(conn, okapiHeaders)
       .compose(consortiaCentralTenantId -> {
         if (Objects.nonNull(consortiaCentralTenantId)) {
           logger.info("Found central tenant id = {}", consortiaCentralTenantId);
           return isUserTypePopulated(entity)
-            .compose(aVoid -> isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext));
+            .compose(aVoid -> {
+              if (predicate.test(entity)) {
+                return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
+              }
+              return Future.succeededFuture();
+            });
         }
         return Future.succeededFuture();
       });
