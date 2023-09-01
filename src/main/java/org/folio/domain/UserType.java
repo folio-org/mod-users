@@ -1,8 +1,5 @@
 package org.folio.domain;
 
-import lombok.Getter;
-
-@Getter
 public enum UserType {
 
   PATRON("patron"), STAFF("staff"), SHADOW("shadow");
@@ -11,5 +8,9 @@ public enum UserType {
 
   UserType(String typeName) {
     this.typeName = typeName;
+  }
+
+  public String getTypeName() {
+    return typeName;
   }
 }
