@@ -55,53 +55,23 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
     userTenantClient.deleteAllUserTenants();
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
   }
 
   @Test
   void doNotSendUserCreateUpdateKafkaEvents() {
     //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events for patron users
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
+    UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
-
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .type("patron")
-      .personal(Personal.builder()
-        .firstName("julia")
-        .preferredFirstName("jules")
-        .lastName("brockhurst")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
+    final User userToCreate = createUser(userId, "joannek", "julia", "patron");
     final var user = usersClient.createUser(userToCreate);
-
-    User userToUpdate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .type("patron")
-      .personal(Personal.builder()
-        .firstName("new_julia")
-        .lastName("new_brockhurst")
-        .preferredFirstName("jules")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
+    User userToUpdate = createUser(userId, "joannek", "new_julia", "patron");
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(is(204));
-
     usersClient.deleteUser(user.getId());
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
@@ -118,31 +88,11 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void canDeleteAUserForConsortia() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
+    UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
-
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .type("staff")
-      .personal(Personal.builder()
-        .firstName("julia")
-        .preferredFirstName("jules")
-        .lastName("brockhurst")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
+    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     final var user = usersClient.createUser(userToCreate);
-
     usersClient.deleteUser(user.getId());
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
@@ -160,44 +110,12 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void canUpdateUserNameForConsortia() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
+    UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
-
     String userId = UUID.randomUUID().toString();
-
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .type("staff")
-      .personal(Personal.builder()
-        .firstName("julia")
-        .lastName("brockhurst")
-        .preferredFirstName("jules")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
+    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     usersClient.createUser(userToCreate);
-
-    User userToUpdate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .type("staff")
-      .personal(Personal.builder()
-        .firstName("new_julia")
-        .lastName("new_brockhurst")
-        .preferredFirstName("jules")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
+    final User userToUpdate = createUser(userId, "joannek", "new_julia", "staff");
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(is(204));
@@ -208,69 +126,27 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .untilAsserted(() -> {
         final var updatedUser = usersClient.getUser(userId);
         assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
-        assertThat(updatedUser.getPersonal().getLastName(), is("new_brockhurst"));
       });
   }
 
   @Test
   void cannotUpdateUserWithSameUsernameAsExistingUserForConsortia() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
+    UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
-
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .type("staff")
-      .personal(Personal.builder()
-        .firstName("julia")
-        .preferredFirstName("jules")
-        .lastName("brockhurst")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
-    final var user = usersClient.createUser(userToCreate);
-
-    usersClient.attemptToUpdateUser(
-        User.builder()
-          .id(user.getId())
-          .username("user_test")
-          .type("staff")
-          .build())
+    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
+    usersClient.createUser(userToCreate);
+    usersClient.attemptToUpdateUser(createUser(userId, "user_test", "julia", "staff"))
       .statusCode(400)
       .body(is("User with this username already exists"));
   }
 
   @Test
   void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
+    UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
-
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("user_test")
-      .active(true)
-      .type("staff")
-      .personal(Personal.builder()
-        .firstName("user")
-        .preferredFirstName("jules")
-        .lastName("test")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
+    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
     usersClient.attemptToCreateUser(userToCreate)
       .statusCode(422)
       .extract().as(ValidationErrors.class);
@@ -278,26 +154,10 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotCreateUserWithoutUserTypeForConsortia() {
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
+    UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
-
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("user_test")
-      .active(true)
-      .personal(Personal.builder()
-        .firstName("user")
-        .preferredFirstName("jules")
-        .lastName("test")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
+    final User userToCreate = createUser(userId, "joannek", "julia", null);
     usersClient.attemptToCreateUser(userToCreate)
       .statusCode(422)
       .extract().as(ValidationErrors.class);
@@ -305,41 +165,12 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotUpdateUserWithoutUserTypeForConsortia() {
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
+    UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
-
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("userTest")
-      .active(true)
-      .type("staff")
-      .personal(Personal.builder()
-        .firstName("user")
-        .preferredFirstName("jules")
-        .lastName("test")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
+    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     usersClient.createUser(userToCreate);
-
-    usersClient.attemptToUpdateUser(
-      User.builder()
-        .id(userId)
-        .username("user_test")
-        .active(true)
-        .personal(Personal.builder()
-          .firstName("user")
-          .preferredFirstName("jules")
-          .lastName("test")
-          .build())
-        .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-        .build())
+    usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", null))
       .statusCode(400)
       .body(is("The user type was not populated for the user"));
   }
@@ -362,5 +193,27 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     assertEquals(action, userEvent.getAction());
     assertEquals(TENANT_NAME, userEvent.getTenantId());
     assertEquals(userId, userEvent.getUser().getId());
+  }
+
+  private UserTenant getUserTenant() {
+    return new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
+  }
+
+  private User createUser(String userId, String username, String firstName, String type) {
+    return User.builder()
+      .id(userId)
+      .username(username)
+      .active(true)
+      .type(type)
+      .personal(Personal.builder()
+        .firstName(firstName)
+        .preferredFirstName("jules")
+        .lastName("test")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
   }
 }

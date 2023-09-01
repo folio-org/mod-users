@@ -305,7 +305,6 @@ public class UsersAPI implements Users {
           return;
         }
         if (isUserTypeNotPopulatedError(reply)) {
-          logger.info("The user type was not populated for the user with id {}", entity.getId());
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
@@ -334,16 +333,16 @@ public class UsersAPI implements Users {
     return errorMessage.contains(BARCODE_ALREADY_EXISTS);
   }
 
+  private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, ".*barcode.*already exists.*");
+  }
+
   private boolean isUserTypeNotPopulatedError(String errorMessage) {
     return errorMessage.contains(USER_TYPE_NOT_POPULATED);
   }
 
   private boolean isUserTypeNotPopulatedError(AsyncResult<Response> reply) {
     return isDesiredError(reply, ".*user type was not populated.*");
-  }
-
-  private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
-    return isDesiredError(reply, ".*barcode.*already exists.*");
   }
 
   private boolean isDesiredError(AsyncResult<Response> reply, String errMsg) {
