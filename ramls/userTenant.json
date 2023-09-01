@@ -34,6 +34,14 @@
     "email": {
       "description": "The user's email address",
       "type": "string"
+    },
+    "barcode": {
+      "description": "The barcode of the user's",
+      "type": "string"
+    },
+    "externalSystemId": {
+      "description": "The externalSystemId of the user's",
+      "type": "string"
     }
   },
   "additionalProperties": false,

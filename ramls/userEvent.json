@@ -38,6 +38,10 @@
       "description": "Full snapshot of the user",
       "type": "object",
       "$ref": "userdata.json"
+    },
+    "isPersonalDataChanged": {
+      "description": "Is the personal data changed for the user",
+      "type": "boolean"
     }
   },
   "additionalProperties": false

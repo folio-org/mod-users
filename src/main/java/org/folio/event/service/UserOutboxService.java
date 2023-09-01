@@ -89,8 +89,9 @@ public class UserOutboxService {
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
-        if (isConsortiaTenant && isNotPatronUserType(user) && isConsortiaFieldsUpdated) {
-          return saveUserOutboxLog(conn, user, UserEvent.Action.EDIT, okapiHeaders);
+        boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
+        if (isConsortiaTenant && isNotPatronUserType(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged)) {
+          return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
         }
         return Future.succeededFuture();
       });
@@ -117,15 +118,29 @@ public class UserOutboxService {
    *
    * @param conn connection in transaction
    * @param entity the user
+   * @param isPersonalDataChanged was the personal data changed
+   * @param action the event action
+   * @param okapiHeaders okapi headers
+   * @return future with saved outbox log in the same transaction
+   */
+  public Future<Boolean> saveUserOutboxLog(Conn conn, User entity, boolean isPersonalDataChanged, UserEvent.Action action, Map<String, String> okapiHeaders) {
+    String user = Json.encode(entity);
+    return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, isPersonalDataChanged, okapiHeaders)
+      .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
+      .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
+  }
+
+  /**
+   * Saves user outbox log.
+   *
+   * @param conn connection in transaction
+   * @param entity the user
    * @param action the event action
    * @param okapiHeaders okapi headers
    * @return future with saved outbox log in the same transaction
    */
   public Future<Boolean> saveUserOutboxLog(Conn conn, User entity, UserEvent.Action action, Map<String, String> okapiHeaders) {
-    String user = Json.encode(entity);
-    return saveOutboxLog(conn, action.value(), OutboxEventLog.EntityType.USER, user, okapiHeaders)
-      .onSuccess(reply -> logger.info("Outbox log has been saved for user id: {}", entity.getId()))
-      .onFailure(e -> logger.warn("Could not save outbox audit log for user with id {}", entity.getId(), e));
+    return saveUserOutboxLog(conn, entity, false, action, okapiHeaders);
   }
 
   private List<Future<Boolean>> getKafkaFutures(List<OutboxEventLog> logs, Map<String, String> okapiHeaders) {
@@ -133,8 +148,9 @@ public class UserOutboxService {
     for (OutboxEventLog log : logs) {
       if (OutboxEventLog.EntityType.USER == log.getEntityType()) {
         User user = Json.decodeValue(log.getPayload(), User.class);
+        boolean isPersonalDataChanged = log.getIsPersonalDataChanged() != null && log.getIsPersonalDataChanged();
         UserEvent.Action userAction = UserEvent.Action.fromValue(log.getAction());
-        futures.add(producer.sendUserEvent(user, userAction, okapiHeaders));
+        futures.add(producer.sendUserEvent(user, isPersonalDataChanged, userAction, okapiHeaders));
       }
     }
     return futures;
@@ -144,6 +160,7 @@ public class UserOutboxService {
                                         String action,
                                         OutboxEventLog.EntityType entityType,
                                         String entity,
+                                        boolean isPersonalDataChanged,
                                         Map<String, String> okapiHeaders) {
     String tenantId = TenantTool.tenantId(okapiHeaders);
 
@@ -152,14 +169,17 @@ public class UserOutboxService {
       .withAction(action)
       .withActionDate(new Date())
       .withEntityType(entityType)
-      .withPayload(entity);
+      .withPayload(entity)
+      .withIsPersonalDataChanged(isPersonalDataChanged);
 
     return outboxRepository.saveEventLog(conn, log, tenantId);
   }
 
   private boolean isConsortiumUserFieldsUpdated(User updatedUser, User userFromStorage) {
-    if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())) {
-      logger.info("The username has been updated to {}", updatedUser.getUsername());
+    if (ObjectUtils.notEqual(userFromStorage.getUsername(), updatedUser.getUsername())
+        || ObjectUtils.notEqual(userFromStorage.getBarcode(), updatedUser.getBarcode())
+        || ObjectUtils.notEqual(userFromStorage.getExternalSystemId(), updatedUser.getExternalSystemId())) {
+      logger.info("The user with id: {} has been updated", updatedUser.getId());
       return true;
     }
 
@@ -167,18 +187,38 @@ public class UserOutboxService {
     Personal newPersonal = updatedUser.getPersonal();
 
     if (oldPersonal == null && newPersonal == null) {
-      logger.info("Personal fields have not been updated");
+      logger.info("Personal fields have not been updated for user with id: {}", updatedUser.getId());
       return false;
     }
 
     if (oldPersonal == null || newPersonal == null) {
-      logger.info("Personal fields have been updated");
+      logger.info("Personal fields have been updated for user with id: {}", updatedUser.getId());
       return true;
     }
 
     return ObjectUtils.notEqual(oldPersonal.getEmail(), newPersonal.getEmail())
       || ObjectUtils.notEqual(oldPersonal.getPhone(), newPersonal.getPhone())
       || ObjectUtils.notEqual(oldPersonal.getMobilePhone(), newPersonal.getMobilePhone());
+  }
+
+  private boolean isPersonalDataChanged(User updatedUser, User userFromStorage) {
+    Personal oldPersonal = userFromStorage.getPersonal();
+    Personal newPersonal = updatedUser.getPersonal();
+
+    if (isPersonalNotNull(oldPersonal, newPersonal) && isPersonalNameChanged(oldPersonal, newPersonal)) {
+      logger.info("Personal name have been updated for user with id: {}", updatedUser.getId());
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isPersonalNameChanged(Personal oldPersonal, Personal newPersonal) {
+    return ObjectUtils.notEqual(oldPersonal.getFirstName(), newPersonal.getFirstName())
+      || ObjectUtils.notEqual(oldPersonal.getLastName(), newPersonal.getLastName());
+  }
+
+  private boolean isPersonalNotNull(Personal oldPersonal, Personal newPersonal) {
+    return ObjectUtils.allNotNull(oldPersonal, newPersonal);
   }
 
   private boolean isNotPatronUserType(User user) {

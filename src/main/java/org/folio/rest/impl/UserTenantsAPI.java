@@ -36,7 +36,8 @@ public class UserTenantsAPI implements UserTenants {
   }
 
   @Override
-  public void getUserTenants(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber, String queryOp, int offset, int limit, String lang,
+  public void getUserTenants(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber,
+                             String barcode, String externalSystemId, String queryOp, int offset, int limit, String lang,
                              Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
                              Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);

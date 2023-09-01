@@ -40,34 +40,38 @@ public class UserEventProducer {
   }
 
   public Future<Boolean> sendUserEvent(User user,
+                                       boolean isPersonalDataChanged,
                                        UserEvent.Action eventAction,
                                        Map<String, String> okapiHeaders) {
     String tenantId = okapiHeaders.get("x-okapi-tenant");
-    UserEvent event = getUserEvent(user, tenantId, eventAction);
+    UserEvent event = getUserEvent(user, tenantId, isPersonalDataChanged, eventAction);
     String eventPayload = Json.encode(event);
 
-    switch (eventAction) {
-      case CREATE:
+    return switch (eventAction) {
+      case CREATE -> {
         logger.info("Starting to send user created event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-        return sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
-      case DELETE:
+        yield sendToKafka(UserEventType.USER_CREATED, eventPayload, okapiHeaders, user.getId());
+      }
+      case DELETE -> {
         logger.info("Starting to send user deleted event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-        return sendToKafka(UserEventType.USER_DELETED, eventPayload, okapiHeaders, user.getId());
-      case EDIT:
+        yield sendToKafka(UserEventType.USER_DELETED, eventPayload, okapiHeaders, user.getId());
+      }
+      case EDIT -> {
         logger.info("Starting to send user edit event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-        return sendToKafka(UserEventType.USER_UPDATED, eventPayload, okapiHeaders, user.getId());
-      default:
-        throw new IllegalStateException("Unexpected value: " + eventAction);
-    }
+        yield sendToKafka(UserEventType.USER_UPDATED, eventPayload, okapiHeaders, user.getId());
+      }
+      default -> throw new IllegalStateException("Unexpected value: " + eventAction);
+    };
   }
 
-  private UserEvent getUserEvent(User user, String tenantId, UserEvent.Action eventAction) {
+  private UserEvent getUserEvent(User user, String tenantId, boolean isPersonalDataChanged, UserEvent.Action eventAction) {
     Metadata metadata = user.getMetadata();
     UserEvent event = new UserEvent();
     event.setId(UUID.randomUUID().toString());
     event.setAction(eventAction);
     event.setEventDate(new Date());
     event.setTenantId(tenantId);
+    event.setIsPersonalDataChanged(isPersonalDataChanged);
     if (Objects.nonNull(metadata)) {
       event.setActionDate(metadata.getCreatedDate());
       event.setPerformedBy(metadata.getUpdatedByUserId());
