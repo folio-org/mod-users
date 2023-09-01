@@ -24,11 +24,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.folio.event.util.UserType.PATRON;
+
 public class UserOutboxService {
 
   private static final Logger logger = LogManager.getLogger(UserOutboxService.class);
   private static final String OUTBOX_LOCK_NAME = "user_outbox";
-  private static final String PATRON = "patron";
 
   private final UserEventProducer producer;
   private final InternalLockRepository lockRepository;
@@ -222,6 +223,6 @@ public class UserOutboxService {
   }
 
   private boolean isNotPatronUserType(User user) {
-    return ObjectUtils.notEqual(PATRON, user.getType());
+    return ObjectUtils.notEqual(PATRON.getTypeName(), user.getType());
   }
 }

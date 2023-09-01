@@ -511,8 +511,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canDeleteAPatronUser() {
+  void doNotSendUserCreateUpdateKafkaEvents() {
+    //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
     commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = new UserTenant()
       .withId(UUID.randomUUID().toString())
@@ -537,13 +539,30 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
+    User userToUpdate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .type("patron")
+      .personal(Personal.builder()
+        .firstName("new_julia")
+        .lastName("new_brockhurst")
+        .preferredFirstName("jules")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(204));
+
     usersClient.deleteUser(user.getId());
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
+    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
     List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
 
     assertEquals(0, userCreatedEvents.size());
-
+    assertEquals(0, userUpdatedEvents.size());
     assertEquals(1, userDeletedEvents.size());
 
     usersClient.attemptToGetUser(user.getId())
