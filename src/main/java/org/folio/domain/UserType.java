@@ -1,4 +1,4 @@
-package org.folio.event.util;
+package org.folio.domain;
 
 import lombok.Getter;
 

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.folio.event.util.UserType.PATRON;
+import static org.folio.domain.UserType.PATRON;
 
 public class UserOutboxService {
 

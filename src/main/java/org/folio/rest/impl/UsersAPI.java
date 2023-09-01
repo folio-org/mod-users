@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
+import static org.folio.event.service.UserTenantService.USER_TYPE_NOT_POPULATED;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.util.ArrayList;
@@ -265,7 +266,7 @@ public class UsersAPI implements Users {
     entity.setUpdatedDate(now);
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
-    pgClient.withTrans(conn -> userTenantService.isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn, vertxContext)
+    pgClient.withTrans(conn -> userTenantService.validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext)
         .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
           .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
           .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
@@ -303,6 +304,15 @@ public class UsersAPI implements Users {
                 "This barcode has already been taken"))));
           return;
         }
+        if (isUserTypeNotPopulatedError(reply)) {
+          logger.info("The user type was not populated for the user with id {}", entity.getId());
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+              ValidationHelper.createValidationErrorMessage(
+                "id", entity.getId(),
+                "The user type was not populated for the user"))));
+          return;
+        }
         logger.error("saveUser failed: {}", reply.cause().getMessage(), reply.cause());
         ValidationHelper.handleError(reply.cause(), asyncResultHandler);
       });
@@ -322,6 +332,14 @@ public class UsersAPI implements Users {
 
   private boolean isDuplicateBarcodeError(String errorMessage) {
     return errorMessage.contains(BARCODE_ALREADY_EXISTS);
+  }
+
+  private boolean isUserTypeNotPopulatedError(String errorMessage) {
+    return errorMessage.contains(USER_TYPE_NOT_POPULATED);
+  }
+
+  private boolean isUserTypeNotPopulatedError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, ".*user type was not populated.*");
   }
 
   private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
@@ -521,7 +539,7 @@ public class UsersAPI implements Users {
           return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
         }
 
-        return userTenantService.isUsernameUpdatedAndUniqueAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
+        return userTenantService.validateUserAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
           .compose(aVoid -> usersService.updateUser(conn, entity)
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
@@ -555,6 +573,15 @@ public class UsersAPI implements Users {
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
             "This barcode has already been taken")));
+      return;
+    }
+
+    if (isUserTypeNotPopulatedError(errorMessage)) {
+      logger.info("The user type was not populated for the user with id {}", user.getId());
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(
+            "The user type was not populated for the user")));
       return;
     }
 

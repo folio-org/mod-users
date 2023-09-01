@@ -29,6 +29,7 @@ import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
+  public static final String USER_TYPE_NOT_POPULATED = "The user type was not populated to a user with an id ";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -89,26 +90,51 @@ public class UserTenantService {
     return pgClient.withConn(conn -> tenantRepository.deleteUserTenant(conn, userTenant, tenantId));
   }
 
-  public Future<Void> isUsernameUpdatedAndUniqueAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    return ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername()) ? isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn, vertxContext) : Future.succeededFuture();
+  /**
+   * This check performing only when we are in consortium mode,
+   * for common deployments we don't need to check crosstenant username uniqueness and userType.
+   * For common deployments always will be return succeeded future.
+   * @param entity the user
+   * @param userFromStorage the user from storage
+   * @param okapiHeaders okapi headers
+   * @param conn connection in transaction
+   * @param vertxContext The Vertx Context Object
+   * @return succeededFuture if crosstenant username is unique and userType is populated
+   */
+  public Future<Void> validateUserAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
+    return getConsortiaCentralTenantId(conn, okapiHeaders)
+      .compose(consortiaCentralTenantId -> {
+        if (Objects.nonNull(consortiaCentralTenantId)) {
+          logger.info("Found central tenant id = {}", consortiaCentralTenantId);
+          return isUserTypePopulated(entity)
+            .compose(aVoid -> {
+              if (ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername())) {
+                return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
+              }
+              return Future.succeededFuture();
+            });
+        }
+        return Future.succeededFuture();
+      });
   }
 
   /**
    * This check performing only when we are in consortium mode,
-   * for common deployments we don't need to check crosstenant username uniqueness.
+   * for common deployments we don't need to check crosstenant username uniqueness and userType.
    * For common deployments always will be return succeeded future.
    * @param entity the user
    * @param okapiHeaders okapi headers
    * @param conn connection in transaction
    * @param vertxContext The Vertx Context Object
-   * @return succeededFuture if crosstenant username is unique
+   * @return succeededFuture if crosstenant username is unique and userType is populated
    */
-  public Future<Void> isUsernameUniqueAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
+  public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
     return getConsortiaCentralTenantId(conn, okapiHeaders)
       .compose(consortiaCentralTenantId -> {
         if (Objects.nonNull(consortiaCentralTenantId)) {
           logger.info("Found central tenant id = {}", consortiaCentralTenantId);
-          return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
+          return isUserTypePopulated(entity)
+            .compose(aVoid -> isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext));
         }
         return Future.succeededFuture();
       });
@@ -128,5 +154,14 @@ public class UserTenantService {
         }
         return Future.succeededFuture();
       }));
+  }
+
+  private Future<Void> isUserTypePopulated(User user) {
+    if (Objects.isNull(user.getType())) {
+      String errorMessage = USER_TYPE_NOT_POPULATED + user.getId();
+      logger.error(errorMessage);
+      return Future.failedFuture(errorMessage);
+    }
+    return Future.succeededFuture();
   }
 }
