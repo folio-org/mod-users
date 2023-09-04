@@ -6,6 +6,7 @@ import io.vertx.core.Vertx;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.domain.UserType;
 import org.folio.repository.UserTenantRepository;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.User;
@@ -20,15 +21,18 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.OkapiConnectionParams;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
+  public static final String INVALID_USER_TYPE_POPULATED = "User's 'type' field should be populated with one of the allowed values: 'patron', 'staff', 'shadow'";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -89,26 +93,39 @@ public class UserTenantService {
     return pgClient.withConn(conn -> tenantRepository.deleteUserTenant(conn, userTenant, tenantId));
   }
 
-  public Future<Void> isUsernameUpdatedAndUniqueAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    return ObjectUtils.notEqual(entity.getUsername(), userFromStorage.getUsername()) ? isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn, vertxContext) : Future.succeededFuture();
+  public Future<Void> validateUserAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
+    Predicate<User> predicate = user -> ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername());
+    return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
+  }
+
+  public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
+    Predicate<User> predicate = user -> true;
+    return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
   /**
    * This check performing only when we are in consortium mode,
-   * for common deployments we don't need to check crosstenant username uniqueness.
+   * for common deployments we don't need to check crosstenant username uniqueness and userType.
    * For common deployments always will be return succeeded future.
    * @param entity the user
    * @param okapiHeaders okapi headers
    * @param conn connection in transaction
    * @param vertxContext The Vertx Context Object
-   * @return succeededFuture if crosstenant username is unique
+   * @param predicate condition for name validation
+   * @return succeededFuture if crosstenant username is unique and userType is populated
    */
-  public Future<Void> isUsernameUniqueAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
+  private Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext, Predicate<User> predicate) {
     return getConsortiaCentralTenantId(conn, okapiHeaders)
       .compose(consortiaCentralTenantId -> {
         if (Objects.nonNull(consortiaCentralTenantId)) {
           logger.info("Found central tenant id = {}", consortiaCentralTenantId);
-          return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
+          return isUserTypePopulated(entity)
+            .compose(aVoid -> {
+              if (predicate.test(entity)) {
+                return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
+              }
+              return Future.succeededFuture();
+            });
         }
         return Future.succeededFuture();
       });
@@ -128,5 +145,17 @@ public class UserTenantService {
         }
         return Future.succeededFuture();
       }));
+  }
+
+  private Future<Void> isUserTypePopulated(User user) {
+    boolean isValidUserType = Arrays.stream(UserType.values())
+      .map(UserType::getTypeName)
+      .anyMatch(userType -> userType.equals(user.getType()));
+    if (isValidUserType) {
+      return Future.succeededFuture();
+    } else {
+      logger.error("Invalid user type {} was populated for user with id {} ", user.getType(), user.getId());
+      return Future.failedFuture(INVALID_USER_TYPE_POPULATED);
+    }
   }
 }

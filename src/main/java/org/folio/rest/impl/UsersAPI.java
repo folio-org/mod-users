@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
+import static org.folio.event.service.UserTenantService.INVALID_USER_TYPE_POPULATED;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.util.ArrayList;
@@ -265,7 +266,7 @@ public class UsersAPI implements Users {
     entity.setUpdatedDate(now);
     String userId = StringUtils.defaultIfBlank(entity.getId(), UUID.randomUUID().toString());
 
-    pgClient.withTrans(conn -> userTenantService.isUsernameUniqueAcrossTenants(entity, okapiHeaders, conn, vertxContext)
+    pgClient.withTrans(conn -> userTenantService.validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext)
         .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
           .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
           .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
@@ -303,6 +304,14 @@ public class UsersAPI implements Users {
                 "This barcode has already been taken"))));
           return;
         }
+        if (isInvalidUserTypeError(reply)) {
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+              ValidationHelper.createValidationErrorMessage(
+                "id", entity.getId(),
+                "An invalid user type has been populated to a user"))));
+          return;
+        }
         logger.error("saveUser failed: {}", reply.cause().getMessage(), reply.cause());
         ValidationHelper.handleError(reply.cause(), asyncResultHandler);
       });
@@ -326,6 +335,14 @@ public class UsersAPI implements Users {
 
   private boolean isDuplicateBarcodeError(AsyncResult<Response> reply) {
     return isDesiredError(reply, ".*barcode.*already exists.*");
+  }
+
+  private boolean isInvalidUserTypeError(String errorMessage) {
+    return errorMessage.matches(INVALID_USER_TYPE_POPULATED);
+  }
+
+  private boolean isInvalidUserTypeError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, INVALID_USER_TYPE_POPULATED);
   }
 
   private boolean isDesiredError(AsyncResult<Response> reply, String errMsg) {
@@ -521,7 +538,7 @@ public class UsersAPI implements Users {
           return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
         }
 
-        return userTenantService.isUsernameUpdatedAndUniqueAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
+        return userTenantService.validateUserAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
           .compose(aVoid -> usersService.updateUser(conn, entity)
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
@@ -555,6 +572,15 @@ public class UsersAPI implements Users {
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
             "This barcode has already been taken")));
+      return;
+    }
+
+    if (isInvalidUserTypeError(errorMessage)) {
+      logger.info("An invalid user type {} has been populated to a user with id {}", user.getType(), user.getId());
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(
+            "An invalid user type has been populated to a user")));
       return;
     }
 

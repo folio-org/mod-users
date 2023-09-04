@@ -224,6 +224,10 @@
         {
           "fieldName": "customFields",
           "tOps":"ADD"
+        },
+        {
+          "fieldName": "type",
+          "tOps":"ADD"
         }
       ]
     },

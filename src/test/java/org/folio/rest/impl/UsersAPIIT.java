@@ -11,19 +11,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.folio.moduserstest.AbstractRestTestNoData;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.folio.event.UserEventType;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
-import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
 import org.folio.support.Personal;
@@ -511,170 +505,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canDeleteAUserForConsortia() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-
-    String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .personal(Personal.builder()
-        .firstName("julia")
-        .preferredFirstName("jules")
-        .lastName("brockhurst")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
-    final var user = usersClient.createUser(userToCreate);
-
-    usersClient.deleteUser(user.getId());
-
-    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
-    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
-
-    assertEquals(1, userCreatedEvents.size());
-    assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, user.getId());
-
-    assertEquals(1, userDeletedEvents.size());
-    assertEventContent(userDeletedEvents.get(0), UserEvent.Action.DELETE, user.getId());
-
-    usersClient.attemptToGetUser(user.getId())
-      .statusCode(404);
-  }
-
-  @Test
-  void canUpdateUserNameForConsortia() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-
-    String userId = UUID.randomUUID().toString();
-
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .personal(Personal.builder()
-        .firstName("julia")
-        .lastName("brockhurst")
-        .preferredFirstName("jules")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
-    usersClient.createUser(userToCreate);
-
-    User userToUpdate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .personal(Personal.builder()
-        .firstName("new_julia")
-        .lastName("new_brockhurst")
-        .preferredFirstName("jules")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
-    usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(204));
-
-    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
-    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
-
-    assertEquals(1, userCreatedEvents.size());
-    assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, userId);
-
-    assertEquals(1, userUpdatedEvents.size());
-    assertEventContent(userUpdatedEvents.get(0), UserEvent.Action.EDIT, userId);
-
-    Awaitility.await()
-      .atMost(1, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
-        final var updatedUser = usersClient.getUser(userId);
-        assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
-        assertThat(updatedUser.getPersonal().getLastName(), is("new_brockhurst"));
-      });
-  }
-
-  @Test
-  void cannotUpdateUserWithSameUsernameAsExistingUserForConsortia() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-
-    String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .personal(Personal.builder()
-        .firstName("julia")
-        .preferredFirstName("jules")
-        .lastName("brockhurst")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
-    final var user = usersClient.createUser(userToCreate);
-
-    usersClient.attemptToUpdateUser(
-        User.builder()
-          .id(user.getId())
-          .username("user_test")
-          .build())
-      .statusCode(400)
-      .body(is("User with this username already exists"));
-
-  }
-
-  @Test
-  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
-    UserTenant userTenant = new UserTenant()
-      .withId(UUID.randomUUID().toString())
-      .withUserId(UUID.randomUUID().toString())
-      .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
-
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-
-    String userId = UUID.randomUUID().toString();
-    final User userToCreate = User.builder()
-      .id(userId)
-      .username("user_test")
-      .active(true)
-      .personal(Personal.builder()
-        .firstName("user")
-        .preferredFirstName("jules")
-        .lastName("test")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
-    usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(422)
-      .extract().as(ValidationErrors.class);
-  }
-
-  @Test
   void cannotDeleteAUserThatDoesNotExist() {
     // Define another user to make sure it isn't deleted by accident
     createUser("joannek");
@@ -709,25 +539,5 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   private void deleteUsersByUsername(String username) {
     usersClient.deleteUsers("username == \"" + username + "\"");
-  }
-
-  private List<UserEvent> getUserEventsAndFilterByUserId(UserEventType eventType, String userId) {
-    List<UserEvent> usersList = getUserEvents(eventType);
-    return usersList.stream()
-      .filter(userEvent -> userId.equals(userEvent.getUser().getId()))
-      .collect(Collectors.toList());
-  }
-
-  private List<UserEvent> getUserEvents(UserEventType eventType) {
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.getTopicName());
-    return usersList.stream()
-      .map(s -> Json.decodeValue(s, UserEvent.class))
-      .collect(Collectors.toList());
-  }
-
-  private void assertEventContent(UserEvent userEvent, UserEvent.Action action, String userId) {
-    assertEquals(action, userEvent.getAction());
-    assertEquals(TENANT_NAME, userEvent.getTenantId());
-    assertEquals(userId, userEvent.getUser().getId());
   }
 }

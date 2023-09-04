@@ -18,6 +18,7 @@ public class User {
   String username;
   String barcode;
   Boolean active;
+  String type;
   ZonedDateTime expirationDate;
   Personal personal;
   String patronGroup;
