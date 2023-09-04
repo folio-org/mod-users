@@ -22,9 +22,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
-import static org.folio.domain.UserType.PATRON;
+import static org.folio.domain.UserType.STAFF;
 
 public class UserOutboxService {
 
@@ -79,7 +80,7 @@ public class UserOutboxService {
   public Future<Boolean> saveUserOutboxLogForCreateOrDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
       return userTenantService.isConsortiaTenant(conn, okapiHeaders)
         .compose(isConsortiaTenant -> {
-          if (isConsortiaTenant && isNotPatronUserType(user)) {
+          if (isConsortiaTenant && isStaffUserType(user)) {
             return saveUserOutboxLog(conn, user, action, okapiHeaders);
           }
           return Future.succeededFuture();
@@ -91,7 +92,7 @@ public class UserOutboxService {
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
         boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
-        if (isConsortiaTenant && isNotPatronUserType(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged)) {
+        if (isConsortiaTenant && isStaffUserType(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged)) {
           return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
         }
         return Future.succeededFuture();
@@ -222,7 +223,7 @@ public class UserOutboxService {
     return ObjectUtils.allNotNull(oldPersonal, newPersonal);
   }
 
-  private boolean isNotPatronUserType(User user) {
-    return ObjectUtils.notEqual(PATRON.getTypeName(), user.getType());
+  private boolean isStaffUserType(User user) {
+    return Objects.equals(STAFF.getTypeName(), user.getType());
   }
 }
