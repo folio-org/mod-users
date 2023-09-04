@@ -3,7 +3,6 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
-import static org.folio.event.service.UserTenantService.USER_TYPE_NOT_POPULATED;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.util.ArrayList;
@@ -312,14 +311,6 @@ public class UsersAPI implements Users {
                 "An invalid user type has been populated to a user"))));
           return;
         }
-        if (isUserTypeNotPopulatedError(reply)) {
-          asyncResultHandler.handle(
-            succeededFuture(PostUsersResponse.respond422WithApplicationJson(
-              ValidationHelper.createValidationErrorMessage(
-                "id", entity.getId(),
-                "The user type was not populated for the user"))));
-          return;
-        }
         logger.error("saveUser failed: {}", reply.cause().getMessage(), reply.cause());
         ValidationHelper.handleError(reply.cause(), asyncResultHandler);
       });
@@ -351,14 +342,6 @@ public class UsersAPI implements Users {
 
   private boolean isInvalidUserTypeError(AsyncResult<Response> reply) {
     return isDesiredError(reply, ".*Invalid user type.*was populated.*");
-  }
-
-  private boolean isUserTypeNotPopulatedError(String errorMessage) {
-    return errorMessage.contains(USER_TYPE_NOT_POPULATED);
-  }
-
-  private boolean isUserTypeNotPopulatedError(AsyncResult<Response> reply) {
-    return isDesiredError(reply, USER_TYPE_NOT_POPULATED);
   }
 
   private boolean isDesiredError(AsyncResult<Response> reply, String errMsg) {
@@ -596,14 +579,6 @@ public class UsersAPI implements Users {
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
             "An invalid user type has been populated to a user")));
-      return;
-    }
-
-    if (isUserTypeNotPopulatedError(errorMessage)) {
-      asyncResultHandler.handle(
-        succeededFuture(PutUsersByUserIdResponse
-          .respond400WithTextPlain(
-            "The user type was not populated for the user")));
       return;
     }
 

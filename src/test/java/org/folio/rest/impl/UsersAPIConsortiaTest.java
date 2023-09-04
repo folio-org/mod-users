@@ -172,7 +172,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", null))
       .statusCode(400)
-      .body(is("The user type was not populated for the user"));
+      .body(is("An invalid user type has been populated to a user"));
   }
 
   @Test
