@@ -61,7 +61,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   }
 
   @Test
-  void doNotSendUserCreateUpdateKafkaEvents() {
+  void doNotSendUserCreateUpdateKafkaEventsForPatronUser() {
     //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events for patron users
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
@@ -76,11 +76,33 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
     List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
-    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
 
     assertEquals(0, userCreatedEvents.size());
     assertEquals(0, userUpdatedEvents.size());
-    assertEquals(1, userDeletedEvents.size());
+
+    usersClient.attemptToGetUser(user.getId())
+      .statusCode(404);
+  }
+
+  @Test
+  void doNotSendUserCreateUpdateKafkaEventsForShadowUser() {
+    //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events for shadow users
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "shadow");
+    final var user = usersClient.createUser(userToCreate);
+    User userToUpdate = createUser(userId, "joannek", "new_julia", "shadow");
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(204));
+    usersClient.deleteUser(user.getId());
+
+    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
+    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
+
+    assertEquals(0, userCreatedEvents.size());
+    assertEquals(0, userUpdatedEvents.size());
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
@@ -96,13 +118,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.deleteUser(user.getId());
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
-    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
 
     assertEquals(1, userCreatedEvents.size());
     assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, user.getId());
-
-    assertEquals(1, userDeletedEvents.size());
-    assertEventContent(userDeletedEvents.get(0), UserEvent.Action.DELETE, user.getId());
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);

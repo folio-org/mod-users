@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
+import static org.folio.event.service.UserTenantService.INVALID_USER_TYPE_POPULATED;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.util.ArrayList;
@@ -337,11 +338,11 @@ public class UsersAPI implements Users {
   }
 
   private boolean isInvalidUserTypeError(String errorMessage) {
-    return errorMessage.matches(".*Invalid user type.*was populated.*");
+    return errorMessage.matches(INVALID_USER_TYPE_POPULATED);
   }
 
   private boolean isInvalidUserTypeError(AsyncResult<Response> reply) {
-    return isDesiredError(reply, ".*Invalid user type.*was populated.*");
+    return isDesiredError(reply, INVALID_USER_TYPE_POPULATED);
   }
 
   private boolean isDesiredError(AsyncResult<Response> reply, String errMsg) {

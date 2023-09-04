@@ -80,7 +80,7 @@ public class UserOutboxService {
   public Future<Boolean> saveUserOutboxLogForCreateOrDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
       return userTenantService.isConsortiaTenant(conn, okapiHeaders)
         .compose(isConsortiaTenant -> {
-          if (isConsortiaTenant && isStaffUserType(user)) {
+          if (isConsortiaTenant && isStaffUser(user)) {
             return saveUserOutboxLog(conn, user, action, okapiHeaders);
           }
           return Future.succeededFuture();
@@ -92,7 +92,7 @@ public class UserOutboxService {
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
         boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
-        if (isConsortiaTenant && isStaffUserType(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged)) {
+        if (isConsortiaTenant && isStaffUser(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged)) {
           return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
         }
         return Future.succeededFuture();
@@ -223,7 +223,7 @@ public class UserOutboxService {
     return ObjectUtils.allNotNull(oldPersonal, newPersonal);
   }
 
-  private boolean isStaffUserType(User user) {
+  private boolean isStaffUser(User user) {
     return Objects.equals(STAFF.getTypeName(), user.getType());
   }
 }
