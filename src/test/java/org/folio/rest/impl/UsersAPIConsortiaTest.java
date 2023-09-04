@@ -2,16 +2,16 @@
 package org.folio.rest.impl;
 
 import io.vertx.core.json.Json;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UserTenant;
-import org.folio.support.*;
-import org.folio.support.http.AddressTypesClient;
-import org.folio.support.http.GroupsClient;
+import org.folio.support.Personal;
+import org.folio.support.TagList;
+import org.folio.support.User;
+import org.folio.support.ValidationErrors;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
@@ -31,29 +31,22 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
-  private static GroupsClient groupsClient;
-  private static AddressTypesClient addressTypesClient;
   private static UserTenantClient userTenantClient;
 
   @BeforeAll
   @SneakyThrows
   static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
-    groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
-    addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
   public void beforeEach() {
     usersClient.deleteAllUsers();
-    groupsClient.deleteAllGroups();
-    addressTypesClient.deleteAllAddressTypes();
     userTenantClient.deleteAllUserTenants();
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
