@@ -576,6 +576,7 @@ public class UsersAPI implements Users {
     }
 
     if (isInvalidUserTypeError(errorMessage)) {
+      logger.info("An invalid user type {} has been populated to a user with id {}", user.getType(), user.getId());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
