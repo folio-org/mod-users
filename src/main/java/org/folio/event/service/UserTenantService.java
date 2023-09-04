@@ -6,6 +6,7 @@ import io.vertx.core.Vertx;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.domain.UserType;
 import org.folio.repository.UserTenantRepository;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.User;
@@ -20,6 +21,7 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.OkapiConnectionParams;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +32,7 @@ import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
-  public static final String USER_TYPE_NOT_POPULATED = "The user type was not populated to a user with an id ";
+  public static final String INVALID_USER_TYPE_POPULATED = "Invalid user type %s was populated to a user with id %s";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -92,7 +94,7 @@ public class UserTenantService {
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> (ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername()));
+    Predicate<User> predicate = user -> ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername());
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
@@ -146,11 +148,15 @@ public class UserTenantService {
   }
 
   private Future<Void> isUserTypePopulated(User user) {
-    if (Objects.isNull(user.getType())) {
-      String errorMessage = USER_TYPE_NOT_POPULATED + user.getId();
+    boolean isValidUserType = Arrays.stream(UserType.values())
+      .map(UserType::getTypeName)
+      .anyMatch(userType -> userType.equals(user.getType()));
+    if (isValidUserType) {
+      return Future.succeededFuture();
+    } else {
+      String errorMessage = String.format(INVALID_USER_TYPE_POPULATED, user.getType(), user.getId());
       logger.error(errorMessage);
       return Future.failedFuture(errorMessage);
     }
-    return Future.succeededFuture();
   }
 }
