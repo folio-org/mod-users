@@ -175,6 +175,29 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .body(is("The user type was not populated for the user"));
   }
 
+  @Test
+  void cannotCreateUserWithInvalidUserTypeForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "invalidType");
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(422)
+      .extract().as(ValidationErrors.class);
+  }
+
+  @Test
+  void cannotUpdateUserWithInvalidUserTypeForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
+    usersClient.createUser(userToCreate);
+    usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", "invalidType"))
+      .statusCode(400)
+      .body(is("An invalid user type has been populated to a user"));
+  }
+
   private List<UserEvent> getUserEventsAndFilterByUserId(UserEventType eventType, String userId) {
     List<UserEvent> usersList = getUserEvents(eventType);
     return usersList.stream()
