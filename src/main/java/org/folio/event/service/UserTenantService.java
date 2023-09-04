@@ -33,6 +33,7 @@ import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
   public static final String INVALID_USER_TYPE_POPULATED = "Invalid user type %s was populated to a user with id %s";
+  public static final String USER_TYPE_NOT_POPULATED = "Users 'type' field should be populated with allowed values: 'patron', 'staff', 'shadow'";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -148,9 +149,15 @@ public class UserTenantService {
   }
 
   private Future<Void> isUserTypePopulated(User user) {
+    if (Objects.isNull(user.getType())) {
+      logger.error(USER_TYPE_NOT_POPULATED);
+      return Future.failedFuture(USER_TYPE_NOT_POPULATED);
+    }
+
     boolean isValidUserType = Arrays.stream(UserType.values())
       .map(UserType::getTypeName)
       .anyMatch(userType -> userType.equals(user.getType()));
+
     if (isValidUserType) {
       return Future.succeededFuture();
     } else {

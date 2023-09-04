@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
+import static org.folio.event.service.UserTenantService.USER_TYPE_NOT_POPULATED;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.util.ArrayList;
@@ -303,6 +304,14 @@ public class UsersAPI implements Users {
                 "This barcode has already been taken"))));
           return;
         }
+        if (isInvalidUserTypeError(reply)) {
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersResponse.respond422WithApplicationJson(
+              ValidationHelper.createValidationErrorMessage(
+                "id", entity.getId(),
+                "An invalid user type has been populated to a user"))));
+          return;
+        }
         if (isUserTypeNotPopulatedError(reply)) {
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
@@ -336,12 +345,20 @@ public class UsersAPI implements Users {
     return isDesiredError(reply, ".*barcode.*already exists.*");
   }
 
-  private boolean isUserTypeNotPopulatedError(String errorMessage) {
+  private boolean isInvalidUserTypeError(String errorMessage) {
     return errorMessage.matches(".*Invalid user type.*was populated.*");
   }
 
-  private boolean isUserTypeNotPopulatedError(AsyncResult<Response> reply) {
+  private boolean isInvalidUserTypeError(AsyncResult<Response> reply) {
     return isDesiredError(reply, ".*Invalid user type.*was populated.*");
+  }
+
+  private boolean isUserTypeNotPopulatedError(String errorMessage) {
+    return errorMessage.contains(USER_TYPE_NOT_POPULATED);
+  }
+
+  private boolean isUserTypeNotPopulatedError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, USER_TYPE_NOT_POPULATED);
   }
 
   private boolean isDesiredError(AsyncResult<Response> reply, String errMsg) {
@@ -574,8 +591,15 @@ public class UsersAPI implements Users {
       return;
     }
 
+    if (isInvalidUserTypeError(errorMessage)) {
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(
+            "An invalid user type has been populated to a user")));
+      return;
+    }
+
     if (isUserTypeNotPopulatedError(errorMessage)) {
-      logger.info("The user type was not populated for the user with id {}", user.getId());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
