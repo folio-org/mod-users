@@ -77,7 +77,7 @@ public class UserOutboxService {
     );
   }
 
-  public Future<Boolean> saveUserOutboxLogForCreateOrDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
+  public Future<Boolean> saveUserOutboxLogForCreateUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
       return userTenantService.isConsortiaTenant(conn, okapiHeaders)
         .compose(isConsortiaTenant -> {
           if (isConsortiaTenant && isStaffUser(user)) {
@@ -85,6 +85,16 @@ public class UserOutboxService {
           }
           return Future.succeededFuture();
         });
+  }
+
+  public Future<Boolean> saveUserOutboxLogForDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
+    return userTenantService.isConsortiaTenant(conn, okapiHeaders)
+      .compose(isConsortiaTenant -> {
+        if (isConsortiaTenant) {
+          return saveUserOutboxLog(conn, user, action, okapiHeaders);
+        }
+        return Future.succeededFuture();
+      });
   }
 
   public Future<Boolean> saveUserOutboxLogForUpdateUser(Conn conn, User user, User userFromStorage, Map<String, String> okapiHeaders) {
