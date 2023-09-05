@@ -268,7 +268,7 @@ public class UsersAPI implements Users {
 
     pgClient.withTrans(conn -> userTenantService.validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext)
         .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-          .compose(user -> userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
+          .compose(user -> userOutboxService.saveUserOutboxLogForCreateUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
           .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
           .map(Response.class::cast)))
 
@@ -384,7 +384,7 @@ public class UsersAPI implements Users {
       .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
         .compose(rows -> {
           if (rows.rowCount() != 0) {
-            return userOutboxService.saveUserOutboxLogForCreateOrDeleteUser(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
+            return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
               .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
               .map(Response.class::cast);
           } else {
