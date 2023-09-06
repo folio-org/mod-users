@@ -42,6 +42,10 @@
     "externalSystemId": {
       "description": "The externalSystemId of the user's",
       "type": "string"
+    },
+    "consortiumId": {
+      "description": "UUID of the consortiumId",
+      "$ref": "raml-util/schemas/uuid.schema"
     }
   },
   "additionalProperties": false,

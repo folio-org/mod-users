@@ -4,6 +4,7 @@ package org.folio.rest.impl;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
+import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserEvent;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -106,7 +108,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   }
 
   @Test
-  void canDeleteAUserForConsortia() {
+  void canDeleteStaffAUserForConsortia() {
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -119,6 +121,36 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
     assertEquals(1, userCreatedEvents.size());
     assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, user.getId());
+
+    assertEquals(1, userDeletedEvents.size());
+    assertEventContent(userDeletedEvents.get(0), UserEvent.Action.DELETE, user.getId());
+
+    usersClient.attemptToGetUser(user.getId())
+      .statusCode(404);
+  }
+
+  @Test
+  void sendAllEventsForSystemUserForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "system");
+    final var user = usersClient.createUser(userToCreate);
+    final User userToUpdate = createUser(userId, "joannek", "new_julia", "system");
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(204));
+    usersClient.deleteUser(user.getId());
+
+    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
+    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
+    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
+
+    assertEquals(1, userCreatedEvents.size());
+    assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, user.getId());
+
+    assertEquals(1, userUpdatedEvents.size());
+    assertEventContent(userUpdatedEvents.get(0), UserEvent.Action.EDIT, user.getId());
 
     assertEquals(1, userDeletedEvents.size());
     assertEventContent(userDeletedEvents.get(0), UserEvent.Action.DELETE, user.getId());
@@ -191,7 +223,8 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", null))
       .statusCode(400)
-      .body(is("An invalid user type has been populated to a user"));
+      .body(is(String.format("An invalid user type has been populated to a user, allowed values: %s",
+        Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
   }
 
   @Test
@@ -214,7 +247,8 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", "invalidType"))
       .statusCode(400)
-      .body(is("An invalid user type has been populated to a user"));
+      .body(is(String.format("An invalid user type has been populated to a user, allowed values: %s",
+        Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
   }
 
   private List<UserEvent> getUserEventsAndFilterByUserId(UserEventType eventType, String userId) {
