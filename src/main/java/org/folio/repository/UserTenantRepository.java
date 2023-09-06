@@ -14,6 +14,7 @@ import org.folio.rest.persist.Criteria.Criterion;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
@@ -118,6 +119,6 @@ public class UserTenantRepository {
       .withCentralTenantId(row.getString(CENTRAL_TENANT_ID))
       .withBarcode(row.getString(BARCODE))
       .withExternalSystemId(row.getString(EXTERNAL_SYSTEM_ID))
-      .withConsortiumId(row.getString(CONSORTIUM_ID));
+      .withConsortiumId(Objects.nonNull(row.getUUID(CONSORTIUM_ID)) ? row.getValue(CONSORTIUM_ID).toString() : null);
   }
 }
