@@ -36,19 +36,23 @@ class UserTenantIT extends AbstractRestTestNoData {
   private static final UserTenant FIRST_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUsername(USER_A).withTenantId(TENANT_X);
+    .withUsername(USER_A).withTenantId(TENANT_X)
+    .withConsortiumId(UUID.randomUUID().toString());
   private static final UserTenant SECOND_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUsername(USER_B).withTenantId(TENANT_X);
+    .withUsername(USER_B).withTenantId(TENANT_X)
+    .withConsortiumId(UUID.randomUUID().toString());
   private static final UserTenant THIRD_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUsername(USER_A).withTenantId(TENANT_Y);
+    .withUsername(USER_A).withTenantId(TENANT_Y)
+    .withConsortiumId(UUID.randomUUID().toString());
   private static final UserTenant FOURTH_AFFILIATION = new UserTenant()
     .withId(UUID.randomUUID().toString())
     .withUserId(UUID.randomUUID().toString())
-    .withUsername(USER_B).withTenantId(TENANT_Y);
+    .withUsername(USER_B).withTenantId(TENANT_Y)
+    .withConsortiumId(UUID.randomUUID().toString());
 
   @BeforeAll
   @SneakyThrows
@@ -91,6 +95,7 @@ class UserTenantIT extends AbstractRestTestNoData {
     userTenant.setMobilePhoneNumber("000000");
     userTenant.setBarcode("12345");
     userTenant.setExternalSystemId("54321");
+    userTenant.setConsortiumId(UUID.randomUUID().toString());
     sendAffiliationUpdatedEvent(List.of(userTenant));
     Awaitility.await()
       .atMost(1, MINUTES)
@@ -103,6 +108,7 @@ class UserTenantIT extends AbstractRestTestNoData {
         Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
         Assertions.assertEquals("12345", collection2.getUserTenants().get(2).getBarcode());
         Assertions.assertEquals("54321", collection2.getUserTenants().get(2).getExternalSystemId());
+        Assertions.assertEquals(userTenant.getConsortiumId(), collection2.getUserTenants().get(2).getConsortiumId());
       });
   }
 

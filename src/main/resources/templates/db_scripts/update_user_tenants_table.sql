@@ -5,7 +5,7 @@ ALTER TABLE user_tenant
   ADD COLUMN IF NOT EXISTS phone_number text,
   ADD COLUMN IF NOT EXISTS barcode text,
   ADD COLUMN IF NOT EXISTS external_system_id text,
-  ADD COLUMN IF NOT EXISTS consortium_id text;
+  ADD COLUMN IF NOT EXISTS consortium_id uuid;
 
 DROP INDEX IF EXISTS ${myuniversity}_${mymodule}.username_idx;
 CREATE INDEX IF NOT EXISTS username_idx ON user_tenant USING BTREE (LOWER(f_unaccent(username)));

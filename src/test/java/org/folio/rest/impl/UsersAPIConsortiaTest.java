@@ -4,6 +4,7 @@ package org.folio.rest.impl;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
+import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserEvent;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -221,7 +223,8 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", null))
       .statusCode(400)
-      .body(is("An invalid user type has been populated to a user"));
+      .body(is(String.format("An invalid user type has been populated to a user, allowed values: %s",
+        Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
   }
 
   @Test
@@ -244,7 +247,8 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", "invalidType"))
       .statusCode(400)
-      .body(is("An invalid user type has been populated to a user"));
+      .body(is(String.format("An invalid user type has been populated to a user, allowed values: %s",
+        Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
   }
 
   private List<UserEvent> getUserEventsAndFilterByUserId(UserEventType eventType, String userId) {

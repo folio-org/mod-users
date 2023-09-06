@@ -44,8 +44,8 @@
       "type": "string"
     },
     "consortiumId": {
-      "description": "The consortiumId",
-      "type": "string"
+      "description": "UUID of the consortiumId",
+      "$ref": "raml-util/schemas/uuid.schema"
     }
   },
   "additionalProperties": false,

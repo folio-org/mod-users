@@ -6,6 +6,7 @@ import static java.util.Collections.emptyList;
 import static org.folio.event.service.UserTenantService.INVALID_USER_TYPE_POPULATED;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -33,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.domain.UserType;
 import org.folio.event.service.UserTenantService;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Validate;
@@ -309,7 +311,8 @@ public class UsersAPI implements Users {
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
                 "id", entity.getId(),
-                "An invalid user type has been populated to a user"))));
+                String.format("An invalid user type has been populated to a user, allowed values: %s",
+                  Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())))));
           return;
         }
         logger.error("saveUser failed: {}", reply.cause().getMessage(), reply.cause());
@@ -580,7 +583,8 @@ public class UsersAPI implements Users {
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
           .respond400WithTextPlain(
-            "An invalid user type has been populated to a user")));
+            String.format("An invalid user type has been populated to a user, allowed values: %s",
+              Arrays.stream(UserType.values()).map(UserType::getTypeName).toList()))));
       return;
     }
 
