@@ -160,7 +160,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   }
 
   @Test
-  void canUpdateUserNameForConsortia() {
+  void canUpdateFirstNameForConsortia() {
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();

@@ -22,9 +22,10 @@ public class UserEventsLogRepository {
   private static final String OUTBOX_TABLE_NAME = "outbox_event_log";
   private static final String EVENT_ID_FIELD = "event_id";
   private static final String ENTITY_TYPE_FIELD = "entity_type";
+  private static final String PERSONAL_DATA_CHANGED_FIELD = "is_personal_data_changed";
   private static final String ACTION_FIELD = "action";
   private static final String PAYLOAD_FIELD = "payload";
-  private static final String INSERT_SQL = "INSERT INTO %s.%s (event_id, entity_type, action, action_date, payload) VALUES ($1, $2, $3, $4, $5)";
+  private static final String INSERT_SQL = "INSERT INTO %s.%s (event_id, entity_type, action, action_date, payload, is_personal_data_changed) VALUES ($1, $2, $3, $4, $5, $6)";
   private static final String SELECT_EVENT_LOGS = "SELECT * FROM %s.%s ORDER BY action_date LIMIT 1000";
   public static final String DELETE_SQL = "DELETE from %s.%s where event_id = ANY ($1)";
 
@@ -52,7 +53,7 @@ public class UserEventsLogRepository {
   public Future<Boolean> saveEventLog(Conn conn, OutboxEventLog eventLog, String tenantId) {
     String query = String.format(INSERT_SQL, convertToPsqlStandard(tenantId), OUTBOX_TABLE_NAME);
     Tuple queryParams = Tuple.of(eventLog.getEventId(), eventLog.getEntityType().value(), eventLog.getAction(),
-      eventLog.getActionDate().toInstant().atOffset(ZoneOffset.UTC), eventLog.getPayload());
+      eventLog.getActionDate().toInstant().atOffset(ZoneOffset.UTC), eventLog.getPayload(), eventLog.getIsPersonalDataChanged());
     return conn.execute(query, queryParams).map(resultSet -> resultSet.size() == 1);
   }
 
@@ -78,7 +79,8 @@ public class UserEventsLogRepository {
         .withEventId(row.getValue(EVENT_ID_FIELD).toString())
         .withEntityType(OutboxEventLog.EntityType.fromValue(row.getString(ENTITY_TYPE_FIELD)))
         .withAction(row.getString(ACTION_FIELD))
-        .withPayload(row.getString(PAYLOAD_FIELD));
+        .withPayload(row.getString(PAYLOAD_FIELD))
+        .withIsPersonalDataChanged(row.getBoolean(PERSONAL_DATA_CHANGED_FIELD));
       result.add(log);
     }
     return result;
