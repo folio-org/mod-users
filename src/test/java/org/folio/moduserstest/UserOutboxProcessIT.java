@@ -2,6 +2,7 @@ package org.folio.moduserstest;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.folio.repository.UserEventsLogRepository;
@@ -26,6 +27,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.event.UserEventType.USER_CREATED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 10, unit = SECONDS)
@@ -36,7 +38,8 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
     .withAction(UserEvent.Action.CREATE.value())
     .withActionDate(new Date())
     .withEntityType(OutboxEventLog.EntityType.USER)
-    .withPayload(Json.encode(new User().withMetadata(new Metadata())));
+    .withPayload(Json.encode(new User().withMetadata(new Metadata())))
+    .withIsPersonalDataChanged(true);
 
   private static TimerInterfaceClient timerInterfaceClient;
   private static UserEventsLogRepository userEventsLogRepository;
@@ -61,6 +64,9 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
       .statusCode(is(HTTP_OK));
     List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     assertEquals(1, list.size());
+    JsonObject log = (JsonObject) Json.decodeValue(list.get(0));
+    assertEquals(UserEvent.Action.CREATE.value(), log.getString("action"));
+    assertTrue(log.getBoolean("isPersonalDataChanged"));
   }
 
   @Test
