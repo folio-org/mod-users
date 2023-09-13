@@ -44,6 +44,7 @@ public class UsersService {
 
     if (user.getPersonal() != null) {
       userDto.withPersonal(new Personal()
+        .withFirstName(user.getPersonal().getFirstName())
         .withLastName(user.getPersonal().getLastName())
         .withEmail(user.getPersonal().getEmail())
         .withPhone(user.getPersonal().getPhone())
