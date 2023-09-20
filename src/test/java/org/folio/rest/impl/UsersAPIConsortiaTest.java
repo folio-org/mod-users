@@ -15,10 +15,10 @@ import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -34,6 +34,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Timeout(value = 20, unit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
