@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.List;
 
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
@@ -48,6 +49,7 @@ public class CustomFieldTestBase extends TestBase {
   private static final String SHORT_TEXT_FIELD_JSON_PATH = "fields/shortTextField.json";
   private static final String SINGLE_CHECKBOX_FIELD_JSON_PATH = "fields/singleCheckbox.json";
   private static final String MULTI_SELECT_FIELD_JSON_PATH = "fields/multiSelectField.json";
+  private static final List<String> KAFKA_CONTAINER_PORTS = List.of("11544:2181", "11545:9092", "11546:9093");
 
   protected User testUser;
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
