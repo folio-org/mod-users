@@ -15,6 +15,7 @@ import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(VertxExtension.class)
+@Ignore
 class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;

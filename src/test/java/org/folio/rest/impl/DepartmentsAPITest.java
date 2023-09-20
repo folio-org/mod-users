@@ -4,6 +4,9 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.folio.moduserstest.AbstractRestTest.*;
+import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
+import static org.folio.rest.impl.CustomFieldTestBase.updateKafkaConfigField;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -32,7 +35,11 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import org.folio.rest.jaxrs.model.Department;
@@ -43,6 +50,8 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.DBTestUtil;
 import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @RunWith(VertxUnitRunner.class)
 public class DepartmentsAPITest extends TestBase {
@@ -55,6 +64,27 @@ public class DepartmentsAPITest extends TestBase {
   private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
 
   protected User testUser;
+  private static final KafkaContainer kafkaContainer = new KafkaContainer(
+    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
+
+  private static final ExternalResource resource = new ExternalResource() {
+    @Override
+    protected void before() {
+      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+      kafkaContainer.start();
+      updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
+      updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
+      updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
+    }
+
+    @Override
+    protected void after() {
+      kafkaContainer.stop();
+    }
+  };
+
+  @ClassRule
+  public static final TestRule rules = RuleChain.outerRule(resource);
 
   @Before
   public void setUp() {

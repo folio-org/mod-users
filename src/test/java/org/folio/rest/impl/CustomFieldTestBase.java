@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 
+import static org.folio.moduserstest.AbstractRestTest.*;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.test.util.TestUtil.mockGetWithBody;
 import static org.folio.test.util.TestUtil.readFile;
@@ -28,6 +29,12 @@ import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
+import org.junit.ClassRule;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 public class CustomFieldTestBase extends TestBase {
   protected static final String USER_ID = "88888888-8888-4888-8888-888888888888";
@@ -43,6 +50,27 @@ public class CustomFieldTestBase extends TestBase {
   private static final String MULTI_SELECT_FIELD_JSON_PATH = "fields/multiSelectField.json";
 
   protected User testUser;
+  private static final KafkaContainer kafkaContainer = new KafkaContainer(
+    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
+
+  private static final ExternalResource resource = new ExternalResource() {
+    @Override
+    protected void before() {
+      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+      kafkaContainer.start();
+      updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
+      updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
+      updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
+    }
+
+    @Override
+    protected void after() {
+      kafkaContainer.stop();
+    }
+  };
+
+  @ClassRule
+  public static final TestRule rules = RuleChain.outerRule(resource);
 
   @Before
   public void setUp() {
