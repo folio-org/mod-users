@@ -30,6 +30,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
 import org.junit.ClassRule;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
@@ -65,6 +66,11 @@ public class CustomFieldTestBase extends TestBase {
 
     @Override
     protected void after() {
+      kafkaContainer.stop();
+    }
+
+    @AfterAll
+    public static void kafkaContainerStop() {
       kafkaContainer.stop();
     }
   };
