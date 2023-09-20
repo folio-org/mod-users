@@ -113,7 +113,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @Test
   void canDeleteStaffAUserForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
     commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
@@ -171,8 +170,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @Test
   void canUpdateFirstNameForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -195,8 +192,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @Test
   void cannotUpdateUserWithSameUsernameAsExistingUserForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -210,8 +205,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @Test
   void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -224,8 +217,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @Test
   void cannotCreateUserWithoutUserTypeForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -239,7 +230,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   void cannotUpdateUserWithoutUserTypeForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -254,8 +244,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @Test
   void cannotCreateUserWithInvalidUserTypeForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -269,7 +257,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   void cannotUpdateUserWithInvalidUserTypeForConsortia() {
     commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
