@@ -2,8 +2,8 @@
 package org.folio.rest.impl;
 
 import io.vertx.core.json.Json;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import lombok.SneakyThrows;
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
@@ -18,7 +18,6 @@ import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
@@ -34,7 +33,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Timeout(value = 20, unit = SECONDS)
+@Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
@@ -42,7 +41,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   private static UserTenantClient userTenantClient;
 
   @BeforeAll
-  @SneakyThrows
   static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
@@ -52,13 +50,13 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   public void beforeEach() {
     usersClient.deleteAllUsers();
     userTenantClient.deleteAllUserTenants();
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
   }
 
   @Test
   void doNotSendUserCreateUpdateKafkaEventsForPatronUser() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events for patron users
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
@@ -85,6 +83,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void doNotSendUserCreateUpdateKafkaEventsForShadowUser() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events for shadow users
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
@@ -111,6 +112,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void canDeleteStaffAUserForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -133,6 +137,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void sendAllEventsForSystemUserForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -163,6 +170,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void canUpdateFirstNameForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -184,6 +194,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotUpdateUserWithSameUsernameAsExistingUserForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -196,6 +209,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -207,6 +223,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotCreateUserWithoutUserTypeForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -218,6 +237,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotUpdateUserWithoutUserTypeForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -231,6 +253,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotCreateUserWithInvalidUserTypeForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
@@ -242,6 +267,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   @Test
   void cannotUpdateUserWithInvalidUserTypeForConsortia() {
+    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
+    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
+//    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
