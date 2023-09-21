@@ -4,7 +4,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.kafka.client.producer.KafkaHeader;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -12,8 +11,8 @@ import org.apache.logging.log4j.Logger;
 import org.folio.event.KafkaConfigSingleton;
 import org.folio.event.UserEventType;
 import org.folio.kafka.KafkaConfig;
-import org.folio.kafka.KafkaHeaderUtils;
 import org.folio.kafka.KafkaTopicNameHelper;
+import org.folio.kafka.services.KafkaProducerRecordBuilder;
 import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
@@ -21,7 +20,6 @@ import org.folio.rest.tools.utils.TenantTool;
 import org.folio.service.UsersService;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -86,9 +84,8 @@ public class UserEventProducer {
                                       Map<String, String> okapiHeaders,
                                       String key) {
     String tenantId = TenantTool.tenantId(okapiHeaders);
-    List<KafkaHeader> kafkaHeaders = KafkaHeaderUtils.kafkaHeadersFromMap(okapiHeaders);
     String topicName = createTopicName(kafkaConfig.getEnvId(), tenantId, eventType.getTopicName());
-    KafkaProducerRecord<String, String> producerRecord = createProducerRecord(topicName, key, eventPayload, kafkaHeaders);
+    KafkaProducerRecord<String, String> producerRecord = createProducerRecord(tenantId, topicName, key, eventPayload, okapiHeaders);
 
     Promise<Boolean> promise = Promise.promise();
 
@@ -113,9 +110,13 @@ public class UserEventProducer {
     return KafkaProducer.createShared(Vertx.currentContext().owner(), producerName, kafkaConfig.getProducerProps());
   }
 
-  private KafkaProducerRecord<String, String> createProducerRecord(String topicName, String key, String eventPayload, List<KafkaHeader> kafkaHeaders) {
-    return KafkaProducerRecord.create(topicName, key, eventPayload)
-      .addHeaders(kafkaHeaders);
+  private KafkaProducerRecord<String, String> createProducerRecord(String tenantId, String topicName, String key, String eventPayload, Map<String, String> okapiHeaders) {
+    return new KafkaProducerRecordBuilder<String, String>(tenantId)
+      .key(key)
+      .value(eventPayload)
+      .topic(topicName)
+      .propagateOkapiHeaders(okapiHeaders)
+      .build();
   }
 
   private String createTopicName(String envId, String tenantId, String eventType) {
