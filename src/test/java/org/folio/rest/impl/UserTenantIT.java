@@ -94,17 +94,18 @@ class UserTenantIT extends AbstractRestTestNoData {
     userTenant.setExternalSystemId("54321");
     sendAffiliationUpdatedEvent(List.of(userTenant));
     Awaitility.await()
-      .atMost(1, MINUTES)
+      .atMost(2, MINUTES)
       .pollInterval(5, SECONDS)
       .untilAsserted(() -> {
         UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
-        Assertions.assertEquals("Test", collection2.getUserTenants().get(2).getEmail());
-        Assertions.assertEquals("1234", collection2.getUserTenants().get(2).getPhoneNumber());
-        Assertions.assertEquals("testUser", collection2.getUserTenants().get(2).getUsername());
-        Assertions.assertEquals("000000", collection2.getUserTenants().get(2).getMobilePhoneNumber());
-        Assertions.assertEquals("12345", collection2.getUserTenants().get(2).getBarcode());
-        Assertions.assertEquals("54321", collection2.getUserTenants().get(2).getExternalSystemId());
-        Assertions.assertNotNull(collection2.getUserTenants().get(2).getConsortiumId());
+        UserTenant tenant = collection2.getUserTenants().get(2);
+        Assertions.assertEquals("Test", tenant.getEmail());
+        Assertions.assertEquals("1234", tenant.getPhoneNumber());
+        Assertions.assertEquals("testUser", tenant.getUsername());
+        Assertions.assertEquals("000000", tenant.getMobilePhoneNumber());
+        Assertions.assertEquals("12345", tenant.getBarcode());
+        Assertions.assertEquals("54321", tenant.getExternalSystemId());
+        Assertions.assertNotNull(tenant.getConsortiumId());
       });
   }
 

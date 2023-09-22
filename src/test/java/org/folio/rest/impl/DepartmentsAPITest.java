@@ -4,7 +4,6 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.folio.moduserstest.AbstractRestTest.*;
 import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
 import static org.folio.rest.impl.CustomFieldTestBase.updateKafkaConfigField;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,6 +61,7 @@ public class DepartmentsAPITest extends TestBase {
 
   private static final String USER_ID = "88888888-8888-4888-8888-888888888888";
   private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
+  private static final List<String> KAFKA_CONTAINER_PORTS = List.of("11547:2181", "11548:9092", "11549:9093");
 
   protected User testUser;
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
