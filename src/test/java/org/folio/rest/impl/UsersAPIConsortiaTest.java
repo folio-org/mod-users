@@ -8,14 +8,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
-import org.folio.moduserstest.AbstractRestTest;
+import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.support.Personal;
@@ -37,15 +35,10 @@ import java.util.stream.Collectors;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
-class UsersAPIConsortiaTest extends AbstractRestTest {
+class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static UserTenantClient userTenantClient;
-
-  @BeforeAll
-  public static void beforeAll(Vertx vertx, VertxTestContext context) {
-    AbstractRestTest.beforeAll(vertx, context, false, List.of("11551:2181", "11552:9092", "11553:9093"));
-  }
 
   @BeforeAll
   static void beforeAll() {
