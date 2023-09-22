@@ -41,7 +41,7 @@ public abstract class AbstractRestTest {
   public static final String KAFKA_HOST = "KAFKA_HOST";
   public static final String KAFKA_PORT = "KAFKA_PORT";
   public static final String KAFKA_ENV_VALUE = "test-env";
-  private static final List<String> KAFKA_CONTAINER_PORTS = List.of("11541:2181", "11542:9092", "11543:9093");
+  public static final List<String> KAFKA_CONTAINER_PORTS = List.of("11541:2181", "11542:9092", "11543:9093");
 
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
@@ -52,7 +52,7 @@ public abstract class AbstractRestTest {
     new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
 
   @SneakyThrows
-  public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
+  public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData, List<String> kafkaPorts) {
     final var token = new FakeTokenGenerator().generateToken();
 
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
@@ -62,7 +62,7 @@ public abstract class AbstractRestTest {
     okapiUrl = new OkapiUrl("http://localhost:" + port);
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
-    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+    kafkaContainer.setPortBindings(kafkaPorts);
     kafkaContainer.start();
     System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
