@@ -58,7 +58,7 @@ public class CustomFieldTestBase extends TestBase {
   private static final ExternalResource resource = new ExternalResource() {
     @Override
     protected void before() {
-      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+//      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
       kafkaContainer.start();
       updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
       updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());

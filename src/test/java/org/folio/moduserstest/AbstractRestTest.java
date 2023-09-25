@@ -72,21 +72,6 @@ public abstract class AbstractRestTest {
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
-    Properties consumerProperties = new Properties();
-    consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-    consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-    consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-    consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
-    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    kafkaConsumer = new KafkaConsumer<>(consumerProperties);
-    kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
-
-    Properties producerProperties = new Properties();
-    producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-    producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    kafkaProducer = new KafkaProducer<>(producerProperties);
-
     module = new VertxModule(vertx);
 
     waitForKafka(vertx);
@@ -135,9 +120,22 @@ public abstract class AbstractRestTest {
 
   private static void waitForKafka(Vertx vertx) {
     Supplier<KafkaAdminClient> buildAdminClient = () -> {
-      Map<String, String> configs = new HashMap<>();
-      configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-      return KafkaAdminClient.create(vertx, configs);
+      Properties consumerProperties = new Properties();
+      consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+      consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+      consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+      consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
+      consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+      kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+      kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
+
+      Properties producerProperties = new Properties();
+      producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+      producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+      producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+      kafkaProducer = new KafkaProducer<>(producerProperties);
+
+      return KafkaAdminClient.create(vertx, consumerProperties);
     };
     AtomicBoolean isReady = new AtomicBoolean();
 
