@@ -42,7 +42,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   private static UserTenantClient userTenantClient;
 
   @BeforeAll
-  @SneakyThrows
   static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);

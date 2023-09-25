@@ -3,8 +3,10 @@ package org.folio.moduserstest;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.kafka.admin.KafkaAdminClient;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -26,13 +28,15 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
 import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 public abstract class AbstractRestTest {
 
@@ -62,7 +66,7 @@ public abstract class AbstractRestTest {
     okapiUrl = new OkapiUrl("http://localhost:" + port);
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
-    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
+//    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
     kafkaContainer.start();
     System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
@@ -84,6 +88,8 @@ public abstract class AbstractRestTest {
     kafkaProducer = new KafkaProducer<>(producerProperties);
 
     module = new VertxModule(vertx);
+
+    waitForKafka(vertx);
 
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
@@ -125,5 +131,33 @@ public abstract class AbstractRestTest {
 
   private static String formatToKafkaTopicName(String tenant, String eventType) {
     return KafkaTopicNameHelper.formatTopicName(KAFKA_ENV_VALUE, getDefaultNameSpace(), tenant, eventType);
+  }
+
+  private static void waitForKafka(Vertx vertx) {
+    Supplier<KafkaAdminClient> buildAdminClient = () -> {
+      Map<String, String> configs = new HashMap<>();
+      configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+      return KafkaAdminClient.create(vertx, configs);
+    };
+    AtomicBoolean isReady = new AtomicBoolean();
+
+    await()
+      .atMost(15, TimeUnit.SECONDS)
+      .pollDelay(3, TimeUnit.SECONDS)
+      .pollInterval(3, TimeUnit.SECONDS)
+      .alias("Is Kafka Up?")
+      .until(() -> {
+        System.out.println("listing topics to see if kafka is up");
+        KafkaAdminClient adminClient = buildAdminClient.get();
+        adminClient.listTopics()
+          .onComplete(ar -> {
+            if (ar.succeeded()) {
+              System.out.println("Kafka is up");
+              isReady.set(true);
+            }
+            adminClient.close(1000);
+          });
+        return isReady.get();
+      });
   }
 }
