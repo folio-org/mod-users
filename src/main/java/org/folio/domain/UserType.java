@@ -5,7 +5,8 @@ public enum UserType {
   PATRON("patron"),
   STAFF("staff"),
   SHADOW("shadow"),
-  SYSTEM("system");
+  SYSTEM("system"),
+  DCB("dcb");
 
   private final String typeName;
 
