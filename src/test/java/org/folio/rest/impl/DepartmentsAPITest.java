@@ -61,7 +61,6 @@ public class DepartmentsAPITest extends TestBase {
 
   private static final String USER_ID = "88888888-8888-4888-8888-888888888888";
   private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
-  private static final List<String> KAFKA_CONTAINER_PORTS = List.of("11547:2181", "11548:9092", "11549:9093");
 
   protected User testUser;
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
@@ -70,7 +69,6 @@ public class DepartmentsAPITest extends TestBase {
   private static final ExternalResource resource = new ExternalResource() {
     @Override
     protected void before() {
-//      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
       kafkaContainer.start();
       updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
       updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());

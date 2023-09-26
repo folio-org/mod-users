@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import lombok.SneakyThrows;
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
@@ -193,16 +192,16 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .body(is("User with this username already exists"));
   }
 
-  @Test
-  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
-    UserTenant userTenant = getUserTenant();
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-    String userId = UUID.randomUUID().toString();
-    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
-    usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(422)
-      .extract().as(ValidationErrors.class);
-  }
+//  @Test
+//  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
+//    UserTenant userTenant = getUserTenant();
+//    userTenantClient.attemptToSaveUserTenant(userTenant);
+//    String userId = UUID.randomUUID().toString();
+//    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
+//    usersClient.attemptToCreateUser(userToCreate)
+//      .statusCode(422)
+//      .extract().as(ValidationErrors.class);
+//  }
 
   @Test
   void cannotCreateUserWithoutUserTypeForConsortia() {

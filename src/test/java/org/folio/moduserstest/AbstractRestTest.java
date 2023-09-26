@@ -3,10 +3,8 @@ package org.folio.moduserstest;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.kafka.admin.KafkaAdminClient;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.IteratorUtils;
-import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -28,15 +26,13 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
 import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 public abstract class AbstractRestTest {
 
@@ -70,9 +66,22 @@ public abstract class AbstractRestTest {
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
-    module = new VertxModule(vertx);
+    Properties consumerProperties = new Properties();
+    consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
+    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+    kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
 
-    waitForKafka(vertx);
+    Properties producerProperties = new Properties();
+    producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    kafkaProducer = new KafkaProducer<>(producerProperties);
+
+    module = new VertxModule(vertx);
 
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
@@ -85,8 +94,6 @@ public abstract class AbstractRestTest {
       .compose(v -> {
         kafkaProducer.close();
         kafkaConsumer.close();
-        System.clearProperty(KAFKA_HOST);
-        System.clearProperty(KAFKA_PORT);
         kafkaContainer.stop();
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
@@ -116,48 +123,5 @@ public abstract class AbstractRestTest {
 
   private static String formatToKafkaTopicName(String tenant, String eventType) {
     return KafkaTopicNameHelper.formatTopicName(KAFKA_ENV_VALUE, getDefaultNameSpace(), tenant, eventType);
-  }
-
-  private static void waitForKafka(Vertx vertx) {
-    Properties consumerProperties = new Properties();
-    Properties producerProperties = new Properties();
-    Supplier<KafkaAdminClient> buildAdminClient = () -> {
-      consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-      consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-      consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-      consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
-      consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-//      kafkaConsumer = new KafkaConsumer<>(consumerProperties);
-//      kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
-
-      producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-      producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-      producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-//      kafkaProducer = new KafkaProducer<>(producerProperties);
-
-      return KafkaAdminClient.create(vertx, consumerProperties);
-    };
-    AtomicBoolean isReady = new AtomicBoolean();
-
-    await()
-      .atMost(15, TimeUnit.SECONDS)
-      .pollDelay(3, TimeUnit.SECONDS)
-      .pollInterval(3, TimeUnit.SECONDS)
-      .alias("Is Kafka Up?")
-      .until(() -> {
-        System.out.println("listing topics to see if kafka is up");
-        KafkaAdminClient adminClient = buildAdminClient.get();
-        adminClient.listTopics()
-          .onComplete(ar -> {
-            if (ar.succeeded()) {
-              System.out.println("Kafka is up");
-              kafkaConsumer = new KafkaConsumer<>(consumerProperties);
-              kafkaProducer = new KafkaProducer<>(producerProperties);
-              isReady.set(true);
-            }
-            adminClient.close(1000);
-          });
-        return isReady.get();
-      });
   }
 }
