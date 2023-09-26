@@ -6,8 +6,4 @@ import org.junit.jupiter.api.BeforeAll;
 
 public class AbstractRestTestWithData extends AbstractRestTest {
 
-  @BeforeAll
-  public static void beforeAll(Vertx vertx, VertxTestContext context) {
-    AbstractRestTest.beforeAll(vertx, context, true);
-  }
 }

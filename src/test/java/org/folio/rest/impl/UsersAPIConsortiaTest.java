@@ -192,16 +192,16 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .body(is("User with this username already exists"));
   }
 
-//  @Test
-//  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
-//    UserTenant userTenant = getUserTenant();
-//    userTenantClient.attemptToSaveUserTenant(userTenant);
-//    String userId = UUID.randomUUID().toString();
-//    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
-//    usersClient.attemptToCreateUser(userToCreate)
-//      .statusCode(422)
-//      .extract().as(ValidationErrors.class);
-//  }
+  @Test
+  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(422)
+      .extract().as(ValidationErrors.class);
+  }
 
   @Test
   void cannotCreateUserWithoutUserTypeForConsortia() {
