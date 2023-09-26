@@ -45,7 +45,6 @@ public abstract class AbstractRestTest {
   public static final String KAFKA_HOST = "KAFKA_HOST";
   public static final String KAFKA_PORT = "KAFKA_PORT";
   public static final String KAFKA_ENV_VALUE = "test-env";
-  private static final List<String> KAFKA_CONTAINER_PORTS = List.of("11541:2181", "11542:9092", "11543:9093");
 
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
@@ -66,7 +65,6 @@ public abstract class AbstractRestTest {
     okapiUrl = new OkapiUrl("http://localhost:" + port);
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
-//    kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
     kafkaContainer.start();
     System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
@@ -87,6 +85,8 @@ public abstract class AbstractRestTest {
       .compose(v -> {
         kafkaProducer.close();
         kafkaConsumer.close();
+        System.clearProperty(KAFKA_HOST);
+        System.clearProperty(KAFKA_PORT);
         kafkaContainer.stop();
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
@@ -119,21 +119,21 @@ public abstract class AbstractRestTest {
   }
 
   private static void waitForKafka(Vertx vertx) {
+    Properties consumerProperties = new Properties();
+    Properties producerProperties = new Properties();
     Supplier<KafkaAdminClient> buildAdminClient = () -> {
-      Properties consumerProperties = new Properties();
       consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
       consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
       consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
       consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
       consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-      kafkaConsumer = new KafkaConsumer<>(consumerProperties);
-      kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
+//      kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+//      kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
 
-      Properties producerProperties = new Properties();
       producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
       producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
       producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-      kafkaProducer = new KafkaProducer<>(producerProperties);
+//      kafkaProducer = new KafkaProducer<>(producerProperties);
 
       return KafkaAdminClient.create(vertx, consumerProperties);
     };
@@ -151,6 +151,8 @@ public abstract class AbstractRestTest {
           .onComplete(ar -> {
             if (ar.succeeded()) {
               System.out.println("Kafka is up");
+              kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+              kafkaProducer = new KafkaProducer<>(producerProperties);
               isReady.set(true);
             }
             adminClient.close(1000);
