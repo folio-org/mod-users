@@ -1,9 +1,16 @@
 
 package org.folio.rest.impl;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.event.UserEventType.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.vertx.core.json.Json;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import lombok.SneakyThrows;
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
@@ -26,13 +33,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+@Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
@@ -40,7 +41,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   private static UserTenantClient userTenantClient;
 
   @BeforeAll
-  @SneakyThrows
   static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);

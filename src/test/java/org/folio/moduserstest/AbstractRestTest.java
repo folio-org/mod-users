@@ -41,7 +41,7 @@ public abstract class AbstractRestTest {
   public static final String KAFKA_HOST = "KAFKA_HOST";
   public static final String KAFKA_PORT = "KAFKA_PORT";
   public static final String KAFKA_ENV_VALUE = "test-env";
-  public static final List<String> KAFKA_CONTAINER_PORTS = List.of("11541:2181", "11542:9092", "11543:9093");
+  private static final List<String> KAFKA_CONTAINER_PORTS = List.of("11541:2181", "11542:9092", "11543:9093");
 
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
