@@ -45,7 +45,6 @@ public abstract class AbstractRestTest {
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
   protected static OkapiHeaders okapiHeaders;
-  protected static KafkaConsumer<String, String> kafkaConsumer;
   protected static KafkaProducer<String, String> kafkaProducer;
   private static final KafkaContainer kafkaContainer =
     new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
@@ -66,15 +65,6 @@ public abstract class AbstractRestTest {
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
 
-    Properties consumerProperties = new Properties();
-    consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-    consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-    consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-    consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
-    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-    kafkaConsumer = new KafkaConsumer<>(consumerProperties);
-    kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
-
     Properties producerProperties = new Properties();
     producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
     producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -93,7 +83,6 @@ public abstract class AbstractRestTest {
     module.purgeModule(okapiHeaders)
       .compose(v -> {
         kafkaProducer.close();
-        kafkaConsumer.close();
         kafkaContainer.stop();
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
@@ -102,8 +91,19 @@ public abstract class AbstractRestTest {
   }
 
   public List<String> checkKafkaEventSent(String tenant, String eventType) {
-    kafkaConsumer.subscribe(Collections.singletonList(formatToKafkaTopicName(tenant, eventType)));
-    ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofMillis(3000));
+    Properties consumerProperties = new Properties();
+    consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
+    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    ConsumerRecords<String, String> records;
+    try (KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(consumerProperties)) {
+      kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
+
+      kafkaConsumer.subscribe(Collections.singletonList(formatToKafkaTopicName(tenant, eventType)));
+      records = kafkaConsumer.poll(Duration.ofMillis(3000));
+    }
     return IteratorUtils.toList(records.iterator()).stream()
         .map(ConsumerRecord::value).collect(Collectors.toList());
   }
@@ -114,11 +114,6 @@ public abstract class AbstractRestTest {
     ProducerRecord<String, String> record = new ProducerRecord<>(topicName, key, value);
     record.headers().add(OKAPI_TENANT_HEADER, TENANT_NAME.getBytes());
     return kafkaProducer.send(record).get();
-  }
-
-  public void commitAllMessagesInTopic(String tenant, String eventType) {
-    kafkaConsumer.subscribe(Collections.singletonList(formatToKafkaTopicName(tenant, eventType)));
-    kafkaConsumer.poll(Duration.ofMillis(1000));
   }
 
   private static String formatToKafkaTopicName(String tenant, String eventType) {

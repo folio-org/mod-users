@@ -59,7 +59,6 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
 
   @Test
   void shouldSendUserEventToKafkaAfterTrigger() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     timerInterfaceClient.attemptToTriggerUsersOutboxProcess(TENANT_NAME)
       .statusCode(is(HTTP_OK));
     List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());

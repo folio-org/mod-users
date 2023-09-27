@@ -50,9 +50,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   public void beforeEach() {
     usersClient.deleteAllUsers();
     userTenantClient.deleteAllUserTenants();
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
   }
 
   @Test
