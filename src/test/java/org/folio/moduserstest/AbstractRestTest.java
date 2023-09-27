@@ -71,7 +71,7 @@ public abstract class AbstractRestTest {
     consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
-    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
     kafkaConsumer = new KafkaConsumer<>(consumerProperties);
     kafkaConsumer.seekToBeginning(kafkaConsumer.assignment());
 

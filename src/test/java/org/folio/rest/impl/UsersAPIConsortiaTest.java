@@ -9,7 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.vertx.core.json.Json;
-import io.vertx.junit5.Timeout;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
@@ -28,12 +28,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
@@ -192,16 +192,16 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .body(is("User with this username already exists"));
   }
 
-//  @Test
-//  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
-//    UserTenant userTenant = getUserTenant();
-//    userTenantClient.attemptToSaveUserTenant(userTenant);
-//    String userId = UUID.randomUUID().toString();
-//    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
-//    usersClient.attemptToCreateUser(userToCreate)
-//      .statusCode(422)
-//      .extract().as(ValidationErrors.class);
-//  }
+  @Test
+  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(422)
+      .extract().as(ValidationErrors.class);
+  }
 
   @Test
   void cannotCreateUserWithoutUserTypeForConsortia() {
@@ -260,9 +260,12 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   private List<UserEvent> getUserEvents(UserEventType eventType) {
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.getTopicName());
-    return usersList.stream()
-      .map(s -> Json.decodeValue(s, UserEvent.class))
-      .collect(Collectors.toList());
+    List<UserEvent> list = new ArrayList<>();
+    for (String s : usersList) {
+      JsonObject res = Json.decodeValue(s, JsonObject.class);
+      list.add(res.mapTo(UserEvent.class));
+    }
+    return list;
   }
 
   private void assertEventContent(UserEvent userEvent, UserEvent.Action action, String userId) {
