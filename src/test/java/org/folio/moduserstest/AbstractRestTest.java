@@ -24,6 +24,8 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.VertxModule;
 import org.folio.support.http.*;
 import org.junit.jupiter.api.AfterAll;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -38,20 +40,18 @@ import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
 import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 public abstract class AbstractRestTest {
-
-  public static final String KAFKA_ENV = "ENV";
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractRestTest.class);
   public static final String TENANT_NAME = "diku";
-  public static final String KAFKA_HOST = "KAFKA_HOST";
-  public static final String KAFKA_PORT = "KAFKA_PORT";
   public static final String KAFKA_ENV_VALUE = "test-env";
-  public static final String OKAPI_URL_ENV = "OKAPI_URL";
+  public static final String KAFKA_IMAGE_NAME = "confluentinc/cp-kafka:7.3.1";
 
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
   protected static OkapiHeaders okapiHeaders;
   protected static KafkaProducer<String, String> kafkaProducer;
+
   private static final KafkaContainer kafkaContainer =
-    new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
+    new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE_NAME));
 
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
@@ -60,25 +60,16 @@ public abstract class AbstractRestTest {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     final var port = NetworkUtils.nextFreePort();
-    final String okapiUrlStr = "http://localhost:" + port;
 
-    okapiUrl = new OkapiUrl(okapiUrlStr);
+    okapiUrl = new OkapiUrl("http://localhost:" + port);
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
     kafkaContainer.start();
     updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
     updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
     updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
-    System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
-    System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
-    System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
-    System.setProperty(OKAPI_URL_ENV, okapiUrlStr);
 
-    Properties producerProperties = new Properties();
-    producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
-    producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    kafkaProducer = new KafkaProducer<>(producerProperties);
+    kafkaProducer = createKafkaProducer();
 
     module = new VertxModule(vertx);
 
@@ -117,6 +108,14 @@ public abstract class AbstractRestTest {
         .map(ConsumerRecord::value).collect(Collectors.toList());
   }
 
+  private static KafkaProducer<String, String> createKafkaProducer() {
+    Properties producerProperties = new Properties();
+    producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    producerProperties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    return new KafkaProducer<>(producerProperties);
+  }
+
   @SneakyThrows
   public RecordMetadata sendEvent(String tenantId, String topic, String key, String value) {
     String topicName = formatToKafkaTopicName(tenantId, topic);
@@ -142,7 +141,7 @@ public abstract class AbstractRestTest {
 
       kafkaConfigField.set(instance, kafkaConfig);
     } catch (NoSuchFieldException | IllegalAccessException e) {
-      e.printStackTrace();
+      LOG.error("Could not update kafka config", e);
     }
   }
 }

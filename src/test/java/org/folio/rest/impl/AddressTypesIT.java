@@ -29,13 +29,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
 class AddressTypesIT extends AbstractRestTestNoData {
-  private static final Logger LOG = LoggerFactory.getLogger(AddressTypesIT.class);
 
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
@@ -43,8 +40,6 @@ class AddressTypesIT extends AbstractRestTestNoData {
 
   @BeforeAll
   static void beforeAll() {
-    LOG.info("OkapiUrl for AddressTypesIT: {}", okapiUrl);
-    LOG.info("OkapiHeaders for AddressTypesIT: {}", okapiHeaders);
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);

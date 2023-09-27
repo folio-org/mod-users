@@ -48,7 +48,7 @@ public class CustomFieldTestBase extends TestBase {
 
   protected User testUser;
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
-    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
+    DockerImageName.parse(KAFKA_IMAGE_NAME));
 
   private static final ExternalResource resource = new ExternalResource() {
     @Override

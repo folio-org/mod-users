@@ -5,6 +5,7 @@ import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
+import static org.folio.moduserstest.AbstractRestTest.KAFKA_IMAGE_NAME;
 import static org.folio.moduserstest.AbstractRestTest.updateKafkaConfigField;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -64,7 +65,7 @@ public class DepartmentsAPITest extends TestBase {
 
   protected User testUser;
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
-    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
+    DockerImageName.parse(KAFKA_IMAGE_NAME));
 
   private static final ExternalResource resource = new ExternalResource() {
     @Override
