@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
@@ -26,6 +27,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 import java.util.ArrayList;
@@ -35,13 +38,17 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @ExtendWith(VertxExtension.class)
+@Timeout(value = 20, timeUnit = SECONDS)
 class UsersAPIConsortiaTest extends AbstractRestTestNoData {
+  private static final Logger LOG = LoggerFactory.getLogger(UsersAPIConsortiaTest.class);
 
   private static UsersClient usersClient;
   private static UserTenantClient userTenantClient;
 
   @BeforeAll
   static void beforeAll() {
+    LOG.info("OkapiUrl for UsersAPIConsortiaTest: {}", okapiUrl);
+    LOG.info("OkapiHeaders for UsersAPIConsortiaTest: {}", okapiHeaders);
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
   }
