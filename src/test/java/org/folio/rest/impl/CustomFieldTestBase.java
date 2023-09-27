@@ -11,16 +11,12 @@ import static org.folio.test.util.TestUtil.readFile;
 import static org.folio.test.util.TestUtil.toJson;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.List;
 
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.restassured.http.Header;
 import io.vertx.core.json.Json;
-import org.folio.event.KafkaConfigSingleton;
-import org.folio.kafka.KafkaConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,16 +45,14 @@ public class CustomFieldTestBase extends TestBase {
   private static final String SHORT_TEXT_FIELD_JSON_PATH = "fields/shortTextField.json";
   private static final String SINGLE_CHECKBOX_FIELD_JSON_PATH = "fields/singleCheckbox.json";
   private static final String MULTI_SELECT_FIELD_JSON_PATH = "fields/multiSelectField.json";
-  private static final List<String> KAFKA_CONTAINER_PORTS = List.of("11544:2181", "11545:9092", "11546:9093");
 
   protected User testUser;
   private static final KafkaContainer kafkaContainer = new KafkaContainer(
-    DockerImageName.parse("confluentinc/cp-kafka:7.3.1"));
+    DockerImageName.parse(KAFKA_IMAGE_NAME));
 
   private static final ExternalResource resource = new ExternalResource() {
     @Override
     protected void before() {
-      kafkaContainer.setPortBindings(KAFKA_CONTAINER_PORTS);
       kafkaContainer.start();
       updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
       updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
@@ -169,23 +163,6 @@ public class CustomFieldTestBase extends TestBase {
     } catch (IOException | URISyntaxException e) {
       Assert.fail(e.getMessage());
       return null;
-    }
-  }
-
-  public static void updateKafkaConfigField(String fieldName, String newValue) {
-    try {
-      KafkaConfigSingleton instance = KafkaConfigSingleton.INSTANCE;
-      Field kafkaConfigField = KafkaConfigSingleton.class.getDeclaredField("kafkaConfig");
-      kafkaConfigField.setAccessible(true);
-
-      KafkaConfig kafkaConfig = (KafkaConfig) kafkaConfigField.get(instance);
-      Field envIdField = KafkaConfig.class.getDeclaredField(fieldName);
-      envIdField.setAccessible(true);
-      envIdField.set(kafkaConfig, newValue);
-
-      kafkaConfigField.set(instance, kafkaConfig);
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      e.printStackTrace();
     }
   }
 }

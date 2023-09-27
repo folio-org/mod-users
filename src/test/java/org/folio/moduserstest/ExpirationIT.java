@@ -3,13 +3,10 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.USER_CREATED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import org.folio.support.User;
 import org.folio.support.http.TimerInterfaceClient;
@@ -68,8 +65,6 @@ class ExpirationIT extends AbstractRestTestNoData {
 
   @Test
   void unexpiredUsersAreNotDisabled() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-
     final var unexpiredUser = usersClient.createUser(User.builder()
       .username("some-user")
       .active(true)
