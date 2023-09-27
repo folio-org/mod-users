@@ -15,6 +15,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.folio.event.KafkaConfigSingleton;
+import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +66,9 @@ public abstract class AbstractRestTest {
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
     kafkaContainer.start();
+    updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
+    updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
+    updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
@@ -121,5 +127,22 @@ public abstract class AbstractRestTest {
 
   private static String formatToKafkaTopicName(String tenant, String eventType) {
     return KafkaTopicNameHelper.formatTopicName(KAFKA_ENV_VALUE, getDefaultNameSpace(), tenant, eventType);
+  }
+
+  public static void updateKafkaConfigField(String fieldName, String newValue) {
+    try {
+      KafkaConfigSingleton instance = KafkaConfigSingleton.INSTANCE;
+      Field kafkaConfigField = KafkaConfigSingleton.class.getDeclaredField("kafkaConfig");
+      kafkaConfigField.setAccessible(true);
+
+      KafkaConfig kafkaConfig = (KafkaConfig) kafkaConfigField.get(instance);
+      Field envIdField = KafkaConfig.class.getDeclaredField(fieldName);
+      envIdField.setAccessible(true);
+      envIdField.set(kafkaConfig, newValue);
+
+      kafkaConfigField.set(instance, kafkaConfig);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      e.printStackTrace();
+    }
   }
 }

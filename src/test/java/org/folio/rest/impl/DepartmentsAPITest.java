@@ -5,7 +5,7 @@ import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
-import static org.folio.rest.impl.CustomFieldTestBase.updateKafkaConfigField;
+import static org.folio.moduserstest.AbstractRestTest.updateKafkaConfigField;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
