@@ -41,6 +41,7 @@ public abstract class AbstractRestTest {
   public static final String KAFKA_HOST = "KAFKA_HOST";
   public static final String KAFKA_PORT = "KAFKA_PORT";
   public static final String KAFKA_ENV_VALUE = "test-env";
+  public static final String OKAPI_URL_ENV = "OKAPI_URL";
 
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
@@ -56,14 +57,16 @@ public abstract class AbstractRestTest {
     PostgresClient.setPostgresTester(new PostgresTesterContainer());
 
     final var port = NetworkUtils.nextFreePort();
+    final String okapiUrlStr = "http://localhost:" + port;
 
-    okapiUrl = new OkapiUrl("http://localhost:" + port);
+    okapiUrl = new OkapiUrl(okapiUrlStr);
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
     kafkaContainer.start();
     System.setProperty(KAFKA_HOST, kafkaContainer.getHost());
     System.setProperty(KAFKA_PORT, String.valueOf(kafkaContainer.getFirstMappedPort()));
     System.setProperty(KAFKA_ENV, KAFKA_ENV_VALUE);
+    System.setProperty(OKAPI_URL_ENV, okapiUrlStr);
 
     Properties producerProperties = new Properties();
     producerProperties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
