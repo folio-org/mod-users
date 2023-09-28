@@ -9,6 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import org.folio.domain.UserType;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -50,9 +52,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   public void beforeEach() {
     usersClient.deleteAllUsers();
     userTenantClient.deleteAllUserTenants();
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_UPDATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
   }
 
   @Test
@@ -260,9 +259,12 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   private List<UserEvent> getUserEvents(UserEventType eventType) {
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.getTopicName());
-    return usersList.stream()
-      .map(s -> Json.decodeValue(s, UserEvent.class))
-      .collect(Collectors.toList());
+    List<UserEvent> list = new ArrayList<>();
+    for (String s : usersList) {
+      JsonObject res = Json.decodeValue(s, JsonObject.class);
+      list.add(res.mapTo(UserEvent.class));
+    }
+    return list;
   }
 
   private void assertEventContent(UserEvent userEvent, UserEvent.Action action, String userId) {

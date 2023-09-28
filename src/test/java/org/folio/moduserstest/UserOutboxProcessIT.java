@@ -59,12 +59,11 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
 
   @Test
   void shouldSendUserEventToKafkaAfterTrigger() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
     timerInterfaceClient.attemptToTriggerUsersOutboxProcess(TENANT_NAME)
       .statusCode(is(HTTP_OK));
     List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     assertEquals(1, list.size());
-    JsonObject log = (JsonObject) Json.decodeValue(list.get(0));
+    JsonObject log = Json.decodeValue(list.get(0), JsonObject.class);
     assertEquals(UserEvent.Action.CREATE.value(), log.getString("action"));
     assertTrue(log.getBoolean("isPersonalDataChanged"));
   }
