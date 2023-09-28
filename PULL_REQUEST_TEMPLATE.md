@@ -14,7 +14,7 @@
   to provide to the reviewer and to future readers than the cause
   that gave rise to this pull request. Be careful to avoid circular
   statements like "the purpose is to update the schema." and
-  instead provide an explanation like "there is more data to be provided and stored for Purchase Orders 
+  instead provide an explanation like "there is more data to be provided and stored for Purchase Orders
   which is currently missing in the schema"
 
   The purpose may seem self-evident to you now, but the standard to
@@ -38,8 +38,8 @@
 #### TODOS and Open Questions
 <!-- OPTIONAL
 - [ ] Use GitHub checklists. When solved, check the box and explain the answer.
--->
 - [ ] Check logging
+-->
 
 ## Learning
 <!-- OPTIONAL
@@ -65,7 +65,7 @@ Before merging this PR, please go through the following list and take appropriat
   - [ ] Were permissions changed, added, or removed?
   - [ ] Are there new interface dependencies?
   - [ ] There are no breaking changes in this PR.
-  
+
 If there are breaking changes, please **STOP** and consider the following:
 
 - What other modules will these changes impact?
@@ -73,11 +73,11 @@ If there are breaking changes, please **STOP** and consider the following:
   - [ ] If not, please create them
   - [ ] Do they contain the appropriate level of detail?  Which endpoints/schemas changed, etc.
   - [ ] Do they have all they appropriate links to blocked/related issues?
-- Are the JIRAs under active development?  
+- Are the JIRAs under active development?
   - [ ] If not, contact the project's PO and make sure they're aware of the urgency.
 - Do PRs exist for these changes?
   - [ ] If so, have they been approved?
 
-Ideally all of the PRs involved in breaking changes would be merged in the same day to avoid breaking the folio-testing environment.  Communication is paramount if that is to be achieved, especially as the number of intermodule and inter-team dependencies increase.  
+Ideally all of the PRs involved in breaking changes would be merged in the same day to avoid breaking the folio-testing environment.  Communication is paramount if that is to be achieved, especially as the number of intermodule and inter-team dependencies increase.
 
 While it's helpful for reviewers to help identify potential problems, ensuring that it's safe to merge is ultimately the responsibility of the PR assignee.
