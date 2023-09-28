@@ -5,7 +5,6 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.*;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -482,8 +481,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void canDeleteAUser() {
-    commitAllMessagesInTopic(TENANT_NAME, USER_CREATED.getTopicName());
-    commitAllMessagesInTopic(TENANT_NAME, USER_DELETED.getTopicName());
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
