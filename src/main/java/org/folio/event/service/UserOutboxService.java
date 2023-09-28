@@ -244,7 +244,7 @@ public class UserOutboxService {
   }
 
   private boolean isStaffOrSystemUserUpdated(User user, boolean isConsortiaFieldsUpdated, boolean isPersonalDataChanged) {
-    return isStaffOrSystemUser(user)  && (isConsortiaFieldsUpdated || isPersonalDataChanged);
+    return isStaffOrSystemUser(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged);
   }
 
   private boolean isChangedUserTypeBetweenPatronAndStaff(User user, User userFromStorage) {
