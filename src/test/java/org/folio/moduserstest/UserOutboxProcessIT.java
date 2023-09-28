@@ -63,7 +63,7 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
       .statusCode(is(HTTP_OK));
     List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
     assertEquals(1, list.size());
-    JsonObject log = Json.decodeValue(list.get(0), JsonObject.class);
+    JsonObject log = (JsonObject) Json.decodeValue(list.get(0));
     assertEquals(UserEvent.Action.CREATE.value(), log.getString("action"));
     assertTrue(log.getBoolean("isPersonalDataChanged"));
   }

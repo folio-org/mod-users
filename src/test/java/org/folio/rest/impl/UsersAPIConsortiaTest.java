@@ -250,6 +250,64 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
         Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
   }
 
+  @Test
+  void shouldSendEventAfterChangingUserTypeFromStaffToPatron() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
+    usersClient.createUser(userToCreate);
+
+    final User userToUpdate = createUser(userId, "joannek", "julia", "patron");
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(204));
+
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        final var updatedUser = usersClient.getUser(userId);
+        assertThat(updatedUser.getType(), is("patron"));
+      });
+
+    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
+    assertEquals(1, userUpdatedEvents.size());
+    UserEvent userEvent = userUpdatedEvents.get(0);
+    assertEventContent(userEvent, UserEvent.Action.EDIT, userToUpdate.getId());
+    assertEquals(UserType.PATRON.getTypeName(), userEvent.getUser().getType());
+  }
+
+  @Test
+  void shouldSendEventAfterChangingUserTypeFromPatronToStaff() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "patron");
+    usersClient.createUser(userToCreate);
+
+    final User userToUpdate = createUser(userId, "joannek", "julia", "staff");
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(204));
+
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        final var updatedUser = usersClient.getUser(userId);
+        assertThat(updatedUser.getType(), is("staff"));
+      });
+
+    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
+    assertEquals(1, userUpdatedEvents.size());
+    UserEvent userEvent = userUpdatedEvents.get(0);
+    assertEventContent(userEvent, UserEvent.Action.EDIT, userToUpdate.getId());
+    assertEquals(UserType.STAFF.getTypeName(), userEvent.getUser().getType());
+  }
+
   private List<UserEvent> getUserEventsAndFilterByUserId(UserEventType eventType, String userId) {
     List<UserEvent> usersList = getUserEvents(eventType);
     return usersList.stream()
@@ -259,12 +317,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
 
   private List<UserEvent> getUserEvents(UserEventType eventType) {
     List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.getTopicName());
-    List<UserEvent> list = new ArrayList<>();
-    for (String s : usersList) {
-      JsonObject res = Json.decodeValue(s, JsonObject.class);
-      list.add(res.mapTo(UserEvent.class));
-    }
-    return list;
+    return usersList.stream()
+      .map(s -> Json.decodeValue(s, UserEvent.class))
+      .collect(Collectors.toList());
   }
 
   private void assertEventContent(UserEvent userEvent, UserEvent.Action action, String userId) {
