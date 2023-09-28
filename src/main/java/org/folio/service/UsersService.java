@@ -39,6 +39,7 @@ public class UsersService {
       .withId(user.getId())
       .withUsername(user.getUsername())
       .withActive(user.getActive())
+      .withType(user.getType())
       .withBarcode(user.getBarcode())
       .withExternalSystemId(user.getExternalSystemId());
 
