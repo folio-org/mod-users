@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import static org.folio.domain.UserType.PATRON;
 import static org.folio.domain.UserType.STAFF;
 import static org.folio.domain.UserType.SYSTEM;
 
@@ -103,7 +104,10 @@ public class UserOutboxService {
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
         boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
-        if (isConsortiaTenant && isStaffOrSystemUser(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged)) {
+        if (isConsortiaTenant &&
+          (isStaffOrSystemUserUpdated(user, isConsortiaFieldsUpdated, isPersonalDataChanged) ||
+          isChangedUserTypeBetweenPatronAndStaff(user, userFromStorage))) {
+
           return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
         }
         return Future.succeededFuture();
@@ -237,5 +241,14 @@ public class UserOutboxService {
   private boolean isStaffOrSystemUser(User user) {
     return Objects.equals(STAFF.getTypeName(), user.getType()) ||
       Objects.equals(SYSTEM.getTypeName(), user.getType());
+  }
+
+  private boolean isStaffOrSystemUserUpdated(User user, boolean isConsortiaFieldsUpdated, boolean isPersonalDataChanged) {
+    return isStaffOrSystemUser(user) && (isConsortiaFieldsUpdated || isPersonalDataChanged);
+  }
+
+  private boolean isChangedUserTypeBetweenPatronAndStaff(User user, User userFromStorage) {
+    return Objects.equals(user.getType(), PATRON.getTypeName()) && Objects.equals(userFromStorage.getType(), STAFF.getTypeName()) ||
+      Objects.equals(user.getType(), STAFF.getTypeName()) && Objects.equals(userFromStorage.getType(), PATRON.getTypeName());
   }
 }
