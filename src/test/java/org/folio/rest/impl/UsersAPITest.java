@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.Response;
 
 import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.domain.UserType;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.Personal;
@@ -106,6 +107,18 @@ class UsersAPITest {
     new UsersAPI().postUsers(null, user, null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty());
+        vtc.completeNow();
+      })), Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
+  void postUsersWithDCBUserType(VertxTestContext vtc) {
+    Map<String,String> okapiHeaders = new HashMap<>();
+    User user = new User().withType(UserType.DCB.getTypeName());
+
+    new UsersAPI().postUsers(null, user, null, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertTrue(user.getType().equalsIgnoreCase(UserType.DCB.getTypeName()));
         vtc.completeNow();
       })), Vertx.vertx().getOrCreateContext());
   }
