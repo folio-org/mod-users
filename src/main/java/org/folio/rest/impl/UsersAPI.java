@@ -163,7 +163,7 @@ public class UsersAPI implements Users {
       Context vertxContext) {
 
     try {
-      logger.debug("Getting users");
+      logger.debug("Getting usersA");
       // note that orderBy is NOT used
       String tableName = getTableName(query);
       CQLWrapper cql = getCQL(query, limit, offset);
