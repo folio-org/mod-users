@@ -17,7 +17,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.http.HttpStatus;
+import org.folio.HttpStatus;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Department;
 import org.folio.rest.jaxrs.model.DepartmentCollection;
@@ -92,7 +92,7 @@ public class DepartmentsAPI implements Departments {
     AsyncResult<Response> finalResult = result;
     try {
       Errors error = null;
-      if (result.succeeded() && result.result().getStatus() == HttpStatus.SC_UNPROCESSABLE_ENTITY) {
+      if (result.succeeded() && result.result().getStatus() == HttpStatus.HTTP_UNPROCESSABLE_ENTITY.toInt()) {
         String errorMessage = ((Errors) result.result().getEntity()).getErrors().iterator().next().getMessage();
         if (isDuplicateField(errorMessage, ID_FIELD)) {
           error = createDuplicateErrorMessage(ID_FIELD, entity.getId());
