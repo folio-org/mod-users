@@ -85,9 +85,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   @Test
   void canUpdateUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
-    UserTenant userTenant = collection.getUserTenants().stream()
-      .filter(tenant -> tenant.getUsername().equals(USER_A) && tenant.getTenantId().equals(TENANT_X))
-      .findFirst().orElseThrow();
+    UserTenant userTenant = collection.getUserTenants().get(0);
     userTenant.setEmail("Test");
     userTenant.setPhoneNumber("1234");
     userTenant.setUsername("testUser");
