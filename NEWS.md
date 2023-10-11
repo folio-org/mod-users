@@ -1,6 +1,32 @@
-## 20.0.0 Unreleased
+## 19.2.0 2023-10-11
 
+* Upgraded folio-custom-fields to 1.10.0
+* Upgraded folio-service-tools-test to 3.1.0
+* Upgraded folio-kafka-wrapper to 3.0.0
+* Add DCB user type (MODUSERS-388)
+* Add check to produce user updated event if user type changed (MODUSERS-389)
+* Fix unit tests instability in mod-users (MODUSERS-387)
+* Populate system users with type='system' in different modules (MODCON-92)
+* Filter out patron users for Consortia pipeline (MODUSERS-384)
+* Add externalSystemId, barcode to user-teant for SAML login (MODUSERS-377)
+* provides custom-fields version 2.1(MODCON-83)
+* Add check for username uniqueness across consortium (MODUSERS-368)
+* "Username" field on "Log in" page is case-sensitive for "member" user on "Consortia" environment (MODUSERS-376)
+* ECS - Do not display shadow users in search results (MODUSERS-373)
+* Add support of Forgot Password/Forgot Username for Consortia functionality (MODUSERBL-169)
+* Consume PRIMARY_AFFILATION_USERDETAILS_UPDATED to update username, email and phoneNumber for Consortia needs (MODUSERS-362)
+* Implement sending USER_UPDATED event using Transaction Outbox Pattern (MODUSERS-360)
+* Update to Java 17 mod-users (MODUSERS-369)
+* User with invalid date value will break /users/expire/timer API (MODUSERS-320)
+* update user_tenant schema (MODCON-42)
+* Modify users dtos to include source field (MODUSERS-370)
+* Create Post user-tenant endpoint (MODUSERS-364)
+* Consume Primary Affiliation Deleted event and delete record from local persistence (MODUSERS-355)
+* Consume Primary Affiliation Created event and store in local persistence (MODUSERS-354)
+* Implement sending USER_DELETED event using transactional outbox pattern (MODUSERS-350)
 * Integrated Kafka for real-time event processing and messaging (MODUSERS-347)
+* Upgrading tenant resets reference and sample records (MODUSERS-335)
+* Add the buildMvn GitHub Action workflow (FOLIO-3629)
 
 ## 19.1.0 2023-02-13
 
