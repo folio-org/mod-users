@@ -2,6 +2,7 @@
 
 * Upgraded folio-custom-fields to 1.10.0
 * Upgraded folio-service-tools-test to 3.1.0
+* Upgraded folio-kafka-wrapper to 3.0.0
 * Add DCB user type (MODUSERS-388)
 * Add check to produce user updated event if user type changed (MODUSERS-389)
 * Fix unit tests instability in mod-users (MODUSERS-387)
@@ -25,6 +26,7 @@
 * Implement sending USER_DELETED event using transactional outbox pattern (MODUSERS-350)
 * Integrated Kafka for real-time event processing and messaging (MODUSERS-347)
 * Upgrading tenant resets reference and sample records (MODUSERS-335)
+* Add the buildMvn GitHub Action workflow (FOLIO-3629)
 
 ## 19.1.0 2023-02-13
 
