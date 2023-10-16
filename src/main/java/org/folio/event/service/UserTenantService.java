@@ -4,6 +4,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.domain.UserType;
@@ -33,6 +34,7 @@ import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
   public static final String INVALID_USER_TYPE_POPULATED = "User's 'type' field should be populated with one of the allowed values: 'patron', 'staff', 'shadow'";
+  public static final String USERNAME_IS_NOT_POPULATED = "In consortium mode, the user must have a username";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -94,12 +96,13 @@ public class UserTenantService {
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername());
+    Predicate<User> predicate = user -> StringUtils.isNotBlank(user.getUsername()) &&
+      ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername());
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> true;
+    Predicate<User> predicate = user -> StringUtils.isNotBlank(user.getUsername());
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
@@ -123,6 +126,9 @@ public class UserTenantService {
             .compose(aVoid -> {
               if (predicate.test(entity)) {
                 return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
+              } else if (StringUtils.isBlank(entity.getUsername())) {
+                logger.error(USERNAME_IS_NOT_POPULATED);
+                return Future.failedFuture(USERNAME_IS_NOT_POPULATED);
               }
               return Future.succeededFuture();
             });
