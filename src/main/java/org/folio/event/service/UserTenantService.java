@@ -96,15 +96,12 @@ public class UserTenantService {
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> ((UserType.STAFF.getTypeName().equals(user.getType()) && StringUtils.isNotBlank(user.getUsername())) ||
-      ObjectUtils.notEqual(UserType.STAFF.getTypeName(), user.getType())) &&
-      ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername());
+    Predicate<User> predicate = user -> ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername());
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> (UserType.STAFF.getTypeName().equals(user.getType()) && StringUtils.isNotBlank(user.getUsername())) ||
-      ObjectUtils.notEqual(UserType.STAFF.getTypeName(), user.getType());
+    Predicate<User> predicate = user -> true;
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
@@ -126,12 +123,12 @@ public class UserTenantService {
           logger.info("Found central tenant id = {}", consortiaCentralTenantId);
           return isUserTypePopulated(entity)
             .compose(aVoid -> {
-              if (predicate.test(entity)) {
-                return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
-              }
-              if (StringUtils.isBlank(entity.getUsername())) {
+              if ((UserType.STAFF.getTypeName().equals(entity.getType()) && StringUtils.isBlank(entity.getUsername()))) {
                 logger.error(USERNAME_IS_NOT_POPULATED);
                 return Future.failedFuture(USERNAME_IS_NOT_POPULATED);
+              }
+              if (predicate.test(entity)) {
+                return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
               }
               return Future.succeededFuture();
             });
