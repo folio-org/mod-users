@@ -289,6 +289,7 @@ public class UsersAPI implements Users {
         }
 
         if (isDuplicateIdError(reply)) {
+          logger.warn("User with id {} already exists", entity.getId());
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
