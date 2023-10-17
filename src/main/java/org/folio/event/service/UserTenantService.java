@@ -96,13 +96,15 @@ public class UserTenantService {
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, User userFromStorage, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> StringUtils.isNotBlank(user.getUsername()) &&
+    Predicate<User> predicate = user -> ((UserType.STAFF.getTypeName().equals(user.getType()) && StringUtils.isNotBlank(user.getUsername())) ||
+      ObjectUtils.notEqual(UserType.STAFF.getTypeName(), user.getType())) &&
       ObjectUtils.notEqual(user.getUsername(), userFromStorage.getUsername());
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> StringUtils.isNotBlank(user.getUsername());
+    Predicate<User> predicate = user -> (UserType.STAFF.getTypeName().equals(user.getType()) && StringUtils.isNotBlank(user.getUsername())) ||
+      ObjectUtils.notEqual(UserType.STAFF.getTypeName(), user.getType());
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
@@ -126,7 +128,8 @@ public class UserTenantService {
             .compose(aVoid -> {
               if (predicate.test(entity)) {
                 return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
-              } else if (StringUtils.isBlank(entity.getUsername())) {
+              }
+              if (StringUtils.isBlank(entity.getUsername())) {
                 logger.error(USERNAME_IS_NOT_POPULATED);
                 return Future.failedFuture(USERNAME_IS_NOT_POPULATED);
               }
