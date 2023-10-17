@@ -6,7 +6,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.event.UserEventType.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import io.vertx.core.json.Json;
 import io.vertx.junit5.Timeout;
@@ -157,6 +159,28 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   }
 
   @Test
+  void canUpdateNotStaffUserWithoutUsernameForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "system");
+    usersClient.createUser(userToCreate);
+    final User userToUpdate = createUser(userId, null, "new_julia", "system");
+
+    usersClient.attemptToUpdateUser(userToUpdate)
+      .statusCode(is(204));
+
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        final var updatedUser = usersClient.getUser(userId);
+        assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
+        assertNull(updatedUser.getUsername());
+      });
+  }
+
+  @Test
   void canUpdateFirstNameForConsortia() {
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
@@ -209,6 +233,29 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.attemptToCreateUser(userToCreate)
       .statusCode(422)
       .extract().as(ValidationErrors.class);
+  }
+
+  @Test
+  void cannotCreateUserWithoutUsernameForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, null, "julia", "staff");
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(400)
+      .body(matchesPattern("The user with the ID .* must have a username since consortium mode is enabled"));
+  }
+
+  @Test
+  void cannotUpdateUserWithoutUsernameForConsortia() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
+    usersClient.createUser(userToCreate);
+    usersClient.attemptToUpdateUser(createUser(userId, null, "julia", "staff"))
+      .statusCode(400)
+      .body(matchesPattern("The user with the ID .* must have a username since consortium mode is enabled"));
   }
 
   @Test
