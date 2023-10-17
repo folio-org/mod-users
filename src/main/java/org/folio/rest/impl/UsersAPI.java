@@ -4,6 +4,7 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
 import static org.folio.event.service.UserTenantService.INVALID_USER_TYPE_POPULATED;
+import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATED;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.util.Arrays;
@@ -80,6 +81,11 @@ public class UsersAPI implements Users {
   private static final Date year1 = new Date(1 - 1900, 0 /* 0 .. 11 */, 1 /* 1 .. 31 */);
   public static final String USERNAME_ALREADY_EXISTS = "users_username_idx_unique";
   public static final String BARCODE_ALREADY_EXISTS = "users_barcode_idx_unique";
+  private static final String INVALID_USERNAME_ERROR = "The user with the ID %s must have a username since consortium mode is enabled";
+  private static final String INVALID_USER_TYPE_ERROR = "An invalid user type has been populated to a user, allowed values: %s";
+  private static final String DUPLICATE_BARCODE_ERROR = "This barcode has already been taken";
+  private static final String DUPLICATE_USERNAME_ERROR = "User with this username already exists";
+  private static final String DUPLICATE_ID_ERROR = "User with this id already exists";
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
@@ -283,38 +289,45 @@ public class UsersAPI implements Users {
         }
 
         if (isDuplicateIdError(reply)) {
+          logger.warn("User with id {} already exists", entity.getId());
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
-                "id", entity.getId(),
-                "User with this id already exists"))));
+                "id", entity.getId(), DUPLICATE_ID_ERROR))));
           return;
         }
         if (isDuplicateUsernameError(reply)) {
+          logger.warn("User with this username {} already exists", entity.getUsername());
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
-                "username", entity.getUsername(),
-                "User with this username already exists"))));
+                "username", entity.getUsername(), DUPLICATE_USERNAME_ERROR))));
           return;
         }
         if (isDuplicateBarcodeError(reply)) {
+          logger.warn("This barcode {} has already been taken", entity.getBarcode());
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
-                "barcode", entity.getBarcode(),
-                "This barcode has already been taken"))));
+                "barcode", entity.getBarcode(), DUPLICATE_BARCODE_ERROR))));
           return;
         }
         if (isInvalidUserTypeError(reply)) {
+          logger.warn("An invalid user type {} has been populated to a user with id {}", entity.getType(), entity.getId());
           asyncResultHandler.handle(
             succeededFuture(PostUsersResponse.respond422WithApplicationJson(
               ValidationHelper.createValidationErrorMessage(
                 "id", entity.getId(),
-                String.format("An invalid user type has been populated to a user, allowed values: %s",
-                  Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())))));
+                String.format(INVALID_USER_TYPE_ERROR, Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())))));
           return;
         }
+        if (isInvalidUsernameError(reply)) {
+          logger.warn("The user with the ID {} must have a username since consortium mode is enabled", entity.getId());
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersResponse.respond400WithTextPlain(String.format(INVALID_USERNAME_ERROR, entity.getId()))));
+          return;
+        }
+
         logger.error("saveUser failed: {}", reply.cause().getMessage(), reply.cause());
         ValidationHelper.handleError(reply.cause(), asyncResultHandler);
       });
@@ -346,6 +359,14 @@ public class UsersAPI implements Users {
 
   private boolean isInvalidUserTypeError(AsyncResult<Response> reply) {
     return isDesiredError(reply, INVALID_USER_TYPE_POPULATED);
+  }
+
+  private boolean isInvalidUsernameError(String errorMessage) {
+    return errorMessage.matches(USERNAME_IS_NOT_POPULATED);
+  }
+
+  private boolean isInvalidUsernameError(AsyncResult<Response> reply) {
+    return isDesiredError(reply, USERNAME_IS_NOT_POPULATED);
   }
 
   private boolean isDesiredError(AsyncResult<Response> reply, String errMsg) {
@@ -561,30 +582,35 @@ public class UsersAPI implements Users {
   private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
     String errorMessage = reply.cause().getMessage();
     if (isDuplicateUsernameError(errorMessage)) {
-      logger.info("User with this username {} already exists", user.getUsername());
+      logger.warn("User with this username {} already exists", user.getUsername());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
-          .respond400WithTextPlain(
-            "User with this username already exists")));
+          .respond400WithTextPlain(DUPLICATE_USERNAME_ERROR)));
       return;
     }
 
     if (isDuplicateBarcodeError(errorMessage)) {
-      logger.info("This barcode {} has already been taken", user.getBarcode());
+      logger.warn("This barcode {} has already been taken", user.getBarcode());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
-          .respond400WithTextPlain(
-            "This barcode has already been taken")));
+          .respond400WithTextPlain(DUPLICATE_BARCODE_ERROR)));
       return;
     }
 
     if (isInvalidUserTypeError(errorMessage)) {
-      logger.info("An invalid user type {} has been populated to a user with id {}", user.getType(), user.getId());
+      logger.warn("An invalid user type {} has been populated to a user with id {}", user.getType(), user.getId());
       asyncResultHandler.handle(
         succeededFuture(PutUsersByUserIdResponse
-          .respond400WithTextPlain(
-            String.format("An invalid user type has been populated to a user, allowed values: %s",
+          .respond400WithTextPlain(String.format(INVALID_USER_TYPE_ERROR,
               Arrays.stream(UserType.values()).map(UserType::getTypeName).toList()))));
+      return;
+    }
+
+    if (isInvalidUsernameError(errorMessage)) {
+      logger.warn("The user with the ID {} must have a username since consortium mode is enabled", user.getId());
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersByUserIdResponse
+          .respond400WithTextPlain(String.format(INVALID_USERNAME_ERROR, user.getId()))));
       return;
     }
 
