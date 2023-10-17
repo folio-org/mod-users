@@ -34,7 +34,7 @@ import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
   public static final String INVALID_USER_TYPE_POPULATED = "User's 'type' field should be populated with one of the allowed values: 'patron', 'staff', 'shadow'";
-  public static final String USERNAME_IS_NOT_POPULATED = "In consortium mode, the user must have a username";
+  public static final String USERNAME_IS_NOT_POPULATED = "In consortium mode, the staff user must have a username";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
