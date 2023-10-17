@@ -123,7 +123,7 @@ public class UserTenantService {
           logger.info("Found central tenant id = {}", consortiaCentralTenantId);
           return isUserTypePopulated(entity)
             .compose(aVoid -> {
-              if ((UserType.STAFF.getTypeName().equals(entity.getType()) && StringUtils.isBlank(entity.getUsername()))) {
+              if (UserType.STAFF.getTypeName().equals(entity.getType()) && StringUtils.isBlank(entity.getUsername())) {
                 logger.error(USERNAME_IS_NOT_POPULATED);
                 return Future.failedFuture(USERNAME_IS_NOT_POPULATED);
               }
