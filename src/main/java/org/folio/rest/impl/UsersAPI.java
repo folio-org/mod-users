@@ -573,6 +573,7 @@ public class UsersAPI implements Users {
           handleUpdateUserFailures(entity, asyncResultHandler, reply);
           return;
         }
+        userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
       });
   }
