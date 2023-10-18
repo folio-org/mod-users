@@ -1,3 +1,8 @@
+## 19.2.1 23-10-18
+
+* Fix transaction behavior with processing outbox logs (MODUSERS-395)
+* Make username as required field for staff user type for ECS mode (MODUSERS-393)
+
 ## 19.2.0 2023-10-11
 
 * Upgraded folio-custom-fields to 1.10.0
