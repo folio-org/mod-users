@@ -54,25 +54,28 @@ public class UserOutboxService {
    * @return future with integer how many records have been processed
    */
   public Future<Integer> processOutboxEventLogs(Vertx vertx, Map<String, String> okapiHeaders) {
+    logger.debug("processOutboxEventLogs:: Trying to process outbox event logs");
     String tenantId = TenantTool.tenantId(okapiHeaders);
     PostgresClient pgClient = PostgresClient.getInstance(vertx, tenantId);
     return pgClient.withTrans(conn -> lockRepository.selectWithLocking(conn, OUTBOX_LOCK_NAME, tenantId)
       .compose(retrievedCount -> outboxRepository.fetchEventLogs(conn, tenantId))
       .compose(logs -> {
         if (CollectionUtils.isEmpty(logs)) {
+          logger.info("processOutboxEventLogs:: OutBoxEventLogs is empty");
           return Future.succeededFuture(0);
         }
 
-        logger.info("Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
+        logger.info("processOutboxEventLogs:: Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
         return GenericCompositeFuture.join(futures)
           .map(logs.stream().map(OutboxEventLog::getEventId).toList())
           .compose(eventIds -> {
             if (CollectionUtils.isNotEmpty(eventIds)) {
               return outboxRepository.deleteBatch(conn, eventIds, tenantId)
-                .onSuccess(rowsCount -> logger.info("{} logs have been deleted from outbox table", rowsCount))
+                .onSuccess(rowsCount -> logger.info("processOutboxEventLogs:: {} logs have been deleted from outbox table", rowsCount))
                 .onFailure(ex -> logger.error("Logs deletion failed", ex));
             }
+            logger.info("processOutboxEventLogs:: eventIds is empty");
             return Future.succeededFuture(0);
           });
       })
@@ -80,41 +83,48 @@ public class UserOutboxService {
   }
 
   public Future<Boolean> saveUserOutboxLogForCreateUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
-      return userTenantService.isConsortiaTenant(conn, okapiHeaders)
+    logger.debug("saveUserOutboxLogForCreateUser:: Trying to save UserOutBoxLog for create user action");
+    return userTenantService.isConsortiaTenant(conn, okapiHeaders)
         .compose(isConsortiaTenant -> {
           if (isConsortiaTenant && isStaffOrSystemUser(user)) {
             return saveUserOutboxLog(conn, user, action, okapiHeaders);
           }
+          logger.info("saveUserOutboxLogForCreateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
           return Future.succeededFuture();
         });
   }
 
   public Future<Boolean> saveUserOutboxLogForDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
+    logger.debug("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         if (isConsortiaTenant) {
           return saveUserOutboxLog(conn, user, action, okapiHeaders);
         }
+        logger.info("saveUserOutboxLogForDeleteUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
         return Future.succeededFuture();
       });
   }
 
   public Future<Boolean> saveUserOutboxLogForUpdateUser(Conn conn, User user, User userFromStorage, Map<String, String> okapiHeaders) {
+    logger.debug("saveUserOutboxLogForUpdateUser:: Trying to save UserOutBoxLog for update user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
         boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
-        if (isConsortiaTenant &&
-          (isStaffOrSystemUserUpdated(user, isConsortiaFieldsUpdated, isPersonalDataChanged) ||
-          isChangedUserTypeBetweenPatronAndStaff(user, userFromStorage))) {
-
+        boolean isStaffOrSystem = isStaffOrSystemUserUpdated(user, isConsortiaFieldsUpdated, isPersonalDataChanged);
+        boolean isChangedUserTypeBetweenPatronAndStaff = isChangedUserTypeBetweenPatronAndStaff(user, userFromStorage);
+        if (isConsortiaTenant && (isStaffOrSystem || isChangedUserTypeBetweenPatronAndStaff)) {
+          logger.info("saveUserOutboxLogForUpdateUser:: isStaffOrSystem={}, isChangedUserTypeBetweenPatronAndStaff={}", isStaffOrSystem, isChangedUserTypeBetweenPatronAndStaff);
           return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
         }
+        logger.info("saveUserOutboxLogForUpdateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
         return Future.succeededFuture();
       });
   }
 
   public Future<Boolean> saveUserOutboxLogForDeleteUsers(Conn conn, List<User> users, Map<String, String> okapiHeaders) {
+    logger.debug("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete users action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         if (isConsortiaTenant) {
@@ -126,6 +136,7 @@ public class UserOutboxService {
           }
           return Future.succeededFuture(resultFuture.size() == users.size());
         }
+        logger.info("saveUserOutboxLogForUpdateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
         return Future.succeededFuture(false);
       });
   }
