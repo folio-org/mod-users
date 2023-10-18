@@ -567,16 +567,14 @@ public class UsersAPI implements Users {
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
             .map(Response.class::cast));
-        })
+        }))
       .onComplete(reply -> {
         if (reply.cause() != null) {
           handleUpdateUserFailures(entity, asyncResultHandler, reply);
           return;
         }
-
-        userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
-      }));
+      });
   }
 
   private void handleUpdateUserFailures(User user, Handler<AsyncResult<Response>> asyncResultHandler, AsyncResult<Response> reply) {
