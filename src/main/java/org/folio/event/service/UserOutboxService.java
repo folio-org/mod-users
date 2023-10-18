@@ -61,7 +61,7 @@ public class UserOutboxService {
       .compose(retrievedCount -> outboxRepository.fetchEventLogs(conn, tenantId))
       .compose(logs -> {
         if (CollectionUtils.isEmpty(logs)) {
-          logger.warn("processOutboxEventLogs:: OutBoxEventLogs is empty");
+          logger.info("processOutboxEventLogs:: OutBoxEventLogs is empty");
           return Future.succeededFuture(0);
         }
 
@@ -89,7 +89,8 @@ public class UserOutboxService {
           if (isConsortiaTenant && isStaffOrSystemUser(user)) {
             return saveUserOutboxLog(conn, user, action, okapiHeaders);
           }
-          logger.info("saveUserOutboxLogForCreateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");          return Future.succeededFuture();
+          logger.info("saveUserOutboxLogForCreateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
+          return Future.succeededFuture();
         });
   }
 
