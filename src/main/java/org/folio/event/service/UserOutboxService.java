@@ -83,7 +83,7 @@ public class UserOutboxService {
   }
 
   public Future<Boolean> saveUserOutboxLogForCreateUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
-    logger.info("saveUserOutboxLogForCreateUser:: Trying to save UserOutBoxLog for create user action");
+    logger.debug("saveUserOutboxLogForCreateUser:: Trying to save UserOutBoxLog for create user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
         .compose(isConsortiaTenant -> {
           if (isConsortiaTenant && isStaffOrSystemUser(user)) {
@@ -94,7 +94,7 @@ public class UserOutboxService {
   }
 
   public Future<Boolean> saveUserOutboxLogForDeleteUser(Conn conn, User user, UserEvent.Action action, Map<String, String> okapiHeaders) {
-    logger.info("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete user action");
+    logger.debug("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         if (isConsortiaTenant) {
@@ -106,7 +106,7 @@ public class UserOutboxService {
   }
 
   public Future<Boolean> saveUserOutboxLogForUpdateUser(Conn conn, User user, User userFromStorage, Map<String, String> okapiHeaders) {
-    logger.info("saveUserOutboxLogForUpdateUser:: Trying to save UserOutBoxLog for update user action");
+    logger.debug("saveUserOutboxLogForUpdateUser:: Trying to save UserOutBoxLog for update user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         boolean isConsortiaFieldsUpdated = isConsortiumUserFieldsUpdated(user, userFromStorage);
@@ -123,7 +123,7 @@ public class UserOutboxService {
   }
 
   public Future<Boolean> saveUserOutboxLogForDeleteUsers(Conn conn, List<User> users, Map<String, String> okapiHeaders) {
-    logger.info("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete users action");
+    logger.debug("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete users action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
         if (isConsortiaTenant) {
