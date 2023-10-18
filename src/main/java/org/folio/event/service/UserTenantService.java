@@ -4,6 +4,7 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.domain.UserType;
@@ -33,6 +34,7 @@ import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
   public static final String INVALID_USER_TYPE_POPULATED = "User's 'type' field should be populated with one of the allowed values: 'patron', 'staff', 'shadow'";
+  public static final String USERNAME_IS_NOT_POPULATED = "In consortium mode, the staff user must have a username";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -121,6 +123,10 @@ public class UserTenantService {
           logger.info("Found central tenant id = {}", consortiaCentralTenantId);
           return isUserTypePopulated(entity)
             .compose(aVoid -> {
+              if (UserType.STAFF.getTypeName().equals(entity.getType()) && StringUtils.isBlank(entity.getUsername())) {
+                logger.error(USERNAME_IS_NOT_POPULATED);
+                return Future.failedFuture(USERNAME_IS_NOT_POPULATED);
+              }
               if (predicate.test(entity)) {
                 return isUsernameUniqueAcrossTenants(entity.getUsername(), consortiaCentralTenantId, okapiHeaders, vertxContext);
               }
