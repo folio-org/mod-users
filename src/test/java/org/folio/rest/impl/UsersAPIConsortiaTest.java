@@ -225,6 +225,18 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   }
 
   @Test
+  void cannotCreateUserWithSameUsernameInUpperCase() {
+    UserTenant userTenant = getUserTenant();
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    String usernameInUpperCase = "User_Test";
+    final User userToCreate = createUser(userId, usernameInUpperCase, "julia", "staff");
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(422)
+      .extract().as(ValidationErrors.class);
+  }
+
+  @Test
   void cannotCreateUserWithoutUserTypeForConsortia() {
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
