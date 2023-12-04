@@ -60,7 +60,7 @@ public class UserTenantRepository {
 
   public Future<Boolean> isUsernameAlreadyExists(Conn conn, String username, String tenantId) {
     String query = String.format(IS_USERNAME_ALREADY_EXISTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
-    Tuple queryParams = Tuple.of(username);
+    Tuple queryParams = Tuple.of(StringUtils.toRootLowerCase(username));
     return conn.execute(query, queryParams).map(resultSet -> resultSet.iterator().next().getBoolean(0));
   }
 
