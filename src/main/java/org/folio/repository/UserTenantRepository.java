@@ -44,7 +44,7 @@ public class UserTenantRepository {
   private static final String SELECT_USER_TENANTS = "WITH cte AS (SELECT count(*) AS total_count FROM %1$s.%2$s %3$s) " +
     "SELECT j.*, cte.* FROM %1$s.%2$s j LEFT JOIN cte ON true " +
     "%3$s LIMIT %4$d OFFSET %5$d";
-  private static final String IS_USERNAME_ALREADY_EXISTS = "SELECT EXISTS(SELECT 1 FROM %s.%s WHERE username = $1)";
+  private static final String IS_USERNAME_ALREADY_EXISTS = "SELECT EXISTS(SELECT 1 FROM %s.%s WHERE %s = $1)";
 
   public Future<UserTenantCollection> fetchUserTenants(Conn conn, String tenantId, Criterion criterion) {
     int limit = criterion.getLimit().get();
@@ -59,7 +59,7 @@ public class UserTenantRepository {
   }
 
   public Future<Boolean> isUsernameAlreadyExists(Conn conn, String username, String tenantId) {
-    String query = String.format(IS_USERNAME_ALREADY_EXISTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
+    String query = String.format(IS_USERNAME_ALREADY_EXISTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME, LOWERCASE_WRAPPED_USERNAME);
     Tuple queryParams = Tuple.of(StringUtils.toRootLowerCase(username));
     return conn.execute(query, queryParams).map(resultSet -> resultSet.iterator().next().getBoolean(0));
   }
