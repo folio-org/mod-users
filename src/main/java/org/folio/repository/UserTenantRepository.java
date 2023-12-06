@@ -28,7 +28,7 @@ public class UserTenantRepository {
   public static final String BARCODE = "barcode";
   public static final String EXTERNAL_SYSTEM_ID = "external_system_id";
   public static final String CONSORTIUM_ID = "consortium_id";
-  public static final String LOWERCASE_WRAPPED_USERNAME = String.format("LOWER(%s)", USERNAME_FIELD);
+  public static final String LOWERCASE_WRAPPED_USERNAME = String.format("LOWER(f_unaccent(%s))", USERNAME_FIELD);
   public static final String PHONE_NUMBER = "phone_number";
   public static final String MOBILE_PHONE_NUMBER = "mobile_phone_number";
   public static final String EMAIL = "email";
