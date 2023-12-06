@@ -227,6 +227,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @Test
   void cannotCreateUserWithSameUsernameInUpperCase() {
     UserTenant userTenant = getUserTenant();
+    userTenant.setUsername("uSeR_tEsT");
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
     String usernameInUpperCase = "User_Test";
