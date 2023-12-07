@@ -1,3 +1,6 @@
+## 19.2.2 23-12-07
+* ECS | Username uniqueness validation should be case insensitive for usernames from different tenants (MODUSERS-408)
+
 ## 19.2.1 23-10-18
 
 * Fix transaction behavior with processing outbox logs (MODUSERS-395)
