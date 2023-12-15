@@ -244,6 +244,10 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
     Assertions.assertEquals(externalSystemId, userTenant.getExternalSystemId());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
   }
 
   @Test
@@ -271,6 +275,10 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
     Assertions.assertEquals(barcode, userTenant.getBarcode());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
   }
 
   @Test
