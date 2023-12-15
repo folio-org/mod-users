@@ -220,6 +220,68 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canSearchByExternalSystemId() {
+    String username = "testCrossTenantUser";
+    String externalSystemId = "testExternalSystemId";
+    String tenantId = "testTenant";
+    String centralTenantId = "testTenant";
+
+    UserTenant affiliation = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername(username).withTenantId(tenantId).withExternalSystemId(externalSystemId).withCentralTenantId(centralTenantId);
+
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
+    Assertions.assertEquals(201, actualStatusCode);
+
+    Map<String, String> params = Map.of(
+      "externalSystemId", externalSystemId,
+      "queryOp", "or");
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    Assertions.assertEquals(1, collection.getTotalRecords());
+    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    Assertions.assertEquals(username, userTenant.getUsername());
+    Assertions.assertEquals(tenantId, userTenant.getTenantId());
+    Assertions.assertEquals(externalSystemId, userTenant.getExternalSystemId());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
+  }
+
+  @Test
+  void canSearchByBarcode() {
+    String username = "testCrossTenantUser";
+    String barcode = "testBarcode";
+    String tenantId = "testTenant";
+    String centralTenantId = "testTenant";
+
+    UserTenant affiliation = new UserTenant()
+      .withId(UUID.randomUUID().toString())
+      .withUserId(UUID.randomUUID().toString())
+      .withUsername(username).withTenantId(tenantId).withBarcode(barcode).withCentralTenantId(centralTenantId);
+
+    int actualStatusCode = userTenantClient.attemptToSaveUserTenant(affiliation);
+    Assertions.assertEquals(201, actualStatusCode);
+
+    Map<String, String> params = Map.of(
+      "barcode", barcode,
+      "queryOp", "or");
+
+    UserTenantCollection collection = userTenantClient.getUserTenants(params);
+    Assertions.assertEquals(1, collection.getTotalRecords());
+    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    Assertions.assertEquals(username, userTenant.getUsername());
+    Assertions.assertEquals(tenantId, userTenant.getTenantId());
+    Assertions.assertEquals(barcode, userTenant.getBarcode());
+
+    UserTenantCollection userTenantCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(4, userTenantCollection.getTotalRecords());
+    sendAffiliationDeletedEvents(userTenantCollection.getUserTenants());
+  }
+
+  @Test
   void canSearchByUserNameCaseInsensitive() {
     String username = "CaSe-InSeNsItIvE";
     String lowerCaseUsername = "case-insensitive";

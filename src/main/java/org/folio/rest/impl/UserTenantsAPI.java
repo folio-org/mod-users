@@ -19,7 +19,9 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 import static io.vertx.core.Future.succeededFuture;
+import static org.folio.repository.UserTenantRepository.BARCODE;
 import static org.folio.repository.UserTenantRepository.EMAIL;
+import static org.folio.repository.UserTenantRepository.EXTERNAL_SYSTEM_ID;
 import static org.folio.repository.UserTenantRepository.MOBILE_PHONE_NUMBER;
 import static org.folio.repository.UserTenantRepository.PHONE_NUMBER;
 import static org.folio.repository.UserTenantRepository.TENANT_ID_FIELD;
@@ -42,7 +44,7 @@ public class UserTenantsAPI implements UserTenants {
                              Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     Criterion criterion = new Criterion().setLimit(new Limit(limit)).setOffset(new Offset(offset));
-    ArgumentsHolder argumentsHolder = new ArgumentsHolder(userId, username, tenantId, email, phoneNumber, mobilePhoneNumber);
+    ArgumentsHolder argumentsHolder = new ArgumentsHolder(userId, username, tenantId, email, phoneNumber, mobilePhoneNumber, barcode, externalSystemId);
     addWhereClauseArgumentsToCriterion(argumentsHolder, queryOp, criterion);
     logger.debug("Trying to get user-tenant records with criterion: {}.", criterion);
 
@@ -78,12 +80,14 @@ public class UserTenantsAPI implements UserTenants {
 
   private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {
     Map<String, String> fields = Map.of(
-      USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),
-      LOWERCASE_WRAPPED_USERNAME, StringUtils.defaultString(StringUtils.toRootLowerCase(argumentsHolder.username())),
-      TENANT_ID_FIELD, StringUtils.defaultString(argumentsHolder.tenantId()),
-      EMAIL, StringUtils.defaultString(argumentsHolder.email()),
-      PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.phoneNumber()),
-      MOBILE_PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.mobilePhoneNumber())
+        USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),
+        LOWERCASE_WRAPPED_USERNAME, StringUtils.defaultString(StringUtils.toRootLowerCase(argumentsHolder.username())),
+        TENANT_ID_FIELD, StringUtils.defaultString(argumentsHolder.tenantId()),
+        EMAIL, StringUtils.defaultString(argumentsHolder.email()),
+        PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.phoneNumber()),
+        MOBILE_PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.mobilePhoneNumber()),
+        BARCODE, StringUtils.defaultString(argumentsHolder.barcode()),
+        EXTERNAL_SYSTEM_ID, StringUtils.defaultString(argumentsHolder.externalSystemId())
       );
 
     fields.entrySet().stream()
@@ -92,5 +96,15 @@ public class UserTenantsAPI implements UserTenants {
       .forEach(param -> criterion.addCriterion(param, queryOp));
   }
 
-  record ArgumentsHolder(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber) {}
+  record ArgumentsHolder(
+    String userId,
+    String username,
+    String tenantId,
+    String email,
+    String phoneNumber,
+    String mobilePhoneNumber,
+    String barcode,
+    String externalSystemId
+  ) {
+  }
 }
