@@ -235,7 +235,7 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(201, actualStatusCode);
 
     Map<String, String> params = Map.of(
-      "external_system_id", externalSystemId,
+      "externalSystemId", externalSystemId,
       "queryOp", "or");
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);

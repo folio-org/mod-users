@@ -80,14 +80,14 @@ public class UserTenantsAPI implements UserTenants {
 
   private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {
     Map<String, String> fields = Map.of(
-      USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),
-      LOWERCASE_WRAPPED_USERNAME, StringUtils.defaultString(StringUtils.toRootLowerCase(argumentsHolder.username())),
-      TENANT_ID_FIELD, StringUtils.defaultString(argumentsHolder.tenantId()),
-      EMAIL, StringUtils.defaultString(argumentsHolder.email()),
-      PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.phoneNumber()),
-      MOBILE_PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.mobilePhoneNumber()),
-      BARCODE, StringUtils.defaultString(argumentsHolder.barcode()),
-      EXTERNAL_SYSTEM_ID, StringUtils.defaultString(argumentsHolder.externalSystemId())
+        USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),
+        LOWERCASE_WRAPPED_USERNAME, StringUtils.defaultString(StringUtils.toRootLowerCase(argumentsHolder.username())),
+        TENANT_ID_FIELD, StringUtils.defaultString(argumentsHolder.tenantId()),
+        EMAIL, StringUtils.defaultString(argumentsHolder.email()),
+        PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.phoneNumber()),
+        MOBILE_PHONE_NUMBER, StringUtils.defaultString(argumentsHolder.mobilePhoneNumber()),
+        BARCODE, StringUtils.defaultString(argumentsHolder.barcode()),
+        EXTERNAL_SYSTEM_ID, StringUtils.defaultString(argumentsHolder.externalSystemId())
       );
 
     fields.entrySet().stream()
@@ -96,5 +96,15 @@ public class UserTenantsAPI implements UserTenants {
       .forEach(param -> criterion.addCriterion(param, queryOp));
   }
 
-  record ArgumentsHolder(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber, String barcode, String externalSystemId) {}
+  record ArgumentsHolder(
+    String userId,
+    String username,
+    String tenantId,
+    String email,
+    String phoneNumber,
+    String mobilePhoneNumber,
+    String barcode,
+    String externalSystemId
+  ) {
+  }
 }
