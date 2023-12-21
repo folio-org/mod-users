@@ -98,7 +98,13 @@ public class UserTenantService {
           return Future.failedFuture(new IllegalStateException(MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD));
         }
         UserTenant userTenant = res.getUserTenants().get(0);
-        return tenantRepository.deleteById(conn, userTenant.getId());
+        return tenantRepository.deleteById(conn, userTenant.getId())
+          .compose(isDeleted -> {
+            if (Boolean.FALSE.equals(isDeleted)) {
+              return Future.failedFuture(new IllegalStateException(MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD));
+            }
+            return Future.succeededFuture(Boolean.TRUE);
+          });
       }));
   }
 
