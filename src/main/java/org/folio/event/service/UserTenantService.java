@@ -35,6 +35,8 @@ public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
   public static final String INVALID_USER_TYPE_POPULATED = "User's 'type' field should be populated with one of the allowed values: 'patron', 'staff', 'shadow'";
   public static final String USERNAME_IS_NOT_POPULATED = "In consortium mode, the staff user must have a username";
+  public static final String MEMBER_USER_TENANT_TABLE_IS_EMPTY = "User-tenant table is empty, nothing to delete";
+  public static final String MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS = "User-tenant table in member tenant should not contain more than 1 record";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -57,8 +59,7 @@ public class UserTenantService {
    */
   public Future<String> getConsortiaCentralTenantId(Conn conn, Map<String, String> okapiHeaders) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
-    Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
-    return tenantRepository.fetchUserTenants(conn, okapiTenantId, criterion)
+    return fetchFirstUserTenant(conn, okapiTenantId)
       .map(res -> {
         if (res.getTotalRecords() > 0) {
           return res.getUserTenants().stream().map(UserTenant::getCentralTenantId).findFirst().orElse(null);
@@ -75,9 +76,39 @@ public class UserTenantService {
    */
   public Future<Boolean> isConsortiaTenant(Conn conn, Map<String, String> okapiHeaders) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
-    Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
-    return tenantRepository.fetchUserTenants(conn, okapiTenantId, criterion)
+    return fetchFirstUserTenant(conn, okapiTenantId)
       .map(res -> res.getTotalRecords() > 0);
+  }
+
+  /**
+   * User-tenant table in each member ECS tenant has only single record, in this case http requests to this tenant allowed
+   * (central ECS tenant contains multiple user tenant associations necessary for login, saml-login, forgot password/username functionality).
+   * This method deletes  record from user-tenant table in Member ECS tenant and after this each request to that tenant will be
+   * forbidden.
+   *
+   * @param tenantId the tenant id
+   * @param vertx the vertx instance
+   * @return future with true if record was deleted or false otherwise
+   * @throws IllegalStateException if deleting is not possible
+   */
+  public Future<Boolean> deleteMemberUserTenant(String tenantId, Vertx vertx) {
+    PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
+    return pgClient.withConn(conn -> fetchFirstUserTenant(conn, tenantId)
+      .compose(res -> {
+        if (res.getTotalRecords() > 1) {
+          return Future.failedFuture(new IllegalStateException(MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS));
+        }
+        if (res.getTotalRecords() == 0) {
+          return Future.failedFuture(new IllegalStateException(MEMBER_USER_TENANT_TABLE_IS_EMPTY));
+        }
+        UserTenant userTenant = res.getUserTenants().get(0);
+        return tenantRepository.deleteById(conn, userTenant.getId());
+      }));
+  }
+
+  private Future<UserTenantCollection> fetchFirstUserTenant(Conn conn, String tenantId) {
+    Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
+    return tenantRepository.fetchUserTenants(conn, tenantId, criterion);
   }
 
   public Future<Boolean> saveUserTenant(UserTenant userTenant, String tenantId, Vertx vertx) {

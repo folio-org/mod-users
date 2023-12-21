@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.event.ConsortiumEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserTenant;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.event.service.UserTenantService.MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS;
+import static org.folio.event.service.UserTenantService.MEMBER_USER_TENANT_TABLE_IS_EMPTY;
 
 @ExtendWith(VertxExtension.class)
 class UserTenantIT extends AbstractRestTestNoData {
@@ -80,6 +84,42 @@ class UserTenantIT extends AbstractRestTestNoData {
     UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
 
     Assertions.assertEquals(0, collection2.getTotalRecords());
+  }
+
+  @Test
+  void canNotDeleteIfMemberUserTenantContainsMoreThanOneRecord() {
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+
+    Assertions.assertEquals(3, collection.getTotalRecords());
+
+    String error = userTenantClient.deleteMemberUserTenant();
+
+    Assertions.assertEquals(MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS, error);
+  }
+
+  @Test
+  void canNotDeleteIfMemberUserTenantTableEmpty() {
+    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
+
+    sendAffiliationDeletedEvents(collection.getUserTenants());
+    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(0, collection2.getTotalRecords());
+
+    String error = userTenantClient.deleteMemberUserTenant();
+    Assertions.assertEquals(MEMBER_USER_TENANT_TABLE_IS_EMPTY, error);
+  }
+
+  @Test
+  void canDeleteFromMemberUserTenantTable() {
+    UserTenantCollection allThreeTenants = userTenantClient.getAllUsersTenants();
+    List<UserTenant> twoUserTenantsToDelete = Arrays.asList(allThreeTenants.getUserTenants().get(0), allThreeTenants.getUserTenants().get(1));
+
+    sendAffiliationDeletedEvents(twoUserTenantsToDelete, 1);
+    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(1, collection2.getTotalRecords());
+
+    String error = userTenantClient.deleteMemberUserTenant();
+    Assertions.assertTrue(StringUtils.isBlank(error));
   }
 
   @Test
@@ -278,11 +318,15 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   private void sendAffiliationDeletedEvents(List<UserTenant> userTenants) {
+    sendAffiliationDeletedEvents(userTenants, 0);
+  }
+
+  private void sendAffiliationDeletedEvents(List<UserTenant> userTenants, int expectedSizeAfterDeleting) {
     for (UserTenant userTenant : userTenants) {
       String eventPayload = Json.encode(userTenant);
       sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED.getTopicName(),
         userTenant.getId(), eventPayload);
     }
-    awaitHandlingEvent(0);
+    awaitHandlingEvent(expectedSizeAfterDeleting);
   }
 }

@@ -92,6 +92,10 @@ public class UserTenantRepository {
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
+  public Future<Boolean> deleteById(Conn conn, String id) {
+    return conn.delete(USER_TENANT_TABLE_NAME, id).map(resultSet -> resultSet.size() == 1);
+  }
+
   private UserTenantCollection mapResultSetToUserTenantCollection(RowSet<Row> resultSet) {
     UserTenantCollection userTenantCollection = new UserTenantCollection().withTotalRecords(0);
     resultSet.iterator().forEachRemaining(row -> {
