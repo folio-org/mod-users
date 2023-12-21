@@ -276,7 +276,10 @@
     {
       "permissionName": "user-settings.custom-fields.collection.put",
       "displayName": "Custom Fields - put collection",
-      "description": "Put Custom Fields collection"
+      "description": "Put Custom Fields collection",
+      "subPermissions" : [
+        "users.item.get"
+      ]
     },
     {
       "permissionName" : "users.item.get",
@@ -480,7 +483,11 @@
     {
       "permissionName": "user-settings.custom-fields.item.post",
       "displayName": "User Custom Fields - create field",
-      "description": "Create User Custom Field"
+      "description": "Create User Custom Field",
+      "subPermissions": [
+        "users.item.get"
+      ]
+
     },
     {
       "permissionName": "user-settings.custom-fields.item.get",
@@ -490,12 +497,18 @@
     {
       "permissionName": "user-settings.custom-fields.item.put",
       "displayName": "User Custom Fields - modify field",
-      "description": "Modify User Custom Field"
+      "description": "Modify User Custom Field",
+      "subPermissions": [
+        "users.item.get"
+      ]
     },
     {
       "permissionName": "user-settings.custom-fields.item.delete",
       "displayName": "User Custom Fields - delete field",
-      "description": "Delete User Custom Field"
+      "description": "Delete User Custom Field",
+      "subPermissions": [
+        "users.item.get"
+      ]
     },
     {
       "permissionName": "user-settings.custom-fields.item.stats.get",
