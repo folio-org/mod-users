@@ -507,7 +507,8 @@
       "displayName": "User Custom Fields - delete field",
       "description": "Delete User Custom Field",
       "subPermissions": [
-        "users.item.get"
+        "users.item.get",
+        "user-settings.custom-fields.item.stats.get"
       ]
     },
     {
