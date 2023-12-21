@@ -24,8 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.service.UserTenantService.MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS;
-import static org.folio.event.service.UserTenantService.MEMBER_USER_TENANT_TABLE_IS_EMPTY;
+import static org.folio.event.service.UserTenantService.MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD;
 
 @ExtendWith(VertxExtension.class)
 class UserTenantIT extends AbstractRestTestNoData {
@@ -94,19 +93,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     String error = userTenantClient.deleteMemberUserTenant();
 
-    Assertions.assertEquals(MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS, error);
-  }
-
-  @Test
-  void canNotDeleteIfMemberUserTenantTableEmpty() {
-    UserTenantCollection collection = userTenantClient.getAllUsersTenants();
-
-    sendAffiliationDeletedEvents(collection.getUserTenants());
-    UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
-    Assertions.assertEquals(0, collection2.getTotalRecords());
-
-    String error = userTenantClient.deleteMemberUserTenant();
-    Assertions.assertEquals(MEMBER_USER_TENANT_TABLE_IS_EMPTY, error);
+    Assertions.assertEquals(MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD, error);
   }
 
   @Test

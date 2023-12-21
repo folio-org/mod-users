@@ -35,8 +35,7 @@ public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);
   public static final String INVALID_USER_TYPE_POPULATED = "User's 'type' field should be populated with one of the allowed values: 'patron', 'staff', 'shadow'";
   public static final String USERNAME_IS_NOT_POPULATED = "In consortium mode, the staff user must have a username";
-  public static final String MEMBER_USER_TENANT_TABLE_IS_EMPTY = "User-tenant table is empty, nothing to delete";
-  public static final String MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS = "User-tenant table in member tenant should not contain more than 1 record";
+  public static final String MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD = "User-tenant table in member ECS tenant should contain 1 record";
 
   private final UserTenantRepository tenantRepository;
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
@@ -95,11 +94,8 @@ public class UserTenantService {
     PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
     return pgClient.withConn(conn -> fetchFirstUserTenant(conn, tenantId)
       .compose(res -> {
-        if (res.getTotalRecords() > 1) {
-          return Future.failedFuture(new IllegalStateException(MEMBER_USER_TENANT_CONTAINS_ADDITIONAL_RECORDS));
-        }
-        if (res.getTotalRecords() == 0) {
-          return Future.failedFuture(new IllegalStateException(MEMBER_USER_TENANT_TABLE_IS_EMPTY));
+        if (res.getTotalRecords() != 1) {
+          return Future.failedFuture(new IllegalStateException(MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD));
         }
         UserTenant userTenant = res.getUserTenants().get(0);
         return tenantRepository.deleteById(conn, userTenant.getId());
