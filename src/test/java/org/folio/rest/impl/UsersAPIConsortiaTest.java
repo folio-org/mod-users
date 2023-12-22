@@ -51,7 +51,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @BeforeEach
   public void beforeEach() {
     usersClient.deleteAllUsers();
-    userTenantClient.deleteAllUserTenants();
   }
 
   @Test

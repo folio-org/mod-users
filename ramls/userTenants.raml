@@ -101,6 +101,13 @@ resourceTypes:
         description: "Validation error, e.g. missing required field. Details of the error provided in the response."
       500:
         description: "Internal server error"
+  delete:
+    description: Delete a user-tenant from member tenant. Deleting from the central tenant is forbidden.
+    responses:
+      204:
+        description: "Successful deletion"
+      500:
+        description: "Internal server error"
         body:
           text/plain:
             example: "Internal server error"
