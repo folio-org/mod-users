@@ -71,7 +71,7 @@ public class UserTenantRepository {
       userTenant.getEmail(), userTenant.getMobilePhoneNumber(), userTenant.getPhoneNumber(), userTenant.getBarcode(),
       userTenant.getExternalSystemId(), userTenant.getConsortiumId());
     return conn.execute(query, queryParams)
-      .map(resultSet -> resultSet.size() == 1)
+      .map(resultSet -> resultSet.rowCount() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
@@ -80,7 +80,7 @@ public class UserTenantRepository {
     Tuple queryParams = Tuple.of(userTenant.getUsername(), userTenant.getEmail(), userTenant.getMobilePhoneNumber(),
       userTenant.getPhoneNumber(), userTenant.getBarcode(), userTenant.getExternalSystemId(), userTenant.getUserId());
     return conn.execute(query, queryParams)
-      .map(resultSet -> resultSet.size() == 1)
+      .map(resultSet -> resultSet.rowCount() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
@@ -88,12 +88,12 @@ public class UserTenantRepository {
     String query = String.format(DELETE_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
     Tuple queryParams = Tuple.of(userTenant.getUserId(), userTenant.getTenantId());
     return conn.execute(query, queryParams)
-      .map(resultSet -> resultSet.size() == 1)
+      .map(resultSet -> resultSet.rowCount() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
   public Future<Boolean> deleteById(Conn conn, String id) {
-    return conn.delete(USER_TENANT_TABLE_NAME, id).map(resultSet -> resultSet.size() == 1);
+    return conn.delete(USER_TENANT_TABLE_NAME, id).map(resultSet -> resultSet.rowCount() == 1);
   }
 
   private UserTenantCollection mapResultSetToUserTenantCollection(RowSet<Row> resultSet) {
