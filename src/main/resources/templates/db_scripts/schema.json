@@ -52,7 +52,7 @@
     },
     {
       "run": "after",
-      "snippetPath": "add_blob_column_in_users_table.sql",
+      "snippetPath": "create_blob_table.sql",
       "fromModuleVersion": "19.3.0"
     },
     {
