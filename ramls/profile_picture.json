@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProfilePicture",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "profile_picture_blob": {
+      "type": "string",
+      "format": "base64"
+    }
+  },
+  "required": ["id", "profile_picture_blob"]
+}

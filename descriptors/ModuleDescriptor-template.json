@@ -30,6 +30,16 @@
           "permissionsRequired": [ "users.item.post" ]
         },
         {
+          "methods": [ "GET" ],
+          "pathPattern": "/users/profile-picture/{id}",
+          "permissionsRequired": [ "users.profile-picture.item.get" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/users/profile-picture",
+          "permissionsRequired": [ "users.profile-picture.item.post" ]
+        },
+        {
           "methods": [ "PUT" ],
           "pathPattern": "/users/{id}",
           "permissionsRequired": [ "users.item.put" ]

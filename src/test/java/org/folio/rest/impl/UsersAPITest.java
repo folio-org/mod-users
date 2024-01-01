@@ -11,19 +11,21 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Response;
 
+import io.vertx.core.*;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.domain.UserType;
-import org.folio.rest.jaxrs.model.Address;
-import org.folio.rest.jaxrs.model.CustomFields;
-import org.folio.rest.jaxrs.model.Personal;
-import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.model.*;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.interfaces.Results;
@@ -31,9 +33,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.z3950.zing.cql.CQLParseException;
 
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -121,6 +120,37 @@ class UsersAPITest {
         assertTrue(user.getType().equalsIgnoreCase(UserType.DCB.getTypeName()));
         vtc.completeNow();
       })), Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
+  void postUsersProfilePictureTest(VertxTestContext vtc) {
+    String profilePictureId = UUID.randomUUID().toString();
+    Map<String,String> okapiHeaders = new HashMap<>();
+    String testData = "Testing";
+    InputStream sampleDataStream = new ByteArrayInputStream(
+      testData.getBytes(StandardCharsets.UTF_8)
+    );
+
+    new UsersAPI().postUsersProfilePicture(sampleDataStream, okapiHeaders,
+    vtc.succeeding(response -> vtc.verify( () -> {
+      assertThat(response.getStatus(), is(500));
+      vtc.completeNow();
+  })),Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
+  void getUsersProfilePictureTest(VertxTestContext vtc) {
+    String profilePictureId = UUID.randomUUID().toString();
+    Map<String,String> okapiHeaders = new HashMap<>();
+    String mockInputStreamData = "Mock profile picture data";
+
+    InputStream mockInputStream = new ByteArrayInputStream(mockInputStreamData.getBytes());
+
+    new UsersAPI().getUsersProfilePictureByProfileId(profilePictureId, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertThat(response.getStatus(), is(500));
+        vtc.completeNow();
+      })),Vertx.vertx().getOrCreateContext());
   }
 
   @Test
