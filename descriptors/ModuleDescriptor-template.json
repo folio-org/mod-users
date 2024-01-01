@@ -227,6 +227,11 @@
           "methods": [ "POST" ],
           "pathPattern": "/user-tenants",
           "permissionsRequired": [ "user-tenants.item.post" ]
+        },
+        {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/user-tenants",
+          "permissionsRequired": [ "user-tenants.item.delete" ]
         }
       ]
     },
@@ -437,6 +442,11 @@
       "description" : "Create a new user-tenant record"
     },
     {
+      "permissionName" : "user-tenants.item.delete",
+      "displayName" : "user-tenants item delete",
+      "description" : "Delete user-tenant record"
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -473,7 +483,8 @@
         "patron-pin.delete",
         "patron-pin.validate",
         "user-tenants.collection.get",
-        "user-tenants.item.post"
+        "user-tenants.item.post",
+        "user-tenants.item.delete"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
