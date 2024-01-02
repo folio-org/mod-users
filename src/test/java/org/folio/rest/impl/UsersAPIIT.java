@@ -62,7 +62,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
-    userTenantClient.deleteAllUserTenants();
   }
 
   @Test

@@ -40,15 +40,11 @@ public class UserTenantClient {
       .extract().statusCode();
   }
 
-  public void deleteUserTenant(String id) {
-   configuration.initialSpecification()
+  public String deleteMemberUserTenant() {
+   return configuration.initialSpecification()
      .when()
-     .delete("/{id}", Map.of("id", id))
-     .then();
-  }
-
-  public void deleteAllUserTenants() {
-    final var usersTenants = getAllUsersTenants();
-    usersTenants.getUserTenants().forEach(addressType -> deleteUserTenant(addressType.getId()));
+     .delete()
+     .then()
+     .extract().asString();
   }
 }

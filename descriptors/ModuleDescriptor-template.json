@@ -237,6 +237,11 @@
           "methods": [ "POST" ],
           "pathPattern": "/user-tenants",
           "permissionsRequired": [ "user-tenants.item.post" ]
+        },
+        {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/user-tenants",
+          "permissionsRequired": [ "user-tenants.item.delete" ]
         }
       ]
     },
@@ -286,7 +291,10 @@
     {
       "permissionName": "user-settings.custom-fields.collection.put",
       "displayName": "Custom Fields - put collection",
-      "description": "Put Custom Fields collection"
+      "description": "Put Custom Fields collection",
+      "subPermissions" : [
+        "users.item.get"
+      ]
     },
     {
       "permissionName" : "users.item.get",
@@ -444,6 +452,11 @@
       "description" : "Create a new user-tenant record"
     },
     {
+      "permissionName" : "user-tenants.item.delete",
+      "displayName" : "user-tenants item delete",
+      "description" : "Delete user-tenant record"
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -480,7 +493,8 @@
         "patron-pin.delete",
         "patron-pin.validate",
         "user-tenants.collection.get",
-        "user-tenants.item.post"
+        "user-tenants.item.post",
+        "user-tenants.item.delete"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
@@ -490,7 +504,11 @@
     {
       "permissionName": "user-settings.custom-fields.item.post",
       "displayName": "User Custom Fields - create field",
-      "description": "Create User Custom Field"
+      "description": "Create User Custom Field",
+      "subPermissions": [
+        "users.item.get"
+      ]
+
     },
     {
       "permissionName": "user-settings.custom-fields.item.get",
@@ -500,12 +518,19 @@
     {
       "permissionName": "user-settings.custom-fields.item.put",
       "displayName": "User Custom Fields - modify field",
-      "description": "Modify User Custom Field"
+      "description": "Modify User Custom Field",
+      "subPermissions": [
+        "users.item.get"
+      ]
     },
     {
       "permissionName": "user-settings.custom-fields.item.delete",
       "displayName": "User Custom Fields - delete field",
-      "description": "Delete User Custom Field"
+      "description": "Delete User Custom Field",
+      "subPermissions": [
+        "users.item.get",
+        "user-settings.custom-fields.item.stats.get"
+      ]
     },
     {
       "permissionName": "user-settings.custom-fields.item.stats.get",
