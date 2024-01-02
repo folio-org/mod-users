@@ -97,23 +97,15 @@ resourceTypes:
           description: "OK"
           body:
             application/json:
-              type: string
+              type: profilePicture
         400:
           description: "Bad request"
           body:
             application/json:
-              example: |
-                {
-                  "error": "Bad request"
-                }
         500:
           description: "Internal server error"
           body:
             application/json:
-              example: |
-                {
-                  "error": "Internal server error"
-                }
   /profile-picture/{profileId}:
     get:
       responses:
@@ -126,4 +118,8 @@ resourceTypes:
           body:
             text/plain:
               example: "profile picture not found"
+        400:
+          description: "Bad request"
+          body:
+            application/json:
 

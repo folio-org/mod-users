@@ -127,6 +127,7 @@ class UsersAPITest {
   void postUsersProfilePictureTest(VertxTestContext vtc) {
     Map<String,String> okapiHeaders = new HashMap<>();
     okapiHeaders.put(STREAM_COMPLETE, "COMPLETED");
+    okapiHeaders.put("X-Okapi-Tenant", "diku");
     String testData = "Testing";
     InputStream sampleDataStream = new ByteArrayInputStream(
       testData.getBytes(StandardCharsets.UTF_8)
@@ -140,9 +141,24 @@ class UsersAPITest {
   }
 
   @Test
+  void postUsersProfilePictureErrorTest(VertxTestContext vtc) {
+    Map<String,String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put(STREAM_COMPLETE, "COMPLETED");
+    okapiHeaders.put("X-Okapi-Tenant", "diku");
+
+    new UsersAPI().postUsersProfilePicture(null, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertThat(response.getStatus(), is(500));
+        assertThat(response.getEntity(), is("Requested file size should be with in allowed size 1-10 megabytes"));
+        vtc.completeNow();
+      })),Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
   void getUsersProfilePictureTest(VertxTestContext vtc) {
     String profilePictureId = UUID.randomUUID().toString();
     Map<String,String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put("X-Okapi-Tenant", "diku");
 
     new UsersAPI().getUsersProfilePictureByProfileId(profilePictureId, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {

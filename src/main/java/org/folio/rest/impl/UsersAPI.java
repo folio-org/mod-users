@@ -28,7 +28,10 @@ import java.util.function.Predicate;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
-import io.vertx.core.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
@@ -49,7 +52,13 @@ import org.folio.event.service.UserTenantService;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Stream;
 import org.folio.rest.annotations.Validate;
-import org.folio.rest.jaxrs.model.*;
+import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.AddressType;
+import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.ProfilePicture;
+import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.jaxrs.model.UserEvent;
+import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -563,63 +572,63 @@ public class UsersAPI implements Users {
 
   @Stream
   @Override
-  public void postUsersProfilePicture(InputStream entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-
+  public void postUsersProfilePicture(InputStream entity, Map<String, String> okapiHeaders,
+                                      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try (InputStream bis = new BufferedInputStream(entity)) {
       if (Objects.isNull(okapiHeaders.get(STREAM_COMPLETE))) {
         validateAndProcessByteArray(bis);
       } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
         asyncResultHandler.handle(succeededFuture(PostUsersProfilePictureResponse.respond400WithApplicationJson("Stream aborted")));
       } else {
-        if (Objects.nonNull(requestBytesArray)) {
+        if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
           String id = UUID.randomUUID().toString();
           Tuple params = Tuple.of(id, requestBytesArray);
           PgUtil.postgresClient(vertxContext, okapiHeaders)
             .execute(createInsertQuery(okapiHeaders), params)
-            .map(rows -> PostUsersProfilePictureResponse.respond201WithApplicationJson(id))
+            .map(rows -> PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(UUID.fromString(id))))
             .map(Response.class::cast)
             .onComplete(reply -> {
               if (reply.cause() != null) {
-                System.out.println("=========="+reply.cause().getMessage());
                 asyncResultHandler.handle(
                   succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson(reply.cause().getMessage())));
-                return;
               }
               asyncResultHandler.handle(reply);
             });
-
         } else {
-
+          asyncResultHandler.handle(
+            succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be with in allowed size 1-10 megabytes")));
         }
       }
     } catch (IOException e) {
-      logger.info("postUsersProfilePicture:: failed to save profile picture [{}]", e.getMessage());
+      logger.error("postUsersProfilePicture:: failed to save profile picture [{}]", e.getMessage());
     }
   }
 
   @Override
   public void getUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders,
                                                 Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
-    postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
-
     Tuple params = Tuple.of(profileId);
-    postgresClient.getValue().execute(createSelectQuery(okapiHeaders), params)
-      .map(rows -> GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)))
+    PgUtil.postgresClient(vertxContext, okapiHeaders).execute(createSelectQuery(okapiHeaders), params)
+      .compose(rows -> {
+        if (rows.rowCount() != 0) {
+          return succeededFuture(GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)));
+        } else {
+          return succeededFuture(GetUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("No profile picture found for id "+ profileId));
+        }
+      })
       .map(Response.class::cast)
       .onComplete(responseAsyncResult -> {
         if (responseAsyncResult.cause() != null) {
           asyncResultHandler.handle(
             succeededFuture(GetUsersProfilePictureByProfileIdResponse
-              .respond404WithTextPlain(DUPLICATE_USERNAME_ERROR)));
+              .respond400WithApplicationJson(responseAsyncResult.cause().getMessage())));
         }
         asyncResultHandler.handle(responseAsyncResult);
       });
   }
 
   private void validateAndProcessByteArray(InputStream is) throws IOException {
-    //rename method
-    if (Objects.nonNull(requestBytesArray) && requestBytesArray.length < MAX_DOCUMENT_SIZE && is.available() < MAX_DOCUMENT_SIZE) {
+    if (Objects.nonNull(requestBytesArray) && requestBytesArray.length < MAX_DOCUMENT_SIZE && is.available() < MAX_DOCUMENT_SIZE && is.available() != 0) {
       requestBytesArray = ArrayUtils.addAll(requestBytesArray, IOUtils.toByteArray(is));
     } else {
       requestBytesArray = null;
