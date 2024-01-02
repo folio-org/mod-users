@@ -564,24 +564,32 @@ public class UsersAPI implements Users {
   @Stream
   @Override
   public void postUsersProfilePicture(InputStream entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    MutableObject<PostgresClient> postgresClient = new MutableObject<>();
-    postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
 
     try (InputStream bis = new BufferedInputStream(entity)) {
       if (Objects.isNull(okapiHeaders.get(STREAM_COMPLETE))) {
-        processBytesArrayFromStream(bis);
+        validateAndProcessByteArray(bis);
       } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
         asyncResultHandler.handle(succeededFuture(PostUsersProfilePictureResponse.respond400WithApplicationJson("Stream aborted")));
       } else {
         if (Objects.nonNull(requestBytesArray)) {
           String id = UUID.randomUUID().toString();
           Tuple params = Tuple.of(id, requestBytesArray);
-          postgresClient.getValue()
+          PgUtil.postgresClient(vertxContext, okapiHeaders)
             .execute(createInsertQuery(okapiHeaders), params)
-            .onSuccess(s -> {
-              logger.info("postUsersProfilePicture::profile picture save successfully with id {}", id);
-              asyncResultHandler.handle(Future.succeededFuture(PostUsersProfilePictureResponse.respond201WithApplicationJson(id)));
-            }).onFailure(throwable -> asyncResultHandler.handle(Future.succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson(throwable.getMessage()))));
+            .map(rows -> PostUsersProfilePictureResponse.respond201WithApplicationJson(id))
+            .map(Response.class::cast)
+            .onComplete(reply -> {
+              if (reply.cause() != null) {
+                System.out.println("=========="+reply.cause().getMessage());
+                asyncResultHandler.handle(
+                  succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson(reply.cause().getMessage())));
+                return;
+              }
+              asyncResultHandler.handle(reply);
+            });
+
+        } else {
+
         }
       }
     } catch (IOException e) {
@@ -590,17 +598,27 @@ public class UsersAPI implements Users {
   }
 
   @Override
-  public void getUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void getUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders,
+                                                Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     MutableObject<PostgresClient> postgresClient = new MutableObject<>();
     postgresClient.setValue(PgUtil.postgresClient(vertxContext, okapiHeaders));
 
     Tuple params = Tuple.of(profileId);
     postgresClient.getValue().execute(createSelectQuery(okapiHeaders), params)
-      .onSuccess(s -> asyncResultHandler.handle(Future.succeededFuture(GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(s)))))
-      .onFailure(cause -> asyncResultHandler.handle(Future.failedFuture(cause)));
+      .map(rows -> GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)))
+      .map(Response.class::cast)
+      .onComplete(responseAsyncResult -> {
+        if (responseAsyncResult.cause() != null) {
+          asyncResultHandler.handle(
+            succeededFuture(GetUsersProfilePictureByProfileIdResponse
+              .respond404WithTextPlain(DUPLICATE_USERNAME_ERROR)));
+        }
+        asyncResultHandler.handle(responseAsyncResult);
+      });
   }
 
-  private void processBytesArrayFromStream(InputStream is) throws IOException {
+  private void validateAndProcessByteArray(InputStream is) throws IOException {
+    //rename method
     if (Objects.nonNull(requestBytesArray) && requestBytesArray.length < MAX_DOCUMENT_SIZE && is.available() < MAX_DOCUMENT_SIZE) {
       requestBytesArray = ArrayUtils.addAll(requestBytesArray, IOUtils.toByteArray(is));
     } else {

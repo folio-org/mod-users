@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static org.folio.rest.RestVerticle.STREAM_COMPLETE;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -124,8 +125,8 @@ class UsersAPITest {
 
   @Test
   void postUsersProfilePictureTest(VertxTestContext vtc) {
-    String profilePictureId = UUID.randomUUID().toString();
     Map<String,String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put(STREAM_COMPLETE, "COMPLETED");
     String testData = "Testing";
     InputStream sampleDataStream = new ByteArrayInputStream(
       testData.getBytes(StandardCharsets.UTF_8)
@@ -133,22 +134,19 @@ class UsersAPITest {
 
     new UsersAPI().postUsersProfilePicture(sampleDataStream, okapiHeaders,
     vtc.succeeding(response -> vtc.verify( () -> {
-      assertThat(response.getStatus(), is(500));
+      assertThat(response.getStatus(), is(201));
       vtc.completeNow();
-  })),Vertx.vertx().getOrCreateContext());
+    })),Vertx.vertx().getOrCreateContext());
   }
 
   @Test
   void getUsersProfilePictureTest(VertxTestContext vtc) {
     String profilePictureId = UUID.randomUUID().toString();
     Map<String,String> okapiHeaders = new HashMap<>();
-    String mockInputStreamData = "Mock profile picture data";
-
-    InputStream mockInputStream = new ByteArrayInputStream(mockInputStreamData.getBytes());
 
     new UsersAPI().getUsersProfilePictureByProfileId(profilePictureId, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(500));
+        assertThat(response.getStatus(), is(200));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }
