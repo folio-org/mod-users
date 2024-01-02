@@ -146,7 +146,7 @@ class UsersAPITest {
     okapiHeaders.put("X-Okapi-Tenant", "diku");
     new UsersAPI().getUsersProfilePictureByProfileId(profilePictureId, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(404));
+        assertThat(response.getStatus(), is(400));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }
