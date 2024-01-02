@@ -580,12 +580,12 @@ public class UsersAPI implements Users {
       } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
         asyncResultHandler.handle(succeededFuture(PostUsersProfilePictureResponse.respond400WithApplicationJson("Stream aborted")));
       } else {
-        if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
-          String id = UUID.randomUUID().toString();
+        if (Objects.nonNull(requestBytesArray)) {
+          UUID id = UUID.randomUUID();
           Tuple params = Tuple.of(id, requestBytesArray);
           PgUtil.postgresClient(vertxContext, okapiHeaders)
             .execute(createInsertQuery(okapiHeaders), params)
-            .map(rows -> PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(UUID.fromString(id))))
+            .map(rows -> PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(id)))
             .map(Response.class::cast)
             .onComplete(reply -> {
               if (reply.cause() != null) {
@@ -628,7 +628,7 @@ public class UsersAPI implements Users {
   }
 
   private void validateAndProcessByteArray(InputStream is) throws IOException {
-    if (Objects.nonNull(requestBytesArray) && requestBytesArray.length < MAX_DOCUMENT_SIZE && is.available() < MAX_DOCUMENT_SIZE && is.available() != 0) {
+    if (Objects.nonNull(requestBytesArray) && requestBytesArray.length < MAX_DOCUMENT_SIZE && is.available() < MAX_DOCUMENT_SIZE) {
       requestBytesArray = ArrayUtils.addAll(requestBytesArray, IOUtils.toByteArray(is));
     } else {
       requestBytesArray = null;

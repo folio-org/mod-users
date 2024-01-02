@@ -23,10 +23,15 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Response;
 
-import io.vertx.core.*;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.domain.UserType;
-import org.folio.rest.jaxrs.model.*;
+import org.folio.rest.jaxrs.model.Address;
+import org.folio.rest.jaxrs.model.CustomFields;
+import org.folio.rest.jaxrs.model.Personal;
+import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.interfaces.Results;
@@ -126,15 +131,16 @@ class UsersAPITest {
   @Test
   void postUsersProfilePictureTest(VertxTestContext vtc) {
     Map<String,String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(STREAM_COMPLETE, "COMPLETED");
     okapiHeaders.put("X-Okapi-Tenant", "diku");
-    String testData = "Testing";
+    okapiHeaders.put(STREAM_COMPLETE, "COMPLETED");
+    String testData = "Testingfdsdssssssssssssfsdfasefdsefewfewfwergfdsxc";
     InputStream sampleDataStream = new ByteArrayInputStream(
       testData.getBytes(StandardCharsets.UTF_8)
     );
 
     new UsersAPI().postUsersProfilePicture(sampleDataStream, okapiHeaders,
     vtc.succeeding(response -> vtc.verify( () -> {
+      System.out.println(response.getEntity());
       assertThat(response.getStatus(), is(201));
       vtc.completeNow();
     })),Vertx.vertx().getOrCreateContext());
@@ -159,10 +165,9 @@ class UsersAPITest {
     String profilePictureId = UUID.randomUUID().toString();
     Map<String,String> okapiHeaders = new HashMap<>();
     okapiHeaders.put("X-Okapi-Tenant", "diku");
-
     new UsersAPI().getUsersProfilePictureByProfileId(profilePictureId, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(200));
+        assertThat(response.getStatus(), is(404));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }
