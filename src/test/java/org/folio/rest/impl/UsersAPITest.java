@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Response;
@@ -140,13 +139,15 @@ class UsersAPITest {
   }
 
   @Test
-  void getUsersProfilePictureTest(VertxTestContext vtc) {
-    String profilePictureId = UUID.randomUUID().toString();
+  void postUsersProfilePictureTest(VertxTestContext vtc) {
     Map<String,String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put(STREAM_COMPLETE, "COMPLETED");
     okapiHeaders.put("X-Okapi-Tenant", "diku");
-    new UsersAPI().getUsersProfilePictureByProfileId(profilePictureId, okapiHeaders,
+
+    new UsersAPI().postUsersProfilePicture(null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(400));
+        assertThat(response.getStatus(), is(500));
+        assertThat(response.getEntity(), is("Requested file size should be with in allowed size 1-10 megabytes"));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }
