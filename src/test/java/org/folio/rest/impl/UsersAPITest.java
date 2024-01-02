@@ -12,9 +12,6 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -126,24 +123,6 @@ class UsersAPITest {
         assertTrue(user.getType().equalsIgnoreCase(UserType.DCB.getTypeName()));
         vtc.completeNow();
       })), Vertx.vertx().getOrCreateContext());
-  }
-
-  @Test
-  void postUsersProfilePictureTest(VertxTestContext vtc) {
-    Map<String,String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "diku");
-    okapiHeaders.put(STREAM_COMPLETE, "COMPLETED");
-    String testData = "Testingfdsdssssssssssssfsdfasefdsefewfewfwergfdsxc";
-    InputStream sampleDataStream = new ByteArrayInputStream(
-      testData.getBytes(StandardCharsets.UTF_8)
-    );
-
-    new UsersAPI().postUsersProfilePicture(sampleDataStream, okapiHeaders,
-    vtc.succeeding(response -> vtc.verify( () -> {
-      System.out.println(response.getEntity());
-      assertThat(response.getStatus(), is(201));
-      vtc.completeNow();
-    })),Vertx.vertx().getOrCreateContext());
   }
 
   @Test

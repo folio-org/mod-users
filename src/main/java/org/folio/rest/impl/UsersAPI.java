@@ -580,7 +580,7 @@ public class UsersAPI implements Users {
       } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
         asyncResultHandler.handle(succeededFuture(PostUsersProfilePictureResponse.respond400WithApplicationJson("Stream aborted")));
       } else {
-        if (Objects.nonNull(requestBytesArray)) {
+        if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
           UUID id = UUID.randomUUID();
           Tuple params = Tuple.of(id, requestBytesArray);
           PgUtil.postgresClient(vertxContext, okapiHeaders)
