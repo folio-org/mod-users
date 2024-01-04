@@ -7,7 +7,6 @@ import static org.apache.commons.io.FileUtils.ONE_MB;
 import static org.folio.event.service.UserTenantService.INVALID_USER_TYPE_POPULATED;
 import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATED;
 import static org.folio.rest.RestVerticle.STREAM_ABORT;
-import static org.folio.rest.RestVerticle.STREAM_COMPLETE;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 import java.io.BufferedInputStream;
@@ -76,6 +75,7 @@ import org.folio.rest.utils.ExpirationTool;
 import org.folio.event.service.UserOutboxService;
 import org.folio.service.UsersService;
 import org.folio.support.FailureHandler;
+import org.folio.support.ProfilePictureHelper;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
 import org.z3950.zing.cql.CQLParseException;
@@ -575,12 +575,13 @@ public class UsersAPI implements Users {
   public void postUsersProfilePicture(InputStream entity, Map<String, String> okapiHeaders,
                                       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try (InputStream bis = new BufferedInputStream(entity)) {
-      if (Objects.isNull(okapiHeaders.get(STREAM_COMPLETE))) {
+      if (Objects.isNull(okapiHeaders.get(STREAM_ABORT))) {
         validateAndProcessByteArray(bis);
-      } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
-        asyncResultHandler.handle(succeededFuture(PostUsersProfilePictureResponse.respond400WithApplicationJson("Stream aborted")));
-      } else {
         if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
+          if (ProfilePictureHelper.detectFileType(requestBytesArray).equals("Unknown")) {
+            asyncResultHandler.handle(
+              succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested image should be of supported type-[PNG,JPG,JPEG]")));
+          }
           UUID id = UUID.randomUUID();
           Tuple params = Tuple.of(id, requestBytesArray);
           PgUtil.postgresClient(vertxContext, okapiHeaders)
@@ -596,11 +597,23 @@ public class UsersAPI implements Users {
             });
         } else {
           asyncResultHandler.handle(
-            succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be with in allowed size 1-10 megabytes")));
+            succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be with in allowed size 0.1-10.0 megabytes")));
         }
+      } else {
+        asyncResultHandler.handle(
+          succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Upload stream for image has been interrupted")));
       }
     } catch (IOException e) {
-      logger.error("postUsersProfilePicture:: failed to save profile picture [{}]", e.getMessage());
+      asyncResultHandler.handle(
+        succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("failed to save profile picture " + e.getMessage())));
+    }
+  }
+
+  private void validateAndProcessByteArray(InputStream is) throws IOException {
+    if (Objects.nonNull(requestBytesArray) && requestBytesArray.length < MAX_DOCUMENT_SIZE && is.available() < MAX_DOCUMENT_SIZE) {
+      requestBytesArray = ArrayUtils.addAll(requestBytesArray, IOUtils.toByteArray(is));
+    } else {
+      requestBytesArray = null;
     }
   }
 
@@ -625,14 +638,6 @@ public class UsersAPI implements Users {
         }
         asyncResultHandler.handle(responseAsyncResult);
       });
-  }
-
-  private void validateAndProcessByteArray(InputStream is) throws IOException {
-    if (Objects.nonNull(requestBytesArray) && requestBytesArray.length < MAX_DOCUMENT_SIZE && is.available() < MAX_DOCUMENT_SIZE) {
-      requestBytesArray = ArrayUtils.addAll(requestBytesArray, IOUtils.toByteArray(is));
-    } else {
-      requestBytesArray = null;
-    }
   }
 
   private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
