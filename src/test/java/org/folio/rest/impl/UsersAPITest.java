@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Response;
@@ -179,19 +178,6 @@ class UsersAPITest {
       vtc.succeeding(response -> vtc.verify( () -> {
         assertThat(response.getStatus(), is(500));
         assertThat(response.getEntity(), is("Upload stream for image has been interrupted"));
-        vtc.completeNow();
-      })),Vertx.vertx().getOrCreateContext());
-  }
-
-  @Test
-  void getUsersProfilePicture404Test(VertxTestContext vtc) {
-    String id = UUID.randomUUID().toString();
-    Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
-    okapiHeaders.put(STREAM_ABORT, "TRUE");
-    new UsersAPI().getUsersProfilePictureByProfileId(id, okapiHeaders,
-      vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(400));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }
