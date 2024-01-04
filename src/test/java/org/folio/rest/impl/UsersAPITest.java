@@ -130,7 +130,7 @@ class UsersAPITest {
   @Test
   void postUsersProfilePictureErrorTest(VertxTestContext vtc) {
     Map<String,String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "diku");
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
 
     new UsersAPI().postUsersProfilePicture(null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
@@ -143,7 +143,7 @@ class UsersAPITest {
   @Test
   void postUsersProfilePictureEmptyTest(VertxTestContext vtc) {
     Map<String,String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "diku");
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
     InputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
     new UsersAPI().postUsersProfilePicture(emptyInputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
@@ -156,7 +156,7 @@ class UsersAPITest {
   @Test
   void postUsersProfilePictureTypeErrorTest(VertxTestContext vtc) {
     Map<String,String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "diku");
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
     String sampleString = "This is a sample string.";
     byte[] bytes = sampleString.getBytes();
 
@@ -172,11 +172,10 @@ class UsersAPITest {
   @Test
   void postUsersProfilePictureJPGTest(VertxTestContext vtc) {
     Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "diku");
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        System.out.println("----"+response.getEntity());
         assertThat(response.getStatus(), is(201));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
@@ -185,7 +184,7 @@ class UsersAPITest {
   @Test
   void postUsersProfilePictureSTREAMTest(VertxTestContext vtc) {
     Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "diku");
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
     okapiHeaders.put(STREAM_ABORT, "TRUE");
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
@@ -200,11 +199,10 @@ class UsersAPITest {
   void getUsersProfilePicture404Test(VertxTestContext vtc) {
     String id = UUID.randomUUID().toString();
     Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "diku");
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
     okapiHeaders.put(STREAM_ABORT, "TRUE");
     new UsersAPI().getUsersProfilePictureByProfileId(id, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        System.out.println("----"+response.getEntity());
         assertThat(response.getStatus(), is(404));
         assertThat(response.getEntity(), is("No profile picture found for id "+id));
         vtc.completeNow();
