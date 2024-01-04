@@ -134,7 +134,6 @@ class UsersAPITest {
 
     new UsersAPI().postUsersProfilePicture(null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        System.out.println(response.getEntity());
         assertThat(response.getStatus(), is(500));
         assertThat(response.getEntity(), is("failed to save profile picture Stream closed"));
         vtc.completeNow();
@@ -148,7 +147,6 @@ class UsersAPITest {
     InputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
     new UsersAPI().postUsersProfilePicture(emptyInputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        System.out.println(response.getEntity());
         assertThat(response.getStatus(), is(500));
         assertThat(response.getEntity(), is("Requested file size should be with in allowed size 0.1-10.0 megabytes"));
         vtc.completeNow();
@@ -165,7 +163,6 @@ class UsersAPITest {
     InputStream inputStream = new ByteArrayInputStream(bytes);
     new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        System.out.println(response.getEntity());
         assertThat(response.getStatus(), is(500));
         assertThat(response.getEntity(), is("Requested image should be of supported type-[PNG,JPG,JPEG]"));
         vtc.completeNow();
@@ -179,7 +176,7 @@ class UsersAPITest {
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
-        System.out.println(response.getEntity());
+        System.out.println("----"+response.getEntity());
         assertThat(response.getStatus(), is(201));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
@@ -207,6 +204,7 @@ class UsersAPITest {
     okapiHeaders.put(STREAM_ABORT, "TRUE");
     new UsersAPI().getUsersProfilePictureByProfileId(id, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
+        System.out.println("----"+response.getEntity());
         assertThat(response.getStatus(), is(404));
         assertThat(response.getEntity(), is("No profile picture found for id "+id));
         vtc.completeNow();
