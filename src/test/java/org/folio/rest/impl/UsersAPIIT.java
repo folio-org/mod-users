@@ -536,8 +536,15 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void createProfilePicture() {
+  void createJPGProfilePicture() {
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .statusCode(HTTP_CREATED);
+  }
+
+  @Test
+  void createPNGProfilePicture() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.png");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
       .statusCode(HTTP_CREATED);
   }

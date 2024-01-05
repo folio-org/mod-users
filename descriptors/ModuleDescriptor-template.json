@@ -284,6 +284,16 @@
       "description" : "Get a collection of user records"
     },
     {
+      "permissionName" : "users.profile-picture.item.post",
+      "displayName" : "post user profile picture",
+      "description" : "Post users profile picture"
+    },
+    {
+      "permissionName" : "users.profile-picture.item.get",
+      "displayName" : "get user profile picture",
+      "description" : "Get users profile picture"
+    },
+    {
       "permissionName" : "users.collection.delete",
       "displayName" : "users collection delete",
       "description" : "Delete a collection of user records"
@@ -494,7 +504,9 @@
         "patron-pin.validate",
         "user-tenants.collection.get",
         "user-tenants.item.post",
-        "user-tenants.item.delete"
+        "user-tenants.item.delete",
+        "users.profile-picture.item.get",
+        "users.profile-picture.item.post"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
