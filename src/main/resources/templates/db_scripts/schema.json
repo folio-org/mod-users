@@ -51,6 +51,11 @@
       "fromModuleVersion": "19.2.0"
     },
     {
+      "run": "after",
+      "snippetPath": "create_blob_table.sql",
+      "fromModuleVersion": "19.3.0"
+    },
+    {
       "run": "before",
       "snippet": "DO $$ BEGIN DROP TABLE patron_block_conditions, patron_block_limits; EXCEPTION WHEN OTHERS THEN END; $$;",
       "fromModuleVersion": "mod-users-16.2.1"
