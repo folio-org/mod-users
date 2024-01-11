@@ -49,6 +49,16 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk</artifactId>
+      <version>1.12.321</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-s3-client</artifactId>
+      <version>${folio-s3-client.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.folio</groupId>
       <artifactId>domain-models-runtime</artifactId>
       <version>${raml-module-builder.version}</version>
@@ -535,5 +545,7 @@
     <java.version>17</java.version>
     <aspectj.version>1.9.19</aspectj.version>
     <lombok.version>1.18.24</lombok.version>
+    <folio-s3-client.version>2.1.0-SNAPSHOT</folio-s3-client.version>
+    <spring.version>5.3.23</spring.version>
   </properties>
 </project>

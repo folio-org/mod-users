@@ -36,7 +36,6 @@ import io.vertx.pgclient.PgException;
 
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.Tuple;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -74,23 +73,23 @@ import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
 import org.folio.event.service.UserOutboxService;
 import org.folio.service.UsersService;
+import org.folio.service.storage.ProfilePictureStorage;
 import org.folio.support.FailureHandler;
 import org.folio.support.ProfilePictureHelper;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.z3950.zing.cql.CQLParseException;
 
 @Path("users")
 public class UsersAPI implements Users {
 
   public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
-  public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob) VALUES ($1, $2)";
   public static final String GET_PROFILE_PICTURE_SQL = "SELECT * from %s.%s WHERE id = $1";
   public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
   public static final String ID = "id";
   public static final String BLOB = "profile_picture_blob";
   public static final String TABLE_NAME_USERS = "users";
-  public static final String TABLE_NAME_PROFILE_PICTURE = "profile_picture";
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
 
   private static final Messages messages = Messages.getInstance();
@@ -108,12 +107,16 @@ public class UsersAPI implements Users {
   private byte[] requestBytesArray = new byte[0];
   private static final long MAX_DOCUMENT_SIZE = 10 * ONE_MB;
 
+
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
   private final UsersService usersService;
   private final UserTenantService userTenantService;
+  private final ProfilePictureStorage profilePictureStorage;
 
+  @Autowired
   public UsersAPI() {
+    this.profilePictureStorage = new ProfilePictureStorage();
     this.userOutboxService = new UserOutboxService();
     this.usersService = new UsersService();
     this.userTenantService = new UserTenantService();
@@ -582,19 +585,8 @@ public class UsersAPI implements Users {
             asyncResultHandler.handle(
               succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested image should be of supported type-[PNG,JPG,JPEG]")));
           }
-          UUID id = UUID.randomUUID();
-          Tuple params = Tuple.of(id, requestBytesArray);
-          PgUtil.postgresClient(vertxContext, okapiHeaders)
-            .execute(createInsertQuery(okapiHeaders), params)
-            .map(rows -> PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(id)))
-            .map(Response.class::cast)
-            .onComplete(reply -> {
-              if (reply.cause() != null) {
-                asyncResultHandler.handle(
-                  succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson(reply.cause().getMessage())));
-              }
-              asyncResultHandler.handle(reply);
-            });
+          //profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, vertxContext);
+          profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, asyncResultHandler);
         } else {
           asyncResultHandler.handle(
             succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be with in allowed size 0.1-10.0 megabytes")));
@@ -620,24 +612,25 @@ public class UsersAPI implements Users {
   @Override
   public void getUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders,
                                                 Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    Tuple params = Tuple.of(profileId);
-    PgUtil.postgresClient(vertxContext, okapiHeaders).execute(createSelectQuery(okapiHeaders), params)
-      .compose(rows -> {
-        if (rows.rowCount() != 0) {
-          return succeededFuture(GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)));
-        } else {
-          return succeededFuture(GetUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("No profile picture found for id "+ profileId));
-        }
-      })
-      .map(Response.class::cast)
-      .onComplete(responseAsyncResult -> {
-        if (responseAsyncResult.cause() != null) {
-          asyncResultHandler.handle(
-            succeededFuture(GetUsersProfilePictureByProfileIdResponse
-              .respond400WithApplicationJson(responseAsyncResult.cause().getMessage())));
-        }
-        asyncResultHandler.handle(responseAsyncResult);
-      });
+    profilePictureStorage.getProfilePictureFromObjectStorage(profileId, asyncResultHandler);
+//    Tuple params = Tuple.of(profileId);
+//    PgUtil.postgresClient(vertxContext, okapiHeaders).execute(createSelectQuery(okapiHeaders), params)
+//      .compose(rows -> {
+//        if (rows.rowCount() != 0) {
+//          return succeededFuture(GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)));
+//        } else {
+//          return succeededFuture(GetUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("No profile picture found for id "+ profileId));
+//        }
+//      })
+//      .map(Response.class::cast)
+//      .onComplete(responseAsyncResult -> {
+//        if (responseAsyncResult.cause() != null) {
+//          asyncResultHandler.handle(
+//            succeededFuture(GetUsersProfilePictureByProfileIdResponse
+//              .respond400WithApplicationJson(responseAsyncResult.cause().getMessage())));
+//        }
+//        asyncResultHandler.handle(responseAsyncResult);
+//      });
   }
 
   private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
@@ -834,12 +827,8 @@ public class UsersAPI implements Users {
     return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);
   }
 
-  private static String createInsertQuery(Map<String, String> okapiHeaders) {
-    return String.format(SAVE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
-  }
-
   private static String createSelectQuery(Map<String, String> okapiHeaders) {
-    return String.format(GET_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
+    return String.format(GET_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), "profile_picture");
   }
 
 }
