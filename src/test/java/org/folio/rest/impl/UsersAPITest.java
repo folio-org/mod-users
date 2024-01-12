@@ -1,5 +1,6 @@
 package org.folio.rest.impl;
 
+import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -11,6 +12,8 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +21,9 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Response;
 
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.domain.UserType;
 import org.folio.rest.jaxrs.model.Address;
@@ -31,9 +37,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.z3950.zing.cql.CQLParseException;
 
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -121,6 +124,62 @@ class UsersAPITest {
         assertTrue(user.getType().equalsIgnoreCase(UserType.DCB.getTypeName()));
         vtc.completeNow();
       })), Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
+  void postUsersProfilePictureErrorTest(VertxTestContext vtc) {
+    Map<String,String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
+
+    new UsersAPI().postUsersProfilePicture(null, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertThat(response.getStatus(), is(500));
+        assertThat(response.getEntity(), is("failed to save profile picture Stream closed"));
+        vtc.completeNow();
+      })),Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
+  void postUsersProfilePictureEmptyTest(VertxTestContext vtc) {
+    Map<String,String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
+    InputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+    new UsersAPI().postUsersProfilePicture(emptyInputStream, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertThat(response.getStatus(), is(500));
+        assertThat(response.getEntity(), is("Requested file size should be with in allowed size 0.1-10.0 megabytes"));
+        vtc.completeNow();
+      })),Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
+  void postUsersProfilePictureTypeErrorTest(VertxTestContext vtc) {
+    Map<String,String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
+    String sampleString = "This is a sample string.";
+    byte[] bytes = sampleString.getBytes();
+
+    InputStream inputStream = new ByteArrayInputStream(bytes);
+    new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertThat(response.getStatus(), is(500));
+        assertThat(response.getEntity(), is("Requested image should be of supported type-[PNG,JPG,JPEG]"));
+        vtc.completeNow();
+      })),Vertx.vertx().getOrCreateContext());
+  }
+
+  @Test
+  void postUsersProfilePictureSTREAMTest(VertxTestContext vtc) {
+    Map<String, String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
+    okapiHeaders.put(STREAM_ABORT, "TRUE");
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
+      vtc.succeeding(response -> vtc.verify( () -> {
+        assertThat(response.getStatus(), is(500));
+        assertThat(response.getEntity(), is("Upload stream for image has been interrupted"));
+        vtc.completeNow();
+      })),Vertx.vertx().getOrCreateContext());
   }
 
   @Test

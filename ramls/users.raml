@@ -11,6 +11,7 @@ types:
   user: !include userdata.json
   userdataCollection: !include userdataCollection.json
   outboxEventLog: !include outboxEventLog.json
+  profilePicture: !include profile_picture.json
   userEvent: !include userEvent.json
   errors: !include raml-util/schemas/errors.schema
 
@@ -86,3 +87,39 @@ resourceTypes:
   /outbox/process:
     post:
       description: Read audit events from DB and send them to Kafka
+  /profile-picture:
+    post:
+      description: Upload user profile picture
+      body:
+        application/octet-stream:
+      responses:
+        201:
+          description: "OK"
+          body:
+            application/json:
+              type: profilePicture
+        400:
+          description: "Bad request"
+          body:
+            application/json:
+        500:
+          description: "Internal server error"
+          body:
+            application/json:
+  /profile-picture/{profileId}:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: profilePicture
+        404:
+          description: "profile picture not found"
+          body:
+            text/plain:
+              example: "profile picture not found"
+        400:
+          description: "Bad request"
+          body:
+            application/json:
+

@@ -51,7 +51,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @BeforeEach
   public void beforeEach() {
     usersClient.deleteAllUsers();
-    userTenantClient.deleteAllUserTenants();
   }
 
   @Test
@@ -219,6 +218,19 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
     final User userToCreate = createUser(userId, "user_test", "julia", "staff");
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(422)
+      .extract().as(ValidationErrors.class);
+  }
+
+  @Test
+  void cannotCreateUserWithSameUsernameInUpperCase() {
+    UserTenant userTenant = getUserTenant();
+    userTenant.setUsername("uSeR_tEsT");
+    userTenantClient.attemptToSaveUserTenant(userTenant);
+    String userId = UUID.randomUUID().toString();
+    String usernameInUpperCase = "User_Test";
+    final User userToCreate = createUser(userId, usernameInUpperCase, "julia", "staff");
     usersClient.attemptToCreateUser(userToCreate)
       .statusCode(422)
       .extract().as(ValidationErrors.class);

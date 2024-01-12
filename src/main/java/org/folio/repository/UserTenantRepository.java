@@ -28,7 +28,7 @@ public class UserTenantRepository {
   public static final String BARCODE = "barcode";
   public static final String EXTERNAL_SYSTEM_ID = "external_system_id";
   public static final String CONSORTIUM_ID = "consortium_id";
-  public static final String LOWERCASE_WRAPPED_USERNAME = String.format("LOWER(%s)", USERNAME_FIELD);
+  public static final String LOWERCASE_WRAPPED_USERNAME = String.format("LOWER(f_unaccent(%s))", USERNAME_FIELD);
   public static final String PHONE_NUMBER = "phone_number";
   public static final String MOBILE_PHONE_NUMBER = "mobile_phone_number";
   public static final String EMAIL = "email";
@@ -44,7 +44,7 @@ public class UserTenantRepository {
   private static final String SELECT_USER_TENANTS = "WITH cte AS (SELECT count(*) AS total_count FROM %1$s.%2$s %3$s) " +
     "SELECT j.*, cte.* FROM %1$s.%2$s j LEFT JOIN cte ON true " +
     "%3$s LIMIT %4$d OFFSET %5$d";
-  private static final String IS_USERNAME_ALREADY_EXISTS = "SELECT EXISTS(SELECT 1 FROM %s.%s WHERE username = $1)";
+  private static final String IS_USERNAME_ALREADY_EXISTS = "SELECT EXISTS(SELECT 1 FROM %s.%s WHERE %s = $1)";
 
   public Future<UserTenantCollection> fetchUserTenants(Conn conn, String tenantId, Criterion criterion) {
     int limit = criterion.getLimit().get();
@@ -59,8 +59,8 @@ public class UserTenantRepository {
   }
 
   public Future<Boolean> isUsernameAlreadyExists(Conn conn, String username, String tenantId) {
-    String query = String.format(IS_USERNAME_ALREADY_EXISTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
-    Tuple queryParams = Tuple.of(username);
+    String query = String.format(IS_USERNAME_ALREADY_EXISTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME, LOWERCASE_WRAPPED_USERNAME);
+    Tuple queryParams = Tuple.of(StringUtils.toRootLowerCase(username));
     return conn.execute(query, queryParams).map(resultSet -> resultSet.iterator().next().getBoolean(0));
   }
 
@@ -71,7 +71,7 @@ public class UserTenantRepository {
       userTenant.getEmail(), userTenant.getMobilePhoneNumber(), userTenant.getPhoneNumber(), userTenant.getBarcode(),
       userTenant.getExternalSystemId(), userTenant.getConsortiumId());
     return conn.execute(query, queryParams)
-      .map(resultSet -> resultSet.size() == 1)
+      .map(resultSet -> resultSet.rowCount() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
@@ -80,7 +80,7 @@ public class UserTenantRepository {
     Tuple queryParams = Tuple.of(userTenant.getUsername(), userTenant.getEmail(), userTenant.getMobilePhoneNumber(),
       userTenant.getPhoneNumber(), userTenant.getBarcode(), userTenant.getExternalSystemId(), userTenant.getUserId());
     return conn.execute(query, queryParams)
-      .map(resultSet -> resultSet.size() == 1)
+      .map(resultSet -> resultSet.rowCount() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
   }
 
@@ -88,8 +88,12 @@ public class UserTenantRepository {
     String query = String.format(DELETE_SQL, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME);
     Tuple queryParams = Tuple.of(userTenant.getUserId(), userTenant.getTenantId());
     return conn.execute(query, queryParams)
-      .map(resultSet -> resultSet.size() == 1)
+      .map(resultSet -> resultSet.rowCount() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
+  }
+
+  public Future<Boolean> deleteById(Conn conn, String id) {
+    return conn.delete(USER_TENANT_TABLE_NAME, id).map(resultSet -> resultSet.rowCount() == 1);
   }
 
   private UserTenantCollection mapResultSetToUserTenantCollection(RowSet<Row> resultSet) {

@@ -2,7 +2,9 @@
 package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -12,10 +14,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import org.folio.moduserstest.AbstractRestTestNoData;
+
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 import io.vertx.core.Vertx;
+import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
@@ -25,6 +30,7 @@ import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
+import org.folio.support.http.UserProfilePictureClient;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
@@ -47,6 +53,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   private static GroupsClient groupsClient;
   private static AddressTypesClient addressTypesClient;
   private static UserTenantClient userTenantClient;
+  private static UserProfilePictureClient userProfilePictureClient;
 
   @BeforeAll
   @SneakyThrows
@@ -55,6 +62,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
+    userProfilePictureClient = new UserProfilePictureClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
@@ -62,7 +70,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
-    userTenantClient.deleteAllUserTenants();
   }
 
   @Test
@@ -526,6 +533,31 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     usersClient.attemptToGetUser(user3.getId())
       .statusCode(404);
+  }
+
+  @Test
+  void createJPGProfilePicture() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .statusCode(HTTP_CREATED);
+  }
+
+  @Test
+  void createPNGProfilePicture() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.png");
+    userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .statusCode(HTTP_CREATED);
+  }
+
+  @Test
+  void getProfilePictureTest() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_OK);
+    userProfilePictureClient.getUserProfilePicture(UUID.randomUUID().toString())
+      .statusCode(HTTP_NOT_FOUND);
   }
 
   User createUser(String username) {
