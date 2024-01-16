@@ -601,6 +601,11 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_INTERNAL_ERROR);
     assertThat(response.extract().asString(), is("Requested file size should be with in allowed size 0.1-10.0 megabytes"));
 
+    //Trying to update profile picture with invalid uuid
+    InputStream inputStream5 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.updateUserProfilePicture("1234", inputStream5)
+      .statusCode(HTTP_INTERNAL_ERROR);
+
   }
 
   User createUser(String username) {
