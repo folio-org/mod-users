@@ -31,6 +31,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
@@ -85,6 +86,7 @@ public class UsersAPI implements Users {
 
   public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
   public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob) VALUES ($1, $2)";
+  public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s set profile_picture_blob = $1 where id  = $2 returning id, profile_picture_blob";
   public static final String GET_PROFILE_PICTURE_SQL = "SELECT * from %s.%s WHERE id = $1";
   public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
   public static final String ID = "id";
@@ -640,6 +642,49 @@ public class UsersAPI implements Users {
       });
   }
 
+  @Override
+  @Stream
+  public void putUsersProfilePictureByProfileId(String profileId, InputStream entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    try (InputStream bis = new BufferedInputStream(entity)) {
+      if (Objects.isNull(okapiHeaders.get(STREAM_ABORT))) {
+        validateAndProcessByteArray(bis);
+        if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
+          if (ProfilePictureHelper.detectFileType(requestBytesArray).equals("Unknown")) {
+            asyncResultHandler.handle(
+              succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Requested image should be of supported type-[PNG,JPG,JPEG]")));
+          }
+          Buffer binaryDataBuffer = Buffer.buffer(requestBytesArray);
+          PgUtil.postgresClient(vertxContext, okapiHeaders)
+            .execute(createUpdateQuery(okapiHeaders), Tuple.of(binaryDataBuffer, profileId))
+            .compose(rows -> {
+              if(rows.rowCount() != 0) {
+                return succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)));
+              } else {
+                return succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Existing profile picture is not found"));
+              }
+            })
+            .map(Response.class::cast)
+            .onComplete(reply -> {
+              if (reply.cause() != null) {
+                asyncResultHandler.handle(
+                  succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause().getMessage())));
+              }
+              asyncResultHandler.handle(reply);
+            });
+        } else {
+          asyncResultHandler.handle(
+            succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Requested file size should be with in allowed size 0.1-10.0 megabytes")));
+        }
+      } else {
+        asyncResultHandler.handle(
+          succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Upload stream for image has been interrupted")));
+      }
+    } catch (IOException e) {
+      asyncResultHandler.handle(
+        succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("failed to save profile picture " + e.getMessage())));
+    }
+  }
+
   private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
     ProfilePicture profilePicture = new ProfilePicture();
     for (Row row : resultSet) {
@@ -840,6 +885,10 @@ public class UsersAPI implements Users {
 
   private static String createSelectQuery(Map<String, String> okapiHeaders) {
     return String.format(GET_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
+  }
+
+  private static String createUpdateQuery(Map<String, String> okapiHeaders) {
+    return String.format(UPDATE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
   }
 
 }

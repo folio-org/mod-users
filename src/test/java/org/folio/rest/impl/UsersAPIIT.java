@@ -560,6 +560,21 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_NOT_FOUND);
   }
 
+  @Test
+  void updatePNGProfilePicture() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_OK);
+    InputStream inputStream1 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.updateUserProfilePicture(response.getId().toString(), inputStream1)
+      .statusCode(HTTP_OK);
+    InputStream inputStream2 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream2)
+      .statusCode(HTTP_NOT_FOUND);
+  }
+
   User createUser(String username) {
     return usersClient.createUser(User.builder()
       .username(username)
