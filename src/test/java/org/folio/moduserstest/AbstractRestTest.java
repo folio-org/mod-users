@@ -21,12 +21,20 @@ import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.postgres.testing.PostgresTesterContainer;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.s3.client.FolioS3Client;
+import org.folio.s3.client.S3ClientFactory;
+import org.folio.s3.client.S3ClientProperties;
 import org.folio.support.VertxModule;
-import org.folio.support.http.*;
+import org.folio.support.http.FakeTokenGenerator;
+import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import java.lang.reflect.Field;
@@ -41,6 +49,7 @@ import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 
 public abstract class AbstractRestTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRestTest.class);
+  private static FolioS3Client s3Client;
   public static final String TENANT_NAME = "diku";
   public static final String KAFKA_ENV_VALUE = "test-env";
   public static final String KAFKA_IMAGE_NAME = "confluentinc/cp-kafka:7.3.1";
@@ -76,7 +85,36 @@ public abstract class AbstractRestTest {
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
       .onComplete(context.succeedingThenComplete());
+    setUpClass();
   }
+
+  @Container
+  private static final LocalStackContainer localStackContainer = new LocalStackContainer(
+    DockerImageName.parse("localstack/localstack:0.11.3")
+  )
+    .withServices(LocalStackContainer.Service.S3);
+
+  @BeforeClass
+  public static void setUpClass() throws Exception {
+    localStackContainer.start();
+    System.setProperty("AWS_URL", localStackContainer.getEndpoint().toString());
+    System.setProperty("AWS_REGION", localStackContainer.getRegion());
+    System.setProperty("AWS_ACCESS_KEY_ID", localStackContainer.getAccessKey());
+    System.setProperty("AWS_SECRET_ACCESS_KEY", localStackContainer.getSecretKey());
+    s3Client = S3ClientFactory.getS3Client(
+      S3ClientProperties
+        .builder()
+        .endpoint(localStackContainer.getEndpoint().toString())
+        .accessKey(localStackContainer.getAccessKey())
+        .secretKey(localStackContainer.getSecretKey())
+        .bucket("diku")
+        .awsSdk(false)
+        .region(localStackContainer.getRegion())
+        .build()
+    );
+    s3Client.createBucketIfNotExists();
+  }
+
 
   @AfterAll
   public static void after(VertxTestContext context) {

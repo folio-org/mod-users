@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-import static org.folio.rest.impl.UsersAPI.USERNAME_ALREADY_EXISTS;
+import static org.folio.support.UsersApiConstants.USERNAME_ALREADY_EXISTS;
 
 public class UserTenantService {
   private static final Logger logger = LogManager.getLogger(UserTenantService.class);

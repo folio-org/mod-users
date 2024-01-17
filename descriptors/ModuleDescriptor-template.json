@@ -41,6 +41,16 @@
         },
         {
           "methods": [ "PUT" ],
+          "pathPattern": "/users/configurations/{entryId}",
+          "permissionsRequired": [ "users.configurations.item.put" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/users/configurations/{entryId}",
+          "permissionsRequired": [ "users.configurations.item.get" ]
+        },
+        {
+          "methods": [ "PUT" ],
           "pathPattern": "/users/{id}",
           "permissionsRequired": [ "users.item.put" ]
         },
@@ -289,6 +299,21 @@
       "description" : "Post users profile picture"
     },
     {
+      "permissionName" : "users.configurations.item.post",
+      "displayName" : "post user configuration",
+      "description" : "Post user configuration"
+    },
+    {
+      "permissionName" : "users.configurations.item.get",
+      "displayName" : "get user configuration",
+      "description" : "Get user configuration"
+    },
+    {
+      "permissionName" : "users.configurations.item.put",
+      "displayName" : "update user configuration",
+      "description" : "Update user configuration"
+    },
+    {
       "permissionName" : "users.profile-picture.item.get",
       "displayName" : "get user profile picture",
       "description" : "Get users profile picture"
@@ -471,6 +496,8 @@
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
       "subPermissions" : [
+        "users.configurations.item.get",
+        "users.configurations.item.put",
         "users.collection.get",
         "users.collection.delete",
         "users.item.get",
@@ -599,8 +626,7 @@
       { "name": "AWS_BUCKET", "value": "example-bucket" },
       { "name": "AWS_ACCESS_KEY_ID", "value": "AKIAIOSFODNN7EXAMPLE" },
       { "name": "AWS_SECRET_ACCESS_KEY", "value": "wJalrXUtnFEMI/K7MDENG/EXAMPLEKEY" },
-      { "name": "AWS_SDK", "value": "false" },
-      { "name": "S3_FORCEPATHSTYLE", "value": "false" }
+      { "name": "AWS_SDK", "value": "false" }
     ]
   }
 }

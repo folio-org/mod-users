@@ -1,10 +1,7 @@
 
 package org.folio.rest.impl;
 
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_CREATED;
-import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -20,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 import io.vertx.core.Vertx;
+import org.folio.rest.jaxrs.model.Config;
 import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.support.Address;
@@ -29,6 +27,7 @@ import org.folio.support.TagList;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.AddressTypesClient;
+import org.folio.support.http.ConfigurationClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UserProfilePictureClient;
 import org.folio.support.http.UserTenantClient;
@@ -54,6 +53,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   private static AddressTypesClient addressTypesClient;
   private static UserTenantClient userTenantClient;
   private static UserProfilePictureClient userProfilePictureClient;
+  private static ConfigurationClient configurationClient;
 
   @BeforeAll
   @SneakyThrows
@@ -63,6 +63,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
     userProfilePictureClient = new UserProfilePictureClient(okapiUrl, okapiHeaders);
+    configurationClient = new ConfigurationClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
@@ -536,21 +537,56 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void createJPGProfilePicture() {
+  void createJPGProfilePictureInDb() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId("3e1aaa06-0600-4cc9-a112-7a3fb8426eda")
+      .withEnabled(true).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
       .statusCode(HTTP_CREATED);
   }
 
   @Test
-  void createPNGProfilePicture() {
+  void createPNGProfilePictureInS3() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId("3e1aaa06-0600-4cc9-a112-7a3fb8426eda")
+      .withEnabled(true).withEnabledObjectStorage(true));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.png");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
       .statusCode(HTTP_CREATED);
   }
 
   @Test
-  void getProfilePictureTest() {
+  void ShouldNotCreateProfilePictureIfDisable() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.png");
+    userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .statusCode(HTTP_INTERNAL_ERROR);
+  }
+
+  @Test
+  void shouldNotCreateProfilePictureForUnknownTypes() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId("3e1aaa06-0600-4cc9-a112-7a3fb8426eda")
+      .withEnabled(true).withEnabledObjectStorage(false));
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.heic");
+    userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .statusCode(HTTP_INTERNAL_ERROR);
+  }
+
+  @Test
+  void getProfilePictureFromDbTest() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId("3e1aaa06-0600-4cc9-a112-7a3fb8426eda")
+      .withEnabled(true).withEnabledObjectStorage(false));
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_OK);
+    userProfilePictureClient.getUserProfilePicture(UUID.randomUUID().toString())
+      .statusCode(HTTP_NOT_FOUND);
+  }
+
+  @Test
+  void getProfilePictureFromS3Test() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId("3e1aaa06-0600-4cc9-a112-7a3fb8426eda")
+      .withEnabled(true).withEnabledObjectStorage(true));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
       .extract().as(ProfilePicture.class);

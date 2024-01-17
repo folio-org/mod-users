@@ -1,11 +1,11 @@
 package org.folio.service.impl;
 
 import static io.vertx.core.Future.failedFuture;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
 
 import java.util.List;
 
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
-import org.folio.rest.impl.UsersAPI;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
@@ -32,7 +32,7 @@ public class UserRepository {
       return failedFuture(e);
     }
 
-    return postgresClient.get(UsersAPI.TABLE_NAME_USERS, User.class, new String[]{"*"},
+    return postgresClient.get(TABLE_NAME_USERS, User.class, new String[]{"*"},
       cql, true, false, List.of())
       .map(Results::getResults)
       .map(users -> !users.isEmpty());

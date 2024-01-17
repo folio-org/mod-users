@@ -122,4 +122,45 @@ resourceTypes:
           description: "Bad request"
           body:
             application/json:
-
+  /configurations/{configId}:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: config
+        404:
+          description: "configuration not found"
+          body:
+            text/plain:
+              example: "configuration not found"
+        400:
+          description: "Bad request"
+          body:
+            text/plain:
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"
+    put:
+      body:
+        application/json:
+          type: config
+      responses:
+        204:
+          description: "configuration updated"
+        404:
+          description: "configuration not found"
+          body:
+            text/plain:
+              example: "configuration not found"
+        400:
+          description: "Bad request"
+          body:
+            text/plain:
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"
