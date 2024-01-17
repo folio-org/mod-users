@@ -592,8 +592,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
     //Trying to update profile picture with insufficient data
     InputStream inputStream3 = new ByteArrayInputStream("1".getBytes());
     response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream3)
-      .statusCode(HTTP_BAD_REQUEST);
-    assertThat(response.extract().asString(), is("Insufficient data provided to detect file type"));
+      .statusCode(HTTP_INTERNAL_ERROR);
+    assertThat(response.extract().asString(), is("failed to save profile picture Insufficient data provided to detect file type"));
 
     //Trying to update profile picture with empty data
     InputStream inputStream4 = new ByteArrayInputStream("".getBytes());

@@ -679,7 +679,7 @@ public class UsersAPI implements Users {
         asyncResultHandler.handle(
           succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Upload stream for image has been interrupted")));
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       asyncResultHandler.handle(
         succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("failed to save profile picture " + e.getMessage())));
     }
