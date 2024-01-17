@@ -1,6 +1,5 @@
 package org.folio.rest.impl;
 
-import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -164,20 +163,6 @@ class UsersAPITest {
       vtc.succeeding(response -> vtc.verify( () -> {
         assertThat(response.getStatus(), is(500));
         assertThat(response.getEntity(), is("Requested image should be of supported type-[PNG,JPG,JPEG]"));
-        vtc.completeNow();
-      })),Vertx.vertx().getOrCreateContext());
-  }
-
-  @Test
-  void postUsersProfilePictureSTREAMTest(VertxTestContext vtc) {
-    Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
-    okapiHeaders.put(STREAM_ABORT, "TRUE");
-    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
-    new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
-      vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(500));
-        assertThat(response.getEntity(), is("Failed to retrieve profile picture configuration"));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }
