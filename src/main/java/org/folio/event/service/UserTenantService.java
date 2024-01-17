@@ -134,7 +134,7 @@ public class UserTenantService {
   }
 
   public Future<Void> validateUserAcrossTenants(User entity, Map<String, String> okapiHeaders, Conn conn, Context vertxContext) {
-    Predicate<User> predicate = user -> true;
+    Predicate<User> predicate = user -> ObjectUtils.notEqual(UserType.SYSTEM.getTypeName(), entity.getType());
     return validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext, predicate);
   }
 
