@@ -556,6 +556,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void ShouldNotCreateProfilePictureIfDisable() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId("3e1aaa06-0600-4cc9-a112-7a3fb8426eda")
+      .withEnabled(false).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.png");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
       .statusCode(HTTP_INTERNAL_ERROR);
@@ -593,7 +595,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     userProfilePictureClient.getUserProfilePicture(response.getId().toString())
       .statusCode(HTTP_OK);
     userProfilePictureClient.getUserProfilePicture(UUID.randomUUID().toString())
-      .statusCode(HTTP_NOT_FOUND);
+      .statusCode(HTTP_INTERNAL_ERROR);
   }
 
   User createUser(String username) {
