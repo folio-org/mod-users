@@ -86,7 +86,9 @@ public class UsersAPI implements Users {
 
   public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
   public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob) VALUES ($1, $2)";
-  public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s set profile_picture_blob = $1 where id  = $2 returning id, profile_picture_blob";
+  public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s set profile_picture_blob = $1 where id = $2 returning id, profile_picture_blob";
+  public static final String DELETE_PROFILE_PICTURE_SQL = "DELETE from %s.%s where id = $1";
+
   public static final String GET_PROFILE_PICTURE_SQL = "SELECT * from %s.%s WHERE id = $1";
   public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
   public static final String ID = "id";
@@ -685,6 +687,28 @@ public class UsersAPI implements Users {
     }
   }
 
+  @Override
+  public void deleteUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("deleteUsersProfilePictureByProfileId:: Deleting profile picture with id {} ", profileId);
+    Tuple params = Tuple.of(profileId);
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .execute(createDeleteQuery(okapiHeaders), params)
+      .compose(rows -> {
+        if(rows.rowCount() != 0) {
+          return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond204());
+        } else {
+          return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Profile picture not found"));
+        }
+      })
+      .map(Response.class::cast)
+      .onComplete(reply -> {
+        if(reply.cause() != null) {
+          asyncResultHandler.handle(succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause())));
+        }
+        asyncResultHandler.handle(reply);
+      });
+  }
+
   private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
     ProfilePicture profilePicture = new ProfilePicture();
     for (Row row : resultSet) {
@@ -889,6 +913,10 @@ public class UsersAPI implements Users {
 
   private static String createUpdateQuery(Map<String, String> okapiHeaders) {
     return String.format(UPDATE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
+  }
+
+  private static String createDeleteQuery(Map<String, String> okapiHeaders) {
+    return String.format(DELETE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
   }
 
 }

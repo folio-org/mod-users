@@ -5,6 +5,7 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -606,6 +607,31 @@ class UsersAPIIT extends AbstractRestTestNoData {
     userProfilePictureClient.updateUserProfilePicture("1234", inputStream5)
       .statusCode(HTTP_INTERNAL_ERROR);
 
+  }
+
+  @Test
+  void deleteProfilePicture() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_OK);
+    userProfilePictureClient.deleteUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_NO_CONTENT);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_NOT_FOUND);
+  }
+
+  @Test
+  void deleteProfilePictureErrorTest() {
+    //Trying to delete a profile picture which is not present
+    var response = userProfilePictureClient.deleteUserProfilePicture(UUID.randomUUID().toString())
+      .statusCode(HTTP_NOT_FOUND);
+    assertThat(response.extract().asString(), is("Profile picture not found"));
+
+    //Trying to delete a profile picture with invalid UUID
+    userProfilePictureClient.deleteUserProfilePicture("1234")
+      .statusCode(HTTP_INTERNAL_ERROR);
   }
 
   User createUser(String username) {

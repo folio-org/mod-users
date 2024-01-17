@@ -144,3 +144,17 @@ resourceTypes:
           description: "Internal server error"
           body:
             application/json:
+    delete:
+      description: "delete user profile picture"
+      responses:
+        204:
+          description: "profile picture deleted"
+        404:
+          description: "profile picture not found"
+          body:
+            text/plain:
+              example: "profile picture not found"
+        500:
+          description: "Internal server error"
+          body:
+            application/json:
