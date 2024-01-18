@@ -35,6 +35,11 @@
           "permissionsRequired": [ "users.profile-picture.item.get" ]
         },
         {
+          "methods": [ "PUT" ],
+          "pathPattern": "/users/profile-picture/{id}",
+          "permissionsRequired": [ "users.profile-picture.item.put" ]
+        },
+        {
           "methods": [ "POST" ],
           "pathPattern": "/users/profile-picture",
           "permissionsRequired": [ "users.profile-picture.item.post" ]
@@ -294,6 +299,11 @@
       "description" : "Get users profile picture"
     },
     {
+      "permissionName" : "users.profile-picture.item.put",
+      "displayName" : "update user profile picture",
+      "description" : "Update users profile picture"
+    },
+    {
       "permissionName" : "users.collection.delete",
       "displayName" : "users collection delete",
       "description" : "Delete a collection of user records"
@@ -506,6 +516,7 @@
         "user-tenants.item.post",
         "user-tenants.item.delete",
         "users.profile-picture.item.get",
+        "users.profile-picture.item.put",
         "users.profile-picture.item.post"
       ]
     },{
