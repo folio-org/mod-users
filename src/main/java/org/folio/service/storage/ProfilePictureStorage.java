@@ -151,7 +151,6 @@ public class ProfilePictureStorage {
     return profilePicture;
   }
 
-
   public static String createInsertQuery(Map<String, String> okapiHeaders) {
     return String.format(SAVE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
   }

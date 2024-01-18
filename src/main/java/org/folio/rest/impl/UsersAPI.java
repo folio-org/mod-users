@@ -528,7 +528,6 @@ public class UsersAPI implements Users {
     }
   }
 
-
   @Override
   public void postUsersExpireTimer(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {

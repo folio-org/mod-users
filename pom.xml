@@ -97,7 +97,6 @@
     </dependency>
 
     <!-- test dependencies -->
-
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
@@ -461,6 +460,9 @@
                   <artifact>*:*</artifact>
                   <excludes>
                     <exclude>**/Log4j2Plugins.dat</exclude>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -558,6 +560,5 @@
     <aspectj.version>1.9.19</aspectj.version>
     <lombok.version>1.18.24</lombok.version>
     <folio-s3-client.version>2.1.0-SNAPSHOT</folio-s3-client.version>
-    <spring.version>5.3.23</spring.version>
   </properties>
 </project>
