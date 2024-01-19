@@ -10,7 +10,7 @@ public class ConfigurationClient {
   private final RestAssuredConfiguration client;
 
   public ConfigurationClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
-    this.client = new RestAssuredConfiguration(okapiUrl.asURI("/users/configurations"), defaultHeaders);
+    this.client = new RestAssuredConfiguration(okapiUrl.asURI("/users/configurations/entry"), defaultHeaders);
   }
 
   public ValidatableResponse updateConfiguration(Config config) {

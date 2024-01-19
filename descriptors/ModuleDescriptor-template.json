@@ -46,12 +46,12 @@
         },
         {
           "methods": [ "PUT" ],
-          "pathPattern": "/users/configurations/{entryId}",
+          "pathPattern": "/users/configurations/entry/{configId}",
           "permissionsRequired": [ "users.configurations.item.put" ]
         },
         {
           "methods": [ "GET" ],
-          "pathPattern": "/users/configurations/{entryId}",
+          "pathPattern": "/users/configurations/entry",
           "permissionsRequired": [ "users.configurations.item.get" ]
         },
         {
