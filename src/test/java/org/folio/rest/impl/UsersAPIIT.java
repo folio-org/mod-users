@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -13,8 +14,10 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.folio.moduserstest.AbstractRestTestNoData;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
@@ -558,6 +561,51 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_OK);
     userProfilePictureClient.getUserProfilePicture(UUID.randomUUID().toString())
       .statusCode(HTTP_NOT_FOUND);
+  }
+
+  @Test
+  void updateProfilePicture() {
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_OK);
+    InputStream inputStream1 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.updateUserProfilePicture(response.getId().toString(), inputStream1)
+      .statusCode(HTTP_OK);
+  }
+
+  @Test
+  void updateProfilePictureErrorTest() {
+    //Trying to update profile picture with invalid id
+    InputStream inputStream1 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream1)
+      .statusCode(HTTP_NOT_FOUND);
+
+    //Trying to update profile picture with unsupported image
+    InputStream inputStream2 = new ByteArrayInputStream(RandomStringUtils.randomAlphanumeric(100).getBytes());
+    var response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream2)
+      .statusCode(HTTP_INTERNAL_ERROR);
+    System.out.println(response.extract().asString());
+    assertThat(response.extract().asString(), is("Requested image should be of supported type-[PNG,JPG,JPEG]"));
+
+    //Trying to update profile picture with insufficient data
+    InputStream inputStream3 = new ByteArrayInputStream("1".getBytes());
+    response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream3)
+      .statusCode(HTTP_INTERNAL_ERROR);
+    assertThat(response.extract().asString(), is("failed to save profile picture Insufficient data provided to detect file type"));
+
+    //Trying to update profile picture with empty data
+    InputStream inputStream4 = new ByteArrayInputStream("".getBytes());
+    response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream4)
+      .statusCode(HTTP_INTERNAL_ERROR);
+    assertThat(response.extract().asString(), is("Requested file size should be with in allowed size 0.1-10.0 megabytes"));
+
+    //Trying to update profile picture with invalid uuid
+    InputStream inputStream5 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.updateUserProfilePicture("1234", inputStream5)
+      .statusCode(HTTP_INTERNAL_ERROR);
+
   }
 
   User createUser(String username) {

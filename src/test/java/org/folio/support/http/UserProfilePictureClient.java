@@ -22,6 +22,15 @@ public class UserProfilePictureClient {
       .then();
   }
 
+  public ValidatableResponse updateUserProfilePicture(String id, InputStream entity) {
+    return client.initialSpecification()
+      .contentType("application/octet-stream")
+      .when()
+      .body(entity)
+      .put("/{id}", Map.of("id", id))
+      .then();
+  }
+
   public ValidatableResponse getUserProfilePicture(String id) {
     return client.initialSpecification()
       .when()
