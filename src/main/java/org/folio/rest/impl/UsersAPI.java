@@ -8,13 +8,31 @@ import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATE
 import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.folio.rest.RestVerticle.STREAM_COMPLETE;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
-import static org.folio.support.UsersApiConstants.*;
+import static org.folio.support.UsersApiConstants.BARCODE_ALREADY_EXISTS;
+import static org.folio.support.UsersApiConstants.BLOB;
+import static org.folio.support.UsersApiConstants.CONFIG_ID;
+import static org.folio.support.UsersApiConstants.DELETE_USERS_SQL;
+import static org.folio.support.UsersApiConstants.DUPLICATE_BARCODE_ERROR;
+import static org.folio.support.UsersApiConstants.DUPLICATE_ID_ERROR;
+import static org.folio.support.UsersApiConstants.DUPLICATE_USERNAME_ERROR;
+import static org.folio.support.UsersApiConstants.ID;
+import static org.folio.support.UsersApiConstants.INVALID_USERNAME_ERROR;
+import static org.folio.support.UsersApiConstants.INVALID_USER_TYPE_ERROR;
+import static org.folio.support.UsersApiConstants.MAX_DOCUMENT_SIZE;
+import static org.folio.support.UsersApiConstants.RETURNING_USERS_ID_SQL;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
+import static org.folio.support.UsersApiConstants.UPDATE_PROFILE_PICTURE_SQL;
+import static org.folio.support.UsersApiConstants.USERNAME_ALREADY_EXISTS;
+import static org.folio.support.UsersApiConstants.VIEW_NAME_USER_GROUPS_JOIN;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -35,6 +53,9 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +74,7 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Config;
 import org.folio.rest.jaxrs.model.Errors;
+import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
@@ -83,18 +105,6 @@ import org.z3950.zing.cql.CQLParseException;
 @Path("users")
 public class UsersAPI implements Users {
 
-  public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
-  public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob) VALUES ($1, $2)";
-  public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s set profile_picture_blob = $1 where id  = $2 returning id, profile_picture_blob";
-  public static final String GET_PROFILE_PICTURE_SQL = "SELECT * from %s.%s WHERE id = $1";
-  public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
-  public static final String ID = "id";
-  public static final String BLOB = "profile_picture_blob";
-  public static final String TABLE_NAME_USERS = "users";
-  public static final String TABLE_NAME_PROFILE_PICTURE = "profile_picture";
-  public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
-
-  private static final Messages messages = Messages.getInstance();
   private static final Logger logger = LogManager.getLogger(UsersAPI.class);
   private static final Messages messages = Messages.getInstance();
   @SuppressWarnings("deprecation")  // RAML requires Date
@@ -545,9 +555,7 @@ public class UsersAPI implements Users {
   @Override
   public void postUsersExpireTimer(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
-
     final var expirationTool = new ExpirationTool();
-
     expirationTool.doExpirationForTenant(vertxContext.owner(), okapiHeaders.get("x-okapi-tenant"))
         .onSuccess(res -> asyncResultHandler.handle(
             succeededFuture(PostUsersExpireTimerResponse.respond204())))
@@ -571,7 +579,7 @@ public class UsersAPI implements Users {
                                       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try (InputStream bis = new BufferedInputStream(entity)) {
       if (Objects.isNull(okapiHeaders.get(STREAM_COMPLETE))) {
-        validateAndProcessProfilePicture(bis, okapiHeaders, asyncResultHandler, vertxContext);
+        validateAndProcessByteArray(bis);
       } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
         logger.error("postUsersProfilePicture:: Stream aborted");
         handleStreamAbort(asyncResultHandler);
@@ -580,16 +588,6 @@ public class UsersAPI implements Users {
       }
     } catch (Exception e) {
       logger.error("postUsersProfilePicture:: failed to save profile picture due to %s", e.getCause());
-      handleException(asyncResultHandler, e);
-    }
-  }
-
-  private void validateAndProcessProfilePicture(InputStream bis, Map<String, String> okapiHeaders,
-                                                Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    try {
-      validateAndProcessByteArray(bis);
-      processProfilePicture(okapiHeaders, asyncResultHandler, vertxContext);
-    } catch (Exception e) {
       handleException(asyncResultHandler, e);
     }
   }
@@ -672,10 +670,13 @@ public class UsersAPI implements Users {
   private void handleProfilePictureConfig(Config config, String profileId, Map<String, String> okapiHeaders,
                                           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
+      logger.error("handleProfilePictureConfig:: Profile Picture feature is not enabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
+      logger.info("handleProfilePictureConfig:: Storing images into object storage");
       profilePictureStorage.getProfilePictureFromObjectStorage(profileId, asyncResultHandler, okapiHeaders);
     } else {
+      logger.info("handleProfilePictureConfig:: Storing images into DB storage");
       profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, vertxContext);
     }
   }
@@ -692,17 +693,18 @@ public class UsersAPI implements Users {
   }
 
   @Override
-  public void getUsersConfigurationsByConfigId(String configId, Map<String, String> okapiHeaders,
-                                               Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PgUtil.getById(TABLE_NAME_CONFIG, Config.class, configId, okapiHeaders, vertxContext,
-      GetUsersConfigurationsByConfigIdResponse.class, asyncResultHandler);
+  public void getUsersConfigurationsEntry(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    PgUtil.getById(TABLE_NAME_CONFIG, Config.class, CONFIG_ID, okapiHeaders, vertxContext,
+      GetUsersConfigurationsEntryResponse.class, asyncResultHandler);
   }
 
   @Override
-  public void putUsersConfigurationsByConfigId(String configId, Config entity, Map<String, String> okapiHeaders,
-                                               Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsByConfigIdResponse.class,
+  public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
       asyncResultHandler);
+  }
+
+  //Will be refactored to multiple methods..
   @Override
   @Stream
   public void putUsersProfilePictureByProfileId(String profileId, InputStream entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
@@ -940,16 +942,7 @@ public class UsersAPI implements Users {
     return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);
   }
 
-  private static String createInsertQuery(Map<String, String> okapiHeaders) {
-    return String.format(SAVE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
-  }
-
-  private static String createSelectQuery(Map<String, String> okapiHeaders) {
-    return String.format(GET_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
-  }
-
   private static String createUpdateQuery(Map<String, String> okapiHeaders) {
     return String.format(UPDATE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
   }
-
 }

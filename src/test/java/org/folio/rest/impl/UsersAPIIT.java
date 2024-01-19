@@ -1,7 +1,6 @@
 
 package org.folio.rest.impl;
 
-import static java.net.HttpURLConnection.*;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
@@ -594,6 +593,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void updateProfilePicture() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId("3e1aaa06-0600-4cc9-a112-7a3fb8426eda")
+      .withEnabled(true).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
       .extract().as(ProfilePicture.class);

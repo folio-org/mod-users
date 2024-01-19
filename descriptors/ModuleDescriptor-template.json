@@ -304,11 +304,6 @@
       "description" : "Post users profile picture"
     },
     {
-      "permissionName" : "users.configurations.item.post",
-      "displayName" : "post user configuration",
-      "description" : "Post user configuration"
-    },
-    {
       "permissionName" : "users.configurations.item.get",
       "displayName" : "get user configuration",
       "description" : "Get user configuration"

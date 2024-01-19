@@ -4,7 +4,9 @@ import static io.restassured.RestAssured.given;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 
-import static org.folio.moduserstest.AbstractRestTest.*;
+import static org.folio.moduserstest.AbstractRestTest.KAFKA_ENV_VALUE;
+import static org.folio.moduserstest.AbstractRestTest.KAFKA_IMAGE_NAME;
+import static org.folio.moduserstest.AbstractRestTest.updateKafkaConfigField;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.test.util.TestUtil.mockGetWithBody;
 import static org.folio.test.util.TestUtil.readFile;

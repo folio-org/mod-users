@@ -14,7 +14,6 @@ import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.utils.TenantTool;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
@@ -29,13 +28,23 @@ import java.util.UUID;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
-import static org.folio.support.UsersApiConstants.*;
+import static org.folio.support.UsersApiConstants.BLOB;
+import static org.folio.support.UsersApiConstants.CONFIG_NAME;
+import static org.folio.support.UsersApiConstants.ENABLED;
+import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
+import static org.folio.support.UsersApiConstants.GET_CONFIGURATION_SQL;
+import static org.folio.support.UsersApiConstants.GET_PROFILE_PICTURE_SQL;
+import static org.folio.support.UsersApiConstants.ID;
+import static org.folio.support.UsersApiConstants.JSONB;
+import static org.folio.support.UsersApiConstants.PROFILE_PICTURE_FOLDER;
+import static org.folio.support.UsersApiConstants.SAVE_PROFILE_PICTURE_SQL;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
 
 public class ProfilePictureStorage {
-  @Autowired
   private final FolioS3ClientFactory folioS3ClientFactory = new FolioS3ClientFactory();
   private String path;
-  private final static String SEPARATOR = "/";
+  private static final String SEPARATOR = "/";
 
   public void storeProfilePictureInObjectStorage(byte[] fileBytes, Map<String, String> okapiHeaders,
                         Handler<AsyncResult<Response>> asyncResultHandler) {
