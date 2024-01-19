@@ -165,3 +165,25 @@ resourceTypes:
           body:
             text/plain:
               example: "Internal server error, contact administrator"
+    put:
+      description: update user profile picture
+      body:
+        application/octet-stream:
+      responses:
+        200:
+          body:
+            application/json:
+              type: profilePicture
+        404:
+          description: "profile picture not found"
+          body:
+            text/plain:
+              example: "profile picture not found"
+        400:
+          description: "Bad request"
+          body:
+            application/json:
+        500:
+          description: "Internal server error"
+          body:
+            application/json:
