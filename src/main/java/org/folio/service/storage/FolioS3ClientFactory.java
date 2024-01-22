@@ -16,9 +16,6 @@ public class FolioS3ClientFactory {
   }
 
   public FolioS3Client getFolioS3Client(Map<String, String> okapiHeaders) {
-    if (folioS3Client != null) {
-      return folioS3Client;
-    }
     folioS3Client = createFolioS3Client(okapiHeaders);
     return folioS3Client;
   }
