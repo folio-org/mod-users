@@ -38,4 +38,11 @@ public class UserProfilePictureClient {
       .then();
   }
 
+  public ValidatableResponse deleteUserProfilePicture(String id) {
+    return client.initialSpecification()
+      .when()
+      .delete("/{id}", Map.of("id", id))
+      .then();
+  }
+
 }

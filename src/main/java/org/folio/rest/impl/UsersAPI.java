@@ -11,6 +11,7 @@ import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 import static org.folio.support.UsersApiConstants.BARCODE_ALREADY_EXISTS;
 import static org.folio.support.UsersApiConstants.BLOB;
 import static org.folio.support.UsersApiConstants.CONFIG_ID;
+import static org.folio.support.UsersApiConstants.DELETE_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.DELETE_USERS_SQL;
 import static org.folio.support.UsersApiConstants.DUPLICATE_BARCODE_ERROR;
 import static org.folio.support.UsersApiConstants.DUPLICATE_ID_ERROR;
@@ -748,6 +749,28 @@ public class UsersAPI implements Users {
     }
   }
 
+  @Override
+  public void deleteUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("deleteUsersProfilePictureByProfileId:: Deleting profile picture with id {} ", profileId);
+    Tuple params = Tuple.of(profileId);
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .execute(createDeleteQuery(okapiHeaders), params)
+      .compose(rows -> {
+        if(rows.rowCount() != 0) {
+          return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond204());
+        } else {
+          return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Profile picture not found"));
+        }
+      })
+      .map(Response.class::cast)
+      .onComplete(reply -> {
+        if(reply.cause() != null) {
+          asyncResultHandler.handle(succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause())));
+        }
+        asyncResultHandler.handle(reply);
+      });
+  }
+
   private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
     ProfilePicture profilePicture = new ProfilePicture();
     for (Row row : resultSet) {
@@ -945,4 +968,9 @@ public class UsersAPI implements Users {
   private static String createUpdateQuery(Map<String, String> okapiHeaders) {
     return String.format(UPDATE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
   }
+
+  private static String createDeleteQuery(Map<String, String> okapiHeaders) {
+    return String.format(DELETE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
+  }
+
 }
