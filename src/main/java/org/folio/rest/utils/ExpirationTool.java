@@ -2,7 +2,7 @@ package org.folio.rest.utils;
 
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;

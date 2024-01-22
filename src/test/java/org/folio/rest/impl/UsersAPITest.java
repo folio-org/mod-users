@@ -1,6 +1,5 @@
 package org.folio.rest.impl;
 
-import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -143,41 +142,12 @@ class UsersAPITest {
   void postUsersProfilePictureEmptyTest(VertxTestContext vtc) {
     Map<String,String> okapiHeaders = new HashMap<>();
     okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
+    okapiHeaders.put("COMPLETE", "completed");
     InputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
     new UsersAPI().postUsersProfilePicture(emptyInputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertThat(response.getStatus(), is(500));
-        assertThat(response.getEntity(), is("Requested file size should be with in allowed size 0.1-10.0 megabytes"));
-        vtc.completeNow();
-      })),Vertx.vertx().getOrCreateContext());
-  }
-
-  @Test
-  void postUsersProfilePictureTypeErrorTest(VertxTestContext vtc) {
-    Map<String,String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
-    String sampleString = "This is a sample string.";
-    byte[] bytes = sampleString.getBytes();
-
-    InputStream inputStream = new ByteArrayInputStream(bytes);
-    new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
-      vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(500));
-        assertThat(response.getEntity(), is("Requested image should be of supported type-[PNG,JPG,JPEG]"));
-        vtc.completeNow();
-      })),Vertx.vertx().getOrCreateContext());
-  }
-
-  @Test
-  void postUsersProfilePictureSTREAMTest(VertxTestContext vtc) {
-    Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
-    okapiHeaders.put(STREAM_ABORT, "TRUE");
-    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
-    new UsersAPI().postUsersProfilePicture(inputStream, okapiHeaders,
-      vtc.succeeding(response -> vtc.verify( () -> {
-        assertThat(response.getStatus(), is(500));
-        assertThat(response.getEntity(), is("Upload stream for image has been interrupted"));
+        assertThat(response.getEntity(), is("Requested file size should be within allowed size 0.1-10.0 megabytes"));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }

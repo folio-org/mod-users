@@ -13,6 +13,7 @@ types:
   outboxEventLog: !include outboxEventLog.json
   profilePicture: !include profile_picture.json
   userEvent: !include userEvent.json
+  config: !include configuration.json
   errors: !include raml-util/schemas/errors.schema
 
 traits:
@@ -106,6 +107,7 @@ resourceTypes:
           description: "Internal server error"
           body:
             application/json:
+
   /profile-picture/{profileId}:
     get:
       responses:
@@ -144,3 +146,46 @@ resourceTypes:
           description: "Internal server error"
           body:
             application/json:
+  /configurations/entry:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: config
+        404:
+          description: "configuration not found"
+          body:
+            text/plain:
+              example: "configuration not found"
+        400:
+          description: "Bad request"
+          body:
+            text/plain:
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"
+  /configurations/entry/{configId}:
+    put:
+      body:
+        application/json:
+          type: config
+      responses:
+        204:
+          description: "configuration updated"
+        404:
+          description: "configuration not found"
+          body:
+            text/plain:
+              example: "configuration not found"
+        400:
+          description: "Bad request"
+          body:
+            text/plain:
+        500:
+          description: "Internal server error, e.g. due to misconfiguration"
+          body:
+            text/plain:
+              example: "Internal server error, contact administrator"

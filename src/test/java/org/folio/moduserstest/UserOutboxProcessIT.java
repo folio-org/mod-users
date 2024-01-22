@@ -22,7 +22,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import static java.net.HttpURLConnection.*;
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.event.UserEventType.USER_CREATED;
 import static org.hamcrest.CoreMatchers.is;

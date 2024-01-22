@@ -46,6 +46,16 @@
         },
         {
           "methods": [ "PUT" ],
+          "pathPattern": "/users/configurations/entry/{configId}",
+          "permissionsRequired": [ "users.configurations.item.put" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/users/configurations/entry",
+          "permissionsRequired": [ "users.configurations.item.get" ]
+        },
+        {
+          "methods": [ "PUT" ],
           "pathPattern": "/users/{id}",
           "permissionsRequired": [ "users.item.put" ]
         },
@@ -294,6 +304,16 @@
       "description" : "Post users profile picture"
     },
     {
+      "permissionName" : "users.configurations.item.get",
+      "displayName" : "get user configuration",
+      "description" : "Get user configuration"
+    },
+    {
+      "permissionName" : "users.configurations.item.put",
+      "displayName" : "update user configuration",
+      "description" : "Update user configuration"
+    },
+    {
       "permissionName" : "users.profile-picture.item.get",
       "displayName" : "get user profile picture",
       "description" : "Get users profile picture"
@@ -481,6 +501,8 @@
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
       "subPermissions" : [
+        "users.configurations.item.get",
+        "users.configurations.item.put",
         "users.collection.get",
         "users.collection.delete",
         "users.item.get",
@@ -604,7 +626,13 @@
       { "name": "DB_CHARSET", "value": "UTF-8" },
       { "name": "DB_MAXPOOLSIZE", "value": "5" },
       { "name": "KAFKA_HOST", "value": "10.0.2.15"},
-      { "name": "KAFKA_PORT", "value": "9092" }
+      { "name": "KAFKA_PORT", "value": "9092" },
+      { "name": "AWS_URL", "value": "http://127.0.0.1:9000/" },
+      { "name": "AWS_REGION", "value": "" },
+      { "name": "AWS_BUCKET", "value": "example-bucket" },
+      { "name": "AWS_ACCESS_KEY_ID", "value": "AKIAIOSFODNN7EXAMPLE" },
+      { "name": "AWS_SECRET_ACCESS_KEY", "value": "wJalrXUtnFEMI/K7MDENG/EXAMPLEKEY" },
+      { "name": "AWS_SDK", "value": "false" }
     ]
   }
 }
