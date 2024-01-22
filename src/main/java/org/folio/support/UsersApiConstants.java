@@ -14,6 +14,7 @@ public class UsersApiConstants {
   public static final String GET_CONFIGURATION_SQL = "SELECT * FROM %s.%s WHERE configName = 'PROFILE_PICTURE_CONFIG'";
   public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
   public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s set profile_picture_blob = $1 where id = $2 returning id, profile_picture_blob";
+  public static final String DELETE_PROFILE_PICTURE_SQL = "DELETE from %s.%s where id = $1";
   public static final String GET_PROFILE_PICTURE_SQL = "SELECT * from %s.%s WHERE id = $1";
   public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
   public static final String ID = "id";
