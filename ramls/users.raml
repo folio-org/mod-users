@@ -107,7 +107,13 @@ resourceTypes:
           description: "Internal server error"
           body:
             application/json:
-
+  /{userId}/profile-picture:
+    post:
+      description: Upload a user's profile picture
+      body:
+        multipart/form-data:
+          type: file
+          description: The image file to be uploaded
   /profile-picture/{profileId}:
     get:
       responses:

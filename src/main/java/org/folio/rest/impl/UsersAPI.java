@@ -28,6 +28,8 @@ import static org.folio.support.UsersApiConstants.USERNAME_ALREADY_EXISTS;
 import static org.folio.support.UsersApiConstants.VIEW_NAME_USER_GROUPS_JOIN;
 
 import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -591,6 +593,50 @@ public class UsersAPI implements Users {
       handleException(asyncResultHandler, e);
     }
   }
+
+  @Override
+  public void postUsersProfilePictureByUserId(String userId, File entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    try {
+      requestBytesArray = null;
+      requestBytesArray = convertFileToBytes(entity);
+      processProfilePictureStorage(okapiHeaders, asyncResultHandler, vertxContext);
+    } catch (Exception e) {
+      logger.error("postUsersProfilePicture:: failed to save profile picture due to %s", e.getCause());
+      handleException(asyncResultHandler, e);
+    }
+  }
+
+  private byte[] convertFileToBytes(File file) throws IOException {
+    logger.info("convertFileToBytes:: file name{}", file.getName());
+    FileInputStream fileInputStream = null;
+
+    try {
+      fileInputStream = new FileInputStream(file);
+      long length = file.length();
+
+      if (length > Integer.MAX_VALUE) {
+        throw new IOException("File is too large to read into a byte array");
+      }
+
+      byte[] fileBytes = new byte[(int) length];
+      int offset = 0;
+      int numRead;
+
+      while (offset < fileBytes.length && (numRead = fileInputStream.read(fileBytes, offset, fileBytes.length - offset)) >= 0) {
+        offset += numRead;
+      }
+
+      if (offset < fileBytes.length) {
+        throw new IOException("Could not completely read file " + file.getName());
+      }
+
+      return fileBytes;
+    } finally {
+      if (fileInputStream != null) {
+        fileInputStream.close();
+      }
+    }
+ }
 
   private void processProfilePicture(Map<String, String> okapiHeaders,
                                      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
