@@ -80,6 +80,7 @@ import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
+import org.folio.rest.jaxrs.model.UsersUserIdProfilePicturePostMultipartFormData;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -595,10 +596,11 @@ public class UsersAPI implements Users {
   }
 
   @Override
-  public void postUsersProfilePictureByUserId(String userId, File entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void postUsersProfilePictureByUserId(String userId, UsersUserIdProfilePicturePostMultipartFormData entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.info("Inside postUsersProfilePictureByUserId");
     try {
       requestBytesArray = null;
-      requestBytesArray = convertFileToBytes(entity);
+      requestBytesArray = convertFileToBytes(entity.getFile());
       processProfilePictureStorage(okapiHeaders, asyncResultHandler, vertxContext);
     } catch (Exception e) {
       logger.error("postUsersProfilePicture:: failed to save profile picture due to %s", e.getCause());
