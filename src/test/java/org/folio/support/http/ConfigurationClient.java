@@ -18,7 +18,7 @@ public class ConfigurationClient {
       .contentType("application/json")
       .when()
       .body(config)
-      .put("/{id}", Map.of("id", config.getId()))
+      .put("/{configName}", Map.of("configName", config.getConfigName()))
       .then();
   }
 
