@@ -40,6 +40,11 @@
           "permissionsRequired": [ "users.profile-picture.item.put" ]
         },
         {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/users/profile-picture/{id}",
+          "permissionsRequired": [ "users.profile-picture.item.delete" ]
+        },
+        {
           "methods": [ "POST" ],
           "pathPattern": "/users/profile-picture",
           "permissionsRequired": [ "users.profile-picture.item.post" ]
@@ -329,6 +334,11 @@
       "description" : "Update users profile picture"
     },
     {
+      "permissionName" : "users.profile-picture.item.delete",
+      "displayName" : "delete user profile picture",
+      "description" : "delete users profile picture"
+    },
+    {
       "permissionName" : "users.collection.delete",
       "displayName" : "users collection delete",
       "description" : "Delete a collection of user records"
@@ -544,7 +554,8 @@
         "user-tenants.item.delete",
         "users.profile-picture.item.get",
         "users.profile-picture.item.put",
-        "users.profile-picture.item.post"
+        "users.profile-picture.item.post",
+        "users.profile-picture.item.delete"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
