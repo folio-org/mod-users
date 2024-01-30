@@ -816,6 +816,7 @@ public class UsersAPI implements Users {
 
   @Override
   public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
     PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
       asyncResultHandler);
   }
