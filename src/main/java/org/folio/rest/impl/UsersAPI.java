@@ -8,16 +8,21 @@ import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATE
 import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.folio.rest.RestVerticle.STREAM_COMPLETE;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
+import static org.folio.service.storage.ProfilePictureStorage.createSelectQuery;
 import static org.folio.support.UsersApiConstants.BARCODE_ALREADY_EXISTS;
-import static org.folio.support.UsersApiConstants.CONFIG_ID;
+import static org.folio.support.UsersApiConstants.CONFIG_NAME;
 import static org.folio.support.UsersApiConstants.DELETE_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.DELETE_USERS_SQL;
 import static org.folio.support.UsersApiConstants.DUPLICATE_BARCODE_ERROR;
 import static org.folio.support.UsersApiConstants.DUPLICATE_ID_ERROR;
 import static org.folio.support.UsersApiConstants.DUPLICATE_USERNAME_ERROR;
+import static org.folio.support.UsersApiConstants.ENABLED;
+import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
+import static org.folio.support.UsersApiConstants.GET_CONFIG_SQL;
 import static org.folio.support.UsersApiConstants.ID;
 import static org.folio.support.UsersApiConstants.INVALID_USERNAME_ERROR;
 import static org.folio.support.UsersApiConstants.INVALID_USER_TYPE_ERROR;
+import static org.folio.support.UsersApiConstants.JSONB;
 import static org.folio.support.UsersApiConstants.MAX_DOCUMENT_SIZE;
 import static org.folio.support.UsersApiConstants.RETURNING_USERS_ID_SQL;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
@@ -669,10 +674,10 @@ public class UsersAPI implements Users {
       logger.error("handleProfilePictureConfig:: Profile Picture feature is not enabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
-      logger.info("handleProfilePictureConfig:: Storing images into object storage");
+      logger.info("handleProfilePictureConfig:: Getting image from object storage");
       profilePictureStorage.getProfilePictureFromObjectStorage(profileId, asyncResultHandler, okapiHeaders);
     } else {
-      logger.info("handleProfilePictureConfig:: Storing images into DB storage");
+      logger.info("handleProfilePictureConfig:: Getting image from DB storage");
       profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, vertxContext);
     }
   }
@@ -788,13 +793,30 @@ public class UsersAPI implements Users {
 
   @Override
   public void getUsersConfigurationsEntry(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PgUtil.getById(TABLE_NAME_CONFIG, Config.class, CONFIG_ID, okapiHeaders, vertxContext,
-      GetUsersConfigurationsEntryResponse.class, asyncResultHandler);
+    logger.info("getUsersConfigurationsEntry:: Getting configuration");
+    PgUtil.postgresClient(vertxContext, okapiHeaders).execute(createSelectQuery(okapiHeaders, GET_CONFIG_SQL, TABLE_NAME_CONFIG))
+      .compose(rows -> {
+        if (rows.rowCount() != 0) {
+          return succeededFuture(Users.GetUsersConfigurationsEntryResponse.respond200WithApplicationJson(mapResultSetToConfig(rows)));
+        } else {
+          return succeededFuture(Users.GetUsersConfigurationsEntryResponse.respond404WithTextPlain("No configuration exist"));
+        }
+      })
+      .map(Response.class::cast)
+      .onComplete(responseAsyncResult -> {
+        if (responseAsyncResult.cause() != null) {
+          logger.error("getUsersConfigurationsEntry:: Can not get profile picture configuration");
+          asyncResultHandler.handle(
+            succeededFuture(Users.GetUsersConfigurationsEntryResponse
+              .respond400WithTextPlain(responseAsyncResult.cause().getMessage())));
+        }
+        asyncResultHandler.handle(responseAsyncResult);
+      });
   }
 
   @Override
-  public void putUsersConfigurationsEntryByConfigName(String configName, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PgUtil.put(TABLE_NAME_CONFIG, entity, configName, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigNameResponse.class,
+  public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
       asyncResultHandler);
   }
 
@@ -977,6 +999,19 @@ public class UsersAPI implements Users {
     }
     return entity.getCustomFields().getAdditionalProperties();
   }
+
+  private Config mapResultSetToConfig(RowSet<Row> resultSet) {
+    Config config = new Config();
+    for (Row row : resultSet) {
+      config
+        .withId(row.getValue(ID).toString())
+        .withConfigName(row.getValue(CONFIG_NAME).toString())
+        .withEnabledObjectStorage(row.getJsonObject(JSONB).getBoolean(ENABLED_OBJECT_STORAGE))
+        .withEnabled(row.getJsonObject(JSONB).getBoolean(ENABLED));
+    }
+    return config;
+  }
+
 
   private static String createDeleteQuery(CQLWrapper wrapper, Map<String, String> okapiHeaders) {
     return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);

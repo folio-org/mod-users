@@ -18,15 +18,14 @@ public class ConfigurationClient {
       .contentType("application/json")
       .when()
       .body(config)
-      .put("/{configName}", Map.of("configName", config.getConfigName()))
+      .put("/{id}", Map.of("configName", config.getId()))
       .then();
   }
 
   public ValidatableResponse getConfiguration(String id) {
     return client.initialSpecification()
       .when()
-      .get("/{id}", Map.of("id", id))
+      .get()
       .then();
   }
-
 }

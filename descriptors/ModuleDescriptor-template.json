@@ -51,7 +51,7 @@
         },
         {
           "methods": [ "PUT" ],
-          "pathPattern": "/users/configurations/entry/{configName}",
+          "pathPattern": "/users/configurations/entry/{configId}",
           "permissionsRequired": [ "users.configurations.item.put" ]
         },
         {
