@@ -311,7 +311,7 @@
     {
       "permissionName" : "users.profile-picture.item.delete",
       "displayName" : "delete user profile picture",
-      "description" : "Dost users profile picture"
+      "description" : "Delete user profile picture"
     },
     {
       "permissionName" : "users.configurations.item.get",

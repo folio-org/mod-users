@@ -7,6 +7,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import org.apache.commons.lang3.StringUtils;
@@ -58,20 +59,24 @@ public class ProfilePictureStorage {
         if (StringUtils.isNotEmpty(profileId)) {
           path = PROFILE_PICTURE_FOLDER + SEPARATOR + profileId;
           client.getSize(path);
+          logger.info("storeProfilePictureInObjectStorage:: Updating file in to folder {}", PROFILE_PICTURE_FOLDER);
+          client.write(path, new ByteArrayInputStream(fileBytes), fileBytes.length);
+          asyncResultHandler.handle(succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(new ProfilePicture().withId(UUID.fromString(path.substring(path.lastIndexOf("/") + 1))))));
           }
         else if (Objects.isNull(path)) {
           logger.debug("storeProfilePictureInObjectStorage:: Creating folder with name {}", PROFILE_PICTURE_FOLDER);
           path = PROFILE_PICTURE_FOLDER + SEPARATOR + UUID.randomUUID();
+          logger.info("storeProfilePictureInObjectStorage:: Writing file in to folder {}", PROFILE_PICTURE_FOLDER);
+          client.write(path, new ByteArrayInputStream(fileBytes), fileBytes.length);
+          asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(UUID.fromString(path.substring(path.lastIndexOf("/") + 1))))));
         }
-        logger.info("storeProfilePictureInObjectStorage:: Writing file in to folder {}", PROFILE_PICTURE_FOLDER);
-        client.write(path, new ByteArrayInputStream(fileBytes), fileBytes.length);
-        asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(UUID.fromString(path.substring(path.lastIndexOf("/") + 1))))));
+
       } catch (Exception e) {
         if (e.getMessage().startsWith("Error getting size")) {
           logger.error("storeProfilePictureInDbStorage:: Can not update profile picture in object storage with id {}", profileId);
           asyncResultHandler.handle(succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Profile picture not found")));
         } else {
-          logger.error("storeProfilePictureInDbStorage:: Can not store profile picture in object storage with id {}", e.getLocalizedMessage());
+          logger.error("storeProfilePictureInDbStorage:: Can not store or update profile picture in object storage {}", e.getLocalizedMessage());
           asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson(String.format("Error storing file [%s]", e.getLocalizedMessage()))));
         }
       }
@@ -91,7 +96,7 @@ public class ProfilePictureStorage {
         logger.error("storeProfilePictureInDbStorage:: Can not remove profile picture in object storage with id {}", profileId);
         asyncResultHandler.handle(succeededFuture(Users.DeleteUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Profile picture not found")));
       } else {
-        logger.error("storeProfilePictureInDbStorage:: Can not remove profile picture in object storage with id {}", e.getMessage());
+        logger.error("storeProfilePictureInDbStorage:: Can not remove profile picture in object storage {}", e.getMessage());
         asyncResultHandler.handle(succeededFuture(Users.DeleteUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(String.format("Error removing file [%s]", e.getCause().getMessage()))));
       }
     }
@@ -220,7 +225,10 @@ public class ProfilePictureStorage {
 
   private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
     ProfilePicture profilePicture = new ProfilePicture();
-    for (Row row : resultSet) {
+    RowIterator<Row> iterator = resultSet.iterator();
+
+    if (iterator.hasNext()) {
+      Row row = iterator.next();
       profilePicture
         .withId(UUID.fromString(row.getValue(ID).toString()))
         .withProfilePictureBlob(Base64.getEncoder().encodeToString(row.getBuffer(BLOB).getBytes()));
