@@ -617,7 +617,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_OK);
     InputStream inputStream1 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     userProfilePictureClient.updateUserProfilePicture(response.getId().toString(), inputStream1)
-      .statusCode(HTTP_CREATED);
+      .statusCode(HTTP_OK);
   }
 
   @Test
