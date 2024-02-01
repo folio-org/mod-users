@@ -9,27 +9,7 @@ import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.folio.rest.RestVerticle.STREAM_COMPLETE;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 import static org.folio.service.storage.ProfilePictureStorage.createSelectQuery;
-import static org.folio.support.UsersApiConstants.BARCODE_ALREADY_EXISTS;
-import static org.folio.support.UsersApiConstants.CONFIG_NAME;
-import static org.folio.support.UsersApiConstants.DELETE_PROFILE_PICTURE_SQL;
-import static org.folio.support.UsersApiConstants.DELETE_USERS_SQL;
-import static org.folio.support.UsersApiConstants.DUPLICATE_BARCODE_ERROR;
-import static org.folio.support.UsersApiConstants.DUPLICATE_ID_ERROR;
-import static org.folio.support.UsersApiConstants.DUPLICATE_USERNAME_ERROR;
-import static org.folio.support.UsersApiConstants.ENABLED;
-import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
-import static org.folio.support.UsersApiConstants.GET_CONFIG_SQL;
-import static org.folio.support.UsersApiConstants.ID;
-import static org.folio.support.UsersApiConstants.INVALID_USERNAME_ERROR;
-import static org.folio.support.UsersApiConstants.INVALID_USER_TYPE_ERROR;
-import static org.folio.support.UsersApiConstants.JSONB;
-import static org.folio.support.UsersApiConstants.MAX_DOCUMENT_SIZE;
-import static org.folio.support.UsersApiConstants.RETURNING_USERS_ID_SQL;
-import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
-import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
-import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
-import static org.folio.support.UsersApiConstants.USERNAME_ALREADY_EXISTS;
-import static org.folio.support.UsersApiConstants.VIEW_NAME_USER_GROUPS_JOIN;
+import static org.folio.support.UsersApiConstants.*;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -619,6 +599,7 @@ public class UsersAPI implements Users {
         handleProfilePictureConfig(config, okapiHeaders, asyncResultHandler, vertxContext));
   }
 
+  @SuppressWarnings("java:S2259")
   private void handleProfilePictureConfig(Config config, Map<String, String> okapiHeaders,
                                           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
@@ -629,7 +610,7 @@ public class UsersAPI implements Users {
       profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, null, asyncResultHandler);
     } else {
       logger.info("handleProfilePictureConfig:: Storing images into DB storage");
-      profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, vertxContext);
+      profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, config.getEncryptionKey(), vertxContext);
     }
   }
 
@@ -668,6 +649,7 @@ public class UsersAPI implements Users {
       .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
   }
 
+  @SuppressWarnings("java:S2259")
   private void handleProfilePictureConfig(Config config, String profileId, Map<String, String> okapiHeaders,
                                           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
@@ -678,7 +660,7 @@ public class UsersAPI implements Users {
       profilePictureStorage.getProfilePictureFromObjectStorage(profileId, asyncResultHandler, okapiHeaders);
     } else {
       logger.info("handleProfilePictureConfig:: Getting image from DB storage");
-      profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, vertxContext);
+      profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, config.getEncryptionKey(), vertxContext);
     }
   }
 
@@ -730,6 +712,7 @@ public class UsersAPI implements Users {
         handlePutProfilePictureConfig(config, okapiHeaders, profileId, asyncResultHandler, vertxContext));
   }
 
+  @SuppressWarnings("java:S2259")
   private void handlePutProfilePictureConfig(Config config, Map<String, String> okapiHeaders, String profileId,
                                           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
@@ -740,7 +723,7 @@ public class UsersAPI implements Users {
       profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, profileId, asyncResultHandler);
     } else {
       logger.info("handleProfilePictureConfig:: Updating image data into DB storage for id {}", profileId);
-      profilePictureStorage.updateProfilePictureInDbStorage(profileId, requestBytesArray, asyncResultHandler, okapiHeaders, vertxContext);
+      profilePictureStorage.updateProfilePictureInDbStorage(profileId, requestBytesArray, asyncResultHandler, okapiHeaders, config.getEncryptionKey(), vertxContext);
     }
   }
 
@@ -1008,7 +991,8 @@ public class UsersAPI implements Users {
         .withId(row.getValue(ID).toString())
         .withConfigName(row.getValue(CONFIG_NAME).toString())
         .withEnabledObjectStorage(row.getJsonObject(JSONB).getBoolean(ENABLED_OBJECT_STORAGE))
-        .withEnabled(row.getJsonObject(JSONB).getBoolean(ENABLED));
+        .withEnabled(row.getJsonObject(JSONB).getBoolean(ENABLED))
+        .withEncryptionKey(row.getJsonObject(JSONB).getString(ENCRYPTION_KEY));
     }
     return config;
   }

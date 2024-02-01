@@ -32,10 +32,13 @@ import java.util.UUID;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
+import static org.folio.support.ProfilePictureHelper.decrypt;
+import static org.folio.support.ProfilePictureHelper.encrypt;
 import static org.folio.support.UsersApiConstants.BLOB;
 import static org.folio.support.UsersApiConstants.CONFIG_NAME;
 import static org.folio.support.UsersApiConstants.ENABLED;
 import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
+import static org.folio.support.UsersApiConstants.ENCRYPTION_KEY;
 import static org.folio.support.UsersApiConstants.GET_CONFIGURATION_SQL;
 import static org.folio.support.UsersApiConstants.GET_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.ID;
@@ -129,32 +132,39 @@ public class ProfilePictureStorage {
   }
 
   public void storeProfilePictureInDbStorage(byte[] requestBytesArray, Map<String, String> okapiHeaders,
-                                  Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    UUID profileId = UUID.randomUUID();
-    Tuple params = Tuple.of(profileId, requestBytesArray);
-    PgUtil.postgresClient(vertxContext, okapiHeaders)
-      .execute(createInsertQuery(okapiHeaders), params)
-      .map(rows -> Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(profileId)))
-      .map(Response.class::cast)
-      .onComplete(reply -> {
-        if (reply.cause() != null) {
-          logger.error("storeProfilePictureInDbStorage:: Can not store profile picture in DB with id {}", profileId);
-          asyncResultHandler.handle(
-            succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson(reply.cause().getMessage())));
-        }
-        logger.info("storeProfilePictureInDbStorage:: Profile picture stored in DB with id {}", profileId);
-        asyncResultHandler.handle(reply);
-      });
+                                  Handler<AsyncResult<Response>> asyncResultHandler,String encryptionKey, Context vertxContext) {
+    try {
+      UUID profileId = UUID.randomUUID();
+      byte[] encryptedData = encrypt(requestBytesArray, encryptionKey);
+      Tuple params = Tuple.of(profileId, encryptedData);
+      PgUtil.postgresClient(vertxContext, okapiHeaders)
+        .execute(createInsertQuery(okapiHeaders), params)
+        .map(rows -> Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(profileId)))
+        .map(Response.class::cast)
+        .onComplete(reply -> {
+          if (reply.cause() != null) {
+            logger.error("storeProfilePictureInDbStorage:: Can not store profile picture in DB with id {}", profileId);
+            asyncResultHandler.handle(
+              succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson(reply.cause().getMessage())));
+          }
+          logger.info("storeProfilePictureInDbStorage:: Profile picture stored in DB with id {}", profileId);
+          asyncResultHandler.handle(reply);
+        });
+    } catch (Exception e) {
+      logger.error("storeProfilePictureInDbStorage:: Error encrypting profile picture data: {}", e.getMessage());
+      asyncResultHandler.handle(
+        succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson("Error encrypting profile picture data")));
+    }
   }
 
   public void getProfilePictureFromDbStorage (String profileId,
-                                              Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, Context vertxContext) {
+                                              Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, String encryptionKey, Context vertxContext) {
     logger.info("getProfilePictureFromDbStorage:: Getting profile picture from db storage with id {}", profileId);
     Tuple params = Tuple.of(profileId);
     PgUtil.postgresClient(vertxContext, okapiHeaders).execute(createSelectQuery(okapiHeaders, GET_PROFILE_PICTURE_SQL, TABLE_NAME_PROFILE_PICTURE), params)
       .compose(rows -> {
         if (rows.rowCount() != 0) {
-          return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)));
+          return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows, encryptionKey)));
         } else {
           return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("No profile picture found for id " + profileId));
         }
@@ -172,27 +182,33 @@ public class ProfilePictureStorage {
   }
 
   public void updateProfilePictureInDbStorage (String profileId, byte[] requestedBytesArray,
-                                                 Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, Context vertxContext) {
-    PgUtil.postgresClient(vertxContext, okapiHeaders)
-      .execute(createUpdateQuery(okapiHeaders), Tuple.of(requestedBytesArray, profileId))
-      .compose(rows -> {
-        if(rows.rowCount() != 0) {
-          logger.info("updateProfilePictureInDbStorage:: Updated profile picture with id {}", profileId);
-          return succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(new ProfilePicture().withId(UUID.fromString(profileId))));
-        } else {
-          logger.error("updateProfilePictureInDbStorage:: Can not find profile picture with id {}", profileId);
-          return succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Existing profile picture is not found"));
-        }
-      })
-      .map(Response.class::cast)
-      .onComplete(reply -> {
-        if (reply.cause() != null) {
-          logger.error("updateProfilePictureInDbStorage:: Can not update profile picture with id {}", profileId);
-          asyncResultHandler.handle(
-            succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause().getMessage())));
-        }
-        asyncResultHandler.handle(reply);
-      });
+                                                 Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, String encryptionKey, Context vertxContext) {
+    try {
+      PgUtil.postgresClient(vertxContext, okapiHeaders)
+        .execute(createUpdateQuery(okapiHeaders), Tuple.of(encrypt(requestedBytesArray, encryptionKey), profileId))
+        .compose(rows -> {
+          if (rows.rowCount() != 0) {
+            logger.info("updateProfilePictureInDbStorage:: Updated profile picture with id {}", profileId);
+            return succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(new ProfilePicture().withId(UUID.fromString(profileId))));
+          } else {
+            logger.error("updateProfilePictureInDbStorage:: Can not find profile picture with id {}", profileId);
+            return succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Existing profile picture is not found"));
+          }
+        })
+        .map(Response.class::cast)
+        .onComplete(reply -> {
+          if (reply.cause() != null) {
+            logger.error("updateProfilePictureInDbStorage:: Can not update profile picture with id {}", profileId);
+            asyncResultHandler.handle(
+              succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause().getMessage())));
+          }
+          asyncResultHandler.handle(reply);
+        });
+    } catch (Exception e) {
+      logger.error("updateProfilePictureInDbStorage:: Error encrypting profile picture data: {}", e.getMessage());
+      asyncResultHandler.handle(
+        succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Error encrypting profile picture data")));
+    }
   }
 
   private Future<Config> mapResultSetToConfig(RowSet<Row> rows) {
@@ -207,7 +223,8 @@ public class ProfilePictureStorage {
           .withId(String.valueOf(row.getUUID(ID)))
           .withConfigName(row.getString(CONFIG_NAME))
           .withEnabled(json.getBoolean(ENABLED))
-          .withEnabledObjectStorage(json.getBoolean(ENABLED_OBJECT_STORAGE));
+          .withEnabledObjectStorage(json.getBoolean(ENABLED_OBJECT_STORAGE))
+          .withEncryptionKey(json.getString(ENCRYPTION_KEY));
       }
       promise.complete(config);
     } else {
@@ -223,15 +240,22 @@ public class ProfilePictureStorage {
       .compose(this::mapResultSetToConfig);
   }
 
-  private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
+  private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet, String encryptionKey) {
     ProfilePicture profilePicture = new ProfilePicture();
     RowIterator<Row> iterator = resultSet.iterator();
-
     if (iterator.hasNext()) {
       Row row = iterator.next();
       profilePicture
-        .withId(UUID.fromString(row.getValue(ID).toString()))
-        .withProfilePictureBlob(Base64.getEncoder().encodeToString(row.getBuffer(BLOB).getBytes()));
+        .withId(UUID.fromString(row.getValue(ID).toString()));
+      byte[] encryptedData = row.getBuffer(BLOB).getBytes();
+
+      try {
+        byte[] decryptedData = decrypt(encryptedData, encryptionKey);
+        profilePicture.withProfilePictureBlob(Base64.getEncoder().encodeToString(decryptedData));
+      } catch (Exception e) {
+        logger.error("Error decrypting profile picture data: {}", e.getMessage());
+        throw new IllegalStateException("Error decrypting profile picture data");
+      }
     }
     return profilePicture;
   }

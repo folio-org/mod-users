@@ -32,4 +32,5 @@ public class UsersApiConstants {
   public static final String JSONB = "jsonb";
   public static final String ENABLED = "enabled";
   public static final String ENABLED_OBJECT_STORAGE = "enabledObjectStorage";
+  public static final String ENCRYPTION_KEY = "encryptionKey";
 }

@@ -23,6 +23,10 @@
       "type": "boolean",
       "default": false
     },
+    "encryptionKey": {
+      "description": "Encryption key for encoding/decoding profile picture",
+      "type": "string"
+    },
     "metadata": {
       "$ref": "raml-util/schemas/metadata.schema",
       "readonly": true
@@ -30,6 +34,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "configName"
+    "configName",
+    "encryptionKey"
   ]
 }
