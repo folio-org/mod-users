@@ -22,11 +22,14 @@ public class ConfigurationClient {
       .then();
   }
 
-  public ValidatableResponse getConfiguration(String id) {
+  public String getConfigurationId() {
     return client.initialSpecification()
       .when()
-      .get("/{id}", Map.of("id", id))
-      .then();
+      .get()
+      .then()
+      .log().all()
+      .extract()
+      .jsonPath()
+      .getString("id");
   }
-
 }

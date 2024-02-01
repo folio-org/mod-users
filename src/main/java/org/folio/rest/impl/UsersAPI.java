@@ -8,23 +8,26 @@ import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATE
 import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.folio.rest.RestVerticle.STREAM_COMPLETE;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
+import static org.folio.service.storage.ProfilePictureStorage.createSelectQuery;
 import static org.folio.support.UsersApiConstants.BARCODE_ALREADY_EXISTS;
-import static org.folio.support.UsersApiConstants.BLOB;
-import static org.folio.support.UsersApiConstants.CONFIG_ID;
+import static org.folio.support.UsersApiConstants.CONFIG_NAME;
 import static org.folio.support.UsersApiConstants.DELETE_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.DELETE_USERS_SQL;
 import static org.folio.support.UsersApiConstants.DUPLICATE_BARCODE_ERROR;
 import static org.folio.support.UsersApiConstants.DUPLICATE_ID_ERROR;
 import static org.folio.support.UsersApiConstants.DUPLICATE_USERNAME_ERROR;
+import static org.folio.support.UsersApiConstants.ENABLED;
+import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
+import static org.folio.support.UsersApiConstants.GET_CONFIG_SQL;
 import static org.folio.support.UsersApiConstants.ID;
 import static org.folio.support.UsersApiConstants.INVALID_USERNAME_ERROR;
 import static org.folio.support.UsersApiConstants.INVALID_USER_TYPE_ERROR;
+import static org.folio.support.UsersApiConstants.JSONB;
 import static org.folio.support.UsersApiConstants.MAX_DOCUMENT_SIZE;
 import static org.folio.support.UsersApiConstants.RETURNING_USERS_ID_SQL;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
-import static org.folio.support.UsersApiConstants.UPDATE_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.USERNAME_ALREADY_EXISTS;
 import static org.folio.support.UsersApiConstants.VIEW_NAME_USER_GROUPS_JOIN;
 
@@ -33,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -50,7 +52,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
@@ -75,7 +76,6 @@ import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Config;
 import org.folio.rest.jaxrs.model.Errors;
-import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UsersGetOrder;
@@ -626,7 +626,7 @@ public class UsersAPI implements Users {
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
       logger.info("handleProfilePictureConfig:: Storing images into Object storage");
-      profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, asyncResultHandler);
+      profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, null, asyncResultHandler);
     } else {
       logger.info("handleProfilePictureConfig:: Storing images into DB storage");
       profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, vertxContext);
@@ -674,10 +674,10 @@ public class UsersAPI implements Users {
       logger.error("handleProfilePictureConfig:: Profile Picture feature is not enabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
-      logger.info("handleProfilePictureConfig:: Storing images into object storage");
+      logger.info("handleProfilePictureConfig:: Getting image from object storage");
       profilePictureStorage.getProfilePictureFromObjectStorage(profileId, asyncResultHandler, okapiHeaders);
     } else {
-      logger.info("handleProfilePictureConfig:: Storing images into DB storage");
+      logger.info("handleProfilePictureConfig:: Getting image from DB storage");
       profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, vertxContext);
     }
   }
@@ -693,92 +693,132 @@ public class UsersAPI implements Users {
       succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson(String.format("Profile picture feature is not enabled for tenant %s", TenantTool.tenantId(okapiHeaders)))));
   }
 
+  @Stream
+  @Override
+  public void putUsersProfilePictureByProfileId(String profileId, InputStream entity, Map<String, String> okapiHeaders,
+                                                Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    try (InputStream bis = new BufferedInputStream(entity)) {
+      if (Objects.isNull(okapiHeaders.get(STREAM_COMPLETE))) {
+        validateAndProcessByteArray(bis);
+      } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
+        handleStreamAbort(asyncResultHandler);
+      } else {
+        processPutProfilePicture(okapiHeaders, profileId, asyncResultHandler, vertxContext);
+      }
+    } catch (Exception e) {
+      handleException(asyncResultHandler, e);
+    }
+  }
+
+  private void processPutProfilePicture(Map<String, String> okapiHeaders, String profileId,
+                                        Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
+      if (ProfilePictureHelper.detectFileType(requestBytesArray).equals("Unknown")) {
+        handleInvalidFileType(asyncResultHandler);
+      } else {
+        processPutProfilePictureStorage(okapiHeaders, profileId, asyncResultHandler, vertxContext);
+      }
+    } else {
+      handleInvalidProfilePictureSize(asyncResultHandler);
+    }
+  }
+
+  private void processPutProfilePictureStorage(Map<String, String> okapiHeaders, String profileId,
+                                            Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
+      .onSuccess(config ->
+        handlePutProfilePictureConfig(config, okapiHeaders, profileId, asyncResultHandler, vertxContext));
+  }
+
+  private void handlePutProfilePictureConfig(Config config, Map<String, String> okapiHeaders, String profileId,
+                                          Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
+      logger.info("handleProfilePictureConfig:: Profile picture feature is disabled");
+      handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
+    } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
+      logger.info("handleProfilePictureConfig:: Updating image data into Object storage for id {}", profileId);
+      profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, profileId, asyncResultHandler);
+    } else {
+      logger.info("handleProfilePictureConfig:: Updating image data into DB storage for id {}", profileId);
+      profilePictureStorage.updateProfilePictureInDbStorage(profileId, requestBytesArray, asyncResultHandler, okapiHeaders, vertxContext);
+    }
+  }
+
+  @Override
+  public void deleteUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders,
+                                                   Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("deleteUsersProfilePictureByProfileId:: Deleting profile picture with id {} ", profileId);
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
+      .onSuccess(config -> handleProfilePictureConfigForDelete(config, okapiHeaders, profileId, asyncResultHandler, vertxContext))
+      .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
+  }
+
+  private void handleProfilePictureConfigForDelete(Config config, Map<String, String> okapiHeaders, String profileId,
+                                                   Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
+      logger.info("handleProfilePictureConfigForDelete:: Profile picture feature is disabled");
+      handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
+    } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
+      logger.info("handleProfilePictureConfigForDelete:: Removing image data into Object storage for id {}", profileId);
+      profilePictureStorage.removeProfilePictureFromObjectStorage(okapiHeaders, profileId, asyncResultHandler);
+    } else {
+      logger.info("handleProfilePictureConfigForDelete:: Removing image data into DB storage for id {}", profileId);
+      deleteProfilePictureFromStorage(okapiHeaders, profileId, asyncResultHandler, vertxContext);
+    }
+  }
+
+  private void deleteProfilePictureFromStorage(Map<String, String> okapiHeaders, String profileId,
+                                               Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .execute(createDeleteQuery(okapiHeaders), Tuple.of(profileId))
+      .compose(this::handleDeleteResult)
+      .onComplete(reply -> handleDeleteCompletion(reply, asyncResultHandler));
+  }
+
+  private Future<Response> handleDeleteResult(RowSet<Row> rows) {
+    if (rows.rowCount() != 0) {
+      logger.info("handleDeleteResult:: Profile picture removed successfully");
+      return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond204());
+    } else {
+      return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Profile picture not found"));
+    }
+  }
+
+  private void handleDeleteCompletion(AsyncResult<Response> reply, Handler<AsyncResult<Response>> asyncResultHandler) {
+    if (reply.cause() != null) {
+      asyncResultHandler.handle(succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause())));
+    }
+    asyncResultHandler.handle(reply);
+  }
+
   @Override
   public void getUsersConfigurationsEntry(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PgUtil.getById(TABLE_NAME_CONFIG, Config.class, CONFIG_ID, okapiHeaders, vertxContext,
-      GetUsersConfigurationsEntryResponse.class, asyncResultHandler);
+    logger.info("getUsersConfigurationsEntry:: Getting configuration");
+    PgUtil.postgresClient(vertxContext, okapiHeaders).execute(createSelectQuery(okapiHeaders, GET_CONFIG_SQL, TABLE_NAME_CONFIG))
+      .compose(rows -> {
+        if (rows.rowCount() != 0) {
+          return succeededFuture(Users.GetUsersConfigurationsEntryResponse.respond200WithApplicationJson(mapResultSetToConfig(rows)));
+        } else {
+          return succeededFuture(Users.GetUsersConfigurationsEntryResponse.respond404WithTextPlain("No configuration exist"));
+        }
+      })
+      .map(Response.class::cast)
+      .onComplete(responseAsyncResult -> {
+        if (responseAsyncResult.cause() != null) {
+          logger.error("getUsersConfigurationsEntry:: Can not get profile picture configuration");
+          asyncResultHandler.handle(
+            succeededFuture(Users.GetUsersConfigurationsEntryResponse
+              .respond400WithTextPlain(responseAsyncResult.cause().getMessage())));
+        }
+        asyncResultHandler.handle(responseAsyncResult);
+      });
   }
 
   @Override
   public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
     PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
       asyncResultHandler);
-  }
-
-  //Will be refactored to multiple methods..
-  @Override
-  @Stream
-  public void putUsersProfilePictureByProfileId(String profileId, InputStream entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    try (InputStream bis = new BufferedInputStream(entity)) {
-      if (Objects.isNull(okapiHeaders.get(STREAM_ABORT))) {
-        validateAndProcessByteArray(bis);
-        if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
-          if (ProfilePictureHelper.detectFileType(requestBytesArray).equals("Unknown")) {
-            asyncResultHandler.handle(
-              succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Requested image should be of supported type-[PNG,JPG,JPEG]")));
-          }
-          Buffer binaryDataBuffer = Buffer.buffer(requestBytesArray);
-          PgUtil.postgresClient(vertxContext, okapiHeaders)
-            .execute(createUpdateQuery(okapiHeaders), Tuple.of(binaryDataBuffer, profileId))
-            .compose(rows -> {
-              if(rows.rowCount() != 0) {
-                return succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows)));
-              } else {
-                return succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Existing profile picture is not found"));
-              }
-            })
-            .map(Response.class::cast)
-            .onComplete(reply -> {
-              if (reply.cause() != null) {
-                asyncResultHandler.handle(
-                  succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause().getMessage())));
-              }
-              asyncResultHandler.handle(reply);
-            });
-        } else {
-          asyncResultHandler.handle(
-            succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Requested file size should be with in allowed size 0.1-10.0 megabytes")));
-        }
-      } else {
-        asyncResultHandler.handle(
-          succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("Upload stream for image has been interrupted")));
-      }
-    } catch (Exception e) {
-      asyncResultHandler.handle(
-        succeededFuture(PutUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson("failed to save profile picture " + e.getMessage())));
-    }
-  }
-
-  @Override
-  public void deleteUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.debug("deleteUsersProfilePictureByProfileId:: Deleting profile picture with id {} ", profileId);
-    Tuple params = Tuple.of(profileId);
-    PgUtil.postgresClient(vertxContext, okapiHeaders)
-      .execute(createDeleteQuery(okapiHeaders), params)
-      .compose(rows -> {
-        if(rows.rowCount() != 0) {
-          return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond204());
-        } else {
-          return succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Profile picture not found"));
-        }
-      })
-      .map(Response.class::cast)
-      .onComplete(reply -> {
-        if(reply.cause() != null) {
-          asyncResultHandler.handle(succeededFuture(DeleteUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(reply.cause())));
-        }
-        asyncResultHandler.handle(reply);
-      });
-  }
-
-  private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet) {
-    ProfilePicture profilePicture = new ProfilePicture();
-    for (Row row : resultSet) {
-      profilePicture
-        .withId(UUID.fromString(row.getValue(ID).toString()))
-        .withProfilePictureBlob(Base64.getEncoder().encodeToString(row.getBuffer(BLOB).getBytes()));
-    }
-    return profilePicture;
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,
@@ -961,12 +1001,21 @@ public class UsersAPI implements Users {
     return entity.getCustomFields().getAdditionalProperties();
   }
 
-  private static String createDeleteQuery(CQLWrapper wrapper, Map<String, String> okapiHeaders) {
-    return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);
+  private Config mapResultSetToConfig(RowSet<Row> resultSet) {
+    Config config = new Config();
+    for (Row row : resultSet) {
+      config
+        .withId(row.getValue(ID).toString())
+        .withConfigName(row.getValue(CONFIG_NAME).toString())
+        .withEnabledObjectStorage(row.getJsonObject(JSONB).getBoolean(ENABLED_OBJECT_STORAGE))
+        .withEnabled(row.getJsonObject(JSONB).getBoolean(ENABLED));
+    }
+    return config;
   }
 
-  private static String createUpdateQuery(Map<String, String> okapiHeaders) {
-    return String.format(UPDATE_PROFILE_PICTURE_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_PROFILE_PICTURE);
+
+  private static String createDeleteQuery(CQLWrapper wrapper, Map<String, String> okapiHeaders) {
+    return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);
   }
 
   private static String createDeleteQuery(Map<String, String> okapiHeaders) {

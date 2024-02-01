@@ -16,9 +16,9 @@ public class UsersApiConstants {
   public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s set profile_picture_blob = $1 where id = $2 returning id, profile_picture_blob";
   public static final String DELETE_PROFILE_PICTURE_SQL = "DELETE from %s.%s where id = $1";
   public static final String GET_PROFILE_PICTURE_SQL = "SELECT * from %s.%s WHERE id = $1";
+  public static final String GET_CONFIG_SQL = "SELECT * from %s.%s";
   public static final String RETURNING_USERS_ID_SQL = "RETURNING id";
   public static final String ID = "id";
-  public static final String CONFIG_ID = "3e1aaa06-0600-4cc9-a112-7a3fb8426eda";
   public static final String BLOB = "profile_picture_blob";
   public static final String VIEW_NAME_USER_GROUPS_JOIN = "users_groups_view";
   public static final String USERNAME_ALREADY_EXISTS = "users_username_idx_unique";

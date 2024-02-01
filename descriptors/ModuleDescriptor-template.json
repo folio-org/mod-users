@@ -40,6 +40,11 @@
           "permissionsRequired": [ "users.profile-picture.item.put" ]
         },
         {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/users/profile-picture/{id}",
+          "permissionsRequired": [ "users.profile-picture.item.delete" ]
+        },
+        {
           "methods": [ "POST" ],
           "pathPattern": "/users/profile-picture",
           "permissionsRequired": [ "users.profile-picture.item.post" ]
@@ -304,6 +309,11 @@
       "description" : "Post users profile picture"
     },
     {
+      "permissionName" : "users.profile-picture.item.delete",
+      "displayName" : "delete user profile picture",
+      "description" : "Delete user profile picture"
+    },
+    {
       "permissionName" : "users.configurations.item.get",
       "displayName" : "get user configuration",
       "description" : "Get user configuration"
@@ -501,6 +511,7 @@
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
       "subPermissions" : [
+        "users.profile-picture.item.delete",
         "users.configurations.item.get",
         "users.configurations.item.put",
         "users.collection.get",
