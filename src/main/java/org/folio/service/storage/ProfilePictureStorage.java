@@ -7,7 +7,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +24,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -32,9 +33,12 @@ import java.util.UUID;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
-import static org.folio.support.ProfilePictureHelper.decrypt;
-import static org.folio.support.ProfilePictureHelper.encrypt;
+import static org.folio.support.ProfilePictureHelper.calculateHmac;
+import static org.folio.support.ProfilePictureHelper.decryptAES;
+import static org.folio.support.ProfilePictureHelper.encryptAES;
+import static org.folio.support.ProfilePictureHelper.verifyHmac;
 import static org.folio.support.UsersApiConstants.BLOB;
+import static org.folio.support.UsersApiConstants.CHECKSUM;
 import static org.folio.support.UsersApiConstants.CONFIG_NAME;
 import static org.folio.support.UsersApiConstants.ENABLED;
 import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
@@ -132,11 +136,13 @@ public class ProfilePictureStorage {
   }
 
   public void storeProfilePictureInDbStorage(byte[] requestBytesArray, Map<String, String> okapiHeaders,
-                                  Handler<AsyncResult<Response>> asyncResultHandler,String encryptionKey, Context vertxContext) {
+                                             Handler<AsyncResult<Response>> asyncResultHandler, String encryptionKey, Context vertxContext) {
     try {
       UUID profileId = UUID.randomUUID();
-      byte[] encryptedData = encrypt(requestBytesArray, encryptionKey);
-      Tuple params = Tuple.of(profileId, encryptedData);
+      byte[] encryptedData = encryptAES(requestBytesArray, encryptionKey);
+      byte[] hmac = calculateHmac(encryptedData, encryptionKey);
+
+      Tuple params = Tuple.of(profileId, encryptedData, hmac);
       PgUtil.postgresClient(vertxContext, okapiHeaders)
         .execute(createInsertQuery(okapiHeaders), params)
         .map(rows -> Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(profileId)))
@@ -146,9 +152,10 @@ public class ProfilePictureStorage {
             logger.error("storeProfilePictureInDbStorage:: Can not store profile picture in DB with id {}", profileId);
             asyncResultHandler.handle(
               succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson(reply.cause().getMessage())));
+          } else {
+            logger.info("storeProfilePictureInDbStorage:: Profile picture stored in DB with id {}", profileId);
+            asyncResultHandler.handle(reply);
           }
-          logger.info("storeProfilePictureInDbStorage:: Profile picture stored in DB with id {}", profileId);
-          asyncResultHandler.handle(reply);
         });
     } catch (Exception e) {
       logger.error("storeProfilePictureInDbStorage:: Error encrypting profile picture data: {}", e.getMessage());
@@ -157,14 +164,28 @@ public class ProfilePictureStorage {
     }
   }
 
-  public void getProfilePictureFromDbStorage (String profileId,
-                                              Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, String encryptionKey, Context vertxContext) {
+  public void getProfilePictureFromDbStorage(String profileId, Handler<AsyncResult<Response>> asyncResultHandler,
+                                             Map<String, String> okapiHeaders, String encryptionKey, Context vertxContext) {
     logger.info("getProfilePictureFromDbStorage:: Getting profile picture from db storage with id {}", profileId);
     Tuple params = Tuple.of(profileId);
-    PgUtil.postgresClient(vertxContext, okapiHeaders).execute(createSelectQuery(okapiHeaders, GET_PROFILE_PICTURE_SQL, TABLE_NAME_PROFILE_PICTURE), params)
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .execute(createSelectQuery(okapiHeaders, GET_PROFILE_PICTURE_SQL, TABLE_NAME_PROFILE_PICTURE), params)
       .compose(rows -> {
         if (rows.rowCount() != 0) {
-          return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(mapResultSetToProfilePicture(rows, encryptionKey)));
+          Row row = rows.iterator().next();
+          byte[] encryptedData = row.getBuffer(BLOB).getBytes();
+          byte[] storedHmac = row.getBuffer(CHECKSUM).getBytes();
+          try {
+            if (!verifyHmac(encryptedData, storedHmac, encryptionKey)) {
+              return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Data integrity check failed"));
+            }
+          } catch (NoSuchAlgorithmException e) {
+            return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Invalid algorithm"));
+          } catch (InvalidKeyException e) {
+            return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Invalid key"));
+          }
+          ProfilePicture profilePicture = mapResultSetToProfilePicture(row, encryptionKey);
+          return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(profilePicture));
         } else {
           return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("No profile picture found for id " + profileId));
         }
@@ -184,8 +205,10 @@ public class ProfilePictureStorage {
   public void updateProfilePictureInDbStorage (String profileId, byte[] requestedBytesArray,
                                                  Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, String encryptionKey, Context vertxContext) {
     try {
+      byte[] encryptedData = encryptAES(requestedBytesArray, encryptionKey);
+      byte[] hmac = calculateHmac(encryptedData, encryptionKey);
       PgUtil.postgresClient(vertxContext, okapiHeaders)
-        .execute(createUpdateQuery(okapiHeaders), Tuple.of(encrypt(requestedBytesArray, encryptionKey), profileId))
+        .execute(createUpdateQuery(okapiHeaders), Tuple.of(encryptedData, hmac, profileId))
         .compose(rows -> {
           if (rows.rowCount() != 0) {
             logger.info("updateProfilePictureInDbStorage:: Updated profile picture with id {}", profileId);
@@ -240,23 +263,19 @@ public class ProfilePictureStorage {
       .compose(this::mapResultSetToConfig);
   }
 
-  private ProfilePicture mapResultSetToProfilePicture(RowSet<Row> resultSet, String encryptionKey) {
+  private ProfilePicture mapResultSetToProfilePicture(Row row, String encryptionKey) {
     ProfilePicture profilePicture = new ProfilePicture();
-    RowIterator<Row> iterator = resultSet.iterator();
-    if (iterator.hasNext()) {
-      Row row = iterator.next();
-      profilePicture
-        .withId(UUID.fromString(row.getValue(ID).toString()));
-      byte[] encryptedData = row.getBuffer(BLOB).getBytes();
+    profilePicture.withId(UUID.fromString(row.getValue(ID).toString()));
+    byte[] encryptedData = row.getBuffer(BLOB).getBytes();
 
-      try {
-        byte[] decryptedData = decrypt(encryptedData, encryptionKey);
-        profilePicture.withProfilePictureBlob(Base64.getEncoder().encodeToString(decryptedData));
-      } catch (Exception e) {
-        logger.error("Error decrypting profile picture data: {}", e.getMessage());
-        throw new IllegalStateException("Error decrypting profile picture data");
-      }
+    try {
+      byte[] decryptedData = decryptAES(encryptedData, encryptionKey);
+      profilePicture.withProfilePictureBlob(Base64.getEncoder().encodeToString(decryptedData));
+    } catch (Exception e) {
+      logger.error("Error decrypting profile picture data: {}", e.getMessage());
+      throw new IllegalStateException("Error decrypting profile picture data");
     }
+
     return profilePicture;
   }
 

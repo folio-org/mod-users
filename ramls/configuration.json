@@ -34,7 +34,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "configName",
-    "encryptionKey"
+    "configName"
   ]
 }

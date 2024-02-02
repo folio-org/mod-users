@@ -13,6 +13,11 @@
       "description": "byte array of image",
       "type": "string",
       "format": "base64"
+    },
+    "hmac": {
+      "description": "Checksum of the profile picture",
+      "type": "string",
+      "format": "base64"
     }
   },
   "required": ["id", "profile_picture_blob"]
