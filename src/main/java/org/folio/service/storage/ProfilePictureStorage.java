@@ -75,7 +75,6 @@ public class ProfilePictureStorage {
           client.write(path, new ByteArrayInputStream(fileBytes), fileBytes.length);
           asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(UUID.fromString(path.substring(path.lastIndexOf("/") + 1))))));
         }
-
       } catch (Exception e) {
         if (e.getMessage().startsWith("Error getting size")) {
           logger.error("storeProfilePictureInDbStorage:: Can not update profile picture in object storage with id {}", profileId);
@@ -100,9 +99,6 @@ public class ProfilePictureStorage {
       if (e.getMessage().startsWith("Error getting size")) {
         logger.error("storeProfilePictureInDbStorage:: Can not remove profile picture in object storage with id {}", profileId);
         asyncResultHandler.handle(succeededFuture(Users.DeleteUsersProfilePictureByProfileIdResponse.respond404WithTextPlain("Profile picture not found")));
-      } else {
-        logger.error("storeProfilePictureInDbStorage:: Can not remove profile picture in object storage {}", e.getMessage());
-        asyncResultHandler.handle(succeededFuture(Users.DeleteUsersProfilePictureByProfileIdResponse.respond500WithApplicationJson(String.format("Error removing file [%s]", e.getCause().getMessage()))));
       }
     }
   }
