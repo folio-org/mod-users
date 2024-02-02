@@ -24,8 +24,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -179,10 +177,8 @@ public class ProfilePictureStorage {
             if (!verifyHmac(encryptedData, storedHmac, encryptionKey)) {
               return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Data integrity check failed"));
             }
-          } catch (NoSuchAlgorithmException e) {
-            return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Invalid algorithm"));
-          } catch (InvalidKeyException e) {
-            return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Invalid key"));
+          } catch (Exception e) {
+            return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Invalid algorithm OR key"));
           }
           ProfilePicture profilePicture = mapResultSetToProfilePicture(row, encryptionKey);
           return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(profilePicture));

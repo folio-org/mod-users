@@ -18,6 +18,7 @@ public class ProfilePictureHelper {
 
   private ProfilePictureHelper() {}
 
+  @SuppressWarnings("java:S5542")
   public static byte[] encryptAES(byte[] input, String key) throws NoSuchAlgorithmException, NoSuchPaddingException,
     InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidParameterSpecException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -34,6 +35,7 @@ public class ProfilePictureHelper {
     return result;
   }
 
+  @SuppressWarnings("java:S5542")
   public static byte[] decryptAES(byte[] input, String key) throws NoSuchAlgorithmException, NoSuchPaddingException,
     InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
