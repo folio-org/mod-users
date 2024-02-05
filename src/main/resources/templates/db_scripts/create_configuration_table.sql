@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 DO $$
 DECLARE
     new_uuid UUID := public.uuid_generate_v4();
-    encryption_key text := 'ThisIsASimpleDefaultKey';
+    encryption_key text := 'ThisIsASimpleDefaultKeyToTestIts';
 BEGIN
     -- Create the configuration table if not exists
     CREATE TABLE IF NOT EXISTS configuration (

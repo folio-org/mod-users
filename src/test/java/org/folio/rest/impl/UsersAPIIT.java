@@ -579,7 +579,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_INTERNAL_ERROR);
   }
 
-
   @Test
   void createPNGProfilePictureInS3() {
     configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId())
