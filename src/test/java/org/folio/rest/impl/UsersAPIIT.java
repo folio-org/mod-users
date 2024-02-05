@@ -568,6 +568,19 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void createJPGProfilePictureInDbWithNullEncryptionKey() {
+    configurationClient.updateConfiguration(new Config()
+      .withConfigName("PROFILE_PICTURE_CONFIG")
+      .withId(configurationClient.getConfigurationId())
+      .withEnabled(true).withEnabledObjectStorage(false)
+      .withEncryptionKey(null));
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .statusCode(HTTP_INTERNAL_ERROR);
+  }
+
+
+  @Test
   void createPNGProfilePictureInS3() {
     configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(true));
