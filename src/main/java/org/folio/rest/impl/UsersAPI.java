@@ -18,11 +18,13 @@ import static org.folio.support.UsersApiConstants.DUPLICATE_ID_ERROR;
 import static org.folio.support.UsersApiConstants.DUPLICATE_USERNAME_ERROR;
 import static org.folio.support.UsersApiConstants.ENABLED;
 import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
+import static org.folio.support.UsersApiConstants.ENCRYPTION_KEY;
 import static org.folio.support.UsersApiConstants.GET_CONFIG_SQL;
 import static org.folio.support.UsersApiConstants.ID;
 import static org.folio.support.UsersApiConstants.INVALID_USERNAME_ERROR;
 import static org.folio.support.UsersApiConstants.INVALID_USER_TYPE_ERROR;
 import static org.folio.support.UsersApiConstants.JSONB;
+import static org.folio.support.UsersApiConstants.KEY_ERROR;
 import static org.folio.support.UsersApiConstants.MAX_DOCUMENT_SIZE;
 import static org.folio.support.UsersApiConstants.RETURNING_USERS_ID_SQL;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
@@ -628,8 +630,14 @@ public class UsersAPI implements Users {
       logger.info("handleProfilePictureConfig:: Storing images into Object storage");
       profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, null, asyncResultHandler);
     } else {
-      logger.info("handleProfilePictureConfig:: Storing images into DB storage");
-      profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, vertxContext);
+      if (config != null && config.getEncryptionKey() != null) {
+        logger.info("handleProfilePictureConfig:: Storing images into DB storage");
+        profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, config.getEncryptionKey(), vertxContext);
+      } else {
+        logger.error("handleProfilePictureConfig:: Encryption key is null");
+        asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse
+          .respond500WithApplicationJson(KEY_ERROR)));
+      }
     }
   }
 
@@ -677,8 +685,14 @@ public class UsersAPI implements Users {
       logger.info("handleProfilePictureConfig:: Getting image from object storage");
       profilePictureStorage.getProfilePictureFromObjectStorage(profileId, asyncResultHandler, okapiHeaders);
     } else {
-      logger.info("handleProfilePictureConfig:: Getting image from DB storage");
-      profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, vertxContext);
+      if (config != null && config.getEncryptionKey() != null) {
+        logger.info("handleProfilePictureConfig:: Getting image from DB storage");
+        profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, config.getEncryptionKey(), vertxContext);
+      } else {
+        logger.error("handleProfilePictureConfig:: Encryption key is null");
+        asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse
+          .respond500WithApplicationJson("Encryption key is null")));
+      }
     }
   }
 
@@ -739,8 +753,14 @@ public class UsersAPI implements Users {
       logger.info("handleProfilePictureConfig:: Updating image data into Object storage for id {}", profileId);
       profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, profileId, asyncResultHandler);
     } else {
-      logger.info("handleProfilePictureConfig:: Updating image data into DB storage for id {}", profileId);
-      profilePictureStorage.updateProfilePictureInDbStorage(profileId, requestBytesArray, asyncResultHandler, okapiHeaders, vertxContext);
+      if (config != null && config.getEncryptionKey() != null) {
+        logger.info("handleProfilePictureConfig:: Updating image data into DB storage for id {}", profileId);
+        profilePictureStorage.updateProfilePictureInDbStorage(profileId, requestBytesArray, asyncResultHandler, okapiHeaders, config.getEncryptionKey(), vertxContext);
+      } else {
+        logger.error("handlePutProfilePictureConfig:: Encryption key is null");
+        asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse
+          .respond500WithApplicationJson("Encryption key is null")));
+      }
     }
   }
 
@@ -1008,7 +1028,8 @@ public class UsersAPI implements Users {
         .withId(row.getValue(ID).toString())
         .withConfigName(row.getValue(CONFIG_NAME).toString())
         .withEnabledObjectStorage(row.getJsonObject(JSONB).getBoolean(ENABLED_OBJECT_STORAGE))
-        .withEnabled(row.getJsonObject(JSONB).getBoolean(ENABLED));
+        .withEnabled(row.getJsonObject(JSONB).getBoolean(ENABLED))
+        .withEncryptionKey(row.getJsonObject(JSONB).getString(ENCRYPTION_KEY));
     }
     return config;
   }
