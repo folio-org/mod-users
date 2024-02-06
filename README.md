@@ -46,19 +46,19 @@ The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
 and the [Docker image](https://hub.docker.com/r/folioorg/mod-users/).
 
-### Configuration setting for Profile-Picture Feature
+# Configuration setting for Profile-Picture Feature
 To enable this feature for a tenant, we need to perform below operations
-## Permissions
+### Permissions
 
-users.configurations.item.put
-users.configurations.item.get
+users.configurations.item.put.
+users.configurations.item.get.
 
 Invoke GET endpoint
-# Example request
+#### Example request
 GET https://{okapi-location}/users/configurations/entry
 
-Then PUT endpoint needs to be invoked
-# Example request
+After GET, PUT endpoint needs to be invoked
+#### Example request
 PUT https://{okapi-location}/users/configurations/entry/{id}
 
 {
@@ -70,7 +70,7 @@ PUT https://{okapi-location}/users/configurations/entry/{id}
 }
 
 By default DB storage will be enabled . To enable Object storage(S3/minio)...
-# Example request
+#### Example request
 PUT https://{okapi-location}/users/configurations/entry/{id}
 
 {
