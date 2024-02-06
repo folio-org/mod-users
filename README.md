@@ -50,14 +50,14 @@ and the [Docker image](https://hub.docker.com/r/folioorg/mod-users/).
 To enable this feature for a tenant, we need to perform below operations
 ### Permissions
 
-users.configurations.item.put.
-users.configurations.item.get.
+###### users.configurations.item.put
+###### users.configurations.item.get
 
-Invoke GET endpoint
+### Invoke GET endpoint
 #### Example request
 GET https://{okapi-location}/users/configurations/entry
 
-After GET, PUT endpoint needs to be invoked
+### After GET, PUT endpoint needs to be invoked
 #### Example request
 PUT https://{okapi-location}/users/configurations/entry/{id}
 
