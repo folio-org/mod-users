@@ -851,6 +851,21 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void deleteProfilePictureErrorInObjectStorage() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId())
+      .withEnabled(true).withEnabledObjectStorage(true));
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_OK);
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId())
+      .withEnabled(false).withEnabledObjectStorage(true));
+    userProfilePictureClient.deleteUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_INTERNAL_ERROR);
+  }
+
+  @Test
   void deleteProfilePictureErrorTest() {
     configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
       .withEnabled(true).withEnabledObjectStorage(false));
