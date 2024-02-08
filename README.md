@@ -46,4 +46,37 @@ The built artifacts for this module are available.
 See [configuration](https://dev.folio.org/download/artifacts) for repository access,
 and the [Docker image](https://hub.docker.com/r/folioorg/mod-users/).
 
+# Configuration setting for Profile-Picture Feature
+To enable this feature for a tenant, we need to perform below operations
+### Permissions
 
+###### users.configurations.item.put
+###### users.configurations.item.get
+
+### Invoke GET endpoint
+#### Example request
+GET https://{okapi-location}/users/configurations/entry
+
+### After GET, PUT endpoint needs to be invoked
+#### Example request
+PUT https://{okapi-location}/users/configurations/entry/{id}
+
+{
+"id": {{id}},
+"configName": "PROFILE_PICTURE_CONFIG",
+"enabled": true,
+"enabledObjectStorage": false,
+"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok"
+}
+
+By default DB storage will be enabled . To enable Object storage(S3/minio)...
+#### Example request
+PUT https://{okapi-location}/users/configurations/entry/{id}
+
+{
+"id": {{id}},
+"configName": "PROFILE_PICTURE_CONFIG",
+"enabled": true,
+"enabledObjectStorage": true,
+"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok"
+}

@@ -167,6 +167,7 @@ resourceTypes:
           body:
             application/json:
               type: config
+              example: !include examples/config.sample
         404:
           description: "configuration not found"
           body:
@@ -186,6 +187,7 @@ resourceTypes:
       body:
         application/json:
           type: config
+          example: !include examples/config.sample
       responses:
         204:
           description: "configuration updated"
