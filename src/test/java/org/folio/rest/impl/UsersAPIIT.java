@@ -649,6 +649,14 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void cleanUpIfProfilePictureDisable() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+      .withEnabled(false).withEnabledObjectStorage(false));
+    timerInterfaceClient.attemptToTriggerProfilePictureCleanUpProcess(TENANT_NAME)
+      .statusCode(is(HTTP_OK));
+  }
+
+  @Test
   void getProfilePictureFromDbWithDifferentKeyTest() {
     configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
       .withEnabled(true).withEnabledObjectStorage(false));
