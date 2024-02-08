@@ -10,7 +10,6 @@ public class UsersApiConstants {
   public static final String TABLE_NAME_PROFILE_PICTURE = "profile_picture";
   public static final String TABLE_NAME_USERS = "users";
   public static final String TABLE_NAME_CONFIG = "configuration";
-  public static final String PROFILE_PICTURE_FOLDER = "Profile-Pictures";
   public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob, hmac) VALUES ($1, $2, $3)";
   public static final String GET_CONFIGURATION_SQL = "SELECT * FROM %s.%s WHERE configName = 'PROFILE_PICTURE_CONFIG'";
   public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
@@ -35,4 +34,19 @@ public class UsersApiConstants {
   public static final String ENABLED = "enabled";
   public static final String ENABLED_OBJECT_STORAGE = "enabledObjectStorage";
   public static final String ENCRYPTION_KEY = "encryptionKey";
+  public static final Integer MAX_IDS_COUNT = 1000;
+  public static final String PROFILE_LINK_IDS = "profilepicturelinkids";
+  public static final String SELECT_USERS_PROFILE_LINK_ID = "SELECT DISTINCT jsonb->'personal'->>'profilePictureLink' AS profilePictureLinkIds\n" +
+    "FROM %s.%s WHERE jsonb->'personal'->>'profilePictureLink' IS NOT NULL";
+  public static final String DELETE_UNUSED_PROFILE_IDS = """
+    DELETE FROM %s.%s
+    WHERE id IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1
+        FROM %s.%s
+        WHERE jsonb->'personal'->>'profilePictureLink' IS NOT NULL
+          AND CAST(jsonb->'personal'->>'profilePictureLink' AS UUID) = profile_picture.id
+      );
+    """;
+
 }

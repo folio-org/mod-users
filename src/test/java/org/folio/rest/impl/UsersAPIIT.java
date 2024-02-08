@@ -36,6 +36,7 @@ import org.folio.support.ValidationErrors;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.ConfigurationClient;
 import org.folio.support.http.GroupsClient;
+import org.folio.support.http.TimerInterfaceClient;
 import org.folio.support.http.UserProfilePictureClient;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
@@ -61,6 +62,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   private static UserTenantClient userTenantClient;
   private static UserProfilePictureClient userProfilePictureClient;
   private static ConfigurationClient configurationClient;
+  private static TimerInterfaceClient timerInterfaceClient;
 
   @BeforeAll
   @SneakyThrows
@@ -71,6 +73,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
     userProfilePictureClient = new UserProfilePictureClient(okapiUrl, okapiHeaders);
     configurationClient = new ConfigurationClient(okapiUrl, okapiHeaders);
+    timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
@@ -617,6 +620,32 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_OK);
     userProfilePictureClient.getUserProfilePicture(UUID.randomUUID().toString())
       .statusCode(HTTP_NOT_FOUND);
+  }
+
+  @Test
+  void removeProfilePictureFromDbViaCleanUp() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+      .withEnabled(true).withEnabledObjectStorage(false));
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    timerInterfaceClient.attemptToTriggerProfilePictureCleanUpProcess(TENANT_NAME)
+      .statusCode(is(HTTP_OK));
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_NOT_FOUND);
+  }
+
+  @Test
+  void removeProfilePictureFromS3ViaCleanUp() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+      .withEnabled(true).withEnabledObjectStorage(true));
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response1 = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    timerInterfaceClient.attemptToTriggerProfilePictureCleanUpProcess(TENANT_NAME)
+      .statusCode(is(HTTP_OK));
+    userProfilePictureClient.getUserProfilePicture(response1.getId().toString())
+      .statusCode(HTTP_OK);
   }
 
   @Test

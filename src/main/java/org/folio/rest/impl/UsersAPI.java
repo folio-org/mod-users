@@ -773,6 +773,17 @@ public class UsersAPI implements Users {
       .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
   }
 
+  @Override
+  public void postUsersProfilePictureCleanup(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.info("postUsersProfilePictureCleanup:: CleanUp job starting..");
+    profilePictureStorage.cleanUp(okapiHeaders, vertxContext)
+      .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(Response.status(Response.Status.OK).build())))
+      .onFailure(cause -> {
+        logger.warn("postUsersProfilePictureCleanup:: CleanUp job has been failed", cause);
+        asyncResultHandler.handle(Future.failedFuture(cause));
+      });
+  }
+
   private void handleProfilePictureConfigForDelete(Config config, Map<String, String> okapiHeaders, String profileId,
                                                    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
