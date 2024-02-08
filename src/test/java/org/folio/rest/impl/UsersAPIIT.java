@@ -642,6 +642,25 @@ class UsersAPIIT extends AbstractRestTestNoData {
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     var response1 = userProfilePictureClient.saveUserProfilePicture(inputStream)
       .extract().as(ProfilePicture.class);
+
+    final var user = usersClient.createUser(User.builder()
+      .username("julia123")
+      .build());
+    Personal p = Personal.builder().profilePictureLink(String.valueOf(response1.getId())).lastName("test").build();
+    usersClient.attemptToUpdateUser(User.builder()
+        .id(user.getId())
+        .username("julia-brockhurst")
+        .personal(p)
+        .build())
+      .statusCode(is(204));
+
+    Awaitility.await()
+      .atMost(1, MINUTES)
+      .pollInterval(5, SECONDS)
+      .untilAsserted(() -> {
+        final var updatedUser = usersClient.getUser(user.getId());
+        assertThat(updatedUser.getPersonal().getProfilePictureLink(), is(response1.getId().toString()));
+      });
     timerInterfaceClient.attemptToTriggerProfilePictureCleanUpProcess(TENANT_NAME)
       .statusCode(is(HTTP_OK));
     userProfilePictureClient.getUserProfilePicture(response1.getId().toString())
@@ -698,6 +717,22 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_OK);
     configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfdfhgjbnvtr")
       .withEnabled(true).withEnabledObjectStorage(false));
+    InputStream inputStream1 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    userProfilePictureClient.updateUserProfilePicture(response.getId().toString(), inputStream1)
+      .statusCode(HTTP_INTERNAL_ERROR);
+  }
+
+  @Test
+  void updateProfilePictureDisableError() {
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+      .withEnabled(true).withEnabledObjectStorage(false));
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
+    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
+      .extract().as(ProfilePicture.class);
+    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
+      .statusCode(HTTP_OK);
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfdfhgjbnvtr")
+      .withEnabled(false).withEnabledObjectStorage(false));
     InputStream inputStream1 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     userProfilePictureClient.updateUserProfilePicture(response.getId().toString(), inputStream1)
       .statusCode(HTTP_INTERNAL_ERROR);

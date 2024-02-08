@@ -21,4 +21,5 @@ public class Personal {
   String email;
   String phone;
   String mobilePhone;
+  String profilePictureLink;
 }
