@@ -22,7 +22,8 @@ BEGIN
             'enabled', false,
             'configName', 'PROFILE_PICTURE_CONFIG',
             'enabledObjectStorage', false,
-            'encryptionKey', encryption_key
+            'encryptionKey', encryption_key,
+            'maxFileSize', 4
         ),
         CURRENT_TIMESTAMP
     )

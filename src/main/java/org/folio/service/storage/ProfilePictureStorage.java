@@ -309,17 +309,15 @@ public class ProfilePictureStorage {
 
   public void removeUnusedProfileIdsFromObjectStorageAsync(Map<String, String> okapiHeaders, Context vertxContext) {
     logger.info("getUsersProfileLinkIdsAsync:: Getting users profile linked ids..");
-    CompletableFuture<List<String>> resultFuture = new CompletableFuture<>();
+    CompletableFuture<Void> resultFuture = new CompletableFuture<>();
     CompletableFuture<List<String>> userProfileIdsFuture = getUsersProfileLinkIdsAsync(okapiHeaders, vertxContext);
     userProfileIdsFuture.thenAccept(userProfileIds -> {
       try {
         String startAfter = null;
         FolioS3Client client = folioS3ClientFactory.getFolioS3Client(okapiHeaders);
-        List<String> unusedIds = new ArrayList<>();
         do {
           List<String> pageOfObjectStorageIds = getObjectStorageIdsPage(startAfter, client);
-          List<String> filteredIds = filterUnusedIds(pageOfObjectStorageIds, client, userProfileIds);
-          unusedIds.addAll(filteredIds);
+          filterUnusedIds(pageOfObjectStorageIds, client, userProfileIds);
 
           // If the size of the current page is less than maxKeys, it means there are no more objects
           if (pageOfObjectStorageIds.size() < MAX_IDS_COUNT) {
@@ -329,8 +327,7 @@ public class ProfilePictureStorage {
           startAfter = pageOfObjectStorageIds.get(pageOfObjectStorageIds.size() - 1);
         } while (true);
 
-        logger.info("Unused Object Storage IDs: {}", unusedIds);
-        resultFuture.complete(unusedIds);
+        resultFuture.complete(null);
       } catch (Exception e) {
         logger.error("Error processing Object Storage IDs", e);
         resultFuture.completeExceptionally(e);
