@@ -297,8 +297,8 @@
         {
           "methods" : [ "POST" ],
           "pathPattern" : "/users/profile-picture/cleanup",
-          "unit" : "minute",
-          "delay" : "5"
+          "unit" : "hour",
+          "delay" : "24"
         }
       ]
     }
