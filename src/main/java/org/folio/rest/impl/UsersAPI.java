@@ -685,9 +685,6 @@ public class UsersAPI implements Users {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
       logger.error("handleProfilePictureConfig:: Profile Picture feature is not enabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
-    } else if (Objects.nonNull(config) && Objects.nonNull(config.getMaxFileSize()) && requestBytesArray.length > (config.getMaxFileSize() * ONE_MB)) {
-      logger.info("handleProfilePictureConfig:: Validating file size");
-      handleInvalidProfilePictureSize(asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
       logger.info("handleProfilePictureConfig:: Getting image from object storage");
       profilePictureStorage.getProfilePictureFromObjectStorage(profileId, asyncResultHandler, okapiHeaders);
@@ -756,6 +753,9 @@ public class UsersAPI implements Users {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
       logger.info("handleProfilePictureConfig:: Profile picture feature is disabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
+    } else if (Objects.nonNull(config) && Objects.nonNull(config.getMaxFileSize()) && requestBytesArray.length > (config.getMaxFileSize() * ONE_MB)) {
+      logger.info("handlePutProfilePictureConfig:: Validating file size");
+      handleInvalidProfilePictureSize(asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
       logger.info("handleProfilePictureConfig:: Updating image data into Object storage for id {}", profileId);
       profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, profileId, asyncResultHandler);
