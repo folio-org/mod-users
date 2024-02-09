@@ -147,7 +147,7 @@ class UsersAPITest {
     new UsersAPI().postUsersProfilePicture(emptyInputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertThat(response.getStatus(), is(500));
-        assertThat(response.getEntity(), is("Requested file size should be within allowed size 0.1-10.0 megabytes"));
+        assertThat(response.getEntity(), is("Requested file size should be within allowed size"));
         vtc.completeNow();
       })),Vertx.vertx().getOrCreateContext());
   }

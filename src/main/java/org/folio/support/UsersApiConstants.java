@@ -32,6 +32,7 @@ public class UsersApiConstants {
   public static final String CONFIG_NAME = "configname";
   public static final String JSONB = "jsonb";
   public static final String ENABLED = "enabled";
+  public static final String MAX_FILE_SIZE = "maxFileSize";
   public static final String ENABLED_OBJECT_STORAGE = "enabledObjectStorage";
   public static final String ENCRYPTION_KEY = "encryptionKey";
   public static final Integer MAX_IDS_COUNT = 1000;

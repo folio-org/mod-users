@@ -51,6 +51,7 @@ import static org.folio.support.UsersApiConstants.GET_CONFIGURATION_SQL;
 import static org.folio.support.UsersApiConstants.GET_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.ID;
 import static org.folio.support.UsersApiConstants.JSONB;
+import static org.folio.support.UsersApiConstants.MAX_FILE_SIZE;
 import static org.folio.support.UsersApiConstants.MAX_IDS_COUNT;
 import static org.folio.support.UsersApiConstants.PROFILE_LINK_IDS;
 import static org.folio.support.UsersApiConstants.SAVE_PROFILE_PICTURE_SQL;
@@ -249,7 +250,8 @@ public class ProfilePictureStorage {
           .withConfigName(row.getString(CONFIG_NAME))
           .withEnabled(json.getBoolean(ENABLED))
           .withEnabledObjectStorage(json.getBoolean(ENABLED_OBJECT_STORAGE))
-          .withEncryptionKey(json.getString(ENCRYPTION_KEY));
+          .withEncryptionKey(json.getString(ENCRYPTION_KEY))
+          .withMaxFileSize(json.getDouble(MAX_FILE_SIZE));
       }
       promise.complete(config);
     } else {
