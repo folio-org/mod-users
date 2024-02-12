@@ -160,6 +160,9 @@ resourceTypes:
           description: "Internal server error"
           body:
             application/json:
+  /profile-picture/cleanup:
+        post:
+          description: Remove unused profile picture from object and db storage
   /configurations/entry:
     get:
       responses:

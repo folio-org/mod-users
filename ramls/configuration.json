@@ -27,6 +27,10 @@
       "description": "Encryption key for encoding/decoding profile picture",
       "type": "string"
     },
+    "maxFileSize": {
+      "description": "Size of profile picture in MB",
+      "type": "number"
+    },
     "metadata": {
       "$ref": "raml-util/schemas/metadata.schema",
       "readonly": true

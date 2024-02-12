@@ -293,6 +293,12 @@
           "pathPattern" : "/users/outbox/process",
           "unit" : "minute",
           "delay" : "30"
+        },
+        {
+          "methods" : [ "POST" ],
+          "pathPattern" : "/users/profile-picture/cleanup",
+          "unit" : "hour",
+          "delay" : "24"
         }
       ]
     }

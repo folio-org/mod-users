@@ -24,4 +24,12 @@ public class TimerInterfaceClient {
       .post("/users/outbox/process")
       .then();
   }
+
+  public ValidatableResponse attemptToTriggerProfilePictureCleanUpProcess(String tenantId) {
+    return configuration.initialSpecification()
+      .header("X-Okapi-Tenant", tenantId)
+      .when()
+      .post("/users/profile-picture/cleanup")
+      .then();
+  }
 }

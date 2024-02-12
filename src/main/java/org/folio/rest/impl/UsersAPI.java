@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
+import static org.apache.commons.io.FileUtils.ONE_MB;
 import static org.folio.event.service.UserTenantService.INVALID_USER_TYPE_POPULATED;
 import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATED;
 import static org.folio.rest.RestVerticle.STREAM_ABORT;
@@ -626,6 +627,9 @@ public class UsersAPI implements Users {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
       logger.info("handleProfilePictureConfig:: Profile picture feature is disable");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
+    } else if (Objects.nonNull(config) && Objects.nonNull(config.getMaxFileSize()) && requestBytesArray.length > (config.getMaxFileSize() * ONE_MB)) {
+      logger.info("handleProfilePictureConfig:: Validating file size");
+      handleInvalidProfilePictureSize(asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
       logger.info("handleProfilePictureConfig:: Storing images into Object storage");
       profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, null, asyncResultHandler);
@@ -648,7 +652,7 @@ public class UsersAPI implements Users {
 
   private void handleInvalidProfilePictureSize(Handler<AsyncResult<Response>> asyncResultHandler) {
     asyncResultHandler.handle(
-      succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be within allowed size 0.1-10.0 megabytes")));
+      succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be within allowed size updated in profile_picture configuration")));
   }
 
   private void handleStreamAbort(Handler<AsyncResult<Response>> asyncResultHandler) {
@@ -749,6 +753,9 @@ public class UsersAPI implements Users {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
       logger.info("handleProfilePictureConfig:: Profile picture feature is disabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
+    } else if (Objects.nonNull(config) && Objects.nonNull(config.getMaxFileSize()) && requestBytesArray.length > (config.getMaxFileSize() * ONE_MB)) {
+      logger.info("handlePutProfilePictureConfig:: Validating file size");
+      handleInvalidProfilePictureSize(asyncResultHandler);
     } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
       logger.info("handleProfilePictureConfig:: Updating image data into Object storage for id {}", profileId);
       profilePictureStorage.storeProfilePictureInObjectStorage(requestBytesArray, okapiHeaders, profileId, asyncResultHandler);
@@ -771,6 +778,17 @@ public class UsersAPI implements Users {
     profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config -> handleProfilePictureConfigForDelete(config, okapiHeaders, profileId, asyncResultHandler, vertxContext))
       .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
+  }
+
+  @Override
+  public void postUsersProfilePictureCleanup(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.info("postUsersProfilePictureCleanup:: CleanUp job starting..");
+    profilePictureStorage.cleanUp(okapiHeaders, vertxContext)
+      .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(Response.status(Response.Status.OK).build())))
+      .onFailure(cause -> {
+        logger.warn("postUsersProfilePictureCleanup:: CleanUp job has been failed", cause);
+        asyncResultHandler.handle(Future.failedFuture(cause));
+      });
   }
 
   private void handleProfilePictureConfigForDelete(Config config, Map<String, String> okapiHeaders, String profileId,

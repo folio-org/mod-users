@@ -6,18 +6,19 @@ import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.client.S3ClientFactory;
 import org.folio.s3.client.S3ClientProperties;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class FolioS3ClientFactory {
-  private FolioS3Client folioS3Client;
+  private Map<String, FolioS3Client> tenantS3ClientMap;
 
   public FolioS3ClientFactory() {
-    this.folioS3Client = null;
+    this.tenantS3ClientMap = new HashMap<>();
   }
 
   public FolioS3Client getFolioS3Client(Map<String, String> okapiHeaders) {
-    folioS3Client = createFolioS3Client(okapiHeaders);
-    return folioS3Client;
+    String tenant = okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER);
+    return tenantS3ClientMap.computeIfAbsent(tenant, k -> createFolioS3Client(okapiHeaders));
   }
 
   private FolioS3Client createFolioS3Client(Map<String, String> okapiHeaders) {
