@@ -66,7 +66,8 @@ PUT https://{okapi-location}/users/configurations/entry/{id}
 "configName": "PROFILE_PICTURE_CONFIG",
 "enabled": true,
 "enabledObjectStorage": false,
-"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok"
+"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok",
+"maxFileSize": 4
 }
 
 By default DB storage will be enabled . To enable Object storage(S3/minio)...
@@ -78,5 +79,6 @@ PUT https://{okapi-location}/users/configurations/entry/{id}
 "configName": "PROFILE_PICTURE_CONFIG",
 "enabled": true,
 "enabledObjectStorage": true,
-"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok"
+"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok",
+"maxFileSize": 4
 }

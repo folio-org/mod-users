@@ -652,7 +652,7 @@ public class UsersAPI implements Users {
 
   private void handleInvalidProfilePictureSize(Handler<AsyncResult<Response>> asyncResultHandler) {
     asyncResultHandler.handle(
-      succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be within allowed size")));
+      succeededFuture(PostUsersProfilePictureResponse.respond500WithApplicationJson("Requested file size should be within allowed size updated in profile_picture configuration")));
   }
 
   private void handleStreamAbort(Handler<AsyncResult<Response>> asyncResultHandler) {

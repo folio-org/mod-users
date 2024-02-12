@@ -872,7 +872,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     InputStream inputStream4 = new ByteArrayInputStream("".getBytes());
     response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream4)
       .statusCode(HTTP_INTERNAL_ERROR);
-    assertThat(response.extract().asString(), is("Requested file size should be within allowed size"));
+    assertThat(response.extract().asString(), is("Requested file size should be within allowed size updated in profile_picture configuration"));
 
     //Trying to update profile picture with invalid uuid
     InputStream inputStream5 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
@@ -906,7 +906,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     InputStream inputStream4 = new ByteArrayInputStream("".getBytes());
     response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream4)
       .statusCode(HTTP_INTERNAL_ERROR);
-    assertThat(response.extract().asString(), is("Requested file size should be within allowed size"));
+    assertThat(response.extract().asString(), is("Requested file size should be within allowed size updated in profile_picture configuration"));
 
     //Trying to update profile picture with invalid uuid
     InputStream inputStream5 = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
