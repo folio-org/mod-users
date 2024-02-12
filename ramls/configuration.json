@@ -28,7 +28,7 @@
       "type": "string"
     },
     "maxFileSize": {
-      "description": "Size of profile picture",
+      "description": "Size of profile picture in MB",
       "type": "number"
     },
     "metadata": {
