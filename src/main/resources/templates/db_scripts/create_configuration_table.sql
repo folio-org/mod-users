@@ -4,8 +4,11 @@ DECLARE
     new_uuid UUID := public.uuid_generate_v4();
     encryption_key text := 'ThisIsASimpleDefaultKeyToTestIts';
 BEGIN
+    -- Drop the existing table if it exists
+    DROP TABLE IF EXISTS configuration;
     -- Create the configuration table if not exists
-    CREATE TABLE IF NOT EXISTS configuration (
+
+    CREATE TABLE configuration (
         id uuid PRIMARY KEY DEFAULT public.uuid_generate_v4(),
         configName text UNIQUE,
         jsonb jsonb NOT NULL,
