@@ -70,7 +70,14 @@ PUT https://{okapi-location}/users/configurations/entry/{id}
 "maxFileSize": 4
 }
 
-By default DB storage will be enabled . To enable Object storage(S3/minio)...
+By default DB storage will be enabled . To enable Object storage(S3/minio) below variables should be present in the env
+AWS_URL
+AWS_REGION
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+
+Note:- Bucket should pre-exist with same name as tenantName.
+
 #### Example request
 PUT https://{okapi-location}/users/configurations/entry/{id}
 

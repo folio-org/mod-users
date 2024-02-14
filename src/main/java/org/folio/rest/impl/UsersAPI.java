@@ -27,6 +27,7 @@ import static org.folio.support.UsersApiConstants.INVALID_USER_TYPE_ERROR;
 import static org.folio.support.UsersApiConstants.JSONB;
 import static org.folio.support.UsersApiConstants.KEY_ERROR;
 import static org.folio.support.UsersApiConstants.MAX_DOCUMENT_SIZE;
+import static org.folio.support.UsersApiConstants.MAX_FILE_SIZE;
 import static org.folio.support.UsersApiConstants.RETURNING_USERS_ID_SQL;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
@@ -1047,11 +1048,11 @@ public class UsersAPI implements Users {
         .withConfigName(row.getValue(CONFIG_NAME).toString())
         .withEnabledObjectStorage(row.getJsonObject(JSONB).getBoolean(ENABLED_OBJECT_STORAGE))
         .withEnabled(row.getJsonObject(JSONB).getBoolean(ENABLED))
-        .withEncryptionKey(row.getJsonObject(JSONB).getString(ENCRYPTION_KEY));
+        .withEncryptionKey(row.getJsonObject(JSONB).getString(ENCRYPTION_KEY))
+        .withMaxFileSize(row.getJsonObject(JSONB).getDouble(MAX_FILE_SIZE));
     }
     return config;
   }
-
 
   private static String createDeleteQuery(CQLWrapper wrapper, Map<String, String> okapiHeaders) {
     return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);
