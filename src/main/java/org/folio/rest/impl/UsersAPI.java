@@ -1031,7 +1031,6 @@ public class UsersAPI implements Users {
     return config;
   }
 
-
   private static String createDeleteQuery(CQLWrapper wrapper, Map<String, String> okapiHeaders) {
     return String.format(DELETE_USERS_SQL, convertToPsqlStandard(TenantTool.tenantId(okapiHeaders)), TABLE_NAME_USERS + " " + wrapper.getWhereClause() + " " + RETURNING_USERS_ID_SQL);
   }
