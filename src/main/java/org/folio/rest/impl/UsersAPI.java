@@ -856,8 +856,12 @@ public class UsersAPI implements Users {
   @Override
   public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
-    PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
-      asyncResultHandler);
+    if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
+      asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Max file size should not exceed more than 10 megabytes")));
+    } else {
+      PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
+        asyncResultHandler);
+    }
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,
