@@ -70,6 +70,8 @@ PUT https://{okapi-location}/users/configurations/entry/{id}
 "maxFileSize": 4
 }
 
+Note: maxFileSize must and should be within range of 0.1 to 10 megabytes.
+
 By default DB storage will be enabled . To enable Object storage(S3/minio) below variables should be present in the env
 AWS_URL
 AWS_REGION

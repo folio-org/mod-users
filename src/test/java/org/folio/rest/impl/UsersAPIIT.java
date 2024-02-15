@@ -559,6 +559,26 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void createConfigWithMoreThan10MB() {
+    configurationClient.updateConfiguration(new Config()
+      .withConfigName("PROFILE_PICTURE_CONFIG")
+      .withId(configurationClient.getConfigurationId())
+      .withEnabled(true).withEnabledObjectStorage(false)
+      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+      .withMaxFileSize(11.0)).statusCode(500);
+  }
+
+  @Test
+  void createConfigWithLessThan10MB() {
+    configurationClient.updateConfiguration(new Config()
+      .withConfigName("PROFILE_PICTURE_CONFIG")
+      .withId(configurationClient.getConfigurationId())
+      .withEnabled(true).withEnabledObjectStorage(false)
+      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+      .withMaxFileSize(9.9)).statusCode(204);
+  }
+
+  @Test
   void createBigSizeJPGProfilePictureInDb() {
     configurationClient.updateConfiguration(new Config()
       .withConfigName("PROFILE_PICTURE_CONFIG")
