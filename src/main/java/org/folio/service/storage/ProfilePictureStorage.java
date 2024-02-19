@@ -182,7 +182,7 @@ public class ProfilePictureStorage {
           byte[] storedHmac = row.getBuffer(CHECKSUM).getBytes();
           try {
             if (!verifyHmac(encryptedData, storedHmac, encryptionKey)) {
-              return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Data integrity check failed"));
+              return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Data integrity check failed, POST and GET must use an identical key"));
             }
           } catch (Exception e) {
             return succeededFuture(Users.GetUsersProfilePictureByProfileIdResponse.respond400WithApplicationJson("Invalid algorithm OR key"));
