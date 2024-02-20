@@ -3,7 +3,12 @@
     {
       "run": "after",
       "snippetPath": "create_custom_fields_table.sql",
-      "fromModuleVersion": "mod-users-15.7.0"
+      "fromModuleVersion": "19.3.0"
+    },
+    {
+      "run": "after",
+      "snippetPath": "custom_fields_metadata_cleanup.sql",
+      "fromModuleVersion": "19.3.0"
     },
     {
       "run": "after",
@@ -49,6 +54,16 @@
       "run": "after",
       "snippetPath": "update_user_type_in_users_table.sql",
       "fromModuleVersion": "19.2.0"
+    },
+    {
+      "run": "after",
+      "snippetPath": "create_blob_table.sql",
+      "fromModuleVersion": "19.3.0"
+    },
+    {
+      "run": "after",
+      "snippetPath": "create_configuration_table.sql",
+      "fromModuleVersion": "19.3.0"
     },
     {
       "run": "before",

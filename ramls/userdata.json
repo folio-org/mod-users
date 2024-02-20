@@ -145,6 +145,11 @@
         "preferredContactTypeId": {
           "description": "Id of user's preferred contact type like Email, Mail or Text Message, see /addresstypes API",
           "type": "string"
+        },
+        "profilePictureLink": {
+          "description": "Link to the profile picture",
+          "type": "string",
+          "format": "uri"
         }
       },
       "additionalProperties": false,

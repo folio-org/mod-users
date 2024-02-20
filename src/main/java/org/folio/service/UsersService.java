@@ -10,7 +10,7 @@ import org.folio.rest.persist.Conn;
 
 import javax.ws.rs.core.Response;
 
-import static org.folio.rest.impl.UsersAPI.TABLE_NAME_USERS;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
 
 public class UsersService {
 

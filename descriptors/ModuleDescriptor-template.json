@@ -30,6 +30,36 @@
           "permissionsRequired": [ "users.item.post" ]
         },
         {
+          "methods": [ "GET" ],
+          "pathPattern": "/users/profile-picture/{id}",
+          "permissionsRequired": [ "users.profile-picture.item.get" ]
+        },
+        {
+          "methods": [ "PUT" ],
+          "pathPattern": "/users/profile-picture/{id}",
+          "permissionsRequired": [ "users.profile-picture.item.put" ]
+        },
+        {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/users/profile-picture/{id}",
+          "permissionsRequired": [ "users.profile-picture.item.delete" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/users/profile-picture",
+          "permissionsRequired": [ "users.profile-picture.item.post" ]
+        },
+        {
+          "methods": [ "PUT" ],
+          "pathPattern": "/users/configurations/entry/{configId}",
+          "permissionsRequired": [ "users.configurations.item.put" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/users/configurations/entry",
+          "permissionsRequired": [ "users.configurations.item.get" ]
+        },
+        {
           "methods": [ "PUT" ],
           "pathPattern": "/users/{id}",
           "permissionsRequired": [ "users.item.put" ]
@@ -227,6 +257,11 @@
           "methods": [ "POST" ],
           "pathPattern": "/user-tenants",
           "permissionsRequired": [ "user-tenants.item.post" ]
+        },
+        {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/user-tenants",
+          "permissionsRequired": [ "user-tenants.item.delete" ]
         }
       ]
     },
@@ -258,6 +293,12 @@
           "pathPattern" : "/users/outbox/process",
           "unit" : "minute",
           "delay" : "30"
+        },
+        {
+          "methods" : [ "POST" ],
+          "pathPattern" : "/users/profile-picture/cleanup",
+          "unit" : "hour",
+          "delay" : "24"
         }
       ]
     }
@@ -269,6 +310,36 @@
       "description" : "Get a collection of user records"
     },
     {
+      "permissionName" : "users.profile-picture.item.post",
+      "displayName" : "post user profile picture",
+      "description" : "Post users profile picture"
+    },
+    {
+      "permissionName" : "users.profile-picture.item.delete",
+      "displayName" : "delete user profile picture",
+      "description" : "Delete user profile picture"
+    },
+    {
+      "permissionName" : "users.configurations.item.get",
+      "displayName" : "get user configuration",
+      "description" : "Get user configuration"
+    },
+    {
+      "permissionName" : "users.configurations.item.put",
+      "displayName" : "update user configuration",
+      "description" : "Update user configuration"
+    },
+    {
+      "permissionName" : "users.profile-picture.item.get",
+      "displayName" : "get user profile picture",
+      "description" : "Get users profile picture"
+    },
+    {
+      "permissionName" : "users.profile-picture.item.put",
+      "displayName" : "update user profile picture",
+      "description" : "Update users profile picture"
+    },
+    {
       "permissionName" : "users.collection.delete",
       "displayName" : "users collection delete",
       "description" : "Delete a collection of user records"
@@ -276,7 +347,10 @@
     {
       "permissionName": "user-settings.custom-fields.collection.put",
       "displayName": "Custom Fields - put collection",
-      "description": "Put Custom Fields collection"
+      "description": "Put Custom Fields collection",
+      "subPermissions" : [
+        "users.item.get"
+      ]
     },
     {
       "permissionName" : "users.item.get",
@@ -434,10 +508,18 @@
       "description" : "Create a new user-tenant record"
     },
     {
+      "permissionName" : "user-tenants.item.delete",
+      "displayName" : "user-tenants item delete",
+      "description" : "Delete user-tenant record"
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
       "subPermissions" : [
+        "users.profile-picture.item.delete",
+        "users.configurations.item.get",
+        "users.configurations.item.put",
         "users.collection.get",
         "users.collection.delete",
         "users.item.get",
@@ -470,7 +552,11 @@
         "patron-pin.delete",
         "patron-pin.validate",
         "user-tenants.collection.get",
-        "user-tenants.item.post"
+        "user-tenants.item.post",
+        "user-tenants.item.delete",
+        "users.profile-picture.item.get",
+        "users.profile-picture.item.put",
+        "users.profile-picture.item.post"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
@@ -480,7 +566,11 @@
     {
       "permissionName": "user-settings.custom-fields.item.post",
       "displayName": "User Custom Fields - create field",
-      "description": "Create User Custom Field"
+      "description": "Create User Custom Field",
+      "subPermissions": [
+        "users.item.get"
+      ]
+
     },
     {
       "permissionName": "user-settings.custom-fields.item.get",
@@ -490,12 +580,19 @@
     {
       "permissionName": "user-settings.custom-fields.item.put",
       "displayName": "User Custom Fields - modify field",
-      "description": "Modify User Custom Field"
+      "description": "Modify User Custom Field",
+      "subPermissions": [
+        "users.item.get"
+      ]
     },
     {
       "permissionName": "user-settings.custom-fields.item.delete",
       "displayName": "User Custom Fields - delete field",
-      "description": "Delete User Custom Field"
+      "description": "Delete User Custom Field",
+      "subPermissions": [
+        "users.item.get",
+        "user-settings.custom-fields.item.stats.get"
+      ]
     },
     {
       "permissionName": "user-settings.custom-fields.item.stats.get",
@@ -546,7 +643,13 @@
       { "name": "DB_CHARSET", "value": "UTF-8" },
       { "name": "DB_MAXPOOLSIZE", "value": "5" },
       { "name": "KAFKA_HOST", "value": "10.0.2.15"},
-      { "name": "KAFKA_PORT", "value": "9092" }
+      { "name": "KAFKA_PORT", "value": "9092" },
+      { "name": "AWS_URL", "value": "http://127.0.0.1:9000/" },
+      { "name": "AWS_REGION", "value": "" },
+      { "name": "AWS_BUCKET", "value": "example-bucket" },
+      { "name": "AWS_ACCESS_KEY_ID", "value": "AKIAIOSFODNN7EXAMPLE" },
+      { "name": "AWS_SECRET_ACCESS_KEY", "value": "wJalrXUtnFEMI/K7MDENG/EXAMPLEKEY" },
+      { "name": "AWS_SDK", "value": "false" }
     ]
   }
 }

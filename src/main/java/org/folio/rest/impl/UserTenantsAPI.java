@@ -78,6 +78,20 @@ public class UserTenantsAPI implements UserTenants {
       });
   }
 
+  @Override
+  public void deleteUserTenants(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    String okapiTenantId = TenantTool.tenantId(okapiHeaders);
+    userTenantService.deleteMemberUserTenant(okapiTenantId, vertxContext.owner())
+      .onSuccess(res -> {
+        logger.info("Record from member user-tenant has been deleted successfully. All http requests to this ECS tenant will be forbidden");
+        asyncResultHandler.handle(succeededFuture(Response.status(204).build()));
+      })
+      .onFailure(cause -> {
+        logger.error("Could not delete member ECS user-tenant record", cause);
+        asyncResultHandler.handle(succeededFuture(PostUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
+      });
+  }
+
   private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {
     Map<String, String> fields = Map.of(
         USER_ID_FIELD, StringUtils.defaultString(argumentsHolder.userId()),

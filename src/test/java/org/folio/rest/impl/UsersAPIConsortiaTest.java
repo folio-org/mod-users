@@ -3,7 +3,9 @@ package org.folio.rest.impl;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.*;
+import static org.folio.event.UserEventType.USER_CREATED;
+import static org.folio.event.UserEventType.USER_DELETED;
+import static org.folio.event.UserEventType.USER_UPDATED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -51,7 +53,6 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   @BeforeEach
   public void beforeEach() {
     usersClient.deleteAllUsers();
-    userTenantClient.deleteAllUserTenants();
   }
 
   @Test
