@@ -6,6 +6,7 @@ public class UsersApiConstants {
 
   private UsersApiConstants() {}
   public static final long MAX_DOCUMENT_SIZE = 10 * ONE_MB;
+  public static final String PROFILE_PICTURE_FOR_SHADOW_USER_ERROR_MSG = "Profile Picture feature is not applicable for user's type SHADOW";
   public static final String KEY_ERROR = "Encryption key is null";
   public static final String TABLE_NAME_PROFILE_PICTURE = "profile_picture";
   public static final String TABLE_NAME_USERS = "users";

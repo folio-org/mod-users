@@ -29,6 +29,7 @@ import static org.folio.support.UsersApiConstants.JSONB;
 import static org.folio.support.UsersApiConstants.KEY_ERROR;
 import static org.folio.support.UsersApiConstants.MAX_DOCUMENT_SIZE;
 import static org.folio.support.UsersApiConstants.MAX_FILE_SIZE;
+import static org.folio.support.UsersApiConstants.PROFILE_PICTURE_FOR_SHADOW_USER_ERROR_MSG;
 import static org.folio.support.UsersApiConstants.RETURNING_USERS_ID_SQL;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
@@ -238,10 +239,8 @@ public class UsersAPI implements Users {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PostUsersResponse::respond500WithTextPlain);
 
-    if (Objects.nonNull(entity) && Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
-      if (entity.getType().equals(SHADOW.getTypeName()) && Objects.nonNull(entity.getPersonal().getProfilePictureLink())) {
-        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond500WithTextPlain("Profile Picture feature is not applicable for user's type SHADOW")));
-      }
+    if (isProfilePictureLinkPresentForShadow(entity)) {
+      asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond500WithTextPlain(PROFILE_PICTURE_FOR_SHADOW_USER_ERROR_MSG)));
     }
 
     try {
@@ -500,10 +499,8 @@ public class UsersAPI implements Users {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PutUsersByUserIdResponse::respond500WithTextPlain);
 
-    if (Objects.nonNull(entity) && Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
-      if (entity.getType().equals(SHADOW.getTypeName()) && Objects.nonNull(entity.getPersonal().getProfilePictureLink())) {
-        asyncResultHandler.handle(succeededFuture(PutUsersByUserIdResponse.respond500WithTextPlain("Profile Picture feature is not applicable for user's type SHADOW")));
-      }
+    if (isProfilePictureLinkPresentForShadow(entity)) {
+      asyncResultHandler.handle(succeededFuture(PutUsersByUserIdResponse.respond500WithTextPlain(PROFILE_PICTURE_FOR_SHADOW_USER_ERROR_MSG)));
     }
 
     try {
@@ -568,6 +565,13 @@ public class UsersAPI implements Users {
     } catch (Exception e) {
       failureHandler.handleFailure(e);
     }
+  }
+
+  private boolean isProfilePictureLinkPresentForShadow(User entity) {
+    if (Objects.nonNull(entity) && Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
+      return entity.getType().equals(SHADOW.getTypeName()) && Objects.nonNull(entity.getPersonal().getProfilePictureLink());
+    }
+    return false;
   }
 
   @Override
