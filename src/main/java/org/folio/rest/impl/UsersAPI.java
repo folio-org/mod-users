@@ -238,7 +238,7 @@ public class UsersAPI implements Users {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PostUsersResponse::respond500WithTextPlain);
 
-    if (Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
+    if (Objects.nonNull(entity) && Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
       if (entity.getType().equals(SHADOW.getTypeName()) && Objects.nonNull(entity.getPersonal().getProfilePictureLink())) {
         asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond500WithTextPlain("Profile Picture feature is not applicable for user's type SHADOW")));
       }
@@ -500,7 +500,7 @@ public class UsersAPI implements Users {
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PutUsersByUserIdResponse::respond500WithTextPlain);
 
-    if (Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
+    if (Objects.nonNull(entity) && Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
       if (entity.getType().equals(SHADOW.getTypeName()) && Objects.nonNull(entity.getPersonal().getProfilePictureLink())) {
         asyncResultHandler.handle(succeededFuture(PutUsersByUserIdResponse.respond500WithTextPlain("Profile Picture feature is not applicable for user's type SHADOW")));
       }
