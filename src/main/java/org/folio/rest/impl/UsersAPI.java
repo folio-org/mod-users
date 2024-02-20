@@ -4,6 +4,7 @@ import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static java.util.Collections.emptyList;
 import static org.apache.commons.io.FileUtils.ONE_MB;
+import static org.folio.domain.UserType.SHADOW;
 import static org.folio.event.service.UserTenantService.INVALID_USER_TYPE_POPULATED;
 import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATED;
 import static org.folio.rest.RestVerticle.STREAM_ABORT;
@@ -236,6 +237,12 @@ public class UsersAPI implements Users {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PostUsersResponse::respond500WithTextPlain);
+
+    if (Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
+      if (entity.getType().equals(SHADOW.getTypeName()) && Objects.nonNull(entity.getPersonal().getProfilePictureLink())) {
+        asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond500WithTextPlain("Profile Picture feature is not applicable for user's type SHADOW")));
+      }
+    }
 
     try {
       var dateOfBirthError = validateDateOfBirth(entity);
@@ -492,6 +499,12 @@ public class UsersAPI implements Users {
 
     final var failureHandler = new FailureHandler(asyncResultHandler, logger,
       PutUsersByUserIdResponse::respond500WithTextPlain);
+
+    if (Objects.nonNull(entity.getPersonal()) && Objects.nonNull(entity.getType())) {
+      if (entity.getType().equals(SHADOW.getTypeName()) && Objects.nonNull(entity.getPersonal().getProfilePictureLink())) {
+        asyncResultHandler.handle(succeededFuture(PutUsersByUserIdResponse.respond500WithTextPlain("Profile Picture feature is not applicable for user's type SHADOW")));
+      }
+    }
 
     try {
       var dateOfBirthError = validateDateOfBirth(entity);

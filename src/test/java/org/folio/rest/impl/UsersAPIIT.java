@@ -16,6 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.domain.UserType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 
 import java.io.ByteArrayInputStream;
@@ -109,6 +110,25 @@ class UsersAPIIT extends AbstractRestTestNoData {
     assertThat(createdUser.getTags().getTagList(), containsInAnyOrder("foo", "bar"));
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
+  }
+
+  @Test
+  void canNotCreateUser() {
+    final var userToCreate = User.builder()
+      .username("juliab")
+      .active(true)
+      .type(UserType.SHADOW.getTypeName())
+      .id("999fd1a4-1865-4991-ae9d-6c9f75d4b043")
+      .personal(Personal.builder()
+        .firstName("julia")
+        .profilePictureLink("/link")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+    usersClient.attemptToCreateUser(userToCreate)
+      .statusCode(is(500));
   }
 
   @Test
@@ -301,6 +321,23 @@ class UsersAPIIT extends AbstractRestTestNoData {
         final var updatedUser = usersClient.getUser(user.getId());
         assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
       });
+  }
+
+  @Test
+  void canNotUpdateAUser() {
+    final var user = usersClient.createUser(User.builder()
+      .username("julia")
+      .type(UserType.SHADOW.getTypeName())
+      .build());
+    Personal personal = Personal.builder().lastName("mark").profilePictureLink("/link").build();
+
+    usersClient.attemptToUpdateUser(User.builder()
+        .id(user.getId())
+        .username("julia-brockhurst")
+        .personal(personal)
+        .type(UserType.SHADOW.getTypeName())
+        .build())
+      .statusCode(is(500));
   }
 
   @Test
