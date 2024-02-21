@@ -27,6 +27,7 @@
 * Integrated Kafka for real-time event processing and messaging (MODUSERS-347)
 * Upgrading tenant resets reference and sample records (MODUSERS-335)
 * Add the buildMvn GitHub Action workflow (FOLIO-3629)
+* Add condition to disable profile picture functionality for user's type SHADOW
 
 ## 19.1.0 2023-02-13
 
