@@ -241,6 +241,7 @@ public class UsersAPI implements Users {
 
     if (isProfilePictureLinkPresentForShadow(entity)) {
       asyncResultHandler.handle(succeededFuture(PostUsersResponse.respond500WithTextPlain(PROFILE_PICTURE_FOR_SHADOW_USER_ERROR_MSG)));
+      return;
     }
 
     try {
@@ -501,6 +502,7 @@ public class UsersAPI implements Users {
 
     if (isProfilePictureLinkPresentForShadow(entity)) {
       asyncResultHandler.handle(succeededFuture(PutUsersByUserIdResponse.respond500WithTextPlain(PROFILE_PICTURE_FOR_SHADOW_USER_ERROR_MSG)));
+      return;
     }
 
     try {
