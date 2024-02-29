@@ -18,17 +18,17 @@ public class FolioS3ClientFactory {
 
   public FolioS3Client getFolioS3Client(Map<String, String> okapiHeaders) {
     String tenant = okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER);
-    return tenantS3ClientMap.computeIfAbsent(tenant, k -> createFolioS3Client(okapiHeaders));
+    return tenantS3ClientMap.computeIfAbsent(tenant, k -> createFolioS3Client());
   }
 
-  private FolioS3Client createFolioS3Client(Map<String, String> okapiHeaders) {
+  private FolioS3Client createFolioS3Client() {
     return S3ClientFactory.getS3Client(
       S3ClientProperties
         .builder()
         .endpoint(getValues("AWS_URL"))
         .accessKey(getValues("AWS_ACCESS_KEY_ID"))
         .secretKey(getValues("AWS_SECRET_ACCESS_KEY"))
-        .bucket(okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER))
+        .bucket(getValues("AWS_BUCKET"))
         .region(getValues("AWS_REGION"))
         .build()
     );
