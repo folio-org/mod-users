@@ -41,7 +41,26 @@ import static org.folio.support.ProfilePictureHelper.calculateHmac;
 import static org.folio.support.ProfilePictureHelper.decryptAES;
 import static org.folio.support.ProfilePictureHelper.encryptAES;
 import static org.folio.support.ProfilePictureHelper.verifyHmac;
-import static org.folio.support.UsersApiConstants.*;
+import static org.folio.support.UsersApiConstants.BLOB;
+import static org.folio.support.UsersApiConstants.CHECKSUM;
+import static org.folio.support.UsersApiConstants.CONFIG_NAME;
+import static org.folio.support.UsersApiConstants.DELETE_UNUSED_PROFILE_IDS;
+import static org.folio.support.UsersApiConstants.ENABLED;
+import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
+import static org.folio.support.UsersApiConstants.ENCRYPTION_KEY;
+import static org.folio.support.UsersApiConstants.GET_CONFIGURATION_SQL;
+import static org.folio.support.UsersApiConstants.GET_PROFILE_PICTURE_SQL;
+import static org.folio.support.UsersApiConstants.ID;
+import static org.folio.support.UsersApiConstants.JSONB;
+import static org.folio.support.UsersApiConstants.MAX_FILE_SIZE;
+import static org.folio.support.UsersApiConstants.MAX_IDS_COUNT;
+import static org.folio.support.UsersApiConstants.PROFILE_LINK_IDS;
+import static org.folio.support.UsersApiConstants.SAVE_PROFILE_PICTURE_SQL;
+import static org.folio.support.UsersApiConstants.SELECT_USERS_PROFILE_LINK_ID;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
+import static org.folio.support.UsersApiConstants.UPDATE_PROFILE_PICTURE_SQL;
 
 public class ProfilePictureStorage {
   private final FolioS3ClientFactory folioS3ClientFactory = new FolioS3ClientFactory();
@@ -304,7 +323,7 @@ public class ProfilePictureStorage {
         String startAfter = null;
         FolioS3Client client = folioS3ClientFactory.getFolioS3Client(okapiHeaders);
         do {
-          List<String> pageOfObjectStorageIds = getObjectStorageIdsPage(startAfter, client);
+          List<String> pageOfObjectStorageIds = getObjectStorageIdsPage(TENANT_FOLDER, startAfter, client);
           filterUnusedIds(pageOfObjectStorageIds,TENANT_FOLDER, client, userProfileIds);
 
           // If the size of the current page is less than maxKeys, it means there are no more objects
@@ -346,9 +365,9 @@ public class ProfilePictureStorage {
     return resultFuture;
   }
 
-  private List<String> getObjectStorageIdsPage(String startAfter, FolioS3Client client) {
+  private List<String> getObjectStorageIdsPage(String path, String startAfter, FolioS3Client client) {
     try {
-      return client.list("", MAX_IDS_COUNT, startAfter);
+      return client.list(path, MAX_IDS_COUNT, startAfter);
     } catch (Exception e) {
       throw new S3ClientException("Error getting list of objects : {} ", e);
     }
@@ -356,12 +375,10 @@ public class ProfilePictureStorage {
 
   private void filterUnusedIds(List<String> objectStorageIds, String folder, FolioS3Client client, List<String> userProfileIds) {
     List<String> unusedIds = objectStorageIds.stream()
-      .filter(objectStorageId -> !userProfileIds.contains(objectStorageId))
+      .filter(objectStorageId -> !userProfileIds.contains(objectStorageId.substring(folder.length())))
       .toList();
-    List<String> unusedPaths = unusedIds.stream()
-      .map(id -> folder + id)
-      .toList();
-    client.remove(unusedPaths.toArray(new String[0]));
+
+    client.remove(unusedIds.toArray(new String[0]));
   }
 
   private ProfilePicture mapResultSetToProfilePicture(Row row, String encryptionKey) {

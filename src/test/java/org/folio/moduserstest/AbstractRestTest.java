@@ -101,6 +101,7 @@ public abstract class AbstractRestTest {
     System.setProperty("AWS_REGION", localStackContainer.getRegion());
     System.setProperty("AWS_ACCESS_KEY_ID", localStackContainer.getAccessKey());
     System.setProperty("AWS_SECRET_ACCESS_KEY", localStackContainer.getSecretKey());
+    System.setProperty("AWS_BUCKET", TENANT_NAME);
     s3Client = S3ClientFactory.getS3Client(
       S3ClientProperties
         .builder()
