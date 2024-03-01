@@ -37,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
+import static org.folio.support.ProfilePictureHelper.bytesToMegabytes;
 import static org.folio.support.ProfilePictureHelper.calculateHmac;
 import static org.folio.support.ProfilePictureHelper.decryptAES;
 import static org.folio.support.ProfilePictureHelper.encryptAES;
@@ -44,6 +45,7 @@ import static org.folio.support.ProfilePictureHelper.verifyHmac;
 import static org.folio.support.UsersApiConstants.BLOB;
 import static org.folio.support.UsersApiConstants.CHECKSUM;
 import static org.folio.support.UsersApiConstants.CONFIG_NAME;
+import static org.folio.support.UsersApiConstants.CREATED_DATE;
 import static org.folio.support.UsersApiConstants.DELETE_UNUSED_PROFILE_IDS;
 import static org.folio.support.UsersApiConstants.ENABLED;
 import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
@@ -57,6 +59,7 @@ import static org.folio.support.UsersApiConstants.MAX_IDS_COUNT;
 import static org.folio.support.UsersApiConstants.PROFILE_LINK_IDS;
 import static org.folio.support.UsersApiConstants.SAVE_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.SELECT_USERS_PROFILE_LINK_ID;
+import static org.folio.support.UsersApiConstants.SIZE_IN_MB;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
@@ -150,8 +153,8 @@ public class ProfilePictureStorage {
       UUID profileId = UUID.randomUUID();
       byte[] encryptedData = encryptAES(requestBytesArray, encryptionKey);
       byte[] hmac = calculateHmac(encryptedData, encryptionKey);
-
-      Tuple params = Tuple.of(profileId, encryptedData, hmac);
+      JsonObject profilePictureDetails = createProfilePictureDetails(bytesToMegabytes(encryptedData.length));
+      Tuple params = Tuple.of(profileId, encryptedData, hmac, profilePictureDetails);
       PgUtil.postgresClient(vertxContext, okapiHeaders)
         .execute(createInsertQuery(okapiHeaders), params)
         .map(rows -> Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(profileId)))
@@ -171,6 +174,12 @@ public class ProfilePictureStorage {
       asyncResultHandler.handle(
         succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson("Error encrypting profile picture data")));
     }
+  }
+
+  private JsonObject createProfilePictureDetails(double size) {
+    return new JsonObject()
+      .put(SIZE_IN_MB, size)
+      .put(CREATED_DATE, java.time.Instant.now());
   }
 
   public void getProfilePictureFromDbStorage(String profileId, Handler<AsyncResult<Response>> asyncResultHandler,
@@ -214,8 +223,9 @@ public class ProfilePictureStorage {
     try {
       byte[] encryptedData = encryptAES(requestedBytesArray, encryptionKey);
       byte[] hmac = calculateHmac(encryptedData, encryptionKey);
+      JsonObject profilePictureDetails = createProfilePictureDetails(bytesToMegabytes(encryptedData.length));
       PgUtil.postgresClient(vertxContext, okapiHeaders)
-        .execute(createUpdateQuery(okapiHeaders), Tuple.of(encryptedData, hmac, profileId))
+        .execute(createUpdateQuery(okapiHeaders), Tuple.of(encryptedData, hmac, profilePictureDetails, profileId))
         .compose(rows -> {
           if (rows.rowCount() != 0) {
             logger.info("updateProfilePictureInDbStorage:: Updated profile picture with id {}", profileId);
