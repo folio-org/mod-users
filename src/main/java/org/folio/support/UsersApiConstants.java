@@ -11,10 +11,10 @@ public class UsersApiConstants {
   public static final String TABLE_NAME_PROFILE_PICTURE = "profile_picture";
   public static final String TABLE_NAME_USERS = "users";
   public static final String TABLE_NAME_CONFIG = "configuration";
-  public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob, hmac) VALUES ($1, $2, $3)";
+  public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob, hmac, picture_details) VALUES ($1, $2, $3, $4)";
   public static final String GET_CONFIGURATION_SQL = "SELECT * FROM %s.%s WHERE configName = 'PROFILE_PICTURE_CONFIG'";
   public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
-  public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s SET profile_picture_blob = $1, hmac = $2 WHERE id = $3 RETURNING id";
+  public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s SET profile_picture_blob = $1, hmac = $2, picture_details = $3 WHERE id = $4 RETURNING id";
   public static final String DELETE_PROFILE_PICTURE_SQL = "DELETE from %s.%s where id = $1";
   public static final String GET_PROFILE_PICTURE_SQL = "SELECT * from %s.%s WHERE id = $1";
   public static final String GET_CONFIG_SQL = "SELECT * from %s.%s";
@@ -51,4 +51,7 @@ public class UsersApiConstants {
       );
     """;
 
+  public static final String SIZE_IN_MB = "fileSizeInMegaBytes";
+
+  public static final String CREATED_DATE = "createdDate";
 }

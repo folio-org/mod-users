@@ -17,6 +17,7 @@ import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.rest.utils.OkapiConnectionParams;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
 
@@ -36,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
+import static org.folio.support.ProfilePictureHelper.bytesToMegabytes;
 import static org.folio.support.ProfilePictureHelper.calculateHmac;
 import static org.folio.support.ProfilePictureHelper.decryptAES;
 import static org.folio.support.ProfilePictureHelper.encryptAES;
@@ -43,6 +45,7 @@ import static org.folio.support.ProfilePictureHelper.verifyHmac;
 import static org.folio.support.UsersApiConstants.BLOB;
 import static org.folio.support.UsersApiConstants.CHECKSUM;
 import static org.folio.support.UsersApiConstants.CONFIG_NAME;
+import static org.folio.support.UsersApiConstants.CREATED_DATE;
 import static org.folio.support.UsersApiConstants.DELETE_UNUSED_PROFILE_IDS;
 import static org.folio.support.UsersApiConstants.ENABLED;
 import static org.folio.support.UsersApiConstants.ENABLED_OBJECT_STORAGE;
@@ -56,6 +59,7 @@ import static org.folio.support.UsersApiConstants.MAX_IDS_COUNT;
 import static org.folio.support.UsersApiConstants.PROFILE_LINK_IDS;
 import static org.folio.support.UsersApiConstants.SAVE_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.SELECT_USERS_PROFILE_LINK_ID;
+import static org.folio.support.UsersApiConstants.SIZE_IN_MB;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_CONFIG;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_PROFILE_PICTURE;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
@@ -68,17 +72,18 @@ public class ProfilePictureStorage {
 
   public void storeProfilePictureInObjectStorage(byte[] fileBytes, Map<String, String> okapiHeaders, String profileId,
                         Handler<AsyncResult<Response>> asyncResultHandler) {
+    final String TENANT_FOLDER = okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER) + "/";
     var client = folioS3ClientFactory.getFolioS3Client(okapiHeaders);
       try {
         if (StringUtils.isNotEmpty(profileId)) {
-          path = profileId;
+          path = TENANT_FOLDER + profileId;
           client.getSize(path);
           logger.info("storeProfilePictureInObjectStorage:: Updating file {}", profileId);
           client.write(path, new ByteArrayInputStream(fileBytes), fileBytes.length);
           asyncResultHandler.handle(succeededFuture(Users.PutUsersProfilePictureByProfileIdResponse.respond200WithApplicationJson(new ProfilePicture().withId(UUID.fromString(path.substring(path.lastIndexOf("/") + 1))))));
           }
         else if (Objects.isNull(path)) {
-          path = String.valueOf(UUID.randomUUID());
+          path = TENANT_FOLDER + UUID.randomUUID();
           logger.info("storeProfilePictureInObjectStorage:: Writing file {}", path);
           client.write(path, new ByteArrayInputStream(fileBytes), fileBytes.length);
           asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(UUID.fromString(path.substring(path.lastIndexOf("/") + 1))))));
@@ -96,9 +101,10 @@ public class ProfilePictureStorage {
 
   public void removeProfilePictureFromObjectStorage(Map<String, String> okapiHeaders, String profileId,
                                                  Handler<AsyncResult<Response>> asyncResultHandler) {
+    final String TENANT_FOLDER = okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER) + "/";
     var client = folioS3ClientFactory.getFolioS3Client(okapiHeaders);
     try {
-      path = profileId;
+      path = TENANT_FOLDER + profileId;
       logger.info("storeProfilePictureInObjectStorage:: Removing file {}", profileId);
       client.getSize(path);
       client.remove(path);
@@ -116,10 +122,11 @@ public class ProfilePictureStorage {
 
   public void getProfilePictureFromObjectStorage(String fileName,
                                                  Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders) {
+    final String TENANT_FOLDER = okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER) + "/";
     var client = folioS3ClientFactory.getFolioS3Client(okapiHeaders);
     try {
       logger.info("getProfilePictureFromObjectStorage:: Getting profile picture from object storage with id {}", fileName);
-      path = fileName;
+      path = TENANT_FOLDER + fileName;
       var object = client.getPresignedUrl(path);
       URL url = new URI(object).toURL();
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -146,8 +153,8 @@ public class ProfilePictureStorage {
       UUID profileId = UUID.randomUUID();
       byte[] encryptedData = encryptAES(requestBytesArray, encryptionKey);
       byte[] hmac = calculateHmac(encryptedData, encryptionKey);
-
-      Tuple params = Tuple.of(profileId, encryptedData, hmac);
+      JsonObject profilePictureDetails = createProfilePictureDetails(bytesToMegabytes(encryptedData.length));
+      Tuple params = Tuple.of(profileId, encryptedData, hmac, profilePictureDetails);
       PgUtil.postgresClient(vertxContext, okapiHeaders)
         .execute(createInsertQuery(okapiHeaders), params)
         .map(rows -> Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(profileId)))
@@ -167,6 +174,12 @@ public class ProfilePictureStorage {
       asyncResultHandler.handle(
         succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson("Error encrypting profile picture data")));
     }
+  }
+
+  private JsonObject createProfilePictureDetails(double size) {
+    return new JsonObject()
+      .put(SIZE_IN_MB, size)
+      .put(CREATED_DATE, java.time.Instant.now());
   }
 
   public void getProfilePictureFromDbStorage(String profileId, Handler<AsyncResult<Response>> asyncResultHandler,
@@ -210,8 +223,9 @@ public class ProfilePictureStorage {
     try {
       byte[] encryptedData = encryptAES(requestedBytesArray, encryptionKey);
       byte[] hmac = calculateHmac(encryptedData, encryptionKey);
+      JsonObject profilePictureDetails = createProfilePictureDetails(bytesToMegabytes(encryptedData.length));
       PgUtil.postgresClient(vertxContext, okapiHeaders)
-        .execute(createUpdateQuery(okapiHeaders), Tuple.of(encryptedData, hmac, profileId))
+        .execute(createUpdateQuery(okapiHeaders), Tuple.of(encryptedData, hmac, profilePictureDetails, profileId))
         .compose(rows -> {
           if (rows.rowCount() != 0) {
             logger.info("updateProfilePictureInDbStorage:: Updated profile picture with id {}", profileId);
@@ -313,13 +327,14 @@ public class ProfilePictureStorage {
     logger.info("getUsersProfileLinkIdsAsync:: Getting users profile linked ids..");
     CompletableFuture<Void> resultFuture = new CompletableFuture<>();
     CompletableFuture<List<String>> userProfileIdsFuture = getUsersProfileLinkIdsAsync(okapiHeaders, vertxContext);
+    final String TENANT_FOLDER = okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER) + "/";
     userProfileIdsFuture.thenAccept(userProfileIds -> {
       try {
         String startAfter = null;
         FolioS3Client client = folioS3ClientFactory.getFolioS3Client(okapiHeaders);
         do {
-          List<String> pageOfObjectStorageIds = getObjectStorageIdsPage(startAfter, client);
-          filterUnusedIds(pageOfObjectStorageIds, client, userProfileIds);
+          List<String> pageOfObjectStorageIds = getObjectStorageIdsPage(TENANT_FOLDER, startAfter, client);
+          filterUnusedIds(pageOfObjectStorageIds,TENANT_FOLDER, client, userProfileIds);
 
           // If the size of the current page is less than maxKeys, it means there are no more objects
           if (pageOfObjectStorageIds.size() < MAX_IDS_COUNT) {
@@ -360,20 +375,20 @@ public class ProfilePictureStorage {
     return resultFuture;
   }
 
-  private List<String> getObjectStorageIdsPage(String startAfter, FolioS3Client client) {
+  private List<String> getObjectStorageIdsPage(String path, String startAfter, FolioS3Client client) {
     try {
-      return client.list("", MAX_IDS_COUNT, startAfter);
+      return client.list(path, MAX_IDS_COUNT, startAfter);
     } catch (Exception e) {
       throw new S3ClientException("Error getting list of objects : {} ", e);
     }
   }
 
-  private List<String> filterUnusedIds(List<String> objectStorageIds, FolioS3Client client, List<String> userProfileIds) {
+  private void filterUnusedIds(List<String> objectStorageIds, String folder, FolioS3Client client, List<String> userProfileIds) {
     List<String> unusedIds = objectStorageIds.stream()
-      .filter(objectStorageId -> !userProfileIds.contains(objectStorageId))
+      .filter(objectStorageId -> !userProfileIds.contains(objectStorageId.substring(folder.length())))
       .toList();
+
     client.remove(unusedIds.toArray(new String[0]));
-    return unusedIds;
   }
 
   private ProfilePicture mapResultSetToProfilePicture(Row row, String encryptionKey) {

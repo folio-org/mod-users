@@ -78,4 +78,8 @@ public class ProfilePictureHelper {
   private static boolean isPNG(byte[] data) {
     return data[0] == (byte) 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G';
   }
+
+  public static double bytesToMegabytes(long bytes) {
+    return (double) bytes / (1024 * 1024);
+  }
 }
