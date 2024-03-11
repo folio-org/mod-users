@@ -161,7 +161,8 @@ public class ProfilePictureStorage {
         .map(Response.class::cast)
         .onComplete(reply -> {
           if (reply.cause() != null) {
-            logger.error("storeProfilePictureInDbStorage:: Can not store profile picture in DB because of {}", reply.cause().getMessage());
+            logger.error("storeProfilePictureInDbStorage:: Can not store profile picture in DB with id {} because of {}",
+              profileId, reply.cause().getMessage());
             asyncResultHandler.handle(
               succeededFuture(Users.PostUsersProfilePictureResponse.respond500WithApplicationJson(reply.cause().getMessage())));
           } else {
