@@ -19,6 +19,7 @@
 * Updating interface version from 16.0 to 16.1 (MODUSERS-437)
 * Upgrading dependencies for Quesnelia (MODUSERS-441)
 
+
 ## 19.2.0 2023-10-11
 
 * Upgraded folio-custom-fields to 1.10.0
