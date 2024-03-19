@@ -39,7 +39,7 @@ public class UserTenantsAPI implements UserTenants {
 
   @Override
   public void getUserTenants(String userId, String username, String tenantId, String email, String phoneNumber, String mobilePhoneNumber,
-                             String barcode, String externalSystemId, String queryOp, int offset, int limit, String lang,
+                             String barcode, String externalSystemId, String queryOp, String totalRecords, int offset, int limit,
                              Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
                              Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
@@ -60,7 +60,7 @@ public class UserTenantsAPI implements UserTenants {
   }
 
   @Override
-  public void postUserTenants(String lang, UserTenant userTenant, Map<String, String> okapiHeaders,
+  public void postUserTenants(UserTenant userTenant, Map<String, String> okapiHeaders,
                               Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     logger.debug("Trying to save user-tenant with id: {}, userId: {}, userName: {}, tenantId: {}.",

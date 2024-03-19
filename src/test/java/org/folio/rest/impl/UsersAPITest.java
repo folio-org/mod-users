@@ -44,7 +44,7 @@ import io.vertx.junit5.VertxTestContext;
 @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
 class UsersAPITest {
   String response(String message, Throwable e) {
-    Response response = UsersAPI.response(message, e, /* lang */ null,
+    Response response = UsersAPI.response(message, e,
         s -> Response.ok("400 " + s).build(),
         s -> Response.ok("500 " + s).build());
     return response.getEntity().toString();
@@ -84,7 +84,7 @@ class UsersAPITest {
 
   @Test
   void getUsersExceptionInCatch(VertxTestContext vtc) {
-    new UsersAPI().getUsers(null, null, null, 0, 0, null, null, null,
+    new UsersAPI().getUsers(null, null, null, null, 0, 0, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -93,7 +93,7 @@ class UsersAPITest {
 
   @Test
   void postUsersException(VertxTestContext vtc) {
-    new UsersAPI().postUsers(null, null, null, null,
+    new UsersAPI().postUsers(null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -106,7 +106,7 @@ class UsersAPITest {
     CustomFields customFields = new CustomFields().withAdditionalProperty("test", "");
     User user = new User().withCustomFields(customFields);
 
-    new UsersAPI().postUsers(null, user, null, okapiHeaders,
+    new UsersAPI().postUsers(user, null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty());
         vtc.completeNow();
@@ -118,7 +118,7 @@ class UsersAPITest {
     Map<String,String> okapiHeaders = new HashMap<>();
     User user = new User().withType(UserType.DCB.getTypeName());
 
-    new UsersAPI().postUsers(null, user, null, okapiHeaders,
+    new UsersAPI().postUsers(user, null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertTrue(user.getType().equalsIgnoreCase(UserType.DCB.getTypeName()));
         vtc.completeNow();
@@ -154,7 +154,7 @@ class UsersAPITest {
 
   @Test
   void postUsersExceptionInOtherwise(VertxTestContext vtc) {
-    new UsersAPI().postUsers(null, new User(), null, null,
+    new UsersAPI().postUsers(new User(), null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -173,7 +173,7 @@ class UsersAPITest {
         };
       }
     };
-    new UsersAPI().postUsers(null, new User(), null, okapiHeaders,
+    new UsersAPI().postUsers(new User(), null, okapiHeaders,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -182,7 +182,7 @@ class UsersAPITest {
 
   @Test
   void putUsersByUserIdException(VertxTestContext vtc) {
-    new UsersAPI().putUsersByUserId(null, null, null, null,
+    new UsersAPI().putUsersByUserId(null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();

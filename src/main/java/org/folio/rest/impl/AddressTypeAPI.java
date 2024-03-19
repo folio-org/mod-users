@@ -38,25 +38,23 @@ public class AddressTypeAPI implements Addresstypes {
 
   @Validate
   @Override
-  public void getAddresstypes(String query, int offset, int limit, String lang,
-      Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void getAddresstypes(String query, String totalRecords, int offset, int limit,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.get(ADDRESS_TYPE_TABLE, AddressType.class, AddresstypeCollection.class,
       query, offset, limit, okapiHeaders, vertxContext, GetAddresstypesResponse.class, asyncResultHandler);
   }
 
   @Override
-  public void postAddresstypes(String lang, AddressType entity,
-      Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+  public void postAddresstypes(AddressType entity, Map<String, String> okapiHeaders,
+    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.post(ADDRESS_TYPE_TABLE, entity, okapiHeaders, vertxContext,
       PostAddresstypesResponse.class, asyncResultHandler);
   }
 
   @Override
-  public void getAddresstypesByAddresstypeId(String addresstypeId, String lang,
+  public void getAddresstypesByAddresstypeId(String addresstypeId,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
@@ -65,7 +63,7 @@ public class AddressTypeAPI implements Addresstypes {
   }
 
   @Override
-  public void deleteAddresstypesByAddresstypeId(String addresstypeId, String lang,
+  public void deleteAddresstypesByAddresstypeId(String addresstypeId,
       Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
 
@@ -99,7 +97,7 @@ public class AddressTypeAPI implements Addresstypes {
   }
 
   @Override
-  public void putAddresstypesByAddresstypeId(String addresstypeId, String lang,
+  public void putAddresstypesByAddresstypeId(String addresstypeId,
       AddressType entity, Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 

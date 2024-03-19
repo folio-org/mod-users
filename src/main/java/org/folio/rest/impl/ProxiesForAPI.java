@@ -30,9 +30,8 @@ public class ProxiesForAPI implements Proxiesfor {
   private static final Logger logger = LogManager.getLogger(ProxiesForAPI.class);
 
   @Override
-  public void getProxiesfor(String query, int offset, int limit, String lang,
-    Map<String, String> okapiHeaders,
-    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void getProxiesfor(String query, String totalRecords, int offset, int limit,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.get(PROXY_FOR_TABLE, ProxiesFor.class, ProxyforCollection.class,
       query, offset, limit, okapiHeaders, vertxContext,
@@ -40,8 +39,7 @@ public class ProxiesForAPI implements Proxiesfor {
   }
 
   @Override
-  public void postProxiesfor(String lang, ProxiesFor entity,
-    Map<String, String> okapiHeaders,
+  public void postProxiesfor(ProxiesFor entity, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     var postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
@@ -69,8 +67,7 @@ public class ProxiesForAPI implements Proxiesfor {
   }
 
   @Override
-  public void getProxiesforById(String id, String lang,
-    Map<String, String> okapiHeaders,
+  public void getProxiesforById(String id, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.getById(PROXY_FOR_TABLE, ProxiesFor.class, id, okapiHeaders,
@@ -78,8 +75,7 @@ public class ProxiesForAPI implements Proxiesfor {
   }
 
   @Override
-  public void deleteProxiesforById(String id, String lang,
-    Map<String, String> okapiHeaders,
+  public void deleteProxiesforById(String id, Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     PgUtil.deleteById(PROXY_FOR_TABLE, id, okapiHeaders, vertxContext,
@@ -87,7 +83,7 @@ public class ProxiesForAPI implements Proxiesfor {
   }
 
   @Override
-  public void putProxiesforById(String id, String lang, ProxiesFor entity,
+  public void putProxiesforById(String id, ProxiesFor entity,
     Map<String, String> okapiHeaders,
     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 

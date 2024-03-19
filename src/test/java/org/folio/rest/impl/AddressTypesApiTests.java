@@ -32,7 +32,7 @@ class AddressTypesApiTests {
 
     new AddressTypeAPI(client -> userRepository)
       .deleteAddresstypesByAddresstypeId(UUID.randomUUID().toString(),
-        "", Map.of(), handler, context);
+        Map.of(), handler, context);
 
     assertThat(handler.handledObject.succeeded(), is(true));
     assertThat(handler.handledObject.result().getStatus(), is(500));
