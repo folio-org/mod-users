@@ -197,7 +197,7 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void getUsers(String query, String orderBy, UsersGetOrder order, String totalRecords, int offset, int limit,
-                       RoutingContext routingContext, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    RoutingContext routingContext, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     try {
       logger.debug("Getting users");

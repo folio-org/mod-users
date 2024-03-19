@@ -23,7 +23,9 @@ public class UserGroupAPI implements Groups {
 
   @Validate
   @Override
-  public void getGroups(String query, String totalRecords, int offset, int limit, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void getGroups(String query, String totalRecords, int offset, int limit,
+    Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+
     PgUtil.get(GROUP_TABLE, Usergroup.class, Usergroups.class, query, offset, limit, okapiHeaders,
       vertxContext, GetGroupsResponse.class, asyncResultHandler);
   }
