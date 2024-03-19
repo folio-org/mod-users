@@ -45,6 +45,13 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -559,7 +566,7 @@
     <raml-module-builder.version>35.2.0</raml-module-builder.version>
     <vertx.version>4.5.4</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
-    <junit.version>5.8.1</junit.version>
+    <junit.version>5.10.0</junit.version>
     <folio-service-tools.version>4.0.0</folio-service-tools.version>
     <folio-custom-fields.version>2.1.0</folio-custom-fields.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
