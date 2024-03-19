@@ -173,7 +173,7 @@ public class UsersAPI implements Users {
     }
   }
 
-  static Response response(String message, Throwable e, String lang,
+  static Response response(String message, Throwable e,
       Function<String,Response> report400, Function<String,Response> report500) {
 
     try {
@@ -187,7 +187,7 @@ public class UsersAPI implements Users {
         }
         cause = cause.getCause();
       }
-      return report500.apply(messages.getMessage(lang, MessageConsts.InternalServerError));
+      return report500.apply(e != null ? e.getMessage() : "Internal Server Error");
     } catch (Exception e2) {
       logger.error(e2.getMessage(), e2);
       return report500.apply(e2.getMessage());
@@ -196,11 +196,8 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void getUsers(String query, String orderBy,
-      UsersGetOrder order, int offset, int limit,
-      String lang, RoutingContext routingContext, Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
+  public void getUsers(String query, String orderBy, UsersGetOrder order, String totalRecords, int offset, int limit,
+                       RoutingContext routingContext, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     try {
       logger.debug("Getting users");
@@ -212,7 +209,7 @@ public class UsersAPI implements Users {
         routingContext, okapiHeaders, vertxContext);
     } catch (Exception e) {
       logger.error(query, e);
-      Response response = response(query, e, lang,
+      Response response = response(query, e,
         GetUsersResponse::respond400WithTextPlain,
         GetUsersResponse::respond500WithTextPlain);
       asyncResultHandler.handle(succeededFuture(response));
@@ -232,7 +229,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void postUsers(String lang, User entity, RoutingContext routingContext,
+  public void postUsers(User entity, RoutingContext routingContext,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
@@ -294,8 +291,7 @@ public class UsersAPI implements Users {
           } else {
             logger.error(e.getMessage(), e);
             asyncResultHandler.handle(succeededFuture(
-              PostUsersResponse.respond500WithTextPlain(
-                messages.getMessage(lang, MessageConsts.InternalServerError))));
+              PostUsersResponse.respond500WithTextPlain(e.getMessage())));
           }
           return null;
         })
@@ -427,7 +423,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void getUsersByUserId(String userId, String lang,
+  public void getUsersByUserId(String userId,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -438,7 +434,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void deleteUsersByUserId(String userId, String lang,
+  public void deleteUsersByUserId(String userId,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -491,8 +487,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void putUsersByUserId(String userId,
-      String lang, User entity,
+  public void putUsersByUserId(String userId, User entity,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -558,8 +553,7 @@ public class UsersAPI implements Users {
                 customFieldValidationException.getErrors())));
           } else {
             asyncResultHandler.handle(succeededFuture(
-              PutUsersByUserIdResponse.respond500WithTextPlain(
-                messages.getMessage(lang, MessageConsts.InternalServerError))));
+              PutUsersByUserIdResponse.respond500WithTextPlain(e.getMessage())));
           }
           return null;
         })
