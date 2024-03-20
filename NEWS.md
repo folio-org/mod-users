@@ -1,3 +1,24 @@
+## 19.3.0 2024-03-20
+
+* Make username as required field for staff user type for ECS mode (MODUSERS-393)
+* ECS | Username uniqueness validation should be case insensitive for usernames from different tenants (MODUSERS-408)
+* Update to latest folio-custom-fields (FCFIELDS-44)
+* Forbid request to ECS tenant if it soft deleted (MODUSERS-408)
+* Unable to add custom fields fix (MODUSERS-413)
+* GET POST apis for profile_picture (MODUSERS-405)
+* Update Profile Picture API for Database Storage (MODUSERS-418)
+* Disable username uniqueness validation for system users (MODUSERS-421)
+* Added integration with minio/s3 (MODUSERS-406)
+* Delete Profile Picture API for Database Storage (MODUSERS-419)
+* Add migration script for custom fields (MODUSERS-426)
+* Put and delete API for profile pictures for Object storage (MODUSERS-422)
+* Added encryption/decryption for DB (MODUSERS-402)
+* Added cleanup job, maxFileSize Validation (MODUSERS-423)
+* Add fields to filtering in user tenants endpoint (MODUSERS-412)
+* Disabling profile pic functionality for shadow users (MODUSERS-427)
+* Updating interface version from 16.0 to 16.1 (MODUSERS-437)
+* Upgrading dependencies for Quesnelia (MODUSERS-441)
+
 ## 19.2.0 2023-10-11
 
 * Upgraded folio-custom-fields to 1.10.0
