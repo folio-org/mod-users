@@ -1,4 +1,4 @@
-## 19.3.0 2024-03-20
+## 19.3.1 2024-03-20
 
 * Make username as required field for staff user type for ECS mode (MODUSERS-393)
 * ECS | Username uniqueness validation should be case insensitive for usernames from different tenants (MODUSERS-408)
