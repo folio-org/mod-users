@@ -19,8 +19,60 @@ public class ProfilePictureHelper {
   private ProfilePictureHelper() {}
 
   @SuppressWarnings("java:S5542")
-  public static byte[] encryptAES(byte[] input, String key) throws NoSuchAlgorithmException, NoSuchPaddingException,
-    InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidParameterSpecException {
+//  public static byte[] encryptAES(byte[] input, String key) throws NoSuchAlgorithmException, NoSuchPaddingException,
+//    InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidParameterSpecException {
+//    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+//    SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
+//    cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+//    AlgorithmParameters params = cipher.getParameters();
+//    byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
+//    byte[] encryptedData = cipher.doFinal(input);
+//
+//    byte[] result = new byte[iv.length + encryptedData.length];
+//    System.arraycopy(iv, 0, result, 0, iv.length);
+//    System.arraycopy(encryptedData, 0, result, iv.length, encryptedData.length);
+//
+//    return result;
+//  }
+//
+//  @SuppressWarnings("java:S5542")
+//  public static byte[] decryptAES(byte[] input, String key) throws NoSuchAlgorithmException, NoSuchPaddingException,
+//    InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
+//    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+//    SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
+//    byte[] iv = new byte[16]; // Assuming 16 bytes IV length
+//    System.arraycopy(input, 0, iv, 0, 16);
+//    IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+//    cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
+//    return cipher.doFinal(input, 16, input.length - 16);
+//  }
+//
+  public static byte[] calculateHmac(byte[] data, String key) throws NoSuchAlgorithmException, InvalidKeyException {
+    Mac mac = Mac.getInstance("HmacSHA256");
+    SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "HmacSHA256");
+    mac.init(secretKey);
+    return mac.doFinal(data);
+  }
+
+  public static boolean verifyHmac(byte[] data, byte[] storedHmac, String key) throws NoSuchAlgorithmException, InvalidKeyException {
+    byte[] calculatedHmac = calculateHmac(data, key);
+    return MessageDigest.isEqual(calculatedHmac, storedHmac);
+  }
+
+  public static byte[] encryptAES(byte[] input, String factor) throws NoSuchAlgorithmException,
+    NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidParameterSpecException {
+    String key = generateKey(factor);
+    return performEncryption(input, key);
+  }
+
+  public static byte[] decryptAES(byte[] input, String factor) throws NoSuchAlgorithmException,
+    NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
+    String key = generateKey(factor);
+    return performDecryption(input, key);
+  }
+
+  private static byte[] performEncryption(byte[] input, String key) throws NoSuchAlgorithmException,
+    NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidParameterSpecException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
     cipher.init(Cipher.ENCRYPT_MODE, secretKey);
@@ -35,28 +87,19 @@ public class ProfilePictureHelper {
     return result;
   }
 
-  @SuppressWarnings("java:S5542")
-  public static byte[] decryptAES(byte[] input, String key) throws NoSuchAlgorithmException, NoSuchPaddingException,
-    InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
+  private static byte[] performDecryption(byte[] input, String key) throws NoSuchAlgorithmException,
+    NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "AES");
-    byte[] iv = new byte[16]; // Assuming 16 bytes IV length
+    byte[] iv = new byte[16];
     System.arraycopy(input, 0, iv, 0, 16);
     IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
     cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
     return cipher.doFinal(input, 16, input.length - 16);
   }
 
-  public static byte[] calculateHmac(byte[] data, String key) throws NoSuchAlgorithmException, InvalidKeyException {
-    Mac mac = Mac.getInstance("HmacSHA256");
-    SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(), "HmacSHA256");
-    mac.init(secretKey);
-    return mac.doFinal(data);
-  }
-
-  public static boolean verifyHmac(byte[] data, byte[] storedHmac, String key) throws NoSuchAlgorithmException, InvalidKeyException {
-    byte[] calculatedHmac = calculateHmac(data, key);
-    return MessageDigest.isEqual(calculatedHmac, storedHmac);
+  private static String generateKey(String factor) {
+    return factor;
   }
   public static String detectFileType(byte[] data) {
     if (data.length < 12) {
