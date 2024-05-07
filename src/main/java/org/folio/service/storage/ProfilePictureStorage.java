@@ -69,6 +69,7 @@ public class ProfilePictureStorage {
   private final FolioS3ClientFactory folioS3ClientFactory = new FolioS3ClientFactory();
   private String path;
   private static final Logger logger = LogManager.getLogger(ProfilePictureStorage.class);
+  private static final String  factor = UUID.randomUUID().toString() + System.currentTimeMillis();
 
   public void storeProfilePictureInObjectStorage(byte[] fileBytes, Map<String, String> okapiHeaders, String profileId,
                         Handler<AsyncResult<Response>> asyncResultHandler) {
@@ -151,7 +152,8 @@ public class ProfilePictureStorage {
                                              Handler<AsyncResult<Response>> asyncResultHandler, String encryptionKey, Context vertxContext) {
     try {
       UUID profileId = UUID.randomUUID();
-      byte[] encryptedData = encryptAES(requestBytesArray, encryptionKey);
+      System.out.println("------enc--------"+factor);
+      byte[] encryptedData = encryptAES(requestBytesArray, factor);
       byte[] hmac = calculateHmac(encryptedData, encryptionKey);
       JsonObject profilePictureDetails = createProfilePictureDetails(bytesToMegabytes(encryptedData.length));
       Tuple params = Tuple.of(profileId, encryptedData, hmac, profilePictureDetails);
@@ -397,7 +399,9 @@ public class ProfilePictureStorage {
     byte[] encryptedData = row.getBuffer(BLOB).getBytes();
 
     try {
-      byte[] decryptedData = decryptAES(encryptedData, encryptionKey);
+      System.out.println("------dyc--------"+factor);
+
+      byte[] decryptedData = decryptAES(encryptedData, factor);
       profilePicture.withProfilePictureBlob(Base64.getEncoder().encodeToString(decryptedData));
     } catch (Exception e) {
       logger.error("Error decrypting profile picture data: {}", e.getMessage());

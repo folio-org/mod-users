@@ -7,12 +7,14 @@ import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidParameterSpecException;
+import java.util.Base64;
 
 public class ProfilePictureHelper {
 
@@ -99,8 +101,18 @@ public class ProfilePictureHelper {
   }
 
   private static String generateKey(String factor) {
-    return factor;
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(factor.getBytes(StandardCharsets.UTF_8));
+      return Base64.getEncoder().encodeToString(hash).substring(0, 32); // Trim to 32 bytes for AES-256
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("SHA-256 algorithm not available", e);
+    }
   }
+
+//  private static String generateKey(String factor) {
+//    return factor;
+//  }
   public static String detectFileType(byte[] data) {
     if (data.length < 12) {
       throw new IllegalArgumentException("Insufficient data provided to detect file type");
