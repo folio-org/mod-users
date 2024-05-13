@@ -25,7 +25,8 @@ public class UserGroupAPI implements Groups {
   public void getGroups(String query, String totalRecords, int offset, int limit,
     Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
-    new UserGroupService(vertxContext, okapiHeaders).findByQuery(query, offset, limit);
+    new UserGroupService(vertxContext, okapiHeaders).findByQuery(query, offset, limit)
+      .onComplete(asyncResultHandler);
   }
 
   @Validate
