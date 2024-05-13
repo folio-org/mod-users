@@ -6,7 +6,6 @@ public enum ConsortiumEventType {
   CONSORTIUM_PRIMARY_AFFILIATION_UPDATED("CONSORTIUM_PRIMARY_AFFILIATION_UPDATED");
 
   private final String topicName;
-
   ConsortiumEventType(String topicName) {
     this.topicName = topicName;
   }
