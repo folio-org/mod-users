@@ -33,11 +33,6 @@ public class TenantRefAPI extends TenantAPI {
           if (isNew(attributes, "17.3.0")) {
             tl.withIdContent().add("groups-17.3.0", "groups");
           }
-          if (isNew(attributes, "19.3.2")) {
-            System.out.println("I am exe");
-            tl.withIdContent().add("groups-19.3.2", "groups");
-            System.out.println("exec success");
-          }
 
           tl.withKey("loadSample").withLead("sample-data");
           if (isNew(attributes, "15.4.0")) {
@@ -45,6 +40,11 @@ public class TenantRefAPI extends TenantAPI {
           }
           if (isNew(attributes, "17.3.0")) {
             tl.withIdContent().add("users-17.3.0", "users");
+          }
+          if (isNew(attributes, "19.4.0")) {
+            System.out.println("I am exe");
+            tl.withIdContent().add("groups-19.3.2", "groups");
+            System.out.println("exec success");
           }
 
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
