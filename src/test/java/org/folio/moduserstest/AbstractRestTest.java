@@ -1,9 +1,15 @@
 package org.folio.moduserstest;
 
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.junit5.VertxTestContext;
-import lombok.SneakyThrows;
+import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
+import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
+
+import java.lang.reflect.Field;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -37,15 +43,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.lang.reflect.Field;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
-
-import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
-import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxTestContext;
+import lombok.SneakyThrows;
 
 public abstract class AbstractRestTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRestTest.class);
@@ -58,6 +59,7 @@ public abstract class AbstractRestTest {
   protected static OkapiUrl okapiUrl;
   protected static OkapiHeaders okapiHeaders;
   protected static KafkaProducer<String, String> kafkaProducer;
+  protected static Vertx vertx;
 
   private static final KafkaContainer kafkaContainer =
     new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE_NAME));
@@ -74,9 +76,13 @@ public abstract class AbstractRestTest {
     okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
 
     kafkaContainer.start();
+    String kafkaHost = kafkaContainer.getHost();
+    String kafkaPort = String.valueOf(kafkaContainer.getFirstMappedPort());
     updateKafkaConfigField("envId", KAFKA_ENV_VALUE);
-    updateKafkaConfigField("kafkaHost", kafkaContainer.getHost());
-    updateKafkaConfigField("kafkaPort", String.valueOf(kafkaContainer.getFirstMappedPort()));
+    updateKafkaConfigField("kafkaHost", kafkaHost);
+    updateKafkaConfigField("kafkaPort", kafkaPort);
+    System.setProperty("kafka-host", kafkaHost);
+    System.setProperty("kafka-port", kafkaPort);
 
     kafkaProducer = createKafkaProducer();
 
@@ -115,7 +121,6 @@ public abstract class AbstractRestTest {
     );
     s3Client.createBucketIfNotExists();
   }
-
 
   @AfterAll
   public static void after(VertxTestContext context) {
