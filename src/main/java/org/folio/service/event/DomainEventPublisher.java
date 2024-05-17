@@ -26,7 +26,8 @@ public class DomainEventPublisher<K, T> {
   private final FailureHandler failureHandler;
 
   DomainEventPublisher(String kafkaTopic, KafkaProducerManager producerManager,
-                       FailureHandler failureHandler) {
+    FailureHandler failureHandler) {
+
     this.kafkaTopic = kafkaTopic;
     this.producerManager = producerManager;
     this.failureHandler = failureHandler;

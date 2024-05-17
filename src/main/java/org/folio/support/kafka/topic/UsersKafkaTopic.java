@@ -14,7 +14,7 @@ public enum UsersKafkaTopic implements KafkaTopic {
 
   @Override
   public String moduleName() {
-    return "circulation";
+    return "users";
   }
 
   @Override
