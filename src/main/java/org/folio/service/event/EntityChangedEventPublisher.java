@@ -23,19 +23,17 @@ public class EntityChangedEventPublisher<K, T> {
 
   private final Map<String, String> okapiHeaders;
   private final Function<T, K> keyExtractor;
-  private final K nullKey;
   private final EntityChangedEventFactory<T> eventFactory;
   private final DomainEventPublisher<K, EntityChangedData<T>> eventPublisher;
   private final AbstractRepository<T> repository;
 
   EntityChangedEventPublisher(Map<String, String> okapiHeaders,
-    Function<T, K> keyExtractor, K nullKey, EntityChangedEventFactory<T> eventFactory,
+    Function<T, K> keyExtractor, EntityChangedEventFactory<T> eventFactory,
     DomainEventPublisher<K, EntityChangedData<T>> eventPublisher,
     AbstractRepository<T> repository) {
 
     this.okapiHeaders = okapiHeaders;
     this.keyExtractor = keyExtractor;
-    this.nullKey = nullKey;
     this.eventFactory = eventFactory;
     this.eventPublisher = eventPublisher;
     this.repository = repository;

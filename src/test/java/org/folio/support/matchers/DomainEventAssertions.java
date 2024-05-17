@@ -60,10 +60,6 @@ public final class DomainEventAssertions {
     assertNotNull(USER_ID);
   }
 
-  private static JsonObject getDataValue(KafkaConsumerRecord<String, JsonObject> event, String field) {
-    return event.value().getJsonObject("data", new JsonObject()).getJsonObject(field);
-  }
-
   private static Matcher<String> hasUUIDFormat() {
 
     return new TypeSafeMatcher<String>() {
