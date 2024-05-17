@@ -14,15 +14,13 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class EntityChangedEventPublisherFactory {
 
-  private static final String NULL_ID = "00000000-0000-0000-0000-000000000000";
-
   private EntityChangedEventPublisherFactory() {
   }
 
   public static EntityChangedEventPublisher<String, Usergroup> userGroupEventPublisher(
       Context vertxContext, Map<String, String> okapiHeaders) {
 
-    return new EntityChangedEventPublisher<>(okapiHeaders, Usergroup::getId, NULL_ID,
+    return new EntityChangedEventPublisher<>(okapiHeaders, Usergroup::getId,
       new EntityChangedEventFactory<>(), new DomainEventPublisher<>(vertxContext,
       USER_GROUP.fullTopicName(tenantId(okapiHeaders)), FailureHandler.noOperation()),
       new UserGroupRepository(vertxContext, okapiHeaders));

@@ -101,7 +101,7 @@ public abstract class AbstractRestTest {
     .withServices(LocalStackContainer.Service.S3);
 
   @BeforeClass
-  public static void setUpClass() throws Exception {
+  public static void setUpClass() {
     localStackContainer.start();
     System.setProperty("AWS_URL", localStackContainer.getEndpoint().toString());
     System.setProperty("AWS_REGION", localStackContainer.getRegion());
@@ -149,7 +149,7 @@ public abstract class AbstractRestTest {
       records = kafkaConsumer.poll(Duration.ofMillis(3000));
     }
     return IteratorUtils.toList(records.iterator()).stream()
-        .map(ConsumerRecord::value).collect(Collectors.toList());
+        .map(ConsumerRecord::value).toList();
   }
 
   private static KafkaProducer<String, String> createKafkaProducer() {
@@ -163,9 +163,9 @@ public abstract class AbstractRestTest {
   @SneakyThrows
   public RecordMetadata sendEvent(String tenantId, String topic, String key, String value) {
     String topicName = formatToKafkaTopicName(tenantId, topic);
-    ProducerRecord<String, String> record = new ProducerRecord<>(topicName, key, value);
-    record.headers().add(OKAPI_TENANT_HEADER, TENANT_NAME.getBytes());
-    return kafkaProducer.send(record).get();
+    ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topicName, key, value);
+    producerRecord.headers().add(OKAPI_TENANT_HEADER, TENANT_NAME.getBytes());
+    return kafkaProducer.send(producerRecord).get();
   }
 
   private static String formatToKafkaTopicName(String tenant, String eventType) {
