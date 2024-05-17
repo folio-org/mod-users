@@ -11,7 +11,7 @@ public interface FailureHandler {
 
       @Override
       public <K> void handle(Throwable error, KafkaProducerRecord<K, String> producerRecord) {
-
+        // This implementation of the handle method intentionally does nothing
       }
     };
   }

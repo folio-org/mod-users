@@ -8,7 +8,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
