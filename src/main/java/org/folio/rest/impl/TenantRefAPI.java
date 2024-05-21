@@ -41,6 +41,9 @@ public class TenantRefAPI extends TenantAPI {
           if (isNew(attributes, "17.3.0")) {
             tl.withIdContent().add("users-17.3.0", "users");
           }
+          if (isNew(attributes, "19.4.0")) {
+            tl.withIdContent().add("groups-19.4.0", "groups");
+          }
 
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
         });
