@@ -572,7 +572,7 @@
     <folio-custom-fields.version>2.1.0</folio-custom-fields.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <java.version>17</java.version>
-    <aspectj.version>1.9.21.1</aspectj.version>
+    <aspectj.version>1.9.22</aspectj.version>
     <lombok.version>1.18.28</lombok.version>
     <folio-s3-client.version>2.1.0</folio-s3-client.version>
   </properties>
