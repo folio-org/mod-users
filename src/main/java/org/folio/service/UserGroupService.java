@@ -1,5 +1,6 @@
 package org.folio.service;
 
+import static org.folio.repository.UserGroupRepository.GROUP_TABLE;
 import static org.folio.rest.persist.PgUtil.postgresClient;
 import static org.folio.service.event.EntityChangedEventPublisherFactory.userGroupEventPublisher;
 
@@ -23,8 +24,6 @@ import io.vertx.core.Promise;
 public class UserGroupService {
 
   private static final Logger log = LogManager.getLogger(UserGroupService.class);
-  public static final String GROUP_TABLE = "groups";
-
   private final Context vertxContext;
   private final Map<String, String> okapiHeaders;
   private final PostgresClient postgresClient;
