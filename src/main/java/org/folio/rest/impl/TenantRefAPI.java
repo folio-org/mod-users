@@ -28,9 +28,7 @@ public class TenantRefAPI extends TenantAPI {
   Future<Integer> loadData(TenantAttributes attributes, String tenantId,
       Map<String, String> headers, Context vertxContext) {
 
-    return new KafkaAdminClientService(vertxContext.owner())
-      .createKafkaTopics(UsersKafkaTopic.values(), tenantId)
-      .compose(x -> super.loadData(attributes, tenantId, headers, vertxContext)
+    return super.loadData(attributes, tenantId, headers, vertxContext)
         .compose(superRecordsLoaded -> {
           log.info("creating kafka topics");
           new KafkaAdminClientService(vertxContext.owner())
@@ -56,7 +54,7 @@ public class TenantRefAPI extends TenantAPI {
           }
 
           return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
-        }));
+        });
   }
 
   @Validate
