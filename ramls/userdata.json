@@ -196,7 +196,6 @@
         "type": "string",
         "enum": ["Support", "Programs", "Service"]
       },
-      "minItems": 1,
       "maxItems": 3,
       "uniqueItems": true,
       "description": "Preferred email communication types"
