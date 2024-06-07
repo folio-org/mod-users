@@ -880,9 +880,12 @@ public class UsersAPI implements Users {
   private void validateEncryptionKey(Config entity, Map<String, String> okapiHeaders,Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext){
     profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config -> {
+        logger.info(config);
         if(Objects.nonNull(entity.getEncryptionKey()) && (!Objects.equals(entity.getEncryptionKey(), config.getEncryptionKey())))
         {
-          logger.error("putUsersConfigurationsEntryByConfigId:: Can not update Encryption key");
+          logger.info("inside if case");
+          logger.info(entity.getEncryptionKey());
+          logger.info(config.getEncryptionKey());
           asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("can not update the Encryption key")));
 
       }} )
