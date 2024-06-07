@@ -9,19 +9,24 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.*;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.folio.domain.UserType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 import io.vertx.core.Vertx;
@@ -228,6 +233,35 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     assertThat(errors.getErrors().get(0).getMessage(),
       is("User with this id already exists"));
+  }
+
+  @Test
+  void cannotCreateUserWithPreferedEmailEnums() {
+    Set set = new LinkedHashSet();
+    set.add(SUPPORT);
+    set.add(PROGRAMS);
+    set.add(SERVICE);
+    usersClient.attemptToCreateUser(User.builder()
+        .id(UUID.randomUUID().toString())
+        .username("steve123")
+        .preferredEmailCommunication(set)
+        .build())
+      .statusCode(is(201));
+  }
+
+  @Test
+  void cannotNotCreateUserWithRandomPreferedEmailEnums() {
+    Set set = new LinkedHashSet();
+    set.add("TEST");
+    set.add(PROGRAMS);
+    set.add(SERVICE);
+    assertThrows(JsonMappingException.class, () -> {
+      usersClient.attemptToCreateUser(User.builder()
+        .id(UUID.randomUUID().toString())
+        .username("steve1234")
+        .preferredEmailCommunication(set)
+        .build());
+    });
   }
 
   static Stream<Arguments> dateOfBirth() {
