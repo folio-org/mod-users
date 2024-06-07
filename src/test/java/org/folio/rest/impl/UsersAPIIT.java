@@ -601,21 +601,22 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .withConfigName("PROFILE_PICTURE_CONFIG")
       .withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false)
+      .withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts")
       .withMaxFileSize(11.0)).statusCode(500);
   }
 
   @Test
   void createConfigWithLessThan10MB() {
     configurationClient.updateConfiguration(new Config()
-      .withConfigName("PROFILE_PICTURE_CONFIG_11")
+      .withConfigName("PROFILE_PICTURE_CONFIG")
       .withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false)
+      .withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts")
       .withMaxFileSize(9.9)).statusCode(204);
   }
 
   @Test
-  void createConfigWithDifferentEncryptionKey()
-  {
+  void createConfigWithDifferentEncryptionKey() {
     configurationClient.updateConfiguration(new Config()
       .withConfigName("PROFILE_PICTURE_CONFIG_1")
       .withId(configurationClient.getConfigurationId())
