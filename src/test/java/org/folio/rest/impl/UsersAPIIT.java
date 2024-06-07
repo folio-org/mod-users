@@ -589,7 +589,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .withConfigName("PROFILE_PICTURE_CONFIG")
       .withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false)
-      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr"));
+      .withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts"));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
       .statusCode(HTTP_CREATED);
@@ -601,17 +601,36 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .withConfigName("PROFILE_PICTURE_CONFIG")
       .withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false)
-      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
       .withMaxFileSize(11.0)).statusCode(500);
   }
 
   @Test
   void createConfigWithLessThan10MB() {
     configurationClient.updateConfiguration(new Config()
-      .withConfigName("PROFILE_PICTURE_CONFIG")
+      .withConfigName("PROFILE_PICTURE_CONFIG_11")
       .withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false)
-      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+      .withMaxFileSize(9.9)).statusCode(204);
+  }
+
+  @Test
+  void createConfigWithDifferentEncryptionKey()
+  {
+    configurationClient.updateConfiguration(new Config()
+      .withConfigName("PROFILE_PICTURE_CONFIG_1")
+      .withId(configurationClient.getConfigurationId())
+      .withEnabled(true).withEnabledObjectStorage(false)
+      .withEncryptionKey("aaaasrcgyihimbvgfrxyfjbytfrgjvdfd")
+      .withMaxFileSize(6.8)).statusCode(400);
+  }
+
+  @Test
+  void createConfigWithSameEncryptionKey() {
+    configurationClient.updateConfiguration(new Config()
+      .withConfigName("PROFILE_PICTURE_CONFIG_1")
+      .withId(configurationClient.getConfigurationId())
+      .withEnabled(true).withEnabledObjectStorage(false)
+      .withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts")
       .withMaxFileSize(9.9)).statusCode(204);
   }
 
@@ -621,7 +640,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .withConfigName("PROFILE_PICTURE_CONFIG")
       .withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false)
-      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr").withMaxFileSize(1.0));
+      .withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts").withMaxFileSize(1.0));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("pexel.jpg");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
       .statusCode(HTTP_INTERNAL_ERROR);
@@ -633,22 +652,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .withConfigName("PROFILE_PICTURE_CONFIG")
       .withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false)
-      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr"));
+      .withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts"));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("pexel.jpg");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
       .statusCode(HTTP_CREATED);
-  }
-
-  @Test
-  void createJPGProfilePictureInDbWithSmallEncryptionKey() {
-    configurationClient.updateConfiguration(new Config()
-      .withConfigName("PROFILE_PICTURE_CONFIG")
-      .withId(configurationClient.getConfigurationId())
-      .withEnabled(true).withEnabledObjectStorage(false)
-      .withEncryptionKey("isreeedfrgvbnmjhyuortidfhg"));
-    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
-    userProfilePictureClient.saveUserProfilePicture(inputStream)
-      .statusCode(HTTP_INTERNAL_ERROR);
   }
 
   @Test
@@ -674,7 +681,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void ShouldNotCreateProfilePictureIfDisable() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId())
       .withEnabled(false).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.png");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
@@ -683,7 +690,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void shouldNotCreateProfilePictureForUnknownTypes() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId())
       .withEnabled(true).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.heic");
     userProfilePictureClient.saveUserProfilePicture(inputStream)
@@ -750,32 +757,15 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void cleanUpIfProfilePictureDisable() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId())
       .withEnabled(false).withEnabledObjectStorage(false));
     timerInterfaceClient.attemptToTriggerProfilePictureCleanUpProcess(TENANT_NAME)
       .statusCode(is(HTTP_OK));
   }
 
   @Test
-  void getProfilePictureFromDbWithDifferentKeyTest() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
-      .withEnabled(true).withEnabledObjectStorage(false));
-    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
-    var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
-      .extract().as(ProfilePicture.class);
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvts")
-      .withEnabled(true).withEnabledObjectStorage(false));
-    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
-      .statusCode(HTTP_BAD_REQUEST);
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
-      .withEnabled(true).withEnabledObjectStorage(false));
-    userProfilePictureClient.getUserProfilePicture(response.getId().toString())
-      .statusCode(HTTP_OK);
-  }
-
-  @Test
   void getProfilePictureFromDbWithNullKeyTest() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts")
       .withEnabled(true).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
@@ -788,7 +778,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void getProfilePictureFromDbWithDisableTest() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts")
       .withEnabled(true).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
@@ -801,7 +791,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void updateProfilePicture() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts")
       .withEnabled(true).withEnabledObjectStorage(false));
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("sample.jpeg");
     var response = userProfilePictureClient.saveUserProfilePicture(inputStream)
@@ -1018,7 +1008,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void deleteProfilePictureErrorTest() {
-    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("isreeedfrgvbnmjhyuortidfhgjbnvtr")
+    configurationClient.updateConfiguration(new Config().withConfigName("PROFILE_PICTURE_CONFIG").withId(configurationClient.getConfigurationId()).withEncryptionKey("ThisIsASimpleDefaultKeyToTestIts")
       .withEnabled(true).withEnabledObjectStorage(false).withMaxFileSize(5.0));
     //Trying to delete a profile picture which is not present
     var response = userProfilePictureClient.deleteUserProfilePicture(UUID.randomUUID().toString())

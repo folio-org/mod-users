@@ -94,7 +94,6 @@ import org.folio.rest.persist.PgExceptionUtil;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.tools.messages.MessageConsts;
 import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
@@ -869,12 +868,25 @@ public class UsersAPI implements Users {
   @Override
   public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
+    validateEncryptionKey(entity, okapiHeaders,asyncResultHandler,vertxContext);
     if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
       asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Max file size should not exceed more than 10 megabytes")));
     } else {
       PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
         asyncResultHandler);
     }
+  }
+
+  private void validateEncryptionKey(Config entity, Map<String, String> okapiHeaders,Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext){
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
+      .onSuccess(config -> {
+        if(Objects.nonNull(entity.getEncryptionKey()) && (!Objects.equals(entity.getEncryptionKey(), config.getEncryptionKey())))
+        {
+          logger.error("putUsersConfigurationsEntryByConfigId:: Can not update Encryption key");
+          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("can not update the Encryption key")));
+
+      }} )
+      .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,
