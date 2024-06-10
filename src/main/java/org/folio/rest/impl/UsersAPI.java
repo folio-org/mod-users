@@ -868,29 +868,46 @@ public class UsersAPI implements Users {
   @Override
   public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
-    validateEncryptionKey(entity, okapiHeaders,asyncResultHandler,vertxContext);
-    if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
-      asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Max file size should not exceed more than 10 megabytes")));
-    } else {
-      PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
-        asyncResultHandler);
-    }
-  }
-
-  private void validateEncryptionKey(Config entity, Map<String, String> okapiHeaders,Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext){
+//    validateEncryptionKey(entity, okapiHeaders,asyncResultHandler,vertxContext);
+//    if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
+//      asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Max file size should not exceed more than 10 megabytes")));
+//    } else {
+//      PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
+//        asyncResultHandler);
+//    }
     profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config -> {
-        logger.info(config);
-        if(Objects.nonNull(entity.getEncryptionKey()) && (!Objects.equals(entity.getEncryptionKey(), config.getEncryptionKey())))
-        {
-          logger.info("inside if case");
-          logger.info(entity.getEncryptionKey());
-          logger.info(config.getEncryptionKey());
-          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("can not update the Encryption key")));
+        if (Objects.nonNull(entity.getEncryptionKey()) && (!Objects.equals(entity.getEncryptionKey(), config.getEncryptionKey()))) {
+          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("Cannot update the Encryption key")));
+          return;
+        }
 
-      }} )
-      .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
+        if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
+          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Max file size should not exceed more than 10 megabytes")));
+          return;
+        }
+
+        PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class, asyncResultHandler);
+      })
+      .onFailure(throwable -> {
+        asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Failed to retrieve profile picture config")));
+      });
   }
+
+//  private void validateEncryptionKey(Config entity, Map<String, String> okapiHeaders,Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext){
+//    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
+//      .onSuccess(config -> {
+//        logger.info(config);
+//        if(Objects.nonNull(entity.getEncryptionKey()) && (!Objects.equals(entity.getEncryptionKey(), config.getEncryptionKey())))
+//        {
+//          logger.info("inside if case");
+//          logger.info(entity.getEncryptionKey());
+//          logger.info(config.getEncryptionKey());
+//          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("can not update the Encryption key")));
+//
+//      }} )
+//      .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
+//  }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,
                           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
