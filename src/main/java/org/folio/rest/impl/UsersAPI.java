@@ -870,8 +870,8 @@ public class UsersAPI implements Users {
     logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
     profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config -> {
-          if (Objects.isNull(entity.getEncryptionKey()) || !Objects.equals(config.getEncryptionKey(), entity.getEncryptionKey())) {
-            asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("Cannot update the Encryption key")));
+        if (Objects.isNull(entity.getEncryptionKey()) || !Objects.equals(config.getEncryptionKey(), entity.getEncryptionKey())) {
+          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("Cannot update the Encryption key")));
           return;
         }
         if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
