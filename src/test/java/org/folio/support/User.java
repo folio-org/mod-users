@@ -2,12 +2,14 @@ package org.folio.support;
 
 import java.util.Map;
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
+import org.folio.rest.jaxrs.model.PreferredEmailCommunication;
 
 @Value
 @Builder
@@ -25,4 +27,5 @@ public class User {
   TagList tags;
   Metadata metadata;
   Map<String, String> customFields;
+  Set<PreferredEmailCommunication> preferredEmailCommunication;
 }
