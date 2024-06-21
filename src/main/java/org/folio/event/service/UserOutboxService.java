@@ -98,11 +98,12 @@ public class UserOutboxService {
     logger.debug("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
-        if (isConsortiaTenant) {
+        //if (isConsortiaTenant) {
+        logger.info("saveUserOutboxLogForDeleteUser:: OutBoxLog is now saved ");
           return saveUserOutboxLog(conn, user, action, okapiHeaders);
-        }
-        logger.info("saveUserOutboxLogForDeleteUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
-        return Future.succeededFuture();
+        //}
+
+       // return Future.succeededFuture();
       });
   }
 
