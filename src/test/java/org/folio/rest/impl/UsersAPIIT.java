@@ -240,7 +240,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     Set set = new LinkedHashSet();
     set.add(SUPPORT);
     set.add(PROGRAMS);
-    set.add(SERVICES);
+    set.add(SERVICE);
     usersClient.attemptToCreateUser(User.builder()
         .id(UUID.randomUUID().toString())
         .username("steve123")
@@ -254,7 +254,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     Set set = new LinkedHashSet();
     set.add("TEST");
     set.add(PROGRAMS);
-    set.add(SERVICES);
+    set.add(SERVICE);
     assertThrows(JsonMappingException.class, () -> {
       usersClient.attemptToCreateUser(User.builder()
         .id(UUID.randomUUID().toString())
