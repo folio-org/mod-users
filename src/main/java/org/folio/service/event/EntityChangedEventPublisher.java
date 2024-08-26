@@ -28,9 +28,9 @@ public class EntityChangedEventPublisher<K, T> {
   private final AbstractRepository<T> repository;
 
   EntityChangedEventPublisher(Map<String, String> okapiHeaders,
-    Function<T, K> keyExtractor, EntityChangedEventFactory<T> eventFactory,
-    DomainEventPublisher<K, EntityChangedData<T>> eventPublisher,
-    AbstractRepository<T> repository) {
+                              Function<T, K> keyExtractor, EntityChangedEventFactory<T> eventFactory,
+                              DomainEventPublisher<K, EntityChangedData<T>> eventPublisher,
+                              AbstractRepository<T> repository) {
 
     this.okapiHeaders = okapiHeaders;
     this.keyExtractor = keyExtractor;
@@ -56,6 +56,7 @@ public class EntityChangedEventPublisher<K, T> {
 
   public Function<Response, Future<Response>> publishUpdated(T oldEntity) {
     return response -> {
+      log.info("publishUpdated:: response = {}", response);
       if (!isUpdateSuccessResponse(response)) {
         log.warn("publishUpdated:: record update failed, skipping event publishing");
         return succeededFuture(response);
@@ -63,8 +64,8 @@ public class EntityChangedEventPublisher<K, T> {
 
       K key = keyExtractor.apply(oldEntity);
       return repository.getById(key.toString())
-          .compose(newEntity -> publishUpdated(key, oldEntity, newEntity))
-          .map(response);
+        .compose(newEntity -> publishUpdated(key, oldEntity, newEntity))
+        .map(response);
     };
   }
 
@@ -76,7 +77,7 @@ public class EntityChangedEventPublisher<K, T> {
       }
 
       return publishRemoved(keyExtractor.apply(oldEntity), oldEntity)
-          .map(response);
+        .map(response);
     };
   }
 
@@ -106,5 +107,9 @@ public class EntityChangedEventPublisher<K, T> {
 
   private boolean responseHasStatus(Response response, HttpStatus expectedStatus) {
     return response != null && response.getStatus() == expectedStatus.toInt();
+  }
+
+  public Function<T, K> getKeyExtractor() {
+    return keyExtractor;
   }
 }

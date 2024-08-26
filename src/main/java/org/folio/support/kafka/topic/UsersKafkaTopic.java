@@ -3,7 +3,8 @@ package org.folio.support.kafka.topic;
 import org.folio.kafka.services.KafkaTopic;
 
 public enum UsersKafkaTopic implements KafkaTopic {
-  USER_GROUP("userGroup", 10);
+  USER_GROUP("userGroup", 10), USER_UPDATED("userUpdated", 10);
+
   private final String topic;
   private final int partitions;
 

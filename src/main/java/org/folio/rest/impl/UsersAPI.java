@@ -119,7 +119,6 @@ public class UsersAPI implements Users {
 
   // Used when RMB instantiates this class
   private final UserOutboxService userOutboxService;
-  private final UsersService usersService;
   private final UserTenantService userTenantService;
   private final ProfilePictureStorage profilePictureStorage;
 
@@ -127,7 +126,6 @@ public class UsersAPI implements Users {
   public UsersAPI() {
     this.profilePictureStorage = new ProfilePictureStorage();
     this.userOutboxService = new UserOutboxService();
-    this.usersService = new UsersService();
     this.userTenantService = new UserTenantService();
   }
   /**
@@ -888,7 +886,7 @@ public class UsersAPI implements Users {
     Date now = new Date();
     entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
-
+    UsersService usersService = new UsersService(vertxContext, okapiHeaders);
     pgClient.withTrans(conn -> usersService.getUserByIdForUpdate(conn, entity.getId())
       .compose(userFromStorage -> {
         if (userFromStorage == null) {
@@ -896,7 +894,7 @@ public class UsersAPI implements Users {
         }
 
         return userTenantService.validateUserAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
-          .compose(aVoid -> usersService.updateUser(conn, entity)
+          .compose(aVoid -> usersService.updateUser(conn, userFromStorage, entity)
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
             .map(Response.class::cast));
