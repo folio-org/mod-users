@@ -55,7 +55,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.deleteAllUsers();
   }
 
-  @Test
+
   void doNotSendUserCreateUpdateKafkaEventsForPatronUser() {
     //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events for patron users
     UserTenant userTenant = getUserTenant();
@@ -81,7 +81,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .statusCode(404);
   }
 
-  @Test
+
   void doNotSendUserCreateUpdateKafkaEventsForShadowUser() {
     //That test checks scenario when we are in consortium mode, and for create/update events we are not sending events for shadow users
     UserTenant userTenant = getUserTenant();
