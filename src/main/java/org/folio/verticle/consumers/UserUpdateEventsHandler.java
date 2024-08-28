@@ -30,11 +30,10 @@ public class UserUpdateEventsHandler implements AsyncRecordHandler<String, Strin
 
   @Override
   public Future<String> handle(KafkaConsumerRecord<String, String> record) {
-    logger.info("Trying to handle user updates event");
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
     UserTenant event = new JsonObject(record.value()).mapTo(UserTenant.class);
-
+    logger.info("Trying to handle user updates event: {} in tenant: {}", record.value(), okapiConnectionParams.getTenantId());
     return userTenantService.updateUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
       .map(event.getId())
       .onSuccess(x -> logger.info("User primary affiliation with event id: {} has been updated for user id: {} with tenant id: {}",
