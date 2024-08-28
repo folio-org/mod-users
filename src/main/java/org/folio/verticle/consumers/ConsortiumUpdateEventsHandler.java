@@ -29,12 +29,10 @@ public class ConsortiumUpdateEventsHandler implements AsyncRecordHandler<String,
 
   @Override
   public Future<String> handle(KafkaConsumerRecord<String, String> record) {
+    logger.info("Handling consortium update event: {}", record.value());
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
     UserTenant event = new JsonObject(record.value()).mapTo(UserTenant.class);
-    logger.info("Trying to update of user primary affiliation with event id: {} for user id: {} with tenant id: {}",
-      event.getId(), event.getUserId(), event.getTenantId());
-
     return userTenantService.updateUserTenant(event, okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx())
       .map(event.getId())
       .onSuccess(x -> logger.info("User primary affiliation with event id: {} has been updated for user id: {} with tenant id: {}",
