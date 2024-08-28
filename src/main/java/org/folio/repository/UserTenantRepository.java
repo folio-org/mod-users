@@ -6,6 +6,8 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.kafka.exception.DuplicateEventException;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
@@ -20,6 +22,8 @@ import java.util.Optional;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
 
 public class UserTenantRepository {
+
+  private static final Logger logger = LogManager.getLogger(UserTenantRepository.class);
 
   public static final String USER_ID_FIELD = "user_id";
   public static final String USERNAME_FIELD = "username";
@@ -55,6 +59,7 @@ public class UserTenantRepository {
       .orElse("");
     String query = String.format(SELECT_USER_TENANTS, convertToPsqlStandard(tenantId), USER_TENANT_TABLE_NAME,
       whereClause, limit, offset);
+    logger.info("Query to fetch user tenants: {}", query);
     return conn.execute(query).map(this::mapResultSetToUserTenantCollection);
   }
 

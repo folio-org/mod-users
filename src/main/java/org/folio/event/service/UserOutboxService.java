@@ -114,12 +114,12 @@ public class UserOutboxService {
         boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
         boolean isStaffOrSystem = isStaffOrSystemUserUpdated(user, isConsortiaFieldsUpdated, isPersonalDataChanged);
         boolean isChangedUserTypeBetweenPatronAndStaff = isChangedUserTypeBetweenPatronAndStaff(user, userFromStorage);
-        if (isConsortiaTenant && (isStaffOrSystem || isChangedUserTypeBetweenPatronAndStaff)) {
+        //if (isConsortiaTenant && (isStaffOrSystem || isChangedUserTypeBetweenPatronAndStaff)) {
           logger.info("saveUserOutboxLogForUpdateUser:: isStaffOrSystem={}, isChangedUserTypeBetweenPatronAndStaff={}", isStaffOrSystem, isChangedUserTypeBetweenPatronAndStaff);
           return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
-        }
-        logger.info("saveUserOutboxLogForUpdateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
-        return Future.succeededFuture();
+        //}
+//        logger.info("saveUserOutboxLogForUpdateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
+//        return Future.succeededFuture();
       });
   }
 
