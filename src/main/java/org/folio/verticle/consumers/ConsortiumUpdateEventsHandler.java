@@ -29,7 +29,6 @@ public class ConsortiumUpdateEventsHandler implements AsyncRecordHandler<String,
 
   @Override
   public Future<String> handle(KafkaConsumerRecord<String, String> record) {
-    logger.info("Handling consortium update event: {}", record.value());
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
     UserTenant event = new JsonObject(record.value()).mapTo(UserTenant.class);
