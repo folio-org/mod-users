@@ -14,6 +14,7 @@ import org.folio.rest.resource.interfaces.InitAPI;
 import org.folio.verticle.ConsortiumCreateEventConsumersVerticle;
 import org.folio.verticle.ConsortiumDeleteEventConsumersVerticle;
 import org.folio.verticle.ConsortiumUpdateEventConsumersVerticle;
+import org.folio.verticle.UserUpdateEventConsumersVerticle;
 
 import java.util.Arrays;
 
@@ -43,6 +44,7 @@ public class InitAPIs implements InitAPI {
     Promise<String> consortiumCreateEventConsumer = Promise.promise();
     Promise<String> consortiumUpdateEventConsumer = Promise.promise();
     Promise<String> consortiumDeleteEventConsumer = Promise.promise();
+    Promise<String> userUpdateEventConsumer = Promise.promise();
 
     vertx.deployVerticle((ConsortiumCreateEventConsumersVerticle.class.getName()),
       new DeploymentOptions()
@@ -59,10 +61,16 @@ public class InitAPIs implements InitAPI {
         .setWorker(true)
         .setInstances(usersConsortiumConsumerInstancesNumber), consortiumDeleteEventConsumer);
 
+    vertx.deployVerticle((UserUpdateEventConsumersVerticle.class.getName()),
+      new DeploymentOptions()
+        .setWorker(true)
+        .setInstances(usersConsortiumConsumerInstancesNumber), userUpdateEventConsumer);
+
     return GenericCompositeFuture.all(Arrays.asList(
       consortiumCreateEventConsumer.future(),
       consortiumDeleteEventConsumer.future(),
-      consortiumUpdateEventConsumer.future()
+      consortiumUpdateEventConsumer.future(),
+      userUpdateEventConsumer.future()
     ));
   }
 

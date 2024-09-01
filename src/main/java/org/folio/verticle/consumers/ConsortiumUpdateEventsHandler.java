@@ -31,7 +31,6 @@ public class ConsortiumUpdateEventsHandler implements AsyncRecordHandler<String,
   public Future<String> handle(KafkaConsumerRecord<String, String> record) {
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
-    logger.info("User update event received: {}", record.value());
     UserTenant event = new JsonObject(record.value()).mapTo(UserTenant.class);
     logger.info("Trying to update of user primary affiliation with event id: {} for user id: {} with tenant id: {}",
       event.getId(), event.getUserId(), event.getTenantId());

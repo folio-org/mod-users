@@ -32,7 +32,8 @@ public class UsersService {
       .onFailure(t -> logger.error("getUserByIdForUpdate failed, userId={}", userId, t));
   }
 
-  public Future<User> updateUser(Conn conn, User oldEntity, User newEntity) {
+  public Future<User> updateUser(Conn conn, User oldEntity, User newEntity,
+                                 boolean kafkaInitiated) {
 
     return conn.update(TABLE_NAME_USERS, newEntity, newEntity.getId())
       .compose(rowSet -> {
@@ -40,8 +41,10 @@ public class UsersService {
           String errorMsg = String.format("User with id %s was not found", newEntity.getId());
           return Future.failedFuture(new HttpException(Response.Status.NOT_FOUND.getStatusCode(), errorMsg));
         }
-        eventPublisher.publishUpdated(eventPublisher.getKeyExtractor().apply(oldEntity),
-          oldEntity, newEntity);
+        if (!kafkaInitiated) {
+          eventPublisher.publishUpdated(eventPublisher.getKeyExtractor().apply(oldEntity),
+            oldEntity, newEntity);
+        }
         return Future.succeededFuture(newEntity);
       })
       .onSuccess(x -> logger.info("updateUser complete, userId={}", newEntity.getId()))

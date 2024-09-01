@@ -8,6 +8,7 @@ public enum KafkaConfigSingleton {
   INSTANCE;
 
   private final KafkaConfig kafkaConfig;
+  public static final String TENANT_ID_PATTERN = "\\w+";
 
   KafkaConfigSingleton() {
     String envId = getPropertyValue("ENV", "folio");

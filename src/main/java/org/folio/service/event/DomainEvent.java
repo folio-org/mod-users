@@ -13,7 +13,7 @@ public class DomainEvent<T> {
   private final long timestamp;
   private final T data;
 
-  private DomainEvent(UUID id, DomainEventType type, String tenant, long timestamp, T data) {
+  public DomainEvent(UUID id, DomainEventType type, String tenant, long timestamp, T data) {
     this.id = id;
     this.type = type;
     this.tenant = tenant;
