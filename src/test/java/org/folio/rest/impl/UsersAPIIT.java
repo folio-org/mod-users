@@ -10,6 +10,9 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.*;
+import static org.folio.support.kafka.FakeKafkaConsumer.getUsersEvents;
+import static org.folio.support.kafka.FakeKafkaConsumer.removeAllEvents;
+import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -46,6 +49,7 @@ import org.folio.support.http.TimerInterfaceClient;
 import org.folio.support.http.UserProfilePictureClient;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
+import org.folio.support.kafka.FakeKafkaConsumer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,6 +73,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   private static UserProfilePictureClient userProfilePictureClient;
   private static ConfigurationClient configurationClient;
   private static TimerInterfaceClient timerInterfaceClient;
+  protected static FakeKafkaConsumer kafkaConsumer;
 
   @BeforeAll
   @SneakyThrows
@@ -80,6 +85,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
     userProfilePictureClient = new UserProfilePictureClient(okapiUrl, okapiHeaders);
     configurationClient = new ConfigurationClient(okapiUrl, okapiHeaders);
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
+    kafkaConsumer = new FakeKafkaConsumer().consume(module.getVertx());
+    removeAllEvents();
   }
 
   @BeforeEach
@@ -338,7 +345,9 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void canUpdateAUser() {
+    var id = UUID.randomUUID().toString();
     final var user = usersClient.createUser(User.builder()
+      .id(id)
       .username("julia")
       .build());
 
@@ -355,6 +364,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
         final var updatedUser = usersClient.getUser(user.getId());
         assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
       });
+    await().until(() -> getUsersEvents(id).size(), is(1));
   }
 
   @Test
