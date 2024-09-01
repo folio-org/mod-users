@@ -9,6 +9,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.UUID;
 
+import org.folio.event.service.UserUpdateService;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.service.event.DomainEvent;
 import org.folio.service.event.EntityChangedData;
@@ -28,11 +29,13 @@ import lombok.SneakyThrows;
 public class UserUpdateIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
+  private static UserUpdateService userUpdateService;
 
   @BeforeAll
   @SneakyThrows
   static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
+    userUpdateService = new UserUpdateService();
   }
 
   @Test
@@ -65,6 +68,29 @@ public class UserUpdateIT extends AbstractRestTestNoData {
 
     sendEvent(TENANT_NAME, USERS.topicName(), event.getTenant(), Json.encode(event));
     awaitHandlingEvent(id, user.getBarcode());
+  }
+
+  @Test
+  void cannotUpdateIfBarcodeAndPatronGroupNotChanged() {
+    var id = UUID.randomUUID().toString();
+    var barcode = "123456";
+    var username = "julia";
+
+    usersClient.createUser(User.builder()
+      .id(id)
+      .username(username)
+      .barcode(barcode)
+      .build());
+
+    var user = new org.folio.rest.jaxrs.model.User()
+      .withId(id)
+      .withBarcode(barcode)
+      .withPatronGroup(UUID.randomUUID().toString())
+      .withUsername("julia");
+
+    userUpdateService.updateUser(user, user.withUsername("Julia S"), TENANT_NAME, vertx, null);
+    final var updatedUser = usersClient.getUser(id);
+    assertThat(updatedUser.getUsername(), is(username));
   }
 
   private void awaitHandlingEvent(String userId, String barcode) {

@@ -23,8 +23,8 @@ public class UserUpdateService {
   public Future<User> updateUser(User oldEntity, User newEntity, String tenantId, Vertx vertx,
     Map<String, String> headers) {
     logger.info("updateUser:: Updating user with id: {}", newEntity.getId());
-    if (oldEntity.getBarcode().equals(newEntity.getBarcode())
-      && oldEntity.getPatronGroup().equals(newEntity.getPatronGroup())) {
+    if (oldEntity.getBarcode() != null && oldEntity.getBarcode().equals(newEntity.getBarcode())
+      && oldEntity.getPatronGroup() != null && oldEntity.getPatronGroup().equals(newEntity.getPatronGroup())) {
       logger.info("updateUser:: barcode and patronGroup not changed for user with id: {}",
         newEntity.getId());
       return Future.succeededFuture(newEntity);
