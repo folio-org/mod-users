@@ -7,11 +7,11 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
 import org.folio.rest.jaxrs.model.PreferredEmailCommunication;
 
-@Value
+@Data
 @Builder
 @Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
