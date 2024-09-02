@@ -13,7 +13,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 
 public class UserUpdateService {
-  private static final Logger logger = LogManager.getLogger(UserTenantService.class);
+  private static final Logger logger = LogManager.getLogger(UserUpdateService.class);
   private final BiFunction<Vertx, String, PostgresClient> pgClientFactory;
 
   public UserUpdateService() {

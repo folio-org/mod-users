@@ -35,10 +35,9 @@ public class UserUpdateEventsHandler implements AsyncRecordHandler<String, Strin
   }
 
   @Override
-  public Future<String> handle(KafkaConsumerRecord<String, String> record) {
-    logger.info("Handling user update event: {}", record.value());
-    final String eventKey = record.key();
-    final String eventValue = record.value();
+  public Future<String> handle(KafkaConsumerRecord<String, String> kafkaConsumerRecord) {
+    final String eventKey = kafkaConsumerRecord.key();
+    final String eventValue = kafkaConsumerRecord.value();
     logger.info("handle:: event received: key={}", eventKey);
     final DomainEvent<EntityChangedData<JsonObject>> event = toEntityChangedEvent(eventValue);
     if (event.getType() != UPDATED) {
@@ -48,7 +47,7 @@ public class UserUpdateEventsHandler implements AsyncRecordHandler<String, Strin
     logger.info("handle:: trying to update user with event id: {} with tenant: {}",
       event.getId(), event.getTenant());
 
-    List<KafkaHeader> kafkaHeaders = record.headers();
+    List<KafkaHeader> kafkaHeaders = kafkaConsumerRecord.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
     User oldEntity = event.getData().getOldEntity().mapTo(User.class);
     User newEntity = event.getData().getNewEntity().mapTo(User.class);

@@ -31,7 +31,6 @@ public class ConsortiumCreateEventsHandler implements AsyncRecordHandler<String,
 
   @Override
   public Future<String> handle(KafkaConsumerRecord<String, String> record) {
-    logger.info("User create event received: {}", record.value());
     Promise<String> result = Promise.promise();
     List<KafkaHeader> kafkaHeaders = record.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);

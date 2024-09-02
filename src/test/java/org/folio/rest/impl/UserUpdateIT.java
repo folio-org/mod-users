@@ -27,7 +27,7 @@ import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
-public class UserUpdateIT extends AbstractRestTestNoData {
+class UserUpdateIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static UserUpdateService userUpdateService;
