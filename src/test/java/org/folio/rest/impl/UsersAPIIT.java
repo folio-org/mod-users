@@ -594,7 +594,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
     usersClient.deleteUser(user.getId());
-    await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(1));
+    await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(2));
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
   }
