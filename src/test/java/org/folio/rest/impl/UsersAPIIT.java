@@ -284,8 +284,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
   @MethodSource("dateOfBirth")
   void dateOfBirthPost(String dateOfBirth, boolean successExpected) {
     var user = User.builder()
-    .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
-    .build();
+        .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
+        .build();
     usersClient.attemptToCreateUser(user)
     .statusCode(is(successExpected ? 201 : 400));
   }
@@ -297,9 +297,9 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.attemptToCreateUser(User.builder().id(id).build())
     .statusCode(201);
     var user = User.builder()
-    .id(id)
-    .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
-    .build();
+        .id(id)
+        .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
+        .build();
     usersClient.attemptToUpdateUser(user)
     .statusCode(is(successExpected ? 204 : 400));
   }
