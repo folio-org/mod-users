@@ -35,8 +35,7 @@ public final class FakeKafkaConsumer {
   public FakeKafkaConsumer consume(Vertx vertx) {
     final KafkaConsumer<String, JsonObject> consumer = create(vertx, consumerProperties());
 
-    consumer.subscribe(Set.of(USER_GROUP_TOPIC_NAME));
-    consumer.subscribe(Set.of(USERS_TOPIC_NAME));
+    consumer.subscribe(Set.of(USER_GROUP_TOPIC_NAME, USERS_TOPIC_NAME));
 
     consumer.handler(message -> {
       var recordEvents = topicToEvents.get(message.topic());

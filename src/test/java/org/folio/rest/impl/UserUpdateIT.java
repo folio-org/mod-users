@@ -16,6 +16,7 @@ import org.folio.service.event.EntityChangedData;
 import org.folio.support.User;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
@@ -36,6 +37,11 @@ public class UserUpdateIT extends AbstractRestTestNoData {
   static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userUpdateService = new UserUpdateService();
+  }
+
+  @BeforeEach
+  public void beforeEach() {
+    usersClient.deleteAllUsers();
   }
 
   @Test

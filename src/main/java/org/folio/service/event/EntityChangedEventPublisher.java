@@ -28,9 +28,9 @@ public class EntityChangedEventPublisher<K, T> {
   private final AbstractRepository<T> repository;
 
   EntityChangedEventPublisher(Map<String, String> okapiHeaders,
-                              Function<T, K> keyExtractor, EntityChangedEventFactory<T> eventFactory,
-                              DomainEventPublisher<K, EntityChangedData<T>> eventPublisher,
-                              AbstractRepository<T> repository) {
+    Function<T, K> keyExtractor, EntityChangedEventFactory<T> eventFactory,
+    DomainEventPublisher<K, EntityChangedData<T>> eventPublisher,
+    AbstractRepository<T> repository) {
 
     this.okapiHeaders = okapiHeaders;
     this.keyExtractor = keyExtractor;
