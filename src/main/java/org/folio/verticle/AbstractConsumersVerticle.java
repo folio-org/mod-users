@@ -17,7 +17,6 @@ import org.folio.rest.tools.utils.ModuleName;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.folio.event.KafkaConfigSingleton.TENANT_ID_PATTERN;
 import static org.folio.event.KafkaConfigSingleton.getPropertyValue;
 import static org.folio.support.kafka.topic.UsersKafkaTopic.USERS;
 
@@ -33,7 +32,7 @@ public abstract class AbstractConsumersVerticle extends AbstractVerticle {
     getEvents().forEach(event -> {
       SubscriptionDefinition subscriptionDefinition = KafkaTopicNameHelper
         .createSubscriptionDefinition(kafkaConfig.getEnvId(),
-          USERS.topicName().equals(event) ? TENANT_ID_PATTERN :
+          USERS.topicName().equals(event) ? "ALL" :
             KafkaTopicNameHelper.getDefaultNameSpace(),
           event);
       KafkaConsumerWrapper<String, String> consumerWrapper = KafkaConsumerWrapper.<String, String>builder()
