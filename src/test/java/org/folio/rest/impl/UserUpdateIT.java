@@ -73,8 +73,8 @@ public class UserUpdateIT extends AbstractRestTestNoData {
   @Test
   void cannotUpdateIfBarcodeAndPatronGroupNotChanged() {
     var id = UUID.randomUUID().toString();
-    var barcode = "123456";
-    var username = "julia";
+    var barcode = "1234567";
+    var username = "Julia";
 
     usersClient.createUser(User.builder()
       .id(id)
@@ -86,7 +86,7 @@ public class UserUpdateIT extends AbstractRestTestNoData {
       .withId(id)
       .withBarcode(barcode)
       .withPatronGroup(UUID.randomUUID().toString())
-      .withUsername("julia");
+      .withUsername("Julia");
 
     userUpdateService.updateUser(user, user.withUsername("Julia S"), TENANT_NAME, vertx, null);
     final var updatedUser = usersClient.getUser(id);
