@@ -49,17 +49,16 @@ public class UserUpdateEventsHandler implements AsyncRecordHandler<String, Strin
 
     List<KafkaHeader> kafkaHeaders = kafkaConsumerRecord.headers();
     OkapiConnectionParams okapiConnectionParams = new OkapiConnectionParams(KafkaHeaderUtils.kafkaHeadersToMap(kafkaHeaders), vertx);
-    User oldEntity = event.getData().getOldEntity().mapTo(User.class);
     User newEntity = event.getData().getNewEntity().mapTo(User.class);
-    return userUpdateService.updateUser(oldEntity, newEntity,
+    return userUpdateService.updateUser(newEntity,
         okapiConnectionParams.getTenantId(), okapiConnectionParams.getVertx(),
         okapiConnectionParams.getHeaders())
       .map(eventKey)
       .onSuccess(x -> logger.info("handle::user update event with id: {} has been " +
           "updated for user id: {} with tenant id: {}",
-        event.getId(), oldEntity.getId(), event.getTenant()))
+        event.getId(), newEntity.getId(), event.getTenant()))
       .onFailure(e -> logger.error("handle:: failed update user with event id: {} for user id: {} " +
           "with tenant id: {}",
-        event.getId(), oldEntity.getId(), event.getTenant()));
+        event.getId(), newEntity.getId(), event.getTenant()));
   }
 }

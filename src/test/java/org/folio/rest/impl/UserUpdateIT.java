@@ -45,38 +45,6 @@ class UserUpdateIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void sendUserUpdatedEvent() {
-    var id = UUID.randomUUID().toString();
-    var barcode = "123456";
-    var username = "julia";
-    usersClient.createUser(User.builder()
-      .id(id)
-      .username(username)
-      .barcode(barcode)
-      .build());
-
-    var user = new org.folio.rest.jaxrs.model.User()
-      .withId(id)
-      .withBarcode(barcode)
-      .withUsername(username);
-    var userJson = new JsonObject(Json.encode(user));
-    user.setBarcode("654321");
-    var updatedUserJson = new JsonObject(Json.encode(user));
-    EntityChangedData<JsonObject> data = new EntityChangedData<>(userJson, updatedUserJson);
-
-    DomainEvent event = DomainEvent.builder()
-      .id(UUID.randomUUID())
-      .type(UPDATED)
-      .tenant("diku")
-      .timestamp(System.currentTimeMillis())
-      .data(data)
-      .build();
-
-    sendEvent(TENANT_NAME, USERS.topicName(), event.getTenant(), Json.encode(event));
-    awaitHandlingEvent(id, user.getBarcode());
-  }
-
-  @Test
   void cannotUpdateIfBarcodeAndPatronGroupNotChanged() {
     var id = UUID.randomUUID().toString();
     var barcode = "1234567";
@@ -94,7 +62,7 @@ class UserUpdateIT extends AbstractRestTestNoData {
       .withPatronGroup(UUID.randomUUID().toString())
       .withUsername("Julia");
 
-    userUpdateService.updateUser(user, user.withUsername("Julia S"), TENANT_NAME, vertx, null);
+    userUpdateService.updateUser(user.withUsername("Julia S"), TENANT_NAME, vertx, null);
     final var updatedUser = usersClient.getUser(id);
     assertThat(updatedUser.getUsername(), is(username));
   }
