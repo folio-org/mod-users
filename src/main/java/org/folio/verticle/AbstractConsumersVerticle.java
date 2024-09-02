@@ -1,24 +1,24 @@
 package org.folio.verticle;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import org.folio.event.KafkaConfigSingleton;
-import org.folio.event.util.PomReaderUtil;
-import org.folio.kafka.GlobalLoadSensor;
-import org.folio.kafka.KafkaConfig;
-import org.folio.kafka.SubscriptionDefinition;
-import org.folio.kafka.KafkaTopicNameHelper;
-import org.folio.kafka.KafkaConsumerWrapper;
-import org.folio.kafka.AsyncRecordHandler;
-import org.folio.okapi.common.GenericCompositeFuture;
-import org.folio.rest.tools.utils.ModuleName;
+import static org.folio.event.KafkaConfigSingleton.getPropertyValue;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.folio.event.KafkaConfigSingleton.getPropertyValue;
-import static org.folio.support.kafka.topic.UsersKafkaTopic.USERS;
+import org.folio.event.KafkaConfigSingleton;
+import org.folio.event.util.PomReaderUtil;
+import org.folio.kafka.AsyncRecordHandler;
+import org.folio.kafka.GlobalLoadSensor;
+import org.folio.kafka.KafkaConfig;
+import org.folio.kafka.KafkaConsumerWrapper;
+import org.folio.kafka.KafkaTopicNameHelper;
+import org.folio.kafka.SubscriptionDefinition;
+import org.folio.okapi.common.GenericCompositeFuture;
+import org.folio.rest.tools.utils.ModuleName;
+
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 
 public abstract class AbstractConsumersVerticle extends AbstractVerticle {
 
@@ -32,7 +32,6 @@ public abstract class AbstractConsumersVerticle extends AbstractVerticle {
     getEvents().forEach(event -> {
       SubscriptionDefinition subscriptionDefinition = KafkaTopicNameHelper
         .createSubscriptionDefinition(kafkaConfig.getEnvId(),
-          USERS.topicName().equals(event) ? "ALL" :
             KafkaTopicNameHelper.getDefaultNameSpace(),
           event);
       KafkaConsumerWrapper<String, String> consumerWrapper = KafkaConsumerWrapper.<String, String>builder()
