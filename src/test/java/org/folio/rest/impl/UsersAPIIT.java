@@ -10,6 +10,9 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.*;
+import static org.folio.support.kafka.FakeKafkaConsumer.getUsersEvents;
+import static org.folio.support.kafka.FakeKafkaConsumer.removeAllEvents;
+import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -46,6 +49,7 @@ import org.folio.support.http.TimerInterfaceClient;
 import org.folio.support.http.UserProfilePictureClient;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
+import org.folio.support.kafka.FakeKafkaConsumer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,6 +73,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   private static UserProfilePictureClient userProfilePictureClient;
   private static ConfigurationClient configurationClient;
   private static TimerInterfaceClient timerInterfaceClient;
+  protected static FakeKafkaConsumer kafkaConsumer;
 
   @BeforeAll
   @SneakyThrows
@@ -80,6 +85,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     userProfilePictureClient = new UserProfilePictureClient(okapiUrl, okapiHeaders);
     configurationClient = new ConfigurationClient(okapiUrl, okapiHeaders);
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
+    kafkaConsumer = new FakeKafkaConsumer().consume(module.getVertx());
   }
 
   @BeforeEach
@@ -87,6 +93,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
+    removeAllEvents();
   }
 
   @Test
@@ -104,7 +111,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var createdUser = usersClient.createUser(userToCreate);
-
+    await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(1));
     assertThat(createdUser.getId(), is(notNullValue()));
     final var personal = createdUser.getPersonal();
 
@@ -184,7 +191,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build());
 
     usersClient.attemptToCreateUser(User.builder()
-      .build())
+        .build())
       .statusCode(is(201));
   }
 
@@ -193,8 +200,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.createUser("julia");
 
     final var errors = usersClient.attemptToCreateUser(User.builder()
-      .username("julia")
-      .build())
+        .username("julia")
+        .build())
       .statusCode(is(422))
       .extract().as(ValidationErrors.class);
 
@@ -209,8 +216,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build());
 
     final var errors = usersClient.attemptToCreateUser(User.builder()
-      .barcode("12345")
-      .build())
+        .barcode("12345")
+        .build())
       .statusCode(is(422))
       .extract().as(ValidationErrors.class);
 
@@ -225,9 +232,9 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build());
 
     final var errors = usersClient.attemptToCreateUser(User.builder()
-      .id(existingUser.getId())
-      .username("steve")
-      .build())
+        .id(existingUser.getId())
+        .username("steve")
+        .build())
       .statusCode(is(422))
       .extract().as(ValidationErrors.class);
 
@@ -266,12 +273,12 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   static Stream<Arguments> dateOfBirth() {
     return Stream.of(
-        Arguments.of("0000-01-01", false),
-        Arguments.of("0000-12-31", false),
-        Arguments.of("0001-01-01", true),
-        Arguments.of("1900-01-01", true),
-        Arguments.of("2000-01-01", true),
-        Arguments.of("1-1-1", false)
+      Arguments.of("0000-01-01", false),
+      Arguments.of("0000-12-31", false),
+      Arguments.of("0001-01-01", true),
+      Arguments.of("1900-01-01", true),
+      Arguments.of("2000-01-01", true),
+      Arguments.of("1-1-1", false)
     );
   }
 
@@ -279,10 +286,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
   @MethodSource("dateOfBirth")
   void dateOfBirthPost(String dateOfBirth, boolean successExpected) {
     var user = User.builder()
-        .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
-        .build();
+      .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
+      .build();
     usersClient.attemptToCreateUser(user)
-    .statusCode(is(successExpected ? 201 : 400));
+      .statusCode(is(successExpected ? 201 : 400));
   }
 
   @ParameterizedTest
@@ -290,13 +297,13 @@ class UsersAPIIT extends AbstractRestTestNoData {
   void dateOfBirthPut(String dateOfBirth, boolean successExpected) {
     var id = UUID.randomUUID().toString();
     usersClient.attemptToCreateUser(User.builder().id(id).build())
-    .statusCode(201);
+      .statusCode(201);
     var user = User.builder()
-        .id(id)
-        .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
-        .build();
+      .id(id)
+      .personal(Personal.builder().lastName("Last").dateOfBirth(dateOfBirth).build())
+      .build();
     usersClient.attemptToUpdateUser(user)
-    .statusCode(is(successExpected ? 204 : 400));
+      .statusCode(is(successExpected ? 204 : 400));
   }
 
   @Test
@@ -330,15 +337,17 @@ class UsersAPIIT extends AbstractRestTestNoData {
   void canHandleDatabaseException() {
     var id = UUID.randomUUID().toString();
     PostgresClient.getInstance(Vertx.vertx())
-    .execute("ALTER TABLE " + TENANT_NAME + "_mod_users.users ADD CHECK (id <> '" + id + "')")
-    .toCompletionStage().toCompletableFuture().get(5, SECONDS);
+      .execute("ALTER TABLE " + TENANT_NAME + "_mod_users.users ADD CHECK (id <> '" + id + "')")
+      .toCompletionStage().toCompletableFuture().get(5, SECONDS);
     usersClient.attemptToCreateUser(User.builder().id(id).build())
-    .statusCode(is(500));
+      .statusCode(is(500));
   }
 
   @Test
   void canUpdateAUser() {
+    var id = UUID.randomUUID().toString();
     final var user = usersClient.createUser(User.builder()
+      .id(id)
       .username("julia")
       .build());
 
@@ -347,7 +356,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .username("julia-brockhurst")
         .build())
       .statusCode(is(204));
-
+    await().until(() -> getUsersEvents(id).size(), is(2));
     Awaitility.await()
       .atMost(1, MINUTES)
       .pollInterval(5, SECONDS)
@@ -399,10 +408,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build());
 
     usersClient.attemptToUpdateUser(
-      User.builder()
-        .id(anotherUser.getId())
-        .username("a-username")
-        .build())
+        User.builder()
+          .id(anotherUser.getId())
+          .username("a-username")
+          .build())
       .statusCode(is(400))
       .body(is("User with this username already exists"));
   }
@@ -438,10 +447,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build());
 
     usersClient.attemptToUpdateUser(julia.getId(),
-      User.builder()
-        .id(UUID.randomUUID().toString())
-        .username("julia")
-        .build())
+        User.builder()
+          .id(UUID.randomUUID().toString())
+          .username("julia")
+          .build())
       .statusCode(is(400))
       .body(is("You cannot change the value of the id field"));
   }
@@ -585,7 +594,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
     usersClient.deleteUser(user.getId());
-
+    await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(1));
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
   }
