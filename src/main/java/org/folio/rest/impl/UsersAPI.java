@@ -304,7 +304,6 @@ public class UsersAPI implements Users {
             validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
                     handler -> saveUser(entity, okapiHeaders, postgresClient.getValue(), asyncResultHandler, vertxContext));
           }
-          userEventPublisher(vertxContext, okapiHeaders).publishCreated();
           return succeededFuture();
         })
         .otherwise(e -> {
