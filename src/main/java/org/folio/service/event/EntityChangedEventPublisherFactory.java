@@ -1,11 +1,14 @@
 package org.folio.service.event;
 
 import static org.folio.rest.tools.utils.TenantTool.tenantId;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USERS;
 import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_GROUP;
 
 import java.util.Map;
 
 import org.folio.repository.UserGroupRepository;
+import org.folio.repository.UserRepository;
+import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.Usergroup;
 
 import io.vertx.core.Context;
@@ -24,5 +27,14 @@ public class EntityChangedEventPublisherFactory {
       new EntityChangedEventFactory<>(), new DomainEventPublisher<>(vertxContext,
       USER_GROUP.fullTopicName(tenantId(okapiHeaders)), FailureHandler.noOperation()),
       new UserGroupRepository(vertxContext, okapiHeaders));
+  }
+
+  public static EntityChangedEventPublisher<String, User> userEventPublisher(
+    Context vertxContext, Map<String, String> okapiHeaders) {
+
+    return new EntityChangedEventPublisher<>(okapiHeaders, User::getId,
+      new EntityChangedEventFactory<>(), new DomainEventPublisher<>(vertxContext,
+      USERS.fullTopicName(tenantId(okapiHeaders)), FailureHandler.noOperation()),
+      new UserRepository(vertxContext, okapiHeaders));
   }
 }
