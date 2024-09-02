@@ -1,6 +1,5 @@
 package org.folio.event.service;
 
-import static io.vertx.core.Future.succeededFuture;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -8,7 +7,6 @@ import java.util.function.BiFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.User;
-import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.service.UsersService;
 
@@ -46,11 +44,8 @@ public class UserUpdateService {
         logger.info("updateUser:: barcode and patronGroup not changed for user with id: {}",
           newEntity.getId());
         return Future.succeededFuture(userFromStorage);
-      } else {
-        userFromStorage.setBarcode(newEntity.getBarcode());
-        userFromStorage.setPatronGroup(newEntity.getPatronGroup());
-        return usersService.updateUser(conn, userFromStorage, userFromStorage, true);
       }
+      return usersService.updateUser(conn, userFromStorage, userFromStorage, true);
     }));
   }
 }
