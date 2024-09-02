@@ -9,7 +9,13 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.*;
+import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.PROGRAMS;
+import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.SERVICES;
+import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.SUPPORT;
+import static org.folio.support.kafka.DomainEventAssertions.assertCreateEvent;
+import static org.folio.support.kafka.DomainEventAssertions.assertDeleteEvent;
+import static org.folio.support.kafka.DomainEventAssertions.assertUpdateEvent;
+import static org.folio.support.kafka.FakeKafkaConsumer.getLastUserEvent;
 import static org.folio.support.kafka.FakeKafkaConsumer.getUsersEvents;
 import static org.folio.support.kafka.FakeKafkaConsumer.removeAllEvents;
 import static org.folio.support.matchers.DomainEventAssertions.await;
@@ -18,12 +24,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import com.fasterxml.jackson.databind.JsonMappingException;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.domain.UserType;
-import org.folio.moduserstest.AbstractRestTestNoData;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -32,7 +34,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
-import io.vertx.core.Vertx;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.domain.UserType;
+import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.Config;
 import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.persist.PostgresClient;
@@ -57,10 +62,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
+
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @Timeout(value = 20, timeUnit = SECONDS)
 @ExtendWith(VertxExtension.class)
@@ -110,6 +119,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var createdUser = usersClient.createUser(userToCreate);
     await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(1));
+    assertCreateEventForUser(createdUser);
     assertThat(createdUser.getId(), is(notNullValue()));
     final var personal = createdUser.getPersonal();
 
@@ -355,6 +365,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .build())
       .statusCode(is(204));
     await().until(() -> getUsersEvents(id).size(), is(2));
+    assertUpdateEventForUser(user);
     Awaitility.await()
       .atMost(1, MINUTES)
       .pollInterval(5, SECONDS)
@@ -616,6 +627,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     final var user = usersClient.createUser(userToCreate);
     usersClient.deleteUser(user.getId());
     await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(2));
+    assertDeleteEventForUser(user);
     usersClient.attemptToGetUser(user.getId())
       .statusCode(404);
   }
@@ -1104,5 +1116,29 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   private void deleteUsersByUsername(String username) {
     usersClient.deleteUsers("username == \"" + username + "\"");
+  }
+
+  public static void assertDeleteEventForUser(User user) {
+    final String userId = user.getId();
+
+    await().until(() -> getUsersEvents(userId).size(), greaterThan(0));
+
+    assertDeleteEvent(getLastUserEvent(userId));
+  }
+
+  public static void assertCreateEventForUser(User user) {
+    final String userId = user.getId();
+
+    await().until(() -> getUsersEvents(userId).size(), greaterThan(0));
+
+    assertCreateEvent(getLastUserEvent(userId));
+  }
+
+  public static void assertUpdateEventForUser(User user) {
+    final String userId = user.getId();
+
+    await().until(() -> getUsersEvents(userId).size(), greaterThan(0));
+
+    assertUpdateEvent(getLastUserEvent(userId));
   }
 }

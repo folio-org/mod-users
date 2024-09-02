@@ -71,6 +71,10 @@ public final class FakeKafkaConsumer {
     return getLastEvent(getUserGroupsEvents(userGroupId));
   }
 
+  public static KafkaConsumerRecord<String, JsonObject> getLastUserEvent(String userGroupId) {
+    return getLastEvent(getUsersEvents(userGroupId));
+  }
+
   private static KafkaConsumerRecord<String, JsonObject> getLastEvent(
     Collection<KafkaConsumerRecord<String, JsonObject>> events) {
 

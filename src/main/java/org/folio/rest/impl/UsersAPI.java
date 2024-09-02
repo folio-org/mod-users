@@ -471,6 +471,7 @@ public class UsersAPI implements Users {
         }
         return conn.delete(TABLE_NAME_USERS, userId)
           .compose(rows -> {
+            userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user);
             if (rows.rowCount() != 0) {
               return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId),
                   UserEvent.Action.DELETE, okapiHeaders)
@@ -479,8 +480,7 @@ public class UsersAPI implements Users {
             } else {
               return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
             }
-          }).compose(response -> userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user)
-            .map(response));
+          });
       }))
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
