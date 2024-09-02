@@ -906,7 +906,8 @@ public class UsersAPI implements Users {
 
         return userTenantService.validateUserAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
           .compose(aVoid -> usersService.updateUser(conn, entity)
-            .onSuccess(user -> userEventPublisher(vertxContext, okapiHeaders).publishUpdated(entity.getId(), userFromStorage, user))
+            .onSuccess(user -> userEventPublisher(vertxContext, okapiHeaders)
+              .publishUpdated(entity.getId(), userFromStorage, user))
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
             .map(Response.class::cast));
