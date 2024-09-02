@@ -34,7 +34,7 @@ public class EntityChangedEventPublisherFactory {
 
     return new EntityChangedEventPublisher<>(okapiHeaders, User::getId,
       new EntityChangedEventFactory<>(), new DomainEventPublisher<>(vertxContext,
-      USERS.fullTopicName(tenantId(okapiHeaders)), FailureHandler.noOperation()),
+        USERS.fullTopicName(tenantId(okapiHeaders)), FailureHandler.noOperation()),
       new UserRepository(vertxContext, okapiHeaders));
   }
 }
