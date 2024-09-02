@@ -334,7 +334,8 @@ public class UsersAPI implements Users {
 
     pgClient.withTrans(conn -> userTenantService.validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext)
         .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
-          .onSuccess(updatedUser -> userEventPublisher(vertxContext, okapiHeaders).publishCreated(entity.getId(), updatedUser))
+          .onSuccess(updatedUser -> userEventPublisher(vertxContext, okapiHeaders)
+            .publishCreated(entity.getId(), updatedUser))
           .compose(user -> userOutboxService.saveUserOutboxLogForCreateUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
           .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
           .map(Response.class::cast)))
