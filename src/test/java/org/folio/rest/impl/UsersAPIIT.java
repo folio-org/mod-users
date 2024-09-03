@@ -1120,25 +1120,19 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   public static void assertDeleteEventForUser(User user) {
     final String userId = user.getId();
-
     await().until(() -> getUsersEvents(userId).size(), greaterThan(0));
-
     assertDeleteEvent(getLastUserEvent(userId));
   }
 
   public static void assertCreateEventForUser(User user) {
     final String userId = user.getId();
-
     await().until(() -> getUsersEvents(userId).size(), greaterThan(0));
-
     assertCreateEvent(getLastUserEvent(userId));
   }
 
   public static void assertUpdateEventForUser(User user) {
     final String userId = user.getId();
-
     await().until(() -> getUsersEvents(userId).size(), greaterThan(0));
-
     assertUpdateEvent(getLastUserEvent(userId));
   }
 }
