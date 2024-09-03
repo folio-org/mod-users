@@ -10,6 +10,7 @@ import org.folio.service.event.DomainEventType;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+
 public class DomainEventAssertions {
   public static void assertCreateEvent(KafkaConsumerRecord<String, JsonObject> createEvent) {
     assertThat("Create event should be present", createEvent.value(), is(notNullValue()));
