@@ -868,12 +868,19 @@ public class UsersAPI implements Users {
   @Override
   public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
-    if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
-      asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Max file size should not exceed more than 10 megabytes")));
-    } else {
-      PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class,
-        asyncResultHandler);
-    }
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
+      .onSuccess(config -> {
+        if (Objects.isNull(entity.getEncryptionKey()) || !Objects.equals(config.getEncryptionKey(), entity.getEncryptionKey())) {
+          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("Cannot update the Encryption key")));
+          return;
+        }
+        if (Objects.nonNull(entity.getMaxFileSize()) && entity.getMaxFileSize() > 10) {
+          asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Max file size should not exceed more than 10 megabytes")));
+          return;
+        }
+        PgUtil.put(TABLE_NAME_CONFIG, entity, configId, okapiHeaders, vertxContext, PutUsersConfigurationsEntryByConfigIdResponse.class, asyncResultHandler);
+      })
+      .onFailure(throwable -> asyncResultHandler.handle(succeededFuture(PutUsersConfigurationsEntryByConfigIdResponse.respond500WithTextPlain("Failed to retrieve profile picture config"))));
   }
 
   private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,

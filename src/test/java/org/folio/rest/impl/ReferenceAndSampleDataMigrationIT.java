@@ -38,9 +38,9 @@ class ReferenceAndSampleDataMigrationIT extends AbstractRestTestWithData {
   void testMigration(VertxTestContext vtc) {
     usersClient.deleteUser("ab579dc3-219b-4f5b-8068-ab1c7a55c402"); // users-15.4.0/User001.json
     usersClient.deleteUser("bec20636-fb68-41fd-84ea-2cf910673599"); // users-17.3.0/User301.json
-    migrate("17.3.0", 4, 6, 301)
-    .compose(x -> migrate("15.4.0", 4, 6, 302))
-    .compose(x -> migrate("15.3.9", 4, 6, 303))
+    migrate("17.3.0", 5, 6, 301)
+    .compose(x -> migrate("15.4.0", 5, 6, 302))
+    .compose(x -> migrate("15.3.9", 5, 6, 303))
     .onComplete(vtc.succeedingThenComplete());
   }
 

@@ -144,6 +144,10 @@
           "tOps" : "ADD"
         },
         {
+          "fieldName" : "personal.middleName",
+          "tOps" : "ADD"
+        },
+        {
           "fieldName" : "type",
           "tOps" : "ADD"
         },
@@ -215,6 +219,10 @@
         },
         {
           "fieldName" : "personal.firstName",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "personal.middleName",
           "tOps" : "ADD"
         },
         {

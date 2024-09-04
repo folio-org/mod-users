@@ -37,9 +37,9 @@ class ReferenceAndSampleDataIT extends AbstractRestTestWithData {
   void defaultGroupsAreCreated() {
     final var allGroups = groupsClient.getAllGroups();
 
-    assertThat(allGroups.getTotalRecords(), is(4));
+    assertThat(allGroups.getTotalRecords(), is(5));
     assertThat(allGroups.getNames(),
-      containsInAnyOrder("graduate", "staff", "faculty", "undergrad"));
+      containsInAnyOrder("graduate", "staff", "faculty", "undergrad", "Remote Non-circulating"));
   }
 
   @Test
