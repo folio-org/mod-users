@@ -22,16 +22,20 @@ import io.vertx.kafka.client.serialization.JsonObjectDeserializer;
 
 public final class FakeKafkaConsumer {
   private static final String USER_GROUP_TOPIC_NAME = "folio.diku.users.userGroup";
+  private static final String USERS_TOPIC_NAME = "folio.diku.users.users";
   private static final Map<String, List<KafkaConsumerRecord<String, JsonObject>>> userGroupEvents =
-      new ConcurrentHashMap<>();
+    new ConcurrentHashMap<>();
+
+  private static final Map<String, List<KafkaConsumerRecord<String, JsonObject>>> usersEvents =
+    new ConcurrentHashMap<>();
 
   private static final Map<String, Map<String, List<KafkaConsumerRecord<String, JsonObject>>>> topicToEvents = Map.of(
-    USER_GROUP_TOPIC_NAME, userGroupEvents);
+    USER_GROUP_TOPIC_NAME, userGroupEvents, USERS_TOPIC_NAME, usersEvents);
 
   public FakeKafkaConsumer consume(Vertx vertx) {
     final KafkaConsumer<String, JsonObject> consumer = create(vertx, consumerProperties());
 
-    consumer.subscribe(Set.of(USER_GROUP_TOPIC_NAME));
+    consumer.subscribe(Set.of(USER_GROUP_TOPIC_NAME, USERS_TOPIC_NAME));
 
     consumer.handler(message -> {
       var recordEvents = topicToEvents.get(message.topic());
@@ -57,8 +61,18 @@ public final class FakeKafkaConsumer {
     return userGroupEvents.getOrDefault(userGroupId, emptyList());
   }
 
+  public static Collection<KafkaConsumerRecord<String, JsonObject> > getUsersEvents(
+    String userId) {
+
+    return usersEvents.getOrDefault(userId, emptyList());
+  }
+
   public static KafkaConsumerRecord<String, JsonObject> getLastUserGroupEvent(String userGroupId) {
     return getLastEvent(getUserGroupsEvents(userGroupId));
+  }
+
+  public static KafkaConsumerRecord<String, JsonObject> getLastUserEvent(String userGroupId) {
+    return getLastEvent(getUsersEvents(userGroupId));
   }
 
   private static KafkaConsumerRecord<String, JsonObject> getLastEvent(

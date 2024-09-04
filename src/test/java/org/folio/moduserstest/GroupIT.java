@@ -4,11 +4,12 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.support.kafka.DomainEventAssertions.assertCreateEvent;
+import static org.folio.support.kafka.DomainEventAssertions.assertDeleteEvent;
+import static org.folio.support.kafka.DomainEventAssertions.assertUpdateEvent;
 import static org.folio.support.kafka.FakeKafkaConsumer.getLastUserGroupEvent;
 import static org.folio.support.kafka.FakeKafkaConsumer.getUserGroupsEvents;
 import static org.folio.support.kafka.FakeKafkaConsumer.removeAllEvents;
-import static org.folio.support.matchers.DomainEventAssertions.assertBasicEventFields;
-import static org.folio.support.matchers.DomainEventAssertions.assertHeaders;
 import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -17,7 +18,6 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.UUID;
 
-import org.folio.service.event.DomainEventType;
 import org.folio.support.Group;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
@@ -32,9 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 20, unit = SECONDS)
@@ -410,23 +408,5 @@ class GroupIT extends AbstractRestTestNoData {
     await().until(() -> getUserGroupsEvents(userGroupId).size(), greaterThan(0));
 
     assertDeleteEvent(getLastUserGroupEvent(userGroupId));
-  }
-
-  private static void assertCreateEvent(KafkaConsumerRecord<String, JsonObject> createEvent) {
-    assertThat("Create event should be present", createEvent.value(), is(notNullValue()));
-    assertBasicEventFields(createEvent, DomainEventType.CREATED);
-    assertHeaders(createEvent.headers());
-  }
-
-  private static void assertUpdateEvent(KafkaConsumerRecord<String, JsonObject> createEvent) {
-    assertThat("Update event should be present", createEvent.value(), is(notNullValue()));
-    assertBasicEventFields(createEvent, DomainEventType.UPDATED);
-    assertHeaders(createEvent.headers());
-  }
-
-  private static void assertDeleteEvent(KafkaConsumerRecord<String, JsonObject> createEvent) {
-    assertThat("Delete event should be present", createEvent.value(), is(notNullValue()));
-    assertBasicEventFields(createEvent, DomainEventType.DELETED);
-    assertHeaders(createEvent.headers());
   }
 }
