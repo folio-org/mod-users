@@ -1,3 +1,7 @@
+## 19.3.2 2024-09-04
+
+* Slow search in the Users app (MODUSERS-457)
+
 ## 19.3.1 2024-03-20
 
 * Make username as required field for staff user type for ECS mode (MODUSERS-393)
