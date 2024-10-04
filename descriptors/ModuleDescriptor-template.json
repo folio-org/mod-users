@@ -301,6 +301,17 @@
           "delay" : "24"
         }
       ]
+    },
+    {
+      "id": "staging-users",
+      "version": "19.4.0",
+      "handlers" : [
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/staging-users",
+          "permissionsRequired": [ "staging-users.collection.get" ]
+        }
+      ]
     }
   ],
   "permissionSets" : [
