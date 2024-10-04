@@ -99,6 +99,61 @@
       ]
     },
     {
+      "tableName" : "staging_users",
+      "fromModuleVersion" : "19.4.0",
+      "withMetadata" : true,
+      "uniqueIndex" : [
+        {
+          "fieldName" : "contactInfo.email",
+          "tOps" : "ADD"
+        }
+      ],
+      "index" : [
+        {
+          "fieldName" : "contactInfo.email",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "generalInfo.firstName",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "generalInfo.lastName",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "generalInfo.middleName",
+          "tOps" : "ADD"
+        }
+      ],
+      "ginIndex": [
+        {
+          "fieldName": "contactInfo.email",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "generalInfo.firstName",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "generalInfo.lastName",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        },
+        {
+          "fieldName": "generalInfo.middleName",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
+        }
+      ]
+    },
+    {
       "tableName" : "users",
       "fromModuleVersion" : "mod-users-16.0.1",
       "withMetadata" : true,
