@@ -13,6 +13,11 @@
       "description": "A flag to determine if a patron is activated.",
       "type": "boolean"
     },
+    "status": {
+      "type": "string",
+      "description": "whether tier-1 or tier-2",
+      "enum": ["TIER-1", "TIER-2"]
+    },
     "generalInfo": {
       "type": "object",
       "description": "General info of staging user",
