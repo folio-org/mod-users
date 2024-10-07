@@ -4,7 +4,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.StagingUser;
 import org.folio.rest.jaxrs.model.StagingUserdataCollection;
 import org.folio.rest.jaxrs.model.StagingUsersGetOrder;
@@ -18,10 +19,10 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 @Path("staging-users")
-@Log4j2
 public class StagingUsersAPI implements StagingUsers {
 
   public static final String STAGING_USERS_TABLE = "staging_users";
+  private static final Logger log = LogManager.getLogger(StagingUsersAPI.class);
 
   @Override
   public void getStagingUsers(String query, String orderBy, StagingUsersGetOrder order, String totalRecords, int offset,
@@ -39,7 +40,7 @@ public class StagingUsersAPI implements StagingUsers {
   public void putStagingUsersMergeById(String id, String userId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     var criterion = new Criterion(new Criteria().addField("id").setJSONB(false).setOperation("=").setVal(id));
     PgUtil.postgresClient(vertxContext, okapiHeaders)
-      .withTrans(conn -> conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion)
+        .withTrans(conn -> conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion)
         .compose(stagingUser -> {
           if (!stagingUser.getResults().isEmpty()) {
             log.info("Staging User :: {}", stagingUser.getResults().get(0));
