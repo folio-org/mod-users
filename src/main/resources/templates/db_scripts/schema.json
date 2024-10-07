@@ -151,6 +151,12 @@
           "caseSensitive": false,
           "removeAccents": true
         }
+      ],
+      "fullTextIndex" : [
+        {
+          "fieldName": "keywords",
+          "multiFieldNames": "generalInfo.firstName,generalInfo.preferredFirstName,generalInfo.middleName,generalInfo.lastName,contactInfo.phone,contactInfo.mobilePhone,contactInfo.email,preferredEmailCommunication,id,isEmailVerified"
+        }
       ]
     },
     {
