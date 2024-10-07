@@ -3,7 +3,7 @@
   "type": "object",
   "description": "Collection of staging users",
   "properties": {
-    "users": {
+    "staging_users": {
       "description": "List of userdata items",
       "type": "array",
       "id": "stagingUsersData",

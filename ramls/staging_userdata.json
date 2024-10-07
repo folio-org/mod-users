@@ -9,7 +9,7 @@
       "description" : "A globally unique (UUID) identifier for the user",
       "type": "string"
     },
-    "active": {
+    "isEmailVerified": {
       "description": "A flag to determine if a patron is activated.",
       "type": "boolean"
     },
