@@ -5,6 +5,10 @@
   "javaName": "StagingUser",
   "type": "object",
   "properties": {
+    "active": {
+      "description": "A flag to determine if a patron is activated.",
+      "type": "boolean"
+    },
     "generalInfo": {
       "type": "object",
       "description": "General info of staging user",

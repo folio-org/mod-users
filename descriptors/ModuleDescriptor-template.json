@@ -304,7 +304,7 @@
     },
     {
       "id": "staging-users",
-      "version": "19.4.0",
+      "version": "1.0",
       "handlers" : [
         {
           "methods": [ "GET" ],
@@ -630,6 +630,11 @@
         "user-settings.custom-fields.item.option.stats.get"
       ],
       "visible": false
+    },
+    {
+      "permissionName" : "staging-users.collection.get",
+      "displayName" : "staging users collection get",
+      "description" : "Get a collection of staging user records"
     }
   ],
   "launchDescriptor": {
