@@ -310,6 +310,11 @@
           "methods": [ "GET" ],
           "pathPattern": "/staging-users",
           "permissionsRequired": [ "staging-users.collection.get" ]
+        },
+        {
+          "methods": [ "PUT" ],
+          "pathPattern": "/staging-users/{id}",
+          "permissionsRequired": [ "staging-users.collection.put" ]
         }
       ]
     }
@@ -635,6 +640,11 @@
       "permissionName" : "staging-users.collection.get",
       "displayName" : "staging users collection get",
       "description" : "Get a collection of staging user records"
+    },
+    {
+      "permissionName" : "staging-users.collection.put",
+      "displayName" : "staging users collection put",
+      "description" : "create user from staging user records"
     }
   ],
   "launchDescriptor": {
