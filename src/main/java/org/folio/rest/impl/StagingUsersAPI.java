@@ -27,7 +27,8 @@ public class StagingUsersAPI implements StagingUsers {
 
   @Override
   public void postStagingUsers(StagingUser entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    throw new UnsupportedOperationException("postStagingUsers api is not supported currently");
+    PgUtil.post(STAGING_USERS_TABLE, entity, okapiHeaders, vertxContext, StagingUsers.PostStagingUsersResponse.class,
+      asyncResultHandler);
   }
 
 
