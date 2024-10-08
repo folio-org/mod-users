@@ -313,7 +313,7 @@
         },
         {
           "methods": [ "PUT" ],
-          "pathPattern": "/staging-users/{id}",
+          "pathPattern": "/staging-users/{id}/merge",
           "permissionsRequired": [ "staging-users.collection.put" ]
         }
       ]
