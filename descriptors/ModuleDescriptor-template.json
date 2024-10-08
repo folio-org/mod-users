@@ -310,6 +310,11 @@
           "methods": [ "GET" ],
           "pathPattern": "/staging-users",
           "permissionsRequired": [ "staging-users.collection.get" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/staging-users",
+          "permissionsRequired": [ "staging-users.item.post" ]
         }
       ]
     }
