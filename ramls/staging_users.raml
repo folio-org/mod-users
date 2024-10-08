@@ -49,4 +49,17 @@ resourceTypes:
       description: Update a staging user by ID and userId
       responses:
         200:
-          description: ""
+          description: "New user merged/created from staging user successfully"
+          body:
+            application/json:
+              schema:
+                type: string
+                description: "The UUID of the newly merged/created user"
+        404:
+          description: Not found
+          body:
+            text/plain:
+        500:
+          description: Internal error
+          body:
+            text/plain:
