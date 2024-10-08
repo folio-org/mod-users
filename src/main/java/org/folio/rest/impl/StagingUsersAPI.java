@@ -21,7 +21,6 @@ import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.interfaces.Results;
-import org.folio.service.impl.StagingUserService;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -79,11 +78,11 @@ public class StagingUsersAPI implements StagingUsers {
     var criterion = new Criterion(new Criteria().addField("jsonb->>'addressType'").setOperation("=").setVal("Home"));
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> conn.get(ADDRESS_TYPE_TABLE, AddressType.class, criterion))
-      .map(addressType -> {
+      .compose(addressType -> {
         if (!addressType.getResults().isEmpty()) {
-          return addressType.getResults().get(0).getId();
+          return Future.succeededFuture(addressType.getResults().get(0).getId());
         } else {
-          throw new RuntimeException("Home address type not found");
+          return Future.failedFuture(PutStagingUsersMergeByIdResponse.respond500WithTextPlain("Home address type not found").toString());
         }
       });
   }
