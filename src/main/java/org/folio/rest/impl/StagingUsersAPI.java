@@ -75,7 +75,7 @@ public class StagingUsersAPI implements StagingUsers {
   }
 
   private Future<String> fetchHomeAddressTypeId(Context vertxContext, Map<String, String> okapiHeaders) {
-    var criterion = new Criterion(new Criteria().addField("addressType").setOperation("=").setVal("Home"));
+    var criterion = new Criterion(new Criteria().addField("'addressType'").setOperation("=").setVal("Home"));
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> conn.get(ADDRESS_TYPE_TABLE, AddressType.class, criterion))
       .compose(addressType -> {
@@ -88,7 +88,7 @@ public class StagingUsersAPI implements StagingUsers {
   }
 
   private Future<String> fetchPatronGroupId(Context vertxContext, Map<String, String> okapiHeaders) {
-    var criterion = new Criterion(new Criteria().addField("patronGroup").setOperation("=").setVal("Remote"));
+    var criterion = new Criterion(new Criteria().addField("'patronGroup'").setOperation("=").setVal("Remote"));
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> conn.get(GROUP_TABLE, Usergroup.class, criterion))
       .map(patronGroup -> {
