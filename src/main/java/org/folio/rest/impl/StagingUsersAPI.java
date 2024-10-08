@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.impl.AddressTypeAPI.ADDRESS_TYPE_TABLE;
 import static org.folio.rest.impl.UserGroupAPI.GROUP_TABLE;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
@@ -56,7 +57,7 @@ public class StagingUsersAPI implements StagingUsers {
 
     Future<String> patronGroupIdFuture = (userId == null)
       ? fetchPatronGroupId(vertxContext, okapiHeaders)
-      : Future.succeededFuture(null);  // Skip fetching if userId is present
+      : succeededFuture(null);  // Skip fetching if userId is present
 
     Future.all(homeAddressTypeIdFuture, patronGroupIdFuture)
       .compose(composite -> {
@@ -69,9 +70,14 @@ public class StagingUsersAPI implements StagingUsers {
           .withTrans(conn -> conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion1)
             .compose(stagingUser -> handleStagingUser(stagingUser, userId, conn, id, homeAddressTypeId, patronGroupId)));
       })
-      .onSuccess(user -> PutStagingUsersMergeByIdResponse.respond200WithApplicationJson(user.getId()))
-      .map(Response.class :: cast)
-      .onComplete(asyncResultHandler);
+      .onSuccess(user -> {
+        log.info("user response {}", user);
+        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeByIdResponse.respond200WithApplicationJson(user.getId())));
+      })
+      .onFailure(throwable -> {
+        log.error("error is", throwable);
+        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeByIdResponse.respond500WithTextPlain(throwable.getMessage())));
+      });
   }
 
   private Future<String> fetchHomeAddressTypeId(Context vertxContext, Map<String, String> okapiHeaders) {
@@ -80,7 +86,7 @@ public class StagingUsersAPI implements StagingUsers {
       .withTrans(conn -> conn.get(ADDRESS_TYPE_TABLE, AddressType.class, criterion))
       .compose(addressType -> {
         if (!addressType.getResults().isEmpty()) {
-          return Future.succeededFuture(addressType.getResults().get(0).getId());
+          return succeededFuture(addressType.getResults().get(0).getId());
         } else {
           return Future.failedFuture(PutStagingUsersMergeByIdResponse.respond500WithTextPlain("Home address type not found").toString());
         }
@@ -88,14 +94,14 @@ public class StagingUsersAPI implements StagingUsers {
   }
 
   private Future<String> fetchPatronGroupId(Context vertxContext, Map<String, String> okapiHeaders) {
-    var criterion = new Criterion(new Criteria().addField("'patronGroup'").setOperation("=").setVal("Remote"));
+    var criterion = new Criterion(new Criteria().addField("'group'").setOperation("=").setVal("Remote Non-circulating"));
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> conn.get(GROUP_TABLE, Usergroup.class, criterion))
-      .map(patronGroup -> {
+      .compose(patronGroup -> {
         if (!patronGroup.getResults().isEmpty()) {
-          return patronGroup.getResults().get(0).getId();
+          return succeededFuture(patronGroup.getResults().get(0).getId());
         } else {
-          throw new RuntimeException("Patron group 'Remote' not found");
+          return Future.failedFuture("Patron group Non-circulating not found");
         }
       });
   }
