@@ -640,6 +640,11 @@
       "permissionName" : "staging-users.collection.get",
       "displayName" : "staging users collection get",
       "description" : "Get a collection of staging user records"
+    },
+    {
+      "permissionName" : "staging-users.item.post",
+      "displayName" : "staging users collection post",
+      "description" : "Post a staging user records"
     }
   ],
   "launchDescriptor": {
