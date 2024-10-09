@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.AddressInfo;
+import org.folio.rest.jaxrs.model.AddressType;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.StagingUser;
 import org.folio.rest.jaxrs.model.User;
@@ -52,7 +53,7 @@ public class StagingUserService {
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> Future.all(fetchHomeAddressType(), fetchRemotePatronGroupOnlyIfUserIdPresent(userId))
         .compose(compositeFuture -> {
-          Address homeAddress = compositeFuture.resultAt(0);
+          AddressType homeAddress = compositeFuture.resultAt(0);
           String homeAddressId = homeAddress.getId();
 
           Usergroup remotePatronGroup = compositeFuture.resultAt(1);
