@@ -65,8 +65,8 @@ public class StagingUserService {
         }));
   }
 
-  private Future<Address> fetchHomeAddressType() {
-    return fetchEntityByFieldNameAndValue(ADDRESS_TYPE, HOME, Address.class, ADDRESS_TYPE_TABLE,
+  private Future<AddressType> fetchHomeAddressType() {
+    return fetchEntityByFieldNameAndValue(ADDRESS_TYPE, HOME, AddressType.class, ADDRESS_TYPE_TABLE,
       HOME_ADDRESS_TYPE_NOT_FOUND);
   }
 
