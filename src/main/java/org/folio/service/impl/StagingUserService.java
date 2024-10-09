@@ -81,7 +81,7 @@ public class StagingUserService {
 
   private <T> Future<T> fetchEntityByFieldNameAndValue(String fieldName, String fieldValue, Class<T> clazz, String tableName, String errorMessage) {
     var criterion = new Criterion(new Criteria().addField("'"+fieldName+"'")
-      .setOperation("=").setVal("'"+fieldValue+"'"));
+      .setOperation("=").setVal(fieldValue));
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> conn.get(tableName, clazz, criterion))
       .compose(results -> {
