@@ -11,7 +11,14 @@
     },
     "isEmailVerified": {
       "description": "A flag to determine if a patron is activated.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "description": "whether tier-1 or tier-2",
+      "enum": ["TIER-1", "TIER-2"],
+      "default": "TIER-1"
     },
     "generalInfo": {
       "type": "object",
