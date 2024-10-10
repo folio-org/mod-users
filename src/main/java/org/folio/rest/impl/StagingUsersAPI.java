@@ -2,10 +2,11 @@ package org.folio.rest.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.rest.RestVerticle;
+import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.StagingUser;
 import org.folio.rest.jaxrs.model.StagingUserdataCollection;
 import org.folio.rest.jaxrs.model.StagingUsersGetOrder;
@@ -17,6 +18,7 @@ import org.folio.rest.persist.PostgresClient;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,12 +49,12 @@ public class StagingUsersAPI implements StagingUsers {
           logger.info("record found by email success1: {} ", stagingUserResults.getResultInfo().getTotalRecords());
           logger.info("record found by email success2: {} ", stagingUserResults.getResults().size());
           List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
-          String entityId = Optional.ofNullable(stagingUsersByEmail)
+          StagingUser existingStagingUser = Optional.ofNullable(stagingUsersByEmail)
             .filter(l->!l.isEmpty())
-            .map(l->l.get(0))
-            .map(StagingUser::getId).orElse(null);
+            .map(l->l.get(0)).orElse(null);
+          String entityId = updateMetaDataAndEntityId(okapiHeaders, existingStagingUser);
           return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
-            .compose(id-> Future.succeededFuture(entity));
+            .compose(id-> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
         });
     }).onFailure(handler ->
       asyncResultHandler.handle(
@@ -62,6 +64,18 @@ public class StagingUsersAPI implements StagingUsers {
       asyncResultHandler.handle(
         succeededFuture(StagingUsers.PostStagingUsersResponse.respond201WithApplicationJson(stagingUser, PostStagingUsersResponse.headersFor201()))
       ));
+  }
+
+  private String updateMetaDataAndEntityId(Map<String, String> okapiHeaders, StagingUser existingStagingUser) {
+    if(existingStagingUser != null) {
+      String entityId = existingStagingUser.getId();
+      String userId = okapiHeaders.get(RestVerticle.OKAPI_USERID_HEADER);
+      Metadata metadata = existingStagingUser.getMetadata();
+      metadata.setUpdatedDate(new Date());
+      metadata.setUpdatedByUserId(userId);
+      return entityId;
+    }
+    return null;
   }
 
 
