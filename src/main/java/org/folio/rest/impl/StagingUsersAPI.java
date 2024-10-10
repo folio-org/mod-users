@@ -49,10 +49,14 @@ public class StagingUsersAPI implements StagingUsers {
           logger.info("record found by email success1: {} ", stagingUserResults.getResultInfo().getTotalRecords());
           logger.info("record found by email success2: {} ", stagingUserResults.getResults().size());
           List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
-          StagingUser existingStagingUser = Optional.ofNullable(stagingUsersByEmail)
-            .filter(l->!l.isEmpty())
-            .map(l->l.get(0)).orElse(null);
-          String entityId = updateMetaDataAndEntityId(okapiHeaders, existingStagingUser);
+          String entityId = null;
+          if (stagingUsersByEmail != null && !stagingUsersByEmail.isEmpty()) {
+            StagingUser existingStagingUser = stagingUsersByEmail.get(0);
+            entityId = existingStagingUser.getId();
+            logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
+            updateMetaInfo(entity, okapiHeaders, existingStagingUser);
+          }
+
           return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
             .compose(id-> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
         });
@@ -66,17 +70,11 @@ public class StagingUsersAPI implements StagingUsers {
       ));
   }
 
-  private String updateMetaDataAndEntityId(Map<String, String> okapiHeaders, StagingUser existingStagingUser) {
-    if(existingStagingUser != null) {
-      String entityId = existingStagingUser.getId();
-      String userId = okapiHeaders.get(RestVerticle.OKAPI_USERID_HEADER);
-      Metadata metadata = existingStagingUser.getMetadata();
-      metadata.setUpdatedDate(new Date());
-      metadata.setUpdatedByUserId(userId);
-      return entityId;
-    }
-    return null;
+  private static void updateMetaInfo(StagingUser entity, Map<String, String> okapiHeaders, StagingUser existingStagingUser) {
+    String userId = okapiHeaders.get(RestVerticle.OKAPI_USERID_HEADER);
+    Metadata metadata = existingStagingUser.getMetadata();
+    metadata.setUpdatedDate(new Date());
+    metadata.setUpdatedByUserId(userId);
+    entity.setMetadata(metadata);
   }
-
-
 }
