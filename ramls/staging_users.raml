@@ -40,13 +40,13 @@ resourceTypes:
       pageable
     ]
     description: Return a list of staging-users
-  /{id}/merge:
+  /{id}/mergeOrCreateUser:
     put:
       queryParameters:
         userId:
           description: User ID
           type: string
-      description: Update a staging user by ID and userId
+      description: create a new user or update a existing user with staging user details
       responses:
         200:
           description: "New user merged/created from staging user successfully"

@@ -39,26 +39,26 @@ public class StagingUsersAPI implements StagingUsers {
   }
 
   @Override
-  public void putStagingUsersMergeById(String id, String userId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void putStagingUsersMergeOrCreateUserById(String id, String userId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
       new StagingUserService(vertxContext, okapiHeaders)
-        .mergeStagingUserWithUser(id, userId)
+        .mergeOrCreateUserFromStagingUser(id, userId)
       .onSuccess(user -> {
         log.info("user response {}", user);
-        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeByIdResponse.respond200WithApplicationJson(user.getId())));
+        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond200WithApplicationJson(user.getId())));
       })
       .onFailure(throwable -> {
         var errorMessage = throwable.getMessage();
         log.error("putStagingUsersMergeById:: future failed with error {}", errorMessage);
         if (isUserNotFoundError(errorMessage, userId)) {
-          asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeByIdResponse.respond404WithTextPlain(errorMessage)));
+          asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond404WithTextPlain(errorMessage)));
           return;
         }
         if (isStagingUserNotFoundError(errorMessage, id)) {
-          asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeByIdResponse.respond404WithTextPlain(errorMessage)));
+          asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond404WithTextPlain(errorMessage)));
           return;
         }
-        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeByIdResponse.respond500WithTextPlain(throwable.getMessage())));
-      })  ;
+        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond500WithTextPlain(throwable.getMessage())));
+      });
   }
 
   public boolean isUserNotFoundError(String errorMsg, String userId) {

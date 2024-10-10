@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.impl.AddressTypeAPI.ADDRESS_TYPE_TABLE;
 import static org.folio.rest.impl.StagingUsersAPI.STAGING_USERS_TABLE;
@@ -48,15 +49,17 @@ public class StagingUserService {
   private static final Logger log = LogManager.getLogger(StagingUserService.class);
   private final Context vertxContext;
   private final Map<String, String> okapiHeaders;
+  private final UsersService usersService;
 
   public StagingUserService(Context vertxContext, Map<String, String> okapiHeaders) {
     this.vertxContext = vertxContext;
     this.okapiHeaders = okapiHeaders;
+    this.usersService = new UsersService();
   }
 
-  public Future<User> mergeStagingUserWithUser(String stagingUserId, String userId) {
-    log.debug("mergeStagingUserWithUser:: Merging staging user Details with id {} to user with id {}",
-      stagingUserId, userId);
+  public Future<User> mergeOrCreateUserFromStagingUser(String stagingUserId, String userId) {
+    log.debug("mergeOrCreateUserFromStagingUser:: Creating or updating user with id {} from stagingUserId {}",
+      userId, stagingUserId);
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .withTrans(conn -> Future.all(fetchHomeAddressType(conn), fetchRemotePatronGroupOnlyIfUserIdPresent(conn, userId))
         .compose(compositeFuture -> {
@@ -67,101 +70,89 @@ public class StagingUserService {
           String patronGroupId = remotePatronGroup != null ? remotePatronGroup.getId() : null;
 
           return fetchStagingUserById(conn, stagingUserId)
-            .compose(stagingUser -> handleStagingUser(stagingUser, userId, conn, homeAddressId, patronGroupId));
+            .compose(stagingUser -> userId != null ? updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId)
+              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, patronGroupId));
         }))
-      .onFailure(t -> log.error("mergeStagingUserWithUser:: Merge failed for stagingUserId {}, userId {}: {}",
+      .onFailure(t -> log.error("mergeOrCreateUserFromStagingUser:: Merge or creation failed for stagingUserId {}, userId {}: {}",
         stagingUserId, userId, t.getMessage()));
   }
 
   private Future<AddressType> fetchHomeAddressType(Conn conn) {
     log.debug("fetchHomeAddressType:: fetching address of type home");
-    return fetchEntityByFieldNameAndValue(conn, ADDRESS_TYPE, HOME, AddressType.class, ADDRESS_TYPE_TABLE,
+    return fetchEntityByCriterion(conn, ADDRESS_TYPE, HOME, AddressType.class, ADDRESS_TYPE_TABLE,
       HOME_ADDRESS_TYPE_NOT_FOUND);
   }
 
   private Future<Usergroup> fetchRemotePatronGroupOnlyIfUserIdPresent(Conn conn, String userId) {
     log.debug("fetchRemotePatronGroupOnlyIfUserIdPresent:: fetching Remote patron group with userId {}", userId);
     return userId != null
-      ? fetchEntityByFieldNameAndValue(conn, GROUP, REMOTE_NON_CIRCULATING,
+      ? fetchEntityByCriterion(conn, GROUP, REMOTE_NON_CIRCULATING,
       Usergroup.class, GROUP_TABLE, REMOTE_PATRON_GROUP_NOT_FOUND)
       : Future.succeededFuture(null);
   }
 
   private Future<StagingUser> fetchStagingUserById(Conn conn, String stagingUserId) {
     log.debug("fetchStagingUserById:: fetching staging user with id {}", stagingUserId);
-    return fetchEntityByFieldNameAndValue(conn, ID, stagingUserId, StagingUser.class, STAGING_USERS_TABLE, STAGING_USER_NOT_FOUND);
+    return fetchEntityByCriterion(conn, ID, stagingUserId, StagingUser.class, STAGING_USERS_TABLE, STAGING_USER_NOT_FOUND);
   }
 
-  private <T> Future<T> fetchEntityByFieldNameAndValue(Conn conn, String fieldName, String fieldValue, Class<T> clazz, String tableName, String errorMessage) {
-    log.debug("fetchEntityByFieldNameAndValue:: Fetching entity {} with field {} and value {}",
+  private <T> Future<T> fetchEntityByCriterion(Conn conn, String fieldName, String fieldValue, Class<T> clazz,
+                                               String tableName, String errorMessage) {
+    log.debug("fetchEntityByCriterion:: Fetching entity {} with field {} and value {}",
       clazz.getSimpleName(), fieldName, fieldValue);
     var criterion = new Criterion(new Criteria().addField("'" + fieldName + "'")
       .setOperation("=").setVal(fieldValue));
     return conn.get(tableName, clazz, criterion)
-      .compose(results -> {
-        if (!results.getResults().isEmpty()) {
-          return succeededFuture(results.getResults().get(0));
-        } else {
-          log.warn("fetchEntityByFieldNameAndValue:: Entity not found: {} with field {} and value: {}",
-            clazz.getSimpleName(), fieldName, fieldValue);
-          return Future.failedFuture(String.format(errorMessage, fieldValue));
-        }
-      })
-      .onFailure(t -> log.error("fetchEntityByFieldNameAndValue:: Error fetching {} from table {}: {}",
+      .compose(results -> !results.getResults().isEmpty() ?
+        succeededFuture(results.getResults().get(0))
+        : failedFuture(String.format(errorMessage, fieldValue)))
+      .onFailure(t -> log.error("fetchEntityByCriterion:: Error fetching {} from table {}: {}",
         clazz.getSimpleName(), tableName, t.getMessage()));
   }
 
-  public Future<User> handleStagingUser(StagingUser stagUser, String userId, Conn conn, String homeAddressTypeId,
-                                        String patronGroupId) {
-    log.debug("handleStagingUser:: handle staging user {} with userId {} , homeAddressId {} , patronGroupId {}",
-      stagUser, userId, homeAddressTypeId, patronGroupId);
-    var userService = new UsersService();
-    if (userId == null) {
-      log.info("handleStagingUser:: User id is null, hence creating a new user from staging user with id {}",
-        stagUser.getId());
-      var newUser = createUserFromStagingUser(stagUser, homeAddressTypeId, patronGroupId);
-      return userService.saveAndReturnUser(conn, newUser);
-    } else {
-      log.info("handleStagingUser:: Fetching userId {} and updating the user from staging user with id {}",
-        userId, stagUser.getId());
-      return userService.getUserById(conn, userId)
-        .compose(existingUser -> {
-          if (existingUser != null) {
-            var updatedUser = updateUserFromStagingUser(stagUser, existingUser, homeAddressTypeId);
-            return userService.updateUser(conn, updatedUser);
-          } else {
-            return Future.failedFuture(String.format(USER_NOT_FOUND, userId));
-          }
-        });
-    }
+  private Future<User> createNewUserFromStagingUser(StagingUser stagUser, Conn conn, String homeAddressTypeId,
+                                                    String patronGroupId) {
+    log.debug("createNewUserFromStagingUser:: creating a new user from staging user {}", stagUser);
+    var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId, patronGroupId);
+    return usersService.saveAndReturnUser(conn, newUser);
   }
 
-  private User createUserFromStagingUser(StagingUser stagingUser, String homeAddressTypeId, String patronGroupId) {
-    User user = new User();
-    user.setId(UUID.randomUUID().toString());
-    user.setActive(true);
-    user.setPatronGroup(patronGroupId);
-    user.setPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication());
-    LocalDate currentDate = LocalDate.now();
-    LocalDate expirationLocalDate = currentDate.plusYears(2);
-    Date expirationDate = Date.from(expirationLocalDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-    user.setExpirationDate(expirationDate);
-    user.setType(PATRON_TYPE);
-    user.setExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null);
-    user.setEnrollmentDate(stagingUser.getMetadata().getUpdatedDate());
-    Personal personal = createOrUpdatePersonal(stagingUser, new Personal(), homeAddressTypeId);
-    user.setPersonal(personal);
-    user.setMetadata(MetadataUtil.createMetadata(okapiHeaders));
-    return user;
+  private Future<User> updateExistingUserDetailsFromStagingUser(StagingUser stagUser, String userId,
+                                                                Conn conn, String homeAddressTypeId) {
+    log.debug("updateExistingUserDetailsFromStagingUser:: updating existing user {} with stagUser details {}",
+      userId, stagUser);
+    return usersService.getUserById(conn, userId)
+      .compose(existingUser -> {
+        if (existingUser != null) {
+          var updatedUser = updateUserFromStagingUser(stagUser, existingUser, homeAddressTypeId);
+          return usersService.updateUser(conn, updatedUser);
+        } else {
+          return Future.failedFuture(String.format(USER_NOT_FOUND, userId));
+        }
+      });
+  }
+
+  private User createUserEntityFromStagingUser(StagingUser stagingUser, String homeAddressTypeId, String patronGroupId) {
+    return new User()
+      .withId(UUID.randomUUID().toString())
+      .withActive(true)
+      .withPatronGroup(patronGroupId)
+      .withPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication())
+      .withExpirationDate(Date.from(LocalDate.now().plusYears(2).atStartOfDay(ZoneId.systemDefault()).toInstant()))
+      .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
+      .withType(PATRON_TYPE)
+      .withExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null)
+      .withPersonal(createOrUpdatePersonal(stagingUser, new Personal(), homeAddressTypeId))
+      .withMetadata(MetadataUtil.createMetadata(okapiHeaders));
+
   }
 
   private User updateUserFromStagingUser(StagingUser stagingUser, User user, String homeAddressTypeId) {
-    user.setActive(true);
-    user.setExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null);
-    user.setEnrollmentDate(stagingUser.getMetadata().getUpdatedDate());
-    Personal personal = createOrUpdatePersonal(stagingUser, user.getPersonal(), homeAddressTypeId);
-    user.setPersonal(personal);
-    return user;
+    return user.withActive(true)
+      .withPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication())
+      .withExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null)
+      .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
+      .withPersonal(createOrUpdatePersonal(stagingUser, user.getPersonal(), homeAddressTypeId));
   }
 
   private Personal createOrUpdatePersonal(StagingUser stagingUser, Personal personal, String homeAddressTypeId) {
@@ -191,19 +182,19 @@ public class StagingUserService {
 
   private void setContactInfo(ContactInfo contactInfo, Personal personal) {
     if (contactInfo != null) {
-      personal.setEmail(contactInfo.getEmail());
-      personal.setPhone(contactInfo.getPhone());
-      personal.setMobilePhone(contactInfo.getMobilePhone());
-      personal.setPreferredContactTypeId(CONTACT_TYPE_EMAIL_ID);
+      personal.withEmail(contactInfo.getEmail())
+        .withPhone(contactInfo.getPhone())
+        .withMobilePhone(contactInfo.getMobilePhone())
+        .withPreferredContactTypeId(CONTACT_TYPE_EMAIL_ID);
     }
   }
 
   private void setGeneralInfo(GeneralInfo generalInfo, Personal personal) {
     if (generalInfo != null) {
-      personal.setFirstName(generalInfo.getFirstName());
-      personal.setLastName(generalInfo.getLastName());
-      personal.setMiddleName(generalInfo.getMiddleName());
-      personal.setPreferredFirstName(generalInfo.getPreferredFirstName());
+      personal.withFirstName(generalInfo.getFirstName())
+        .withLastName(generalInfo.getLastName())
+        .withMiddleName(generalInfo.getMiddleName())
+        .withPreferredFirstName(generalInfo.getPreferredFirstName());
     }
   }
 
@@ -211,13 +202,14 @@ public class StagingUserService {
     if (userAddress.getId() == null) {
       userAddress.setId(UUID.randomUUID().toString());
     }
-    userAddress.setCountryId(addressInfo.getCountry());
-    userAddress.setAddressLine1(addressInfo.getAddressLine0());
-    userAddress.setAddressLine2(addressInfo.getAddressLine1());
-    userAddress.setCity(addressInfo.getCity());
-    userAddress.setRegion(addressInfo.getProvince());
-    userAddress.setPostalCode(addressInfo.getZip());
-    userAddress.setAddressTypeId(homeAddressTypeId);
-    userAddress.setPrimaryAddress(true);
+    userAddress.withId(userAddress.getId() != null ? userAddress.getId() : UUID.randomUUID().toString())
+      .withCountryId(addressInfo.getCountry())
+      .withAddressLine1(addressInfo.getAddressLine0())
+      .withAddressLine2(addressInfo.getAddressLine1())
+      .withCity(addressInfo.getCity())
+      .withRegion(addressInfo.getProvince())
+      .withPostalCode(addressInfo.getZip())
+      .withAddressTypeId(homeAddressTypeId)
+      .withPrimaryAddress(true);
   }
 }
