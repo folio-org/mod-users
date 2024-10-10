@@ -84,7 +84,7 @@ class UsersAPITest {
 
   @Test
   void getUsersExceptionInCatch(VertxTestContext vtc) {
-    new UsersAPI().getUsers(null, null, null, null, 0, 0, null, null,
+    new UsersAPI().getUsers(null, null, 0, 0, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();

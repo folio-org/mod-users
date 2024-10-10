@@ -17,7 +17,6 @@ types:
   errors: !include raml-util/schemas/errors.schema
 
 traits:
-  orderable: !include raml-util/traits/orderable.raml
   pageable: !include raml-util/traits/pageable.raml
   searchable: !include raml-util/traits/searchable.raml
   validate: !include raml-util/traits/validation.raml
@@ -38,7 +37,6 @@ resourceTypes:
   get:
     is: [
       searchable: {description: "", example: "active=true sortBy username"},
-      orderable: {fieldsList: "field A, field B"},
       pageable
     ]
     description: Return a list of users

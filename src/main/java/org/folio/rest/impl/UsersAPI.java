@@ -84,7 +84,6 @@ import org.folio.rest.jaxrs.model.Config;
 import org.folio.rest.jaxrs.model.Errors;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
-import org.folio.rest.jaxrs.model.UsersGetOrder;
 import org.folio.rest.jaxrs.resource.Users;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -195,7 +194,7 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void getUsers(String query, String orderBy, UsersGetOrder order, String totalRecords, int offset, int limit,
+  public void getUsers(String query, String totalRecords, int offset, int limit,
     RoutingContext routingContext, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
 
     try {
