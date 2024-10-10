@@ -39,7 +39,7 @@ public class StagingUsersAPI implements StagingUsers {
   public void postStagingUsers(StagingUser entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
     final Criterion criterion = new Criterion(
-      new Criteria().addField("'contactInfo'->>'email'")
+      new Criteria().addField("'contactInfo'").addField("'email'")
         .setOperation("=").setVal(entity.getContactInfo().getEmail()).setJSONB(true));
     postgresClient.withTrans(conn -> {
       return conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
