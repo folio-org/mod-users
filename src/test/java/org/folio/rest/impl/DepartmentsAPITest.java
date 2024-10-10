@@ -50,7 +50,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.test.util.DBTestUtil;
 import org.folio.test.util.TestBase;
 import org.folio.test.util.TokenTestUtil;
-import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @RunWith(VertxUnitRunner.class)

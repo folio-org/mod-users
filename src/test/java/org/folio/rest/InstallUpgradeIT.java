@@ -3,6 +3,8 @@ package org.folio.rest;
 import io.restassured.RestAssured;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.is;
+
+import org.folio.moduserstest.AbstractRestTest;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -10,10 +12,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.nio.file.Path;
@@ -26,7 +28,7 @@ public class InstallUpgradeIT {
 
   @ClassRule(order = 1)
   public static final KafkaContainer KAFKA =
-    new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.0.3"))
+    new KafkaContainer(DockerImageName.parse(AbstractRestTest.KAFKA_IMAGE_NAME))
       .withNetwork(NETWORK)
       .withNetworkAliases("mykafka");
 
