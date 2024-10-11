@@ -43,3 +43,21 @@ resourceTypes:
   post:
     is: [ validate ]
     description: Create a user
+    responses:
+      200:
+        description: "When existing staging user record is updated"
+        body:
+          application/json:
+      201:
+        description: "when new staging user record is created"
+        body:
+          application/json:
+      400:
+        description: "Bad request"
+        body:
+          application/json:
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"

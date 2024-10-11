@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.vertx.core.Future.succeededFuture;
 
@@ -53,6 +54,7 @@ public class StagingUsersAPI implements StagingUsers {
     final Criterion criterion = new Criterion(
       new Criteria().addField("'contactInfo'").addField("'email'")
         .setOperation("=").setVal(entity.getContactInfo().getEmail()).setJSONB(true));
+    AtomicReference<Boolean> isUpdated = new AtomicReference<>(Boolean.FALSE);
     postgresClient.withTrans(conn -> {
       return conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
         .compose(stagingUserResults -> {
@@ -71,8 +73,10 @@ public class StagingUsersAPI implements StagingUsers {
             // Copy non-null properties and update metadata
             BeanUtils.copyPropertiesNotNull(entity, finalEntityToSave);
             updateMetaInfo(okapiHeaders, finalEntityToSave);
+            isUpdated.set(Boolean.TRUE);
           } else {
             // No existing user, create a new one
+            isUpdated.set(Boolean.FALSE);
             finalEntityToSave = entity;
           }
           return conn.upsert(STAGING_USERS_TABLE, entityId, finalEntityToSave, true)
@@ -82,10 +86,17 @@ public class StagingUsersAPI implements StagingUsers {
       asyncResultHandler.handle(
         succeededFuture(PostStagingUsersResponse.respond500WithTextPlain(handler.getMessage()))
       )
-    ).onSuccess(stagingUser ->
-      asyncResultHandler.handle(
-        succeededFuture(StagingUsers.PostStagingUsersResponse.respond201WithApplicationJson(stagingUser,
-          PostStagingUsersResponse.headersFor201()))
-      ));
+    ).onSuccess(stagingUser -> {
+      if (Boolean.TRUE.equals(isUpdated.get())) {
+        asyncResultHandler.handle(
+          succeededFuture(StagingUsers.PostStagingUsersResponse.respond200WithApplicationJson(stagingUser))
+        );
+      } else {
+        asyncResultHandler.handle(
+          succeededFuture(StagingUsers.PostStagingUsersResponse.respond201WithApplicationJson(stagingUser,
+            PostStagingUsersResponse.headersFor201()))
+        );
+      }
+    });
   }
 }
