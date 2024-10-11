@@ -5,8 +5,6 @@ import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.StagingUser;
@@ -24,11 +22,9 @@ import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static io.vertx.core.Future.succeededFuture;
 
-import static io.vertx.core.Future.succeededFuture;
 import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
 import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
 
@@ -79,15 +75,16 @@ public class StagingUsersAPI implements StagingUsers {
 
   @Override
   public void putStagingUsersMergeOrCreateUserById(String id, String userId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("putStagingUsersMergeOrCreateUserById:: stagingUserId {} and userId {}", id, userId);
     new StagingUserService(vertxContext, okapiHeaders)
       .mergeOrCreateUserFromStagingUser(id, userId)
       .onSuccess(user -> {
-        log.info("user response {}", user);
+        logger.info("putStagingUsersMergeOrCreateUserById:: user response {}", user);
         asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond200WithApplicationJson(user.getId())));
       })
       .onFailure(throwable -> {
         var errorMessage = throwable.getMessage();
-        log.error("putStagingUsersMergeById:: future failed with error {}", errorMessage);
+        logger.error("putStagingUsersMergeById:: future failed with error {}", errorMessage);
         if (isUserNotFoundError(errorMessage, userId)) {
           asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond404WithTextPlain(errorMessage)));
           return;
