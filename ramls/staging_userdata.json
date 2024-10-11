@@ -41,7 +41,7 @@
           "description": "The staging user's surname"
         }
       },
-      "required": ["externalSystemId", "firstName", "lastName"],
+      "required": ["firstName", "lastName"],
       "additionalProperties": false
     },
     "addressInfo": {

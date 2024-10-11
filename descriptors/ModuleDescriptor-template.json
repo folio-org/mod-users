@@ -312,6 +312,11 @@
           "permissionsRequired": [ "staging-users.collection.get" ]
         },
         {
+          "methods": [ "POST" ],
+          "pathPattern": "/staging-users",
+          "permissionsRequired": [ "staging-users.item.post" ]
+        },
+        {
           "methods": [ "PUT" ],
           "pathPattern": "/staging-users/{id}/mergeOrCreateUser",
           "permissionsRequired": [ "staging-users.collection.put" ]
@@ -640,6 +645,11 @@
       "permissionName" : "staging-users.collection.get",
       "displayName" : "staging users collection get",
       "description" : "Get a collection of staging user records"
+    },
+    {
+      "permissionName" : "staging-users.item.post",
+      "displayName" : "staging users collection post",
+      "description" : "Post a staging user records"
     },
     {
       "permissionName" : "staging-users.collection.put",
