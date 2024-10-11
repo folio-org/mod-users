@@ -71,7 +71,9 @@ public class StagingUsersAPI implements StagingUsers {
             logger.debug("Processing existing staging user with ID: {}", finalEntityToSave.getId());
 
             // Copy non-null properties and update metadata
-            BeanUtils.copyPropertiesNotNull(entity, finalEntityToSave);
+            BeanUtils.copyPropertiesNotNull(finalEntityToSave, entity);
+            logger.info("finalEntityToSave: {}", finalEntityToSave.toString());
+            logger.info("entity: {}", entity.toString());
             updateMetaInfo(okapiHeaders, finalEntityToSave);
             isUpdated.set(Boolean.TRUE);
           } else {
