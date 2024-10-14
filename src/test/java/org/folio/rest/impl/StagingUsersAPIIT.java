@@ -34,16 +34,10 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   private static StagingUsersClient stagingUsersClient;
 
-
   @BeforeAll
   @SneakyThrows
   static void beforeAll() {
     stagingUsersClient = new StagingUsersClient(okapiUrl, okapiHeaders);
-  }
-
-  @BeforeEach
-  public void beforeEach() {
-//    stagingUsersClient.deleteAllUsers();
   }
 
   @Test
@@ -140,6 +134,4 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     stagingUserToCreate.setAddressInfo(addressInfo);
     return stagingUserToCreate;
   }
-
-
 }
