@@ -61,7 +61,7 @@ public class StagingUserService {
     log.debug("mergeOrCreateUserFromStagingUser:: Creating or updating user with id {} from stagingUserId {}",
       userId, stagingUserId);
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
-      .withTrans(conn -> Future.all(fetchHomeAddressType(conn), fetchRemotePatronGroupOnlyIfUserIdPresent(conn, userId))
+      .withTrans(conn -> Future.all(fetchHomeAddressType(conn), fetchRemotePatronGroupOnlyIfUserIdNotPresent(conn, userId))
         .compose(compositeFuture -> {
           AddressType homeAddress = compositeFuture.resultAt(0);
           String homeAddressId = homeAddress.getId();
@@ -83,9 +83,9 @@ public class StagingUserService {
       HOME_ADDRESS_TYPE_NOT_FOUND);
   }
 
-  private Future<Usergroup> fetchRemotePatronGroupOnlyIfUserIdPresent(Conn conn, String userId) {
-    log.debug("fetchRemotePatronGroupOnlyIfUserIdPresent:: fetching Remote patron group with userId {}", userId);
-    return userId != null
+  private Future<Usergroup> fetchRemotePatronGroupOnlyIfUserIdNotPresent(Conn conn, String userId) {
+    log.debug("fetchRemotePatronGroupOnlyIfUserIdNotPresent:: fetching Remote patron group with userId {}", userId);
+    return userId == null
       ? fetchEntityByCriterion(conn, GROUP, REMOTE_NON_CIRCULATING,
       Usergroup.class, GROUP_TABLE, REMOTE_PATRON_GROUP_NOT_FOUND)
       : Future.succeededFuture(null);
@@ -148,11 +148,14 @@ public class StagingUserService {
   }
 
   private User updateUserFromStagingUser(StagingUser stagingUser, User user, String homeAddressTypeId) {
+    var metaData = MetadataUtil.createMetadata(okapiHeaders);
     return user.withActive(true)
       .withPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication())
       .withExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null)
       .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
-      .withPersonal(createOrUpdatePersonal(stagingUser, user.getPersonal(), homeAddressTypeId));
+      .withPersonal(createOrUpdatePersonal(stagingUser, user.getPersonal(), homeAddressTypeId))
+      .withMetadata(user.getMetadata().withUpdatedDate(metaData.getUpdatedDate()))
+      .withMetadata(user.getMetadata().withUpdatedByUserId(metaData.getUpdatedByUserId()));
   }
 
   private Personal createOrUpdatePersonal(StagingUser stagingUser, Personal personal, String homeAddressTypeId) {
@@ -164,6 +167,7 @@ public class StagingUserService {
     setGeneralInfo(generalInfo, personal);
     Address homeAddress = personal.getAddresses() != null
       ? personal.getAddresses().stream()
+      .map(address -> address.withPrimaryAddress(false))
       .filter(address -> homeAddressTypeId.equals(address.getAddressTypeId()))
       .findFirst()
       .orElse(new Address())

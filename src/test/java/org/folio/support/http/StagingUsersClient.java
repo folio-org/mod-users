@@ -2,16 +2,14 @@ package org.folio.support.http;
 
 import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
-import org.folio.rest.jaxrs.model.AddressInfo;
 import org.folio.rest.jaxrs.model.ContactInfo;
 import org.folio.rest.jaxrs.model.GeneralInfo;
 import org.folio.rest.jaxrs.model.StagingUser;
 import org.folio.rest.jaxrs.resource.StagingUsers;
-import org.folio.support.User;
-import org.folio.support.Users;
+
+import java.util.Map;
 
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
 
 public class StagingUsersClient {
   private final RestAssuredCollectionApiClient<StagingUser, StagingUsers> client;
@@ -40,6 +38,19 @@ public class StagingUsersClient {
 
   public ValidatableResponse attemptToCreateStagingUser(@NonNull StagingUser stagingUser) {
     return client.attemptToCreateRecord(stagingUser);
+  }
+
+  public ValidatableResponse attemptToMergeStagingUser(String stagingUserId, String userId) {
+    var requestSpec = client.initialSpecification();
+
+    if (userId != null && !userId.isEmpty()) {
+      requestSpec.queryParam("userId", userId);
+    }
+
+    return requestSpec
+      .when()
+      .put("{id}/mergeOrCreateUser", Map.of("id", stagingUserId))
+      .then();
   }
 
   public StagingUser getUser(String id) {
