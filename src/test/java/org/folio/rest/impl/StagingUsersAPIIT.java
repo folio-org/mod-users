@@ -26,7 +26,6 @@ import org.folio.test.util.DBTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -152,7 +151,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void testMergeUser_whenAddressTypeNotFound() {
-    StagingUser stagingUserToCreate = getDummyStagingUser();
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     final var response = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
     response.statusCode(is(201));
     StagingUser stagingUser = response.extract().response().as(StagingUser.class);
@@ -165,7 +164,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @Test
   void testMergeUser_whenRemotePatronGroupNotFound() {
     createAddressType(HOME);
-    StagingUser stagingUserToCreate = getDummyStagingUser();
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     final var response = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
     response.statusCode(is(201));
     StagingUser stagingUser = response.extract().response().as(StagingUser.class);
@@ -189,7 +188,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   void testMergeUser_withInvalidUserId() {
     createAddressType(HOME);
     createPatronGroup(REMOTE_NON_CIRCULATING);
-    var response = stagingUsersClient.attemptToCreateStagingUser(getDummyStagingUser());
+    var response = stagingUsersClient.attemptToCreateStagingUser(getDummyStagingUser(createRandomString()));
     response.statusCode(is(201));
     StagingUser stagingUser = response.extract().response().as(StagingUser.class);
     var randomId = UUID.randomUUID().toString();
@@ -202,7 +201,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   void testMergeUser_withValidStagingUserId() {
     var homeAddressTypeId = createAddressType(HOME);
     var remotePatronGroupId = createPatronGroup(REMOTE_NON_CIRCULATING);
-    StagingUser stagingUserToCreate = getDummyStagingUser();
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
 
@@ -220,7 +219,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   void testMergeUser_withValidStagingIdAndUserId_WithoutHomeAddress() {
     var homeAddressTypeId = createAddressType(HOME);
     createPatronGroup(REMOTE_NON_CIRCULATING);
-    StagingUser stagingUserToCreate = getDummyStagingUser();
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
     var workAddressTypeId = createAddressType("Work");
@@ -240,7 +239,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   void testMergeUser_withValidStagingIdAndUserId_WithHomeAddress() {
     var homeAddressTypeId = createAddressType(HOME);
     createPatronGroup(REMOTE_NON_CIRCULATING);
-    StagingUser stagingUserToCreate = getDummyStagingUser();
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
     var patronGroupId = createPatronGroup("patron");
@@ -258,7 +257,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   void testMergeUser_withValidStagingIdAndUserId_WithHomeAndWorkAddress() {
     var homeAddressTypeId = createAddressType(HOME);
     createPatronGroup(REMOTE_NON_CIRCULATING);
-    StagingUser stagingUserToCreate = getDummyStagingUser();
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
     var patronGroupId = createPatronGroup("patron");
@@ -278,7 +277,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   void testMergeUser_withValidStagingIdAndUserId_WithOutAddress() {
     var homeAddressTypeId = createAddressType(HOME);
     createPatronGroup(REMOTE_NON_CIRCULATING);
-    StagingUser stagingUserToCreate = getDummyStagingUser();
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
     var patronGroupId = createPatronGroup("patron");
@@ -439,5 +438,9 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
       .countryId("IN")
       .addressTypeId(addressTypeId)
       .build();
+  }
+
+  private String createRandomString() {
+    return RandomStringUtils.random(5, true, true);
   }
 }
