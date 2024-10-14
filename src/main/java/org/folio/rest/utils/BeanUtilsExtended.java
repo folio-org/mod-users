@@ -32,6 +32,7 @@ public class BeanUtilsExtended extends org.springframework.beans.BeanUtils {
         copyPropertiesNotNull(source, target, null, (String[]) null);
     }
 
+    @SuppressWarnings("java:S3011")
     private static void setAccessible(Method method) {
         if (!Modifier.isPublic(method.getDeclaringClass().getModifiers())) {
             method.setAccessible(true);

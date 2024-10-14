@@ -2,16 +2,12 @@ package org.folio.support.http;
 
 import io.restassured.response.ValidatableResponse;
 import lombok.NonNull;
-import org.folio.rest.jaxrs.model.AddressInfo;
 import org.folio.rest.jaxrs.model.ContactInfo;
 import org.folio.rest.jaxrs.model.GeneralInfo;
 import org.folio.rest.jaxrs.model.StagingUser;
 import org.folio.rest.jaxrs.resource.StagingUsers;
-import org.folio.support.User;
-import org.folio.support.Users;
 
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.net.HttpURLConnection.HTTP_OK;
 
 public class StagingUsersClient {
   private final RestAssuredCollectionApiClient<StagingUser, StagingUsers> client;
