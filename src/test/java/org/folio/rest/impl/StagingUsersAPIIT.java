@@ -347,6 +347,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(stagingGeneralInfo.getMiddleName(), userPersonal.getMiddleName());
     assertEquals(stagingGeneralInfo.getPreferredFirstName(), userPersonal.getPreferredFirstName());
     assertEquals(stagingContactInfo.getEmail(), userPersonal.getEmail());
+    assertEquals(stagingContactInfo.getEmail(), user.getExternalSystemId());
     assertEquals(stagingContactInfo.getPhone(), userPersonal.getPhone());
     assertEquals(stagingContactInfo.getMobilePhone(), userPersonal.getMobilePhone());
     assertEquals(CONTACT_TYPE_EMAIL_ID, userPersonal.getPreferredContactTypeId(), "user should always have 002 as its contact type");
