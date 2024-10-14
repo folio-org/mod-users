@@ -77,7 +77,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(updatedUser.getAddressInfo(), createdUser.getAddressInfo());
     assertThat(updatedUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
     assertThat(updatedUser.getMetadata().getUpdatedDate(), not(createdUser.getMetadata().getUpdatedDate()));
-
   }
 
   @Test
@@ -91,7 +90,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
     //Validating status TIER_2 passed in request body is not considered and set TIER_1 on creation
-    assertEquals(createdUser.getStatus(), StagingUser.Status.TIER_1);
+    assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
   }
 
   @Test
@@ -154,11 +153,14 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertFalse(stagingUserdataCollection.getStagingUsers().isEmpty());
     assertThat(stagingUserdataCollection.getTotalRecords(), is(1));
     StagingUser stagingUser = stagingUserdataCollection.getStagingUsers().get(0);
-    assertThat(stagingUser.getGeneralInfo().getFirstName(), is(createdUser.getGeneralInfo().getFirstName()));
-    assertThat(stagingUser.getAddressInfo().getCity(), is(createdUser.getAddressInfo().getCity()));
-    assertThat(stagingUser.getContactInfo().getMobilePhone(), is(createdUser.getContactInfo().getMobilePhone()));
-    assertThat(stagingUser.getIsEmailVerified(), is(createdUser.getIsEmailVerified()));
-    assertThat(stagingUser.getStatus(), is(createdUser.getStatus()));
+
+    assertThat(stagingUser.getId(), is(notNullValue()));
+    assertEquals(createdUser.getStatus(), stagingUser.getStatus());
+    assertTrue(stagingUser.getPreferredEmailCommunication().containsAll(createdUser.getPreferredEmailCommunication()));
+    assertEquals(createdUser.getIsEmailVerified(), stagingUser.getIsEmailVerified());
+    assertEquals(createdUser.getContactInfo(), stagingUser.getContactInfo());
+    assertEquals(createdUser.getGeneralInfo(), stagingUser.getGeneralInfo());
+    assertEquals(createdUser.getAddressInfo(), stagingUser.getAddressInfo());
     assertThat(stagingUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
     assertThat(stagingUser.getMetadata().getUpdatedDate(), is(createdUser.getMetadata().getUpdatedDate()));
     assertThat(stagingUser.getMetadata().getCreatedByUserId(), is(createdUser.getMetadata().getCreatedByUserId()));
