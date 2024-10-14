@@ -38,6 +38,7 @@ public class StagingUsersAPI implements StagingUsers {
 
 
   private static void updateMetaInfo(Map<String, String> okapiHeaders, StagingUser existingStagingUser) {
+    // updating metadata
     String userId = okapiHeaders.get(RestVerticle.OKAPI_USERID_HEADER);
     Metadata metadata = existingStagingUser.getMetadata();
     metadata.setUpdatedDate(new Date());
@@ -55,56 +56,59 @@ public class StagingUsersAPI implements StagingUsers {
   @Override
   public void postStagingUsers(StagingUser entity, Map<String, String> okapiHeaders,
                                Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-    final Criterion criterion = new Criterion(
-      new Criteria().addField("'contactInfo'").addField("'email'")
-        .setOperation("=").setVal(entity.getContactInfo().getEmail()).setJSONB(true));
-    AtomicReference<Boolean> isUpdated = new AtomicReference<>(Boolean.FALSE);
-    postgresClient.withTrans(conn -> {
-      return conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
+    try {
+      PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
+      final Criterion criterion = new Criterion(
+        new Criteria().addField("'contactInfo'").addField("'email'")
+          .setOperation("=").setVal(entity.getContactInfo().getEmail()).setJSONB(true));
+      AtomicReference<Boolean> isUpdated = new AtomicReference<>(Boolean.FALSE);
+      postgresClient.withTrans(conn -> conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
         .compose(stagingUserResults -> {
-          logger.info("record found by email success1: {} ", stagingUserResults.getResultInfo().getTotalRecords());
-          logger.info("record found by email success2: {} ", stagingUserResults.getResults().size());
+          logger.info("Record found by email: {} ", stagingUserResults.getResults().size());
           List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
 
           String entityId = null;
-          StagingUser finalEntityToSave = null;
-
           if (stagingUsersByEmail != null && !stagingUsersByEmail.isEmpty()) {
-            finalEntityToSave = stagingUsersByEmail.get(0);
-            entityId = finalEntityToSave.getId();
-            logger.debug("Processing existing staging user with ID: {}", finalEntityToSave.getId());
+            logger.info("Updating existing Staging-User");
+            StagingUser existingStagingUser = stagingUsersByEmail.get(0);
+            entityId = existingStagingUser.getId();
+            logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
 
-            // Copy non-null properties and update metadata
-            BeanUtils.copyPropertiesNotNull(finalEntityToSave, entity);
-            logger.info("finalEntityToSave: {}", finalEntityToSave.toString());
-            logger.info("entity: {}", entity.toString());
-            updateMetaInfo(okapiHeaders, finalEntityToSave);
+            // Copy non-null properties
+            BeanUtils.copyPropertiesNotNull(existingStagingUser, entity);
+            entity.setIsEmailVerified(existingStagingUser.getIsEmailVerified());
+
+            updateMetaInfo(okapiHeaders, existingStagingUser);
             isUpdated.set(Boolean.TRUE);
           } else {
-            // No existing user, create a new one
+            logger.info("Creating new Staging-User");
+            entity.setStatus(StagingUser.Status.TIER_1);
+            entity.setIsEmailVerified(Boolean.FALSE);
             isUpdated.set(Boolean.FALSE);
-            finalEntityToSave = entity;
           }
-          return conn.upsert(STAGING_USERS_TABLE, entityId, finalEntityToSave, true)
+          return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
             .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
-        });
-    }).onFailure(handler ->
+        })).onFailure(handler ->
+        asyncResultHandler.handle(
+          succeededFuture(PostStagingUsersResponse.respond500WithTextPlain(handler.getMessage()))
+        )
+      ).onSuccess(stagingUser -> {
+        if (Boolean.TRUE.equals(isUpdated.get())) {
+          asyncResultHandler.handle(
+            succeededFuture(StagingUsers.PostStagingUsersResponse.respond200WithApplicationJson(stagingUser))
+          );
+        } else {
+          asyncResultHandler.handle(
+            succeededFuture(StagingUsers.PostStagingUsersResponse.respond201WithApplicationJson(stagingUser,
+              PostStagingUsersResponse.headersFor201()))
+          );
+        }
+      });
+    } catch (Exception e) {
       asyncResultHandler.handle(
-        succeededFuture(PostStagingUsersResponse.respond500WithTextPlain(handler.getMessage()))
-      )
-    ).onSuccess(stagingUser -> {
-      if (Boolean.TRUE.equals(isUpdated.get())) {
-        asyncResultHandler.handle(
-          succeededFuture(StagingUsers.PostStagingUsersResponse.respond200WithApplicationJson(stagingUser))
-        );
-      } else {
-        asyncResultHandler.handle(
-          succeededFuture(StagingUsers.PostStagingUsersResponse.respond201WithApplicationJson(stagingUser,
-            PostStagingUsersResponse.headersFor201()))
-        );
-      }
-    });
+        succeededFuture(PostStagingUsersResponse.respond500WithTextPlain(e.getLocalizedMessage()))
+      );
+    }
   }
   @Override
   public void putStagingUsersMergeOrCreateUserById(String id, String userId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
