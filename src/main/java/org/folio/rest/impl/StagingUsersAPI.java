@@ -15,6 +15,7 @@ import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.utils.MetadataUtil;
 import org.folio.rest.utils.BeanUtilsExtended;
 
 import javax.ws.rs.Path;
@@ -33,10 +34,9 @@ public class StagingUsersAPI implements StagingUsers {
 
   private static void updateMetaInfo(Map<String, String> okapiHeaders, StagingUser existingStagingUser) {
     // updating metadata
-    String userId = okapiHeaders.get(RestVerticle.OKAPI_USERID_HEADER);
     Metadata metadata = existingStagingUser.getMetadata();
     metadata.setUpdatedDate(new Date());
-    metadata.setUpdatedByUserId(userId);
+    metadata.setUpdatedByUserId(MetadataUtil.createMetadata(okapiHeaders).getUpdatedByUserId());
     existingStagingUser.setMetadata(metadata);
   }
 
@@ -51,6 +51,7 @@ public class StagingUsersAPI implements StagingUsers {
   @Override
   public void postStagingUsers(StagingUser entity, Map<String, String> okapiHeaders,
                                Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("postStagingUsers:: request body: {}", entity);
     try {
       PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
       final Criterion criterion = new Criterion(
@@ -64,10 +65,9 @@ public class StagingUsersAPI implements StagingUsers {
 
           String entityId = null;
           if (stagingUsersByEmail != null && !stagingUsersByEmail.isEmpty()) {
-            logger.info("Updating existing Staging-User");
             StagingUser existingStagingUser = stagingUsersByEmail.get(0);
             entityId = existingStagingUser.getId();
-            logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
+            logger.info("Processing existing staging user with ID: {}", existingStagingUser.getId());
 
             // Copy non-null properties
             BeanUtilsExtended.copyPropertiesNotNull(existingStagingUser, entity);

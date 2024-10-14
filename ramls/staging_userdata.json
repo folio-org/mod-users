@@ -73,7 +73,6 @@
           "description": "Country"
         }
       },
-      "required": ["addressLine0", "city", "province", "zip", "country"],
       "additionalProperties": false
     },
     "contactInfo": {
