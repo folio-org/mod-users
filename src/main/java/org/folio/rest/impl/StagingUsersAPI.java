@@ -15,7 +15,7 @@ import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.utils.BeanUtils;
+import org.folio.rest.utils.BeanUtilsExtended;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -70,7 +70,7 @@ public class StagingUsersAPI implements StagingUsers {
             logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
 
             // Copy non-null properties
-            BeanUtils.copyPropertiesNotNull(existingStagingUser, entity);
+            BeanUtilsExtended.copyPropertiesNotNull(existingStagingUser, entity);
             entity.setIsEmailVerified(existingStagingUser.getIsEmailVerified());
 
             updateMetaInfo(okapiHeaders, existingStagingUser);

@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class BeanUtils extends org.springframework.beans.BeanUtils {
+public class BeanUtilsExtended extends org.springframework.beans.BeanUtils {
 
     /**
      * Copy the not null property values of the given source bean into the target bean.
@@ -50,6 +50,7 @@ public class BeanUtils extends org.springframework.beans.BeanUtils {
      * @throws BeansException if the copying failed
      * @see BeanWrapper
      */
+    @SuppressWarnings("java:S3776")
     private static void copyPropertiesNotNull(Object source, Object target, Class<?> editable, String... ignoreProperties)
             throws BeansException {
 
@@ -98,7 +99,7 @@ public class BeanUtils extends org.springframework.beans.BeanUtils {
                                 }
                             }
                         }
-                        catch (Throwable ex) {
+                        catch (Exception ex) {
                             throw new FatalBeanException(
                                     "Could not copy property '" + targetPropertyDescriptor.getName() +
                                     "' from source to target", ex);
