@@ -32,9 +32,9 @@ import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.lang.reflect.Field;
@@ -52,7 +52,7 @@ public abstract class AbstractRestTest {
   private static FolioS3Client s3Client;
   public static final String TENANT_NAME = "diku";
   public static final String KAFKA_ENV_VALUE = "test-env";
-  public static final String KAFKA_IMAGE_NAME = "confluentinc/cp-kafka:7.3.1";
+  public static final String KAFKA_IMAGE_NAME = "apache/kafka-native:3.8.0";
 
   protected static VertxModule module;
   protected static OkapiUrl okapiUrl;
