@@ -45,18 +45,9 @@ import static org.folio.service.impl.StagingUserService.HOME;
 import static org.folio.service.impl.StagingUserService.REMOTE_NON_CIRCULATING;
 import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
 import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
-import org.folio.support.http.StagingUsersClient;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
-import java.util.Set;
 
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;

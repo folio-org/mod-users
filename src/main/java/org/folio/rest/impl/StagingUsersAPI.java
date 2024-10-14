@@ -16,6 +16,7 @@ import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.MetadataUtil;
 import org.folio.rest.utils.BeanUtilsExtended;
+import org.folio.service.impl.StagingUserService;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
