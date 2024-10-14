@@ -203,10 +203,8 @@ public class StagingUserService {
   }
 
   private void updateAddress(Address userAddress, AddressInfo addressInfo, String homeAddressTypeId) {
-    if (userAddress.getId() == null) {
-      userAddress.setId(UUID.randomUUID().toString());
-    }
-    userAddress.withId(userAddress.getId() != null ? userAddress.getId() : UUID.randomUUID().toString())
+    userAddress
+      .withId(userAddress.getId() != null ? userAddress.getId() : UUID.randomUUID().toString())
       .withCountryId(addressInfo.getCountry())
       .withAddressLine1(addressInfo.getAddressLine0())
       .withAddressLine2(addressInfo.getAddressLine1())
