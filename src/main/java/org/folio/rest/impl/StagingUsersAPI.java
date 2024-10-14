@@ -47,6 +47,8 @@ public class StagingUsersAPI implements StagingUsers {
   public void getStagingUsers(String query, String orderBy, StagingUsersGetOrder order, String totalRecords, int offset,
                               int limit, Map<String, String> okapiHeaders,
                               Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("getStagingUsers:: query: {}, orderBy: {}, order: {}, totalRecords: {}, offset: {}, limit: {}",
+      query, orderBy, order, totalRecords, offset, limit);
     PgUtil.get(STAGING_USERS_TABLE, StagingUser.class, StagingUserdataCollection.class,
       query, offset, limit, okapiHeaders, vertxContext, StagingUsers.GetStagingUsersResponse.class, asyncResultHandler);
   }
