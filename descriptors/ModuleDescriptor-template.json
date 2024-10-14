@@ -301,6 +301,22 @@
           "delay" : "24"
         }
       ]
+    },
+    {
+      "id": "staging-users",
+      "version": "1.0",
+      "handlers" : [
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/staging-users",
+          "permissionsRequired": [ "staging-users.collection.get" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/staging-users",
+          "permissionsRequired": [ "staging-users.item.post" ]
+        }
+      ]
     }
   ],
   "permissionSets" : [
@@ -619,6 +635,16 @@
         "user-settings.custom-fields.item.option.stats.get"
       ],
       "visible": false
+    },
+    {
+      "permissionName" : "staging-users.collection.get",
+      "displayName" : "staging users collection get",
+      "description" : "Get a collection of staging user records"
+    },
+    {
+      "permissionName" : "staging-users.item.post",
+      "displayName" : "staging users collection post",
+      "description" : "Post a staging user records"
     }
   ],
   "launchDescriptor": {
