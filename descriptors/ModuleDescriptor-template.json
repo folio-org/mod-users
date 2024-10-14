@@ -319,7 +319,7 @@
         {
           "methods": [ "PUT" ],
           "pathPattern": "/staging-users/{id}/mergeOrCreateUser",
-          "permissionsRequired": [ "staging-users.collection.put" ]
+          "permissionsRequired": [ "staging-users.item.put" ]
         }
       ]
     }
@@ -652,9 +652,9 @@
       "description" : "Post a staging user records"
     },
     {
-      "permissionName" : "staging-users.collection.put",
+      "permissionName" : "staging-users.item.put",
       "displayName" : "staging users collection put",
-      "description" : "create user from staging user records"
+      "description" : "create or update user from staging user records"
     }
   ],
   "launchDescriptor": {
