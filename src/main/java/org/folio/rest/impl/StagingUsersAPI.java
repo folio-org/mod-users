@@ -57,37 +57,33 @@ public class StagingUsersAPI implements StagingUsers {
         new Criteria().addField("'contactInfo'").addField("'email'")
           .setOperation("=").setVal(entity.getContactInfo().getEmail()).setJSONB(true));
       AtomicReference<Boolean> isUpdated = new AtomicReference<>(Boolean.FALSE);
-      postgresClient.withTrans(conn -> {
-        return conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
-          .compose(stagingUserResults -> {
-            logger.info("Record found by email: {} ", stagingUserResults.getResults().size());
-            List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
+      postgresClient.withTrans(conn -> conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
+        .compose(stagingUserResults -> {
+          logger.info("Record found by email: {} ", stagingUserResults.getResults().size());
+          List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
 
-            String entityId = null;
-            if (stagingUsersByEmail != null && !stagingUsersByEmail.isEmpty()) {
-              logger.info("Updating existing Staging-User");
-              StagingUser existingStagingUser = stagingUsersByEmail.get(0);
-              entityId = existingStagingUser.getId();
-              logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
+          String entityId = null;
+          if (stagingUsersByEmail != null && !stagingUsersByEmail.isEmpty()) {
+            logger.info("Updating existing Staging-User");
+            StagingUser existingStagingUser = stagingUsersByEmail.get(0);
+            entityId = existingStagingUser.getId();
+            logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
 
-              // Copy non-null properties
-              BeanUtils.copyPropertiesNotNull(existingStagingUser, entity);
-              entity.setIsEmailVerified(existingStagingUser.getIsEmailVerified());
-              logger.info("existingStagingUser: {}", existingStagingUser);
-              logger.info("entity: {}", entity);
+            // Copy non-null properties
+            BeanUtils.copyPropertiesNotNull(existingStagingUser, entity);
+            entity.setIsEmailVerified(existingStagingUser.getIsEmailVerified());
 
-              updateMetaInfo(okapiHeaders, existingStagingUser);
-              isUpdated.set(Boolean.TRUE);
-            } else {
-              logger.info("Creating new Staging-User");
-              entity.setStatus(StagingUser.Status.TIER_1);
-              entity.setIsEmailVerified(Boolean.FALSE);
-              isUpdated.set(Boolean.FALSE);
-            }
-            return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
-              .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
-          });
-      }).onFailure(handler ->
+            updateMetaInfo(okapiHeaders, existingStagingUser);
+            isUpdated.set(Boolean.TRUE);
+          } else {
+            logger.info("Creating new Staging-User");
+            entity.setStatus(StagingUser.Status.TIER_1);
+            entity.setIsEmailVerified(Boolean.FALSE);
+            isUpdated.set(Boolean.FALSE);
+          }
+          return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
+            .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
+        })).onFailure(handler ->
         asyncResultHandler.handle(
           succeededFuture(PostStagingUsersResponse.respond500WithTextPlain(handler.getMessage()))
         )
@@ -103,7 +99,7 @@ public class StagingUsersAPI implements StagingUsers {
           );
         }
       });
-    } catch (Throwable e) {
+    } catch (Exception e) {
       asyncResultHandler.handle(
         succeededFuture(PostStagingUsersResponse.respond500WithTextPlain(e.getLocalizedMessage()))
       );
