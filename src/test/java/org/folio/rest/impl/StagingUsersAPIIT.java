@@ -143,7 +143,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     createdNewStagingUserResponse.statusCode(is(201));
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
-
     final var stagingUsersResponse =
       stagingUsersClient.attemptToGetUsers("contactInfo.email=="+createdUser.getContactInfo().getEmail());
     stagingUsersResponse.statusCode(is(200));
