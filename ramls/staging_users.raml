@@ -1,0 +1,61 @@
+#%RAML 1.0
+title: StagingUsers
+version: v19.4.0
+baseUri: http://github.com/org/folio/mod-users
+
+documentation:
+  - title: mod-users stagingUser API
+    content: This documents the API calls that can be made to query and manage staging users of the system
+
+types:
+  stagingUser: !include staging_userdata.json
+  stagingUserdataCollection: !include staging_userdataCollection.json
+  errors: !include raml-util/schemas/errors.schema
+
+traits:
+  orderable: !include raml-util/traits/orderable.raml
+  pageable: !include raml-util/traits/pageable.raml
+  searchable: !include raml-util/traits/searchable.raml
+  validate: !include raml-util/traits/validation.raml
+
+resourceTypes:
+  collection: !include raml-util/rtypes/collection.raml
+  collection-item: !include raml-util/rtypes/item-collection.raml
+  get-only: !include raml-util/rtypes/get-only.raml
+  post-empty-body: !include raml-util/rtypes/post-empty-body.raml
+
+/staging-users:
+  type:
+    collection:
+      exampleCollection: !include examples/staging_user_collection.sample
+      exampleItem: !include examples/staging_user.sample
+      schemaCollection: stagingUserdataCollection
+      schemaItem: stagingUser
+  get:
+    is: [
+      searchable: {description: "", example: "email=abc@testEmail.com sortBy contactInfo.email"},
+      orderable: {fieldsList: "field A, field B"},
+      pageable
+    ]
+    description: Return a list of staging-users
+  post:
+    is: [ validate ]
+    description: Create a user
+    responses:
+      200:
+        description: "When existing staging user record is updated"
+        body:
+          application/json:
+      201:
+        description: "when new staging user record is created"
+        body:
+          application/json:
+      400:
+        description: "Bad request"
+        body:
+          application/json:
+      500:
+        description: "Internal server error, e.g. due to misconfiguration"
+        body:
+          text/plain:
+            example: "Internal server error, contact administrator"
