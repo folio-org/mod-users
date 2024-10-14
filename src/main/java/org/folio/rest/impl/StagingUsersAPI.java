@@ -5,7 +5,6 @@ import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.rest.RestVerticle;
 import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.StagingUser;
 import org.folio.rest.jaxrs.model.StagingUserdataCollection;
@@ -14,10 +13,9 @@ import org.folio.rest.jaxrs.resource.StagingUsers;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
-import org.folio.service.impl.StagingUserService;
 import org.folio.rest.persist.PostgresClient;
-import org.folio.rest.utils.BeanUtils;
-import org.folio.service.impl.StagingUserService;
+import org.folio.rest.tools.utils.MetadataUtil;
+import org.folio.rest.utils.BeanUtilsExtended;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -36,15 +34,14 @@ public class StagingUsersAPI implements StagingUsers {
   public static final String STAGING_USERS_TABLE = "staging_users";
   private static final Logger logger = LogManager.getLogger(StagingUsersAPI.class);
 
-
   private static void updateMetaInfo(Map<String, String> okapiHeaders, StagingUser existingStagingUser) {
     // updating metadata
-    String userId = okapiHeaders.get(RestVerticle.OKAPI_USERID_HEADER);
     Metadata metadata = existingStagingUser.getMetadata();
     metadata.setUpdatedDate(new Date());
-    metadata.setUpdatedByUserId(userId);
+    metadata.setUpdatedByUserId(MetadataUtil.createMetadata(okapiHeaders).getUpdatedByUserId());
     existingStagingUser.setMetadata(metadata);
   }
+
   @Override
   public void getStagingUsers(String query, String orderBy, StagingUsersGetOrder order, String totalRecords, int offset,
                               int limit, Map<String, String> okapiHeaders,
@@ -56,6 +53,7 @@ public class StagingUsersAPI implements StagingUsers {
   @Override
   public void postStagingUsers(StagingUser entity, Map<String, String> okapiHeaders,
                                Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("postStagingUsers:: request body: {}", entity);
     try {
       PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
       final Criterion criterion = new Criterion(
@@ -69,13 +67,12 @@ public class StagingUsersAPI implements StagingUsers {
 
           String entityId = null;
           if (stagingUsersByEmail != null && !stagingUsersByEmail.isEmpty()) {
-            logger.info("Updating existing Staging-User");
             StagingUser existingStagingUser = stagingUsersByEmail.get(0);
             entityId = existingStagingUser.getId();
-            logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
+            logger.info("Processing existing staging user with ID: {}", existingStagingUser.getId());
 
             // Copy non-null properties
-            BeanUtils.copyPropertiesNotNull(existingStagingUser, entity);
+            BeanUtilsExtended.copyPropertiesNotNull(existingStagingUser, entity);
             entity.setIsEmailVerified(existingStagingUser.getIsEmailVerified());
 
             updateMetaInfo(okapiHeaders, existingStagingUser);

@@ -45,6 +45,18 @@ import static org.folio.service.impl.StagingUserService.HOME;
 import static org.folio.service.impl.StagingUserService.REMOTE_NON_CIRCULATING;
 import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
 import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
+import org.folio.support.http.StagingUsersClient;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import java.util.Collections;
+import java.util.Set;
+
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -90,12 +102,15 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
     assertThat(createdUser.getId(), is(notNullValue()));
-    assertThat(createdUser.getContactInfo().getEmail(), is(stagingUserToCreate.getContactInfo().getEmail()));
+    assertEquals(createdUser.getStatus(), stagingUserToCreate.getStatus());
+    assertEquals(createdUser.getIsEmailVerified(), stagingUserToCreate.getIsEmailVerified());
+    assertEquals(createdUser.getContactInfo(), stagingUserToCreate.getContactInfo());
+    assertEquals(createdUser.getGeneralInfo(), stagingUserToCreate.getGeneralInfo());
+    assertEquals(createdUser.getAddressInfo(), stagingUserToCreate.getAddressInfo());
+
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
 
-
-    // Validating updating works as expected
     createdUser.setId(null);
     createdUser.getGeneralInfo().setFirstName("updated_firstname");
     createdUser.getAddressInfo().setCity("Updated_City");
@@ -105,12 +120,67 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     updatedNewStagingUserResponse.statusCode(is(200));
     StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
 
-    assertThat(updatedUser.getGeneralInfo().getFirstName(), is(createdUser.getGeneralInfo().getFirstName()));
-    assertThat(updatedUser.getAddressInfo().getCity(), is(createdUser.getAddressInfo().getCity()));
-    assertThat(updatedUser.getContactInfo().getMobilePhone(), is(createdUser.getContactInfo().getMobilePhone()));
+    assertEquals(updatedUser.getContactInfo(), createdUser.getContactInfo());
+    assertEquals(updatedUser.getGeneralInfo(), createdUser.getGeneralInfo());
+    assertEquals(updatedUser.getAddressInfo(), createdUser.getAddressInfo());
     assertThat(updatedUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
     assertThat(updatedUser.getMetadata().getUpdatedDate(), not(createdUser.getMetadata().getUpdatedDate()));
+  }
 
+  @Test
+  void validateStatusIsAlwaysFalseWhenNewStagingUserCreatedForTier1Case_positive() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    // Setting status TIER_2
+    stagingUserToCreate.setStatus(StagingUser.Status.TIER_2);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    //Validating status TIER_2 passed in request body is not considered and set TIER_1 on creation
+    assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
+  }
+
+  @Test
+  void validateIsEmailVerifiedIsAlwaysFalseWhenNewStagingUserCreatedForTier1Case_positive() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    // Setting IsEmailVerified to true
+    stagingUserToCreate.setIsEmailVerified(true);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    //Validating IsEmailVerified passed in request body is not considered and set false on creation
+    assertFalse(createdUser.getIsEmailVerified());
+  }
+
+  @Test
+  void shouldCreateAndUpdatePreferredEmailCommunicationCorrectlyInTheStagingUser_positive() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    createdUser.setId(null);
+    createdUser.setPreferredEmailCommunication(Collections.emptySet());
+
+    var updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertTrue(updatedUser.getPreferredEmailCommunication().containsAll(stagingUserToCreate.getPreferredEmailCommunication()));
+
+    createdUser.setPreferredEmailCommunication(Set.of(PreferredEmailCommunication.PROGRAMS));
+    updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(1, updatedUser.getPreferredEmailCommunication().size());
+    assertTrue(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.PROGRAMS));
+    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
+    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
   }
 
   @Test
@@ -121,7 +191,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     createdNewStagingUserResponse.statusCode(is(201));
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
-
     final var stagingUsersResponse =
       stagingUsersClient.attemptToGetUsers("contactInfo.email=="+createdUser.getContactInfo().getEmail());
     stagingUsersResponse.statusCode(is(200));
@@ -131,11 +200,14 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertFalse(stagingUserdataCollection.getStagingUsers().isEmpty());
     assertThat(stagingUserdataCollection.getTotalRecords(), is(1));
     StagingUser stagingUser = stagingUserdataCollection.getStagingUsers().get(0);
-    assertThat(stagingUser.getGeneralInfo().getFirstName(), is(createdUser.getGeneralInfo().getFirstName()));
-    assertThat(stagingUser.getAddressInfo().getCity(), is(createdUser.getAddressInfo().getCity()));
-    assertThat(stagingUser.getContactInfo().getMobilePhone(), is(createdUser.getContactInfo().getMobilePhone()));
-    assertThat(stagingUser.getIsEmailVerified(), is(createdUser.getIsEmailVerified()));
-    assertThat(stagingUser.getStatus(), is(createdUser.getStatus()));
+
+    assertThat(stagingUser.getId(), is(notNullValue()));
+    assertEquals(createdUser.getStatus(), stagingUser.getStatus());
+    assertTrue(stagingUser.getPreferredEmailCommunication().containsAll(createdUser.getPreferredEmailCommunication()));
+    assertEquals(createdUser.getIsEmailVerified(), stagingUser.getIsEmailVerified());
+    assertEquals(createdUser.getContactInfo(), stagingUser.getContactInfo());
+    assertEquals(createdUser.getGeneralInfo(), stagingUser.getGeneralInfo());
+    assertEquals(createdUser.getAddressInfo(), stagingUser.getAddressInfo());
     assertThat(stagingUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
     assertThat(stagingUser.getMetadata().getUpdatedDate(), is(createdUser.getMetadata().getUpdatedDate()));
     assertThat(stagingUser.getMetadata().getCreatedByUserId(), is(createdUser.getMetadata().getCreatedByUserId()));
@@ -303,10 +375,10 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   private String createPatronGroup(String group) {
     return groupsClient.attemptToCreateGroup(Group.builder()
-      .group(group)
-      .desc(group)
-      .expirationOffsetInDays(730)
-      .build())
+        .group(group)
+        .desc(group)
+        .expirationOffsetInDays(730)
+        .build())
       .statusCode(is(HTTP_CREATED))
       .extract().response().as(Group.class).getId();
   }
@@ -350,6 +422,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @NotNull
   private static StagingUser getDummyStagingUser(String randomString) {
     StagingUser stagingUserToCreate = new StagingUser();
+
+    stagingUserToCreate.setIsEmailVerified(false);
+    stagingUserToCreate.setStatus(StagingUser.Status.TIER_1);
+    stagingUserToCreate.setPreferredEmailCommunication(Set.of(PreferredEmailCommunication.PROGRAMS,
+      PreferredEmailCommunication.SUPPORT, PreferredEmailCommunication.SERVICES));
+
     GeneralInfo generalInfo = new GeneralInfo();
     generalInfo.setFirstName("Kapil_" + randomString);
     generalInfo.setLastName("Soni_" + randomString);
