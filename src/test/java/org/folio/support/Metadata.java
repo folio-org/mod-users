@@ -14,6 +14,5 @@ import lombok.extern.jackson.Jacksonized;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Metadata {
   ZonedDateTime createdDate;
-
   ZonedDateTime updatedDate;
 }

@@ -653,8 +653,8 @@
     },
     {
       "permissionName" : "staging-users.item.put",
-      "displayName" : "staging users collection put",
-      "description" : "create or update user from staging user records"
+      "displayName" : "staging users - create or merge user details",
+      "description" : "create or update user details from staging user records"
     }
   ],
   "launchDescriptor": {
