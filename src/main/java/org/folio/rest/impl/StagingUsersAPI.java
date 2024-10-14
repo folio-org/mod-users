@@ -32,6 +32,7 @@ public class StagingUsersAPI implements StagingUsers {
   private static final Logger logger = LogManager.getLogger(StagingUsersAPI.class);
 
   private static void updateMetaInfo(Map<String, String> okapiHeaders, StagingUser existingStagingUser) {
+    // updating metadata
     String userId = okapiHeaders.get(RestVerticle.OKAPI_USERID_HEADER);
     Metadata metadata = existingStagingUser.getMetadata();
     metadata.setUpdatedDate(new Date());
@@ -63,25 +64,27 @@ public class StagingUsersAPI implements StagingUsers {
           List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
 
           String entityId = null;
-          StagingUser finalEntityToSave = null;
-
           if (stagingUsersByEmail != null && !stagingUsersByEmail.isEmpty()) {
-            finalEntityToSave = stagingUsersByEmail.get(0);
-            entityId = finalEntityToSave.getId();
-            logger.debug("Processing existing staging user with ID: {}", finalEntityToSave.getId());
+            logger.info("Updating existingStaging-User");
+            StagingUser existingStagingUser = stagingUsersByEmail.get(0);
+            entityId = existingStagingUser.getId();
+            logger.debug("Processing existing staging user with ID: {}", existingStagingUser.getId());
 
-            // Copy non-null properties and update metadata
-            BeanUtils.copyPropertiesNotNull(finalEntityToSave, entity);
-            logger.info("finalEntityToSave: {}", finalEntityToSave.toString());
-            logger.info("entity: {}", entity.toString());
-            updateMetaInfo(okapiHeaders, finalEntityToSave);
+            // Copy non-null properties
+            BeanUtils.copyPropertiesNotNull(existingStagingUser, entity);
+            entity.setIsEmailVerified(existingStagingUser.getIsEmailVerified());
+            logger.info("existingStagingUser: {}", existingStagingUser);
+            logger.info("entity: {}", entity);
+
+            updateMetaInfo(okapiHeaders, existingStagingUser);
             isUpdated.set(Boolean.TRUE);
           } else {
-            // No existing user, create a new one
+            logger.info("Creating new Staging-User");
+            entity.setStatus(StagingUser.Status.TIER_1);
+            entity.setIsEmailVerified(Boolean.FALSE);
             isUpdated.set(Boolean.FALSE);
-            finalEntityToSave = entity;
           }
-          return conn.upsert(STAGING_USERS_TABLE, entityId, finalEntityToSave, true)
+          return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
             .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
         });
     }).onFailure(handler ->
