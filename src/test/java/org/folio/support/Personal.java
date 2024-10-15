@@ -15,11 +15,13 @@ import lombok.extern.jackson.Jacksonized;
 public class Personal {
   String lastName;
   String firstName;
+  String middleName;
   String preferredFirstName;
   String dateOfBirth;
   List<Address> addresses;
   String email;
   String phone;
   String mobilePhone;
+  String preferredContactTypeId;
   String profilePictureLink;
 }
