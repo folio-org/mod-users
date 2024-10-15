@@ -72,14 +72,14 @@ public class StagingUsersAPI implements StagingUsers {
 
             // Copy non-null properties
             BeanUtilsExtended.copyPropertiesNotNull(existingStagingUser, entity);
-            entity.setIsEmailVerified(existingStagingUser.getIsEmailVerified());
 
             updateMetaInfo(okapiHeaders, existingStagingUser);
             isUpdated.set(Boolean.TRUE);
           } else {
             logger.info("Creating new Staging-User");
-            entity.setStatus(StagingUser.Status.TIER_1);
-            entity.setIsEmailVerified(Boolean.FALSE);
+            entity.setStatus(entity.getStatus() != null ? entity.getStatus() : StagingUser.Status.TIER_1);
+            entity.setIsEmailVerified(entity.getIsEmailVerified() != null ? entity.getIsEmailVerified() :
+              Boolean.FALSE);
             isUpdated.set(Boolean.FALSE);
           }
           return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)

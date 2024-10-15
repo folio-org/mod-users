@@ -80,30 +80,32 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void validateStatusIsAlwaysFalseWhenNewStagingUserCreatedForTier1Case_positive() {
+  void validateStatusAndIsEmailVerifiedIsSetWhenPassNonNull_positive() {
     String randomString = RandomStringUtils.random(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
-    // Setting status TIER_2
-    stagingUserToCreate.setStatus(StagingUser.Status.TIER_2);
-    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
-    createdNewStagingUserResponse.statusCode(is(201));
-    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
-    //Validating status TIER_2 passed in request body is not considered and set TIER_1 on creation
-    assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
-  }
-
-  @Test
-  void validateIsEmailVerifiedIsAlwaysFalseWhenNewStagingUserCreatedForTier1Case_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
-    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
-    // Setting IsEmailVerified to true
+    stagingUserToCreate.setStatus(StagingUser.Status.TIER_1);
     stagingUserToCreate.setIsEmailVerified(true);
     final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
     createdNewStagingUserResponse.statusCode(is(201));
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
-    //Validating IsEmailVerified passed in request body is not considered and set false on creation
+    assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
+    assertTrue(createdUser.getIsEmailVerified());
+  }
+
+  @Test
+  void validateStatusAndIsEmailVerifiedIsSetWhenPassNull_positive() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+
+    stagingUserToCreate.setStatus(null);
+    stagingUserToCreate.setIsEmailVerified(null);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
     assertFalse(createdUser.getIsEmailVerified());
   }
 
