@@ -11,8 +11,7 @@
     },
     "isEmailVerified": {
       "description": "A flag to determine if a patron is activated.",
-      "type": "boolean",
-      "default": false
+      "type": "boolean"
     },
     "status": {
       "type": "string",
