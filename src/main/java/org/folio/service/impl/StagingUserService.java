@@ -71,7 +71,8 @@ public class StagingUserService {
 
           return fetchStagingUserById(conn, stagingUserId)
             .compose(stagingUser -> userId != null ? updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId)
-              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, patronGroupId));
+              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, patronGroupId))
+            .compose(user -> deleteStagingUser(conn, stagingUserId, user));
         }))
       .onFailure(t -> log.error("mergeOrCreateUserFromStagingUser:: Merge or creation failed for stagingUserId {}, userId {}: {}",
         stagingUserId, userId, t.getMessage()));
@@ -214,4 +215,15 @@ public class StagingUserService {
       .withAddressTypeId(homeAddressTypeId)
       .withPrimaryAddress(true);
   }
+
+  private Future<User> deleteStagingUser(Conn conn, String stagingUserId, User user) {
+    return conn.delete(STAGING_USERS_TABLE, stagingUserId).compose(rowSet -> {
+      if (rowSet.size() != 0) {
+        return failedFuture(String.format("Unable to delete the staging user %s", stagingUserId));
+      }
+      log.info("Deletion of staging user with id {} happened successfully", stagingUserId);
+      return Future.succeededFuture(user);
+    });
+  }
+
 }

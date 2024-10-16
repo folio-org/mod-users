@@ -276,6 +276,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
       LocalDate.now(ZoneId.systemDefault()).plusYears(2),
       newUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
       "Expiration date should be 2 years from today (ignoring time)");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -296,6 +302,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "New address should be added in the address list");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -314,6 +326,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(1, existingUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -334,6 +352,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -353,6 +377,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(1, mergedUser.getPersonal().getAddresses().size(), "New home address should be added");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   private String createAddressType(String addressType) {
