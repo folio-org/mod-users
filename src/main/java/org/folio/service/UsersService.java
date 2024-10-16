@@ -34,6 +34,16 @@ public class UsersService {
       .onFailure(e -> logger.error("updateUser failed, userId={}", user.getId(), e));
   }
 
+  public Future<User> getUserById(Conn conn, String userId) {
+    return conn.getById(TABLE_NAME_USERS, userId, User.class)
+      .onFailure(t -> logger.error("getUserById:: unable to fetch user for userId {}", userId, t));
+  }
+
+  public Future<User> saveAndReturnUser(Conn conn, User user) {
+    return conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, user.getId(), user)
+      .onFailure(t -> logger.error("saveAndReturnUser:: unable to save user {}", user, t));
+  }
+
   public static User getConsortiumUserDto(User user) {
     User userDto = new User()
       .withId(user.getId())

@@ -1,5 +1,6 @@
 package org.folio.support;
 
+import java.util.Date;
 import java.util.Map;
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -28,4 +29,6 @@ public class User {
   Metadata metadata;
   Map<String, String> customFields;
   Set<PreferredEmailCommunication> preferredEmailCommunication;
+  String externalSystemId;
+  Date enrollmentDate;
 }

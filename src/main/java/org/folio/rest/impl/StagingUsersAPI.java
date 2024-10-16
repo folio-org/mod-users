@@ -18,6 +18,7 @@ import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.MetadataUtil;
 import org.folio.rest.utils.BeanUtilsExtended;
+import org.folio.service.impl.StagingUserService;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -27,6 +28,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.vertx.core.Future.succeededFuture;
+
+import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
+import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
 
 @Path("staging-users")
 public class StagingUsersAPI implements StagingUsers {
@@ -136,5 +140,37 @@ public class StagingUsersAPI implements StagingUsers {
           PostStagingUsersResponse.headersFor201()))
       );
     }
+  }
+
+  @Override
+  public void putStagingUsersMergeOrCreateUserById(String id, String userId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    logger.debug("putStagingUsersMergeOrCreateUserById:: stagingUserId {} and userId {}", id, userId);
+    new StagingUserService(vertxContext, okapiHeaders)
+      .mergeOrCreateUserFromStagingUser(id, userId)
+      .onSuccess(user -> {
+        logger.info("putStagingUsersMergeOrCreateUserById:: user response {}", user);
+        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond200WithApplicationJson(user.getId())));
+      })
+      .onFailure(throwable -> {
+        var errorMessage = throwable.getMessage();
+        logger.error("putStagingUsersMergeById:: future failed with error {}", errorMessage);
+        if (isUserNotFoundError(errorMessage, userId)) {
+          asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond404WithTextPlain(errorMessage)));
+          return;
+        }
+        if (isStagingUserNotFoundError(errorMessage, id)) {
+          asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond404WithTextPlain(errorMessage)));
+          return;
+        }
+        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond500WithTextPlain(throwable.getMessage())));
+      });
+  }
+
+  public boolean isUserNotFoundError(String errorMsg, String userId) {
+    return String.format(USER_NOT_FOUND, userId).equals(errorMsg);
+  }
+
+  public boolean isStagingUserNotFoundError(String errorMsg, String stagingUserId) {
+    return String.format(STAGING_USER_NOT_FOUND, stagingUserId).equals(errorMsg);
   }
 }

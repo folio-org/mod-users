@@ -59,3 +59,26 @@ resourceTypes:
         body:
           text/plain:
             example: "Internal server error, contact administrator"
+  /{id}/mergeOrCreateUser:
+    put:
+      queryParameters:
+        userId:
+          description: User ID
+          type: string
+      description: create a new user or update a existing user with staging user details
+      responses:
+        200:
+          description: "New user merged/created from staging user successfully"
+          body:
+            application/json:
+              schema:
+                type: string
+                description: "The UUID of the newly merged/created user"
+        404:
+          description: Not found
+          body:
+            text/plain:
+        500:
+          description: Internal error
+          body:
+            text/plain:
