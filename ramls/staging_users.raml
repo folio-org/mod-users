@@ -54,6 +54,11 @@ resourceTypes:
         description: "Bad request"
         body:
           application/json:
+      422:
+        description: Validation error
+        body:
+          application/json:
+            type: errors
       500:
         description: "Internal server error, e.g. due to misconfiguration"
         body:
