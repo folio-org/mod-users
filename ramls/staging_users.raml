@@ -38,6 +38,26 @@ resourceTypes:
       pageable
     ]
     description: Return a list of staging-users
+    responses:
+      200:
+        body:
+          application/json:
+            type: stagingUserdataCollection
+      400:
+        description: "Bad request"
+        body:
+          text/plain:
+            example: "Bad request"
+      403:
+        description: "Access denied"
+        body:
+          text/plain:
+            example: "Access denied"
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
   post:
     is: [ validate ]
     description: Create a user
@@ -54,6 +74,11 @@ resourceTypes:
         description: "Bad request"
         body:
           application/json:
+      422:
+        description: Validation error
+        body:
+          application/json:
+            type: errors
       500:
         description: "Internal server error, e.g. due to misconfiguration"
         body:
