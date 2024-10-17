@@ -10,6 +10,7 @@ documentation:
 types:
   stagingUser: !include staging_userdata.json
   stagingUserdataCollection: !include staging_userdataCollection.json
+  stagingUserMergeResponse: !include stagingUsersMergeResponse.json
   errors: !include raml-util/schemas/errors.schema
 
 traits:
@@ -96,9 +97,8 @@ resourceTypes:
           description: "New user merged/created from staging user successfully"
           body:
             application/json:
-              schema:
-                type: string
-                description: "The UUID of the newly merged/created user"
+              type: stagingUserMergeResponse
+              example: !include examples/stagingUserMergeResponse.sample
         404:
           description: Not found
           body:

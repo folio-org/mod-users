@@ -12,6 +12,7 @@ import org.folio.rest.jaxrs.model.ContactInfo;
 import org.folio.rest.jaxrs.model.GeneralInfo;
 import org.folio.rest.jaxrs.model.PreferredEmailCommunication;
 import org.folio.rest.jaxrs.model.StagingUser;
+import org.folio.rest.jaxrs.model.StagingUserMergeResponse;
 import org.folio.rest.jaxrs.model.StagingUserdataCollection;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
@@ -488,7 +489,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   private User mergeStagingUserAndFetch(String stagingUserId, String userId) {
     var response = stagingUsersClient.attemptToMergeStagingUser(stagingUserId, userId);
     response.statusCode(is(200));
-    return usersClient.getUser(response.extract().asString());
+    return usersClient.getUser(response.extract().as(StagingUserMergeResponse.class).getUserId());
   }
 
   private void verifyUserDetails(StagingUser stagingUser, User user, String homeAddressTypeId, Date updatedDate, String patronGroupId) {

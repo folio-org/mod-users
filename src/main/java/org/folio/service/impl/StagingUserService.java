@@ -217,13 +217,9 @@ public class StagingUserService {
   }
 
   private Future<User> deleteStagingUser(Conn conn, String stagingUserId, User user) {
-    return conn.delete(STAGING_USERS_TABLE, stagingUserId).compose(rowSet -> {
-      if (rowSet.size() != 0) {
-        return failedFuture(String.format("Unable to delete the staging user %s", stagingUserId));
-      }
-      log.info("Deletion of staging user with id {} happened successfully", stagingUserId);
-      return Future.succeededFuture(user);
-    });
+    return conn.delete(STAGING_USERS_TABLE, stagingUserId).compose(rowSet -> rowSet.size() !=0
+      ? failedFuture(String.format("Unable to delete the staging user %s", stagingUserId))
+      : Future.succeededFuture(user));
   }
 
 }
