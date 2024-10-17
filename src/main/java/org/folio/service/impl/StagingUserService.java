@@ -217,8 +217,8 @@ public class StagingUserService {
   }
 
   private Future<User> deleteStagingUser(Conn conn, String stagingUserId, User user) {
-    return conn.delete(STAGING_USERS_TABLE, stagingUserId).compose(rowSet -> rowSet.size() !=0
-      ? failedFuture(String.format("Unable to delete the staging user %s", stagingUserId))
+    return conn.delete(STAGING_USERS_TABLE, stagingUserId)
+      .compose(rowSet -> rowSet.size() !=0 ? failedFuture(String.format("Unable to delete the staging user %s", stagingUserId))
       : Future.succeededFuture(user));
   }
 
