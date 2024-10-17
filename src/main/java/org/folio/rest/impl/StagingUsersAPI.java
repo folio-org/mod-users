@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.StagingUser;
+import org.folio.rest.jaxrs.model.StagingUserMergeResponse;
 import org.folio.rest.jaxrs.model.StagingUserdataCollection;
 import org.folio.rest.jaxrs.model.StagingUsersGetOrder;
 import org.folio.rest.jaxrs.resource.StagingUsers;
@@ -149,7 +150,8 @@ public class StagingUsersAPI implements StagingUsers {
       .mergeOrCreateUserFromStagingUser(id, userId)
       .onSuccess(user -> {
         logger.info("putStagingUsersMergeOrCreateUserById:: user response {}", user);
-        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse.respond200WithApplicationJson(user.getId())));
+        asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse
+          .respond200WithApplicationJson(new StagingUserMergeResponse().withUserId(user.getId()))));
       })
       .onFailure(throwable -> {
         var errorMessage = throwable.getMessage();
