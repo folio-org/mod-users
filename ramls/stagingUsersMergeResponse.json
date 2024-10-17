@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "stagingUser response after merge",
+  "javaName": "StagingUserMergeResponse",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "description": "The UUID of the newly merged/created user",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

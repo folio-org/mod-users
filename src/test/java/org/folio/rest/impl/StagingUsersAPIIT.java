@@ -12,6 +12,7 @@ import org.folio.rest.jaxrs.model.ContactInfo;
 import org.folio.rest.jaxrs.model.GeneralInfo;
 import org.folio.rest.jaxrs.model.PreferredEmailCommunication;
 import org.folio.rest.jaxrs.model.StagingUser;
+import org.folio.rest.jaxrs.model.StagingUserMergeResponse;
 import org.folio.rest.jaxrs.model.StagingUserdataCollection;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
@@ -278,6 +279,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
       LocalDate.now(ZoneId.systemDefault()).plusYears(2),
       newUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
       "Expiration date should be 2 years from today (ignoring time)");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -298,6 +305,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "New address should be added in the address list");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -316,6 +329,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(1, existingUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -336,6 +355,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   @Test
@@ -355,6 +380,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(1, mergedUser.getPersonal().getAddresses().size(), "New home address should be added");
     verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
   private String createAddressType(String addressType) {
@@ -458,7 +489,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   private User mergeStagingUserAndFetch(String stagingUserId, String userId) {
     var response = stagingUsersClient.attemptToMergeStagingUser(stagingUserId, userId);
     response.statusCode(is(200));
-    return usersClient.getUser(response.extract().asString());
+    return usersClient.getUser(response.extract().as(StagingUserMergeResponse.class).getUserId());
   }
 
   private void verifyUserDetails(StagingUser stagingUser, User user, String homeAddressTypeId, Date updatedDate, String patronGroupId) {
