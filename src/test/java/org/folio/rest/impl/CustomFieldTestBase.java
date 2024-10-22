@@ -32,7 +32,7 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 public class CustomFieldTestBase extends TestBase {
