@@ -12,4 +12,11 @@ import lombok.extern.jackson.Jacksonized;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Address {
   String addressTypeId;
+  String countryId;
+  String addressLine1;
+  String addressLine2;
+  String city;
+  String region;
+  String postalCode;
+  Boolean primaryAddress;
 }

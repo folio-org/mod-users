@@ -17,7 +17,6 @@ types:
   errors: !include raml-util/schemas/errors.schema
 
 traits:
-  orderable: !include raml-util/traits/orderable.raml
   pageable: !include raml-util/traits/pageable.raml
   searchable: !include raml-util/traits/searchable.raml
   validate: !include raml-util/traits/validation.raml
@@ -38,13 +37,12 @@ resourceTypes:
   get:
     is: [
       searchable: {description: "", example: "active=true sortBy username"},
-      orderable: {fieldsList: "field A, field B"},
       pageable
     ]
     description: Return a list of users
   post:
     is: [validate]
-    description: Create a user
+    description: Create a user. Before creating the user you need to create a permission record for the user using the POST /perms/users API; the permissions list may be empty.
   delete:
     description: Delete a collection of users selected by a CQL query; this doesn't delete proxyFor records that reference them
     is: [
