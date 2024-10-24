@@ -11,8 +11,8 @@
           "pathPattern": "/users",
           "permissionsRequired": [ "users.collection.get" ],
           "permissionsDesired": [
-            "users.read.basic",
-            "users.read.restricted"
+            "users.basic-read.execute",
+            "users.restricted-read.execute"
           ]
         },
         {
@@ -20,8 +20,8 @@
           "pathPattern" : "/users/{id}",
           "permissionsRequired" : [ "users.item.get" ],
           "permissionsDesired" : [
-            "users.read.basic",
-            "users.read.restricted"
+            "users.basic-read.execute",
+            "users.restricted-read.execute"
           ]
         },
         {
@@ -189,7 +189,10 @@
         {
           "methods": ["POST"],
           "pathPattern": "/custom-fields",
-          "permissionsRequired": ["user-settings.custom-fields.item.post"]
+          "permissionsRequired": ["user-settings.custom-fields.item.post"],
+          "modulePermissions": [
+            "users.item.get"
+          ]
         },
         {
           "methods": ["GET"],
@@ -199,17 +202,27 @@
         {
           "methods": ["PUT"],
           "pathPattern": "/custom-fields/{id}",
-          "permissionsRequired": ["user-settings.custom-fields.item.put"]
+          "permissionsRequired": ["user-settings.custom-fields.item.put"],
+          "modulePermissions": [
+            "users.item.get"
+          ]
         },
         {
           "methods": ["PUT"],
           "pathPattern": "/custom-fields",
-          "permissionsRequired": ["user-settings.custom-fields.collection.put"]
+          "permissionsRequired": ["user-settings.custom-fields.collection.put"],
+          "modulePermissions": [
+            "users.item.get"
+          ]
         },
         {
           "methods": ["DELETE"],
           "pathPattern": "/custom-fields/{id}",
-          "permissionsRequired": ["user-settings.custom-fields.item.delete"]
+          "permissionsRequired": ["user-settings.custom-fields.item.delete"],
+          "modulePermissions": [
+            "users.item.get",
+            "user-settings.custom-fields.item.stats.get"
+          ]
         },
         {
           "methods": ["GET"],
@@ -230,7 +243,7 @@
         {
           "methods": [ "POST" ],
           "pathPattern": "/patron-pin",
-          "permissionsRequired": [ "patron-pin.set" ]
+          "permissionsRequired": [ "patron-pin.post" ]
         },
         {
           "methods": [ "DELETE" ],
@@ -368,10 +381,7 @@
     {
       "permissionName": "user-settings.custom-fields.collection.put",
       "displayName": "Custom Fields - put collection",
-      "description": "Put Custom Fields collection",
-      "subPermissions" : [
-        "users.item.get"
-      ]
+      "description": "Put Custom Fields collection"
     },
     {
       "permissionName" : "users.item.get",
@@ -379,14 +389,16 @@
       "description" : "Read an individual record in the User module"
     },
     {
-      "permissionName" : "users.read.basic",
+      "permissionName" : "users.basic-read.execute",
       "displayName" : "users read-basic",
-      "description" : "Read non-restricted User data information"
+      "description" : "Read non-restricted User data information",
+      "replaces" : ["users.read.basic"]
     },
     {
-      "permissionName" : "users.read.restricted",
+      "permissionName" : "users.restricted-read.execute",
       "displayName" : "users read-restricted",
-      "description" : "Read restricted User data information"
+      "description" : "Read restricted User data information",
+      "replaces" : ["users.read.restricted"]
     },
     {
       "permissionName" : "users.item.post",
@@ -504,9 +516,10 @@
       "description" : "Delete a department record"
     },
     {
-      "permissionName": "patron-pin.set",
+      "permissionName": "patron-pin.post",
       "displayName": "Permission to set patron pin",
-      "description": "Permission to set patron pin"
+      "description": "Permission to set patron pin",
+      "replaces": ["patron-pin.set"]
     },
     {
       "permissionName": "patron-pin.delete",
@@ -544,8 +557,8 @@
         "users.collection.get",
         "users.collection.delete",
         "users.item.get",
-        "users.read.basic",
-        "users.read.restricted",
+        "users.basic-read.execute",
+        "users.restricted-read.execute",
         "users.item.post",
         "users.item.put",
         "users.item.delete",
@@ -569,7 +582,7 @@
         "departments.item.post",
         "departments.item.put",
         "departments.item.delete",
-        "patron-pin.set",
+        "patron-pin.post",
         "patron-pin.delete",
         "patron-pin.validate",
         "user-tenants.collection.get",
@@ -587,11 +600,7 @@
     {
       "permissionName": "user-settings.custom-fields.item.post",
       "displayName": "User Custom Fields - create field",
-      "description": "Create User Custom Field",
-      "subPermissions": [
-        "users.item.get"
-      ]
-
+      "description": "Create User Custom Field"
     },
     {
       "permissionName": "user-settings.custom-fields.item.get",
@@ -601,19 +610,12 @@
     {
       "permissionName": "user-settings.custom-fields.item.put",
       "displayName": "User Custom Fields - modify field",
-      "description": "Modify User Custom Field",
-      "subPermissions": [
-        "users.item.get"
-      ]
+      "description": "Modify User Custom Field"
     },
     {
       "permissionName": "user-settings.custom-fields.item.delete",
       "displayName": "User Custom Fields - delete field",
-      "description": "Delete User Custom Field",
-      "subPermissions": [
-        "users.item.get",
-        "user-settings.custom-fields.item.stats.get"
-      ]
+      "description": "Delete User Custom Field"
     },
     {
       "permissionName": "user-settings.custom-fields.item.stats.get",
