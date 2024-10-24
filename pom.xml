@@ -534,6 +534,19 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.folio</groupId>
+        <artifactId>folio-module-descriptor-validator</artifactId>
+        <version>${folio-module-descriptor-validator.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>validate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -574,6 +587,9 @@
     <java.version>17</java.version>
     <aspectj.version>1.9.22.1</aspectj.version>
     <lombok.version>1.18.24</lombok.version>
+
+    <!--Folio dependencies properties-->
+    <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
     <folio-s3-client.version>2.1.0</folio-s3-client.version>
   </properties>
 </project>
