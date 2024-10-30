@@ -1,3 +1,20 @@
+## 19.4.0 2024-10-30
+
+* UI generates search for middle name without supporting index (MODUSERS-455)
+* Create a Patron Group Remote Non-circulating (2 years) (MODUSERS-456)
+* Add optional field "preferredEmailCommunication" in user schema (MODUSERS-459)
+* Make encryption key field non-updatable in profile picture configuration (MODUSERS-458)
+* User schema fix (PR #356)
+* Slow search in the Users app (MODUSERS-457)
+* MODUSER_ENUM_FIX-Fixed Enum (PR #358)
+* Change Service to Services. (MODUSERS-463)
+* Remove unused orderBy and order parameters from GET /users API (MODUSERS-480)
+* testcontainers.kafka.KafkaContainer, apache/kafka-native:3.8.0 (MODUSERS-481)
+* New GET API for retrieving the staging users from the new staging record table. (MODUSERS-475)
+* API docs: Create permissions record before creating user record (PR #375)
+* Delete Staging record (MODUSERS-477)
+* Review and cleanup Module Descriptor for mod-users (MODUSERS-465)
+
 ## 19.3.2 2024-09-04
 
 * Slow search in the Users app (MODUSERS-457)
