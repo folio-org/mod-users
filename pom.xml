@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>19.4.0-SNAPSHOT</version>
+  <version>19.4.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -540,6 +540,19 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>org.folio</groupId>
+        <artifactId>folio-module-descriptor-validator</artifactId>
+        <version>${folio-module-descriptor-validator.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>validate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -574,12 +587,15 @@
     <vertx.version>4.5.10</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.10.0</junit.version>
-    <folio-service-tools.version>4.0.0</folio-service-tools.version>
-    <folio-custom-fields.version>2.1.0</folio-custom-fields.version>
+    <folio-service-tools.version>4.1.0</folio-service-tools.version>
+    <folio-custom-fields.version>2.2.0</folio-custom-fields.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <java.version>17</java.version>
     <aspectj.version>1.9.22.1</aspectj.version>
     <lombok.version>1.18.24</lombok.version>
+
+    <!--Folio dependencies properties-->
+    <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
     <folio-s3-client.version>2.1.0</folio-s3-client.version>
   </properties>
 </project>
