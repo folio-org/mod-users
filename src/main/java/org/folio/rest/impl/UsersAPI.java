@@ -51,6 +51,9 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
@@ -121,6 +124,8 @@ public class UsersAPI implements Users {
   private final UsersService usersService;
   private final UserTenantService userTenantService;
   private final ProfilePictureStorage profilePictureStorage;
+  private static final List<String> searchFields = List.of("username", "personal.firstName", "personal.preferredFirstName",
+    "personal.lastName", "personal.middleName", "personal.email", "barcode", "id", "externalSystemId", "customFields");
 
   @Autowired
   public UsersAPI() {
@@ -151,8 +156,26 @@ public class UsersAPI implements Users {
    * @return
    */
   private static String convertQuery(String cql){
+    cql = getKeywordSearchString(cql);
     if (cql != null) {
       return cql.replaceAll("(?i)patronGroup\\.", VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb.");
+    }
+    return cql;
+  }
+
+  private static String getKeywordSearchString(String cql) {
+    if (cql != null) {
+      Pattern pattern = Pattern.compile("keywords=\"([^\"]*)\"");
+      Matcher matcher = pattern.matcher(cql);
+      if (matcher.find()) {
+        String searchString = matcher.group(1);
+        if (searchString != null) {
+          String replacement = searchFields.stream()
+            .map(field -> field + "=\"" + searchString + "\"")
+            .collect(Collectors.joining(" or "));
+          return matcher.replaceAll(replacement);
+        }
+      }
     }
     return cql;
   }
