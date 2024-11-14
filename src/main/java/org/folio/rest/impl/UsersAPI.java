@@ -156,14 +156,30 @@ public class UsersAPI implements Users {
    * @return
    */
   private static String convertQuery(String cql){
-    cql = getKeywordSearchString(cql);
+    cql = convertKeywordSearchToExtensiveSearch(cql);
     if (cql != null) {
       return cql.replaceAll("(?i)patronGroup\\.", VIEW_NAME_USER_GROUPS_JOIN+".group_jsonb.");
     }
     return cql;
   }
 
-  private static String getKeywordSearchString(String cql) {
+  /**
+   * Converts a CQL query containing a keyword search to an extensive field-based search.
+   * <p>
+   * If the provided CQL query contains a keyword search in the format <code>keywords="searchString"</code>,
+   * this method extracts the search string using a regex and replaces it with an OR-based search across multiple fields
+   * such as <code>username</code>, <code>personal.firstName</code>, <code>personal.preferredFirstName</code>, etc.
+   * This transformation is necessary because the <code>user_groups_view</code> does not support keyword-based searches
+   * and instead requires field-specific queries.
+   * </p>
+   * <p>
+   * If no keyword search is detected, the original CQL query is returned unchanged.
+   * </p>
+   *
+   * @param cql the original CQL query string
+   * @return the updated CQL query with extensive field-based search if keywords are present, otherwise the original query
+   */
+  private static String convertKeywordSearchToExtensiveSearch(String cql) {
     if (cql != null) {
       Pattern pattern = Pattern.compile("keywords=\"([^\"]*)\"");
       Matcher matcher = pattern.matcher(cql);

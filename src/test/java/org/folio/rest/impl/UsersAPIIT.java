@@ -35,6 +35,7 @@ import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
+import org.folio.support.Group;
 import org.folio.support.Personal;
 import org.folio.support.TagList;
 import org.folio.support.User;
@@ -568,6 +569,33 @@ class UsersAPIIT extends AbstractRestTestNoData {
     assertThat(activeUsers.getTotalRecords(), is(2));
   }
 
+  @Test
+  void testCreateUserWithGroupAndSortUserWithGroup() {
+    var group1 = groupsClient.createGroup(Group.builder()
+        .group("group1")
+      .build());
+    var group2 = groupsClient.createGroup(Group.builder()
+      .group("group2")
+      .build());
+    usersClient.createUser(User.builder()
+      .patronGroup(group1.getId())
+      .username("user1")
+      .active(true)
+      .build());
+
+    usersClient.createUser(User.builder()
+      .username("user2")
+      .patronGroup(group2.getId())
+      .active(true)
+      .build());
+
+    var response = usersClient.getUsers("((keywords=\"user*\") and active==\"true\") sortby personal.lastName personal.firstName");
+    assertThat(response.getTotalRecords(), is(2));
+
+    // passing the patrongroup filter in cql query, this will look the user details in the user_group_view
+    response = usersClient.getUsers("((keywords=\"user*\") and active==\"true\") sortby patronGroup.group personal.lastName personal.firstName");
+    assertThat(response.getTotalRecords(), is(2));
+  }
   @Test
   void canDeleteAUser() {
     String userId = UUID.randomUUID().toString();
