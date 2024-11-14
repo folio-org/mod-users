@@ -615,6 +615,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
     // passing the patrongroup filter in cql query, this will look the user details in the user_group_view
     response = usersClient.getUsers("((keywords=\"user*\") and active==\"true\") sortby patronGroup.group personal.lastName personal.firstName");
     assertThat(response.getTotalRecords(), is(2));
+
+    // passing the patrongroup filter without keywords based search in cql query, this will look the user details in the user_group_view
+    response = usersClient.getUsers("(active==\"true\") sortby patronGroup.group personal.lastName personal.firstName");
+    assertThat(response.getTotalRecords(), is(2));
   }
   @Test
   void canDeleteAUser() {
