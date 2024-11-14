@@ -10,6 +10,7 @@ documentation:
 types:
   stagingUser: !include staging_userdata.json
   stagingUserdataCollection: !include staging_userdataCollection.json
+  stagingUserMergeResponse: !include stagingUsersMergeResponse.json
   errors: !include raml-util/schemas/errors.schema
 
 traits:
@@ -38,6 +39,26 @@ resourceTypes:
       pageable
     ]
     description: Return a list of staging-users
+    responses:
+      200:
+        body:
+          application/json:
+            type: stagingUserdataCollection
+      400:
+        description: "Bad request"
+        body:
+          text/plain:
+            example: "Bad request"
+      403:
+        description: "Access denied"
+        body:
+          text/plain:
+            example: "Access denied"
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
   post:
     is: [ validate ]
     description: Create a user
@@ -54,6 +75,11 @@ resourceTypes:
         description: "Bad request"
         body:
           application/json:
+      422:
+        description: Validation error
+        body:
+          application/json:
+            type: errors
       500:
         description: "Internal server error, e.g. due to misconfiguration"
         body:
@@ -71,9 +97,8 @@ resourceTypes:
           description: "New user merged/created from staging user successfully"
           body:
             application/json:
-              schema:
-                type: string
-                description: "The UUID of the newly merged/created user"
+              type: stagingUserMergeResponse
+              example: !include examples/stagingUserMergeResponse.sample
         404:
           description: Not found
           body:

@@ -15,12 +15,14 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
+import lombok.Getter;
 import lombok.NonNull;
 
 public class VertxModule {
+  @Getter
   private final Vertx vertx;
-  private final WebClient webClient;
 
+  private final WebClient webClient;
   public VertxModule(Vertx vertx) {
     this.vertx = vertx;
     webClient = WebClient.create(vertx);

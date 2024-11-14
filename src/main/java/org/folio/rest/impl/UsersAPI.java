@@ -10,6 +10,7 @@ import static org.folio.event.service.UserTenantService.USERNAME_IS_NOT_POPULATE
 import static org.folio.rest.RestVerticle.STREAM_ABORT;
 import static org.folio.rest.RestVerticle.STREAM_COMPLETE;
 import static org.folio.rest.persist.PostgresClient.convertToPsqlStandard;
+import static org.folio.service.event.EntityChangedEventPublisherFactory.userEventPublisher;
 import static org.folio.service.storage.ProfilePictureStorage.createSelectQuery;
 import static org.folio.support.UsersApiConstants.BARCODE_ALREADY_EXISTS;
 import static org.folio.support.UsersApiConstants.CONFIG_NAME;
@@ -348,6 +349,8 @@ public class UsersAPI implements Users {
 
     pgClient.withTrans(conn -> userTenantService.validateUserAcrossTenants(entity, okapiHeaders, conn, vertxContext)
         .compose(aVoid -> conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, userId, entity.withId(userId))
+          .onSuccess(updatedUser -> userEventPublisher(vertxContext, okapiHeaders)
+            .publishCreated(entity.getId(), updatedUser))
           .compose(user -> userOutboxService.saveUserOutboxLogForCreateUser(conn, user, UserEvent.Action.CREATE, okapiHeaders))
           .map(isUserOutboxLogCreated -> PostUsersResponse.respond201WithApplicationJson(entity, PostUsersResponse.headersFor201().withLocation(userId)))
           .map(Response.class::cast)))
@@ -477,16 +480,23 @@ public class UsersAPI implements Users {
       Context vertxContext) {
 
     PgUtil.postgresClient(vertxContext, okapiHeaders)
-      .withTrans(conn -> conn.delete(TABLE_NAME_USERS, userId)
-        .compose(rows -> {
-          if (rows.rowCount() != 0) {
-            return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId), UserEvent.Action.DELETE, okapiHeaders)
-              .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
-              .map(Response.class::cast);
-          } else {
-            return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
-          }
-        }))
+      .withTrans(conn -> usersService.getUserByIdForUpdate(conn, userId).compose(user -> {
+        if (user == null) {
+          return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
+        }
+        return conn.delete(TABLE_NAME_USERS, userId)
+          .compose(rows -> {
+            userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user);
+            if (rows.rowCount() != 0) {
+              return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId),
+                  UserEvent.Action.DELETE, okapiHeaders)
+                .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
+                .map(Response.class::cast);
+            } else {
+              return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
+            }
+          });
+      }))
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
           asyncResultHandler.handle(reply);
@@ -935,6 +945,8 @@ public class UsersAPI implements Users {
 
         return userTenantService.validateUserAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
           .compose(aVoid -> usersService.updateUser(conn, entity)
+            .onSuccess(user -> userEventPublisher(vertxContext, okapiHeaders)
+              .publishUpdated(entity.getId(), userFromStorage, user))
             .compose(user -> userOutboxService.saveUserOutboxLogForUpdateUser(conn, user, userFromStorage, okapiHeaders))
             .map(isUserOutboxLogSaved -> PutUsersByUserIdResponse.respond204())
             .map(Response.class::cast));
