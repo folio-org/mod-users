@@ -74,6 +74,7 @@ import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.cql2pgjson.exception.QueryValidationException;
 import org.folio.domain.UserType;
 import org.folio.event.service.UserTenantService;
 import org.folio.okapi.common.GenericCompositeFuture;
@@ -93,8 +94,8 @@ import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PgExceptionUtil;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.cql.CQLQueryValidationException;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.tools.messages.Messages;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.tools.utils.ValidationHelper;
 import org.folio.rest.utils.ExpirationTool;
@@ -112,7 +113,8 @@ import org.z3950.zing.cql.CQLParseException;
 public class UsersAPI implements Users {
 
   private static final Logger logger = LogManager.getLogger(UsersAPI.class);
-  private static final Messages messages = Messages.getInstance();
+  private static final String KEYWORDS_TSVECTOR = getKeywordsTsVector();
+  private static final String USERS_JSONB = TABLE_NAME_USERS + ".jsonb";
   @SuppressWarnings("deprecation")  // RAML requires Date
   private static final Date year1 = new Date(1 - 1900, 0 /* 0 .. 11 */, 1 /* 1 .. 31 */);
   private byte[] requestBytesArray = new byte[0];
@@ -158,6 +160,28 @@ public class UsersAPI implements Users {
     return cql;
   }
 
+  private static String getKeywordsTsVector() {
+    try {
+      var sql = new CQL2PgJSON(USERS_JSONB).toSql("keywords=foo").getWhere();
+      return sql.substring(0, sql.indexOf(" @@ "))
+          .replace("users.jsonb->", "users_groups_view.jsonb->");
+    } catch (FieldException | QueryValidationException e) {
+      throw new CQLQueryValidationException(e);
+    }
+  }
+
+  static class ViewCqlWrapper extends CQLWrapper {
+    public ViewCqlWrapper(CQL2PgJSON field, String query, int limit, int offset) {
+      super(field, query, limit, offset);
+    }
+
+    @Override
+    public String getWhereClause() {
+      return super.getWhereClause().replace(
+          "get_tsvector(f_unaccent(users_groups_view.jsonb->>'keywords'))", KEYWORDS_TSVECTOR);
+    }
+  }
+
   public static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
     if (query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
@@ -165,9 +189,9 @@ public class UsersAPI implements Users {
       fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".jsonb");
       fields.add(VIEW_NAME_USER_GROUPS_JOIN + ".group_jsonb");
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(fields);
-      return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
+      return new ViewCqlWrapper(cql2pgJson, query, limit, offset);
     } else {
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(TABLE_NAME_USERS+".jsonb");
+      CQL2PgJSON cql2pgJson = new CQL2PgJSON(USERS_JSONB);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     }
   }

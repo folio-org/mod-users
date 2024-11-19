@@ -43,6 +43,7 @@ import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.support.Address;
 import org.folio.support.AddressType;
+import org.folio.support.Group;
 import org.folio.support.Personal;
 import org.folio.support.TagList;
 import org.folio.support.User;
@@ -52,7 +53,6 @@ import org.folio.support.http.ConfigurationClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.TimerInterfaceClient;
 import org.folio.support.http.UserProfilePictureClient;
-import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
 import org.folio.support.kafka.FakeKafkaConsumer;
 import org.junit.jupiter.api.BeforeAll;
@@ -78,7 +78,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
   private static UsersClient usersClient;
   private static GroupsClient groupsClient;
   private static AddressTypesClient addressTypesClient;
-  private static UserTenantClient userTenantClient;
   private static UserProfilePictureClient userProfilePictureClient;
   private static ConfigurationClient configurationClient;
   private static TimerInterfaceClient timerInterfaceClient;
@@ -90,7 +89,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     addressTypesClient = new AddressTypesClient(okapiUrl, okapiHeaders);
-    userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
     userProfilePictureClient = new UserProfilePictureClient(okapiUrl, okapiHeaders);
     configurationClient = new ConfigurationClient(okapiUrl, okapiHeaders);
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
@@ -557,6 +555,29 @@ class UsersAPIIT extends AbstractRestTestNoData {
     assertThat(foundUsers.getTotalRecords(), is(1));
     assertThat(foundUsers.getFirstUser().getUsername(), is("steve"));
     assertThat(foundUsers.getFirstUser().getId(), is(steve.getId()));
+  }
+
+  @Test
+  void canSearchForKeywordsAndSortByPatronGroup() {
+    final var staff = groupsClient.createGroup(Group.builder()
+        .id("22222222-9f30-428b-8f63-9fe35b818542").group("staff").build());
+    final var student = groupsClient.createGroup(Group.builder()
+        .id("11111111-9f30-428b-8f63-9fe35b818542").group("student").build());
+    usersClient.createUser(User.builder()
+        .username("stacy").patronGroup(student.getId()).build());
+    usersClient.createUser(User.builder()
+        .username("stephanie").patronGroup(student.getId()).build());
+    usersClient.createUser(User.builder()
+        .username("steve").patronGroup(staff.getId()).build());
+
+    final var cql = "keywords=\"ste*\" sortBy patronGroup.group username";
+    final var foundUsers = usersClient.getUsers(cql);
+
+    assertThat(foundUsers.getUsers().size(), is(2));
+    // should sort by patronGroup name. The two records have patronGroup id
+    // and username that sort in opposite order of patronGroup name.
+    assertThat(foundUsers.getUsers().get(0).getUsername(), is("steve"));
+    assertThat(foundUsers.getUsers().get(1).getUsername(), is("stephanie"));
   }
 
   @Test
