@@ -68,7 +68,7 @@
     {
       "run": "after",
       "snippetPath": "update_users_groups_view.sql",
-      "fromModuleVersion": "19.3.0"
+      "fromModuleVersion": "19.4.0"
     },
     {
       "run": "before",
