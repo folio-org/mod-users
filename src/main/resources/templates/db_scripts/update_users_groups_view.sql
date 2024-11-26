@@ -1,7 +1,11 @@
-ALTER VIEW users_groups_view AS
-SELECT users.id,
-       users.jsonb,
-       groups.jsonb AS group_jsonb
-  FROM users
-       LEFT JOIN groups
-       ON users.f_unaccent(users.jsonb ->> 'patronGroup'::text) = (groups.jsonb ->> 'id'::text);
+CREATE OR REPLACE VIEW ${myuniversity}_${mymodule}.users_groups_view AS
+SELECT
+    u.id,
+    u.jsonb,
+    g.jsonb AS group_jsonb
+FROM
+    ${myuniversity}_${mymodule}.users u
+LEFT JOIN
+    ${myuniversity}_${mymodule}.groups g
+ON
+    ${myuniversity}_${mymodule}.f_unaccent(u.jsonb ->> 'patronGroup') = (g.jsonb ->> 'id');
