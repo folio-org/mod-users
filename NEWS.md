@@ -1,3 +1,7 @@
+## 19.4.1 2024-11-28
+
+* Sorting users by patron group with applied search displays no found records (MODUSERS-479)
+
 ## 19.4.0 2024-10-30
 
 * UI generates search for middle name without supporting index (MODUSERS-455)
