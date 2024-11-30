@@ -1,3 +1,8 @@
+## 19.4.2 2024-11-30
+
+* Consume and handle patron update domain events (MODUSERS-451)
+* Publish domain events for patron groups (MODUSERS-449)
+
 ## 19.4.1 2024-11-28
 
 * Sorting users by patron group with applied search displays no found records (MODUSERS-479)
