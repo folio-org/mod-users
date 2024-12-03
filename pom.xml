@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>19.4.2-SNAPSHOT</version>
+  <version>19.4.3-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -130,6 +130,13 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>localstack</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-bom</artifactId>
+      <version>1.19.1</version>
+      <type>pom</type>
+      <scope>import</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -592,7 +599,7 @@
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <java.version>17</java.version>
     <aspectj.version>1.9.22.1</aspectj.version>
-    <lombok.version>1.18.24</lombok.version>
+    <lombok.version>1.18.28</lombok.version>
 
     <!--Folio dependencies properties-->
     <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
