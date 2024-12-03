@@ -569,11 +569,13 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .username("stephanie").patronGroup(student.getId()).build());
     usersClient.createUser(User.builder()
         .username("steve").patronGroup(staff.getId()).build());
+    usersClient.createUser(User.builder()
+      .username("steven").patronGroup(null).build());
 
     final var cql = "keywords=\"ste*\" sortBy patronGroup.group username";
     final var foundUsers = usersClient.getUsers(cql);
 
-    assertThat(foundUsers.getUsers().size(), is(2));
+    assertThat(foundUsers.getUsers().size(), is(3));
     // should sort by patronGroup name. The two records have patronGroup id
     // and username that sort in opposite order of patronGroup name.
     assertThat(foundUsers.getUsers().get(0).getUsername(), is("steve"));
