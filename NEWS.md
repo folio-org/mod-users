@@ -1,3 +1,7 @@
+## 19.4.3 2024-12-04
+
+* Sorting users by patron group with applied filters changes number of found records (MODUSERS-486)
+
 ## 19.4.2 2024-11-30
 
 * Consume and handle patron update domain events (MODUSERS-451)
