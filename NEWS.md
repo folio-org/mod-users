@@ -1,3 +1,7 @@
+## 19.4.4 2024-12-05
+
+* Refix for Sorting users by patron group with applied filters changes number of found records (MODUSERS-486)
+
 ## 19.4.3 2024-12-04
 
 * Sorting users by patron group with applied filters changes number of found records (MODUSERS-486)
