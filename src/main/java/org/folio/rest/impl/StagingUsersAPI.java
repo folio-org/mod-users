@@ -89,6 +89,18 @@ public class StagingUsersAPI implements StagingUsers {
     );
   }
 
+  private Future<StagingUser> processStagingUser(Conn conn, StagingUser entity, Criterion criterion,
+                                                 Map<String, String> okapiHeaders, AtomicReference<Boolean> isUpdated) {
+
+    return conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
+      .compose(stagingUserResults -> {
+        List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
+        String entityId = processExistingUserIfPresent(stagingUsersByEmail, entity, okapiHeaders, isUpdated);
+
+        return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
+          .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
+      });
+  }
 
   private String processExistingUserIfPresent(List<StagingUser> stagingUsersByEmail, StagingUser entity,
                                               Map<String, String> okapiHeaders, AtomicReference<Boolean> isUpdated) {
