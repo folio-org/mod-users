@@ -47,10 +47,8 @@ import static org.folio.service.impl.StagingUserService.REMOTE_NON_CIRCULATING;
 import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
 import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
 
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
