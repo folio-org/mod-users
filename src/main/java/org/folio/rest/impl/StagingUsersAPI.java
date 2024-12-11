@@ -133,16 +133,10 @@ public class StagingUsersAPI implements StagingUsers {
 
   private void handleSuccessPost(StagingUser stagingUser,
                                  Handler<AsyncResult<Response>> asyncResultHandler) {
-//    if (Boolean.TRUE.equals(isUpdated.get())) {
-//      asyncResultHandler.handle(
-//        succeededFuture(StagingUsers.PostStagingUsersResponse.respond200WithApplicationJson(stagingUser))
-//      );
-//    } else {
       asyncResultHandler.handle(
         succeededFuture(StagingUsers.PostStagingUsersResponse.respond201WithApplicationJson(stagingUser,
           PostStagingUsersResponse.headersFor201()))
       );
-    //}
   }
 
   @Override

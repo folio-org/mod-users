@@ -86,40 +86,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void shouldCreateAndUpdateTheStagingUser_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
-    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
-    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
-    createdNewStagingUserResponse.statusCode(is(201));
-    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertThat(createdUser.getId(), is(notNullValue()));
-    assertEquals(createdUser.getStatus(), stagingUserToCreate.getStatus());
-    assertEquals(createdUser.getIsEmailVerified(), stagingUserToCreate.getIsEmailVerified());
-    assertEquals(createdUser.getContactInfo(), stagingUserToCreate.getContactInfo());
-    assertEquals(createdUser.getGeneralInfo(), stagingUserToCreate.getGeneralInfo());
-    assertEquals(createdUser.getAddressInfo(), stagingUserToCreate.getAddressInfo());
-
-    assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
-    assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
-
-    createdUser.setId(null);
-    createdUser.getGeneralInfo().setFirstName("updated_firstname");
-    createdUser.getAddressInfo().setCity("Updated_City");
-    createdUser.getContactInfo().setMobilePhone("updated_12345");
-
-    final var updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
-    updatedNewStagingUserResponse.statusCode(is(200));
-    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertEquals(updatedUser.getContactInfo(), createdUser.getContactInfo());
-    assertEquals(updatedUser.getGeneralInfo(), createdUser.getGeneralInfo());
-    assertEquals(updatedUser.getAddressInfo(), createdUser.getAddressInfo());
-    assertThat(updatedUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
-    assertThat(updatedUser.getMetadata().getUpdatedDate(), not(createdUser.getMetadata().getUpdatedDate()));
-  }
-
-  @Test
   void validateStatusAndIsEmailVerifiedIsSetWhenPassNonNull_positive() {
     String randomString = RandomStringUtils.random(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
@@ -147,34 +113,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
     assertFalse(createdUser.getIsEmailVerified());
-  }
-
-  @Test
-  void shouldCreateAndUpdatePreferredEmailCommunicationCorrectlyInTheStagingUser_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
-    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
-    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
-    createdNewStagingUserResponse.statusCode(is(201));
-    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    createdUser.setId(null);
-    createdUser.setPreferredEmailCommunication(Collections.emptySet());
-
-    var updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
-    updatedNewStagingUserResponse.statusCode(is(200));
-    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertTrue(updatedUser.getPreferredEmailCommunication().containsAll(stagingUserToCreate.getPreferredEmailCommunication()));
-
-    createdUser.setPreferredEmailCommunication(Set.of(PreferredEmailCommunication.PROGRAMS));
-    updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
-    updatedNewStagingUserResponse.statusCode(is(200));
-    updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertEquals(1, updatedUser.getPreferredEmailCommunication().size());
-    assertTrue(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.PROGRAMS));
-    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
-    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
   }
 
   @Test
