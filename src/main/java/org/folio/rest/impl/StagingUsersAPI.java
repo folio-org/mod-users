@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.vertx.core.Future.succeededFuture;
@@ -62,12 +63,10 @@ public class StagingUsersAPI implements StagingUsers {
 
     try {
       PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
-      final Criterion criterion = buildCriterionForEmail(entity);
-      AtomicReference<Boolean> isUpdated = new AtomicReference<>(Boolean.FALSE);
 
-      postgresClient.withTrans(conn -> processStagingUser(conn, entity, criterion, okapiHeaders, isUpdated))
+      postgresClient.withTrans(conn -> prepareAndSaveNewStagingUser(conn, entity))
         .onFailure(cause -> handleFailurePost(cause, asyncResultHandler))
-        .onSuccess(stagingUser -> handleSuccessPost(stagingUser, isUpdated, asyncResultHandler));
+        .onSuccess(stagingUser -> handleSuccessPost(stagingUser, asyncResultHandler));
 
     } catch (Exception e) {
       asyncResultHandler.handle(
@@ -76,6 +75,13 @@ public class StagingUsersAPI implements StagingUsers {
     }
   }
 
+  private Future<StagingUser> prepareAndSaveNewStagingUser(Conn conn, StagingUser entity) {
+    prepareNewStagingUser(entity);
+    return conn.save(STAGING_USERS_TABLE, entity.getId(), entity)
+      .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
+  }
+
+
   private Criterion buildCriterionForEmail(StagingUser entity) {
     return new Criterion(
       new Criteria().addField("'contactInfo'").addField("'email'")
@@ -83,22 +89,6 @@ public class StagingUsersAPI implements StagingUsers {
     );
   }
 
-  private Future<StagingUser> processStagingUser(Conn conn, StagingUser entity, Criterion criterion,
-                                                 Map<String, String> okapiHeaders, AtomicReference<Boolean> isUpdated) {
-
-    return conn.get(STAGING_USERS_TABLE, StagingUser.class, criterion, true)
-      .compose(stagingUserResults -> {
-        List<StagingUser> stagingUsersByEmail = stagingUserResults.getResults();
-        String entityId = processExistingUserIfPresent(stagingUsersByEmail, entity, okapiHeaders, isUpdated);
-
-        if (entityId == null) {
-          prepareNewStagingUser(entity, isUpdated);
-        }
-
-        return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
-          .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
-      });
-  }
 
   private String processExistingUserIfPresent(List<StagingUser> stagingUsersByEmail, StagingUser entity,
                                               Map<String, String> okapiHeaders, AtomicReference<Boolean> isUpdated) {
@@ -116,11 +106,11 @@ public class StagingUsersAPI implements StagingUsers {
     return null;
   }
 
-  private void prepareNewStagingUser(StagingUser entity, AtomicReference<Boolean> isUpdated) {
+  private void prepareNewStagingUser(StagingUser entity) {
     logger.info("Creating new Staging-User");
+    entity.setExternalSystemId(UUID.randomUUID().toString());
     entity.setStatus(entity.getStatus() != null ? entity.getStatus() : StagingUser.Status.TIER_1);
     entity.setIsEmailVerified(entity.getIsEmailVerified() != null ? entity.getIsEmailVerified() : Boolean.FALSE);
-    isUpdated.set(Boolean.FALSE);
   }
 
   private void handleFailurePost(Throwable cause, Handler<AsyncResult<Response>> asyncResultHandler) {
@@ -129,18 +119,18 @@ public class StagingUsersAPI implements StagingUsers {
     );
   }
 
-  private void handleSuccessPost(StagingUser stagingUser, AtomicReference<Boolean> isUpdated,
+  private void handleSuccessPost(StagingUser stagingUser,
                                  Handler<AsyncResult<Response>> asyncResultHandler) {
-    if (Boolean.TRUE.equals(isUpdated.get())) {
-      asyncResultHandler.handle(
-        succeededFuture(StagingUsers.PostStagingUsersResponse.respond200WithApplicationJson(stagingUser))
-      );
-    } else {
+//    if (Boolean.TRUE.equals(isUpdated.get())) {
+//      asyncResultHandler.handle(
+//        succeededFuture(StagingUsers.PostStagingUsersResponse.respond200WithApplicationJson(stagingUser))
+//      );
+//    } else {
       asyncResultHandler.handle(
         succeededFuture(StagingUsers.PostStagingUsersResponse.respond201WithApplicationJson(stagingUser,
           PostStagingUsersResponse.headersFor201()))
       );
-    }
+    //}
   }
 
   @Override
