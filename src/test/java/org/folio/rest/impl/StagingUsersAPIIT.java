@@ -95,6 +95,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
     assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
+    assertNotNull(createdUser.getExternalSystemId());
     assertTrue(createdUser.getIsEmailVerified());
   }
 
@@ -110,6 +111,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
     assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
+    assertNotNull(createdUser.getExternalSystemId());
     assertFalse(createdUser.getIsEmailVerified());
   }
 
@@ -141,7 +143,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertThat(stagingUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
     assertThat(stagingUser.getMetadata().getUpdatedDate(), is(createdUser.getMetadata().getUpdatedDate()));
     assertThat(stagingUser.getMetadata().getCreatedByUserId(), is(createdUser.getMetadata().getCreatedByUserId()));
-
+    assertNotNull(stagingUser.getExternalSystemId());
   }
 
   @Test
