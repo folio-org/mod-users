@@ -108,7 +108,7 @@
       "withMetadata" : true,
       "uniqueIndex" : [
         {
-          "fieldName" : "contactInfo.email",
+          "fieldName" : "externalSystemId",
           "tOps" : "ADD"
         }
       ],
@@ -127,6 +127,10 @@
         },
         {
           "fieldName" : "generalInfo.middleName",
+          "tOps" : "ADD"
+        },
+        {
+          "fieldName" : "externalSystemId",
           "tOps" : "ADD"
         }
       ],
@@ -154,12 +158,18 @@
           "tOps": "ADD",
           "caseSensitive": false,
           "removeAccents": true
+        },
+        {
+          "fieldName": "externalSystemId",
+          "tOps": "ADD",
+          "caseSensitive": false,
+          "removeAccents": true
         }
       ],
       "fullTextIndex" : [
         {
           "fieldName": "keywords",
-          "multiFieldNames": "generalInfo.firstName,generalInfo.preferredFirstName,generalInfo.middleName,generalInfo.lastName,contactInfo.phone,contactInfo.mobilePhone,contactInfo.email,preferredEmailCommunication,id,isEmailVerified"
+          "multiFieldNames": "generalInfo.firstName,generalInfo.preferredFirstName,generalInfo.middleName,generalInfo.lastName,contactInfo.phone,contactInfo.mobilePhone,contactInfo.email,preferredEmailCommunication,id,isEmailVerified,externalSystemId"
         }
       ]
     },
