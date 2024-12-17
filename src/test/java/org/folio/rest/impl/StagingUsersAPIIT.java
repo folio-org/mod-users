@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.Collections;
+import java.util.UUID;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
