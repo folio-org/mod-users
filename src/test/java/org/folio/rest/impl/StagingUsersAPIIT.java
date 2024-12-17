@@ -32,10 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
@@ -482,5 +479,33 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   private String createRandomString() {
     return RandomStringUtils.random(5, true, true);
+  }
+
+  @Test
+  void shouldCreateAndUpdatePreferredEmailCommunicationCorrectlyInTheStagingUser_positive() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    createdUser.setId(null);
+    createdUser.setPreferredEmailCommunication(Collections.emptySet());
+
+    var updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(createdUser.getExternalSystemId(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertTrue(updatedUser.getPreferredEmailCommunication().containsAll(stagingUserToCreate.getPreferredEmailCommunication()));
+
+    createdUser.setPreferredEmailCommunication(Set.of(PreferredEmailCommunication.PROGRAMS));
+    updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(createdUser.getExternalSystemId(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(1, updatedUser.getPreferredEmailCommunication().size());
+    assertTrue(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.PROGRAMS));
+    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
+    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
   }
 }
