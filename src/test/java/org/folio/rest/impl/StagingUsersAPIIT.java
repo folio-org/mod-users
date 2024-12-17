@@ -512,4 +512,20 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
     assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
   }
+
+  @Test
+  void updateStagingUser_negative() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    createdUser.setId(null);
+    createdUser.setPreferredEmailCommunication(Collections.emptySet());
+
+    var updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(UUID.randomUUID().toString(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(404));
+
+  }
 }
