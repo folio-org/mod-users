@@ -333,6 +333,11 @@
           "methods": [ "PUT" ],
           "pathPattern": "/staging-users/{id}/mergeOrCreateUser",
           "permissionsRequired": [ "staging-users.item.put" ]
+        },
+        {
+          "methods": [ "PUT" ],
+          "pathPattern": "/staging-users/{externalSystemId}",
+          "permissionsRequired": [ "staging-users.external-system-id.put" ]
         }
       ]
     }
@@ -657,7 +662,13 @@
       "permissionName" : "staging-users.item.put",
       "displayName" : "staging users - create or merge user details",
       "description" : "create or update user details from staging user records"
+    },
+    {
+      "permissionName" : "staging-users.external-system-id.put",
+      "displayName" : "staging users - update user details",
+      "description" : "update staging user details by external system id"
     }
+
   ],
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
