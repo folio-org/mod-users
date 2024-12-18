@@ -144,10 +144,15 @@ public class StagingUsersAPI implements StagingUsers {
                                               Map<String, String> okapiHeaders) {
     if (stagingUsersByExternalSystemId != null && !stagingUsersByExternalSystemId.isEmpty()) {
       StagingUser existingStagingUser = stagingUsersByExternalSystemId.get(0);
-      String entityId = existingStagingUser.getId();
+      String entityId = existingStagingUser.getExternalSystemId();
+
+      // Avoid overriding email and externalSystemId value
+      entity.getContactInfo().setEmail(null);
+      entity.setExternalSystemId(null);
 
       logger.info("Processing existing staging user with ID: {}", entityId);
       BeanUtilsExtended.copyPropertiesNotNull(existingStagingUser, entity);
+
       updateMetaInfo(okapiHeaders, existingStagingUser);
 
       return entityId;
