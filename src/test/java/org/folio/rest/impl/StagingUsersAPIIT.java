@@ -493,7 +493,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     createdNewStagingUserResponse.statusCode(is(201));
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
-    createdUser.setId(null);
+    //createdUser.setId(null);
     createdUser.setPreferredEmailCommunication(Collections.emptySet());
 
     var updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(createdUser.getExternalSystemId(), createdUser);

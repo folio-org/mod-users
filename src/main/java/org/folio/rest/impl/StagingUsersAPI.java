@@ -125,8 +125,14 @@ public class StagingUsersAPI implements StagingUsers {
         List<StagingUser> stagingUsersByExternalSystemId = stagingUserResults.getResults();
         String entityId = processExistingUserIfPresent(stagingUsersByExternalSystemId, entity, okapiHeaders);
         if (entityId != null) {
-          return conn.upsert(STAGING_USERS_TABLE, entityId, entity, true)
-            .compose(id -> conn.getById(STAGING_USERS_TABLE, id, StagingUser.class));
+          return conn.update(STAGING_USERS_TABLE, entity, entityId)
+            .compose(rowSet -> {
+              if (rowSet.rowCount() > 0) {
+                return conn.getById(STAGING_USERS_TABLE, entityId, StagingUser.class);
+              } else {
+                return Future.failedFuture("Update failed: No rows were updated.");
+              }
+            });
         } else {
           return Future.failedFuture("No matching user found for update.");
         }
@@ -144,14 +150,14 @@ public class StagingUsersAPI implements StagingUsers {
                                               Map<String, String> okapiHeaders) {
     if (stagingUsersByExternalSystemId != null && !stagingUsersByExternalSystemId.isEmpty()) {
       StagingUser existingStagingUser = stagingUsersByExternalSystemId.get(0);
-      String entityId = existingStagingUser.getExternalSystemId();
+      String entityId = existingStagingUser.getId();
 
       // Avoid overriding email and externalSystemId value
       entity.getContactInfo().setEmail(null);
       entity.setExternalSystemId(null);
       entity.setId(null);
 
-      logger.info("Processing existing staging user with ID: {}", entityId);
+      logger.info("Processing existing staging user with ID: {}", existingStagingUser.getExternalSystemId());
       BeanUtilsExtended.copyPropertiesNotNull(existingStagingUser, entity);
 
       updateMetaInfo(okapiHeaders, existingStagingUser);
