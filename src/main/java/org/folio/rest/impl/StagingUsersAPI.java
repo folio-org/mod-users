@@ -149,6 +149,7 @@ public class StagingUsersAPI implements StagingUsers {
       // Avoid overriding email and externalSystemId value
       entity.getContactInfo().setEmail(null);
       entity.setExternalSystemId(null);
+      entity.setId(null);
 
       logger.info("Processing existing staging user with ID: {}", entityId);
       BeanUtilsExtended.copyPropertiesNotNull(existingStagingUser, entity);
