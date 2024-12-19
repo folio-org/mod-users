@@ -19,6 +19,10 @@ public class StagingUsersClient {
     return client.attemptToCreateRecord(stagingUser);
   }
 
+  public ValidatableResponse attemptToUpdateStagingUser(String externalSystemId, @NonNull StagingUser stagingUser) {
+    return client.attemptToUpdateRecord(externalSystemId, stagingUser);
+  }
+
   public ValidatableResponse attemptToMergeStagingUser(String stagingUserId, String userId) {
     var requestSpec = client.initialSpecification();
 
