@@ -142,7 +142,7 @@ public class StagingUserService {
       .withExpirationDate(Date.from(LocalDate.now().plusYears(2).atStartOfDay(ZoneId.systemDefault()).toInstant()))
       .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
       .withType(PATRON_TYPE)
-      .withExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null)
+      .withExternalSystemId(stagingUser.getExternalSystemId())
       .withPersonal(createOrUpdatePersonal(stagingUser, new Personal(), homeAddressTypeId))
       .withMetadata(MetadataUtil.createMetadata(okapiHeaders));
 
@@ -152,7 +152,7 @@ public class StagingUserService {
     var metaData = MetadataUtil.createMetadata(okapiHeaders);
     return user.withActive(true)
       .withPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication())
-      .withExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null)
+      .withExternalSystemId(stagingUser.getExternalSystemId())
       .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
       .withPersonal(createOrUpdatePersonal(stagingUser, user.getPersonal(), homeAddressTypeId))
       .withMetadata(user.getMetadata().withUpdatedDate(metaData.getUpdatedDate()))

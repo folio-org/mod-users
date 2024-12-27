@@ -212,7 +212,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     var newUser = mergeStagingUserAndFetch(stagingUser.getId(), null);
 
-    verifyUserDetails(stagingUserToCreate, newUser, homeAddressTypeId, updatedDate, remotePatronGroupId);
+    verifyUserDetails(stagingUser, newUser, homeAddressTypeId, updatedDate, remotePatronGroupId);
 
     assertEquals(
       LocalDate.now(ZoneId.systemDefault()).plusYears(2),
@@ -242,7 +242,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "New address should be added in the address list");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -266,7 +266,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(1, existingUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -292,7 +292,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -317,7 +317,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(1, mergedUser.getPersonal().getAddresses().size(), "New home address should be added");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -442,7 +442,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(stagingGeneralInfo.getMiddleName(), userPersonal.getMiddleName());
     assertEquals(stagingGeneralInfo.getPreferredFirstName(), userPersonal.getPreferredFirstName());
     assertEquals(stagingContactInfo.getEmail(), userPersonal.getEmail());
-    assertEquals(stagingContactInfo.getEmail(), user.getExternalSystemId());
+    assertEquals(stagingUser.getExternalSystemId(), user.getExternalSystemId());
     assertEquals(stagingContactInfo.getPhone(), userPersonal.getPhone());
     assertEquals(stagingContactInfo.getMobilePhone(), userPersonal.getMobilePhone());
     assertEquals(CONTACT_TYPE_EMAIL_ID, userPersonal.getPreferredContactTypeId(), "user should always have 002 as its contact type");
