@@ -1,3 +1,10 @@
+## 19.4.5 2025-01-13
+
+* Changes for the POST /patron for patron registration API (MODUSERS-493)
+* Added PUT /staging-users/{externalSystemId} (MODUSERS-494)
+* Pass externalSystemId when patron account is created or updated from staging record (MODUSERS-495)
+* Published created and updated event after merging staging user and expiration of user (MODUSERS-478)
+
 ## 19.4.4 2024-12-05
 
 * Refix for Sorting users by patron group with applied filters changes number of found records (MODUSERS-486)
