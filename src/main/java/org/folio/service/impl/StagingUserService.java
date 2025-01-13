@@ -2,6 +2,7 @@ package org.folio.service.impl;
 
 import io.vertx.core.Context;
 import io.vertx.core.Future;
+import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Address;
@@ -19,6 +20,7 @@ import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.utils.MetadataUtil;
 import org.folio.service.UsersService;
+import org.folio.support.StagingUserUpdatesStorage;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -32,6 +34,7 @@ import static io.vertx.core.Future.succeededFuture;
 import static org.folio.rest.impl.AddressTypeAPI.ADDRESS_TYPE_TABLE;
 import static org.folio.rest.impl.StagingUsersAPI.STAGING_USERS_TABLE;
 import static org.folio.rest.impl.UserGroupAPI.GROUP_TABLE;
+import static org.folio.service.event.EntityChangedEventPublisherFactory.userEventPublisher;
 import static org.folio.support.UsersApiConstants.ID;
 
 public class StagingUserService {
@@ -72,8 +75,16 @@ public class StagingUserService {
           return fetchStagingUserById(conn, stagingUserId)
             .compose(stagingUser -> userId != null ? updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId)
               : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, patronGroupId))
-            .compose(user -> deleteStagingUser(conn, stagingUserId, user));
-        }))
+            .compose(userUpdatesStorage -> deleteStagingUser(conn, stagingUserId, userUpdatesStorage));
+        })).onSuccess(userUpdatesStorage-> {
+          if(userId == null) {
+            userEventPublisher(vertxContext, okapiHeaders)
+                    .publishCreated(userUpdatesStorage.getNewEntity().getId(), userUpdatesStorage.getNewEntity());
+          } else {
+            userEventPublisher(vertxContext, okapiHeaders)
+                    .publishUpdated(userId, userUpdatesStorage.getOldEntity(), userUpdatesStorage.getNewEntity());
+          }
+        }).compose(userUpdatesStorage-> Future.succeededFuture(userUpdatesStorage.getNewEntity()))
       .onFailure(t -> log.error("mergeOrCreateUserFromStagingUser:: Merge or creation failed for stagingUserId {}, userId {}: {}",
         stagingUserId, userId, t.getMessage()));
   }
@@ -111,22 +122,26 @@ public class StagingUserService {
         clazz.getSimpleName(), tableName, t.getMessage()));
   }
 
-  private Future<User> createNewUserFromStagingUser(StagingUser stagUser, Conn conn, String homeAddressTypeId,
-                                                    String patronGroupId) {
+  private Future<StagingUserUpdatesStorage<User>> createNewUserFromStagingUser(StagingUser stagUser, Conn conn,
+                                                                          String homeAddressTypeId,
+                                                                         String patronGroupId) {
     log.debug("createNewUserFromStagingUser:: creating a new user from staging user {}", stagUser);
     var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId, patronGroupId);
-    return usersService.saveAndReturnUser(conn, newUser);
+    return usersService.saveAndReturnUser(conn, newUser)
+            .compose(user->Future.succeededFuture(new StagingUserUpdatesStorage<>(user)));
   }
 
-  private Future<User> updateExistingUserDetailsFromStagingUser(StagingUser stagUser, String userId,
+  private Future<StagingUserUpdatesStorage<User>> updateExistingUserDetailsFromStagingUser(StagingUser stagUser, String userId,
                                                                 Conn conn, String homeAddressTypeId) {
     log.debug("updateExistingUserDetailsFromStagingUser:: updating existing user {} with stagUser details {}",
       userId, stagUser);
     return usersService.getUserById(conn, userId)
       .compose(existingUser -> {
         if (existingUser != null) {
+          User oldEntity = Json.decodeValue(Json.encode(existingUser), User.class);
           var updatedUser = updateUserFromStagingUser(stagUser, existingUser, homeAddressTypeId);
-          return usersService.updateUser(conn, updatedUser);
+          return usersService.updateUser(conn, updatedUser)
+                  .compose(user->Future.succeededFuture(new StagingUserUpdatesStorage<User>(true, oldEntity, user)));
         } else {
           return Future.failedFuture(String.format(USER_NOT_FOUND, userId));
         }
@@ -142,7 +157,7 @@ public class StagingUserService {
       .withExpirationDate(Date.from(LocalDate.now().plusYears(2).atStartOfDay(ZoneId.systemDefault()).toInstant()))
       .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
       .withType(PATRON_TYPE)
-      .withExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null)
+      .withExternalSystemId(stagingUser.getExternalSystemId())
       .withPersonal(createOrUpdatePersonal(stagingUser, new Personal(), homeAddressTypeId))
       .withMetadata(MetadataUtil.createMetadata(okapiHeaders));
 
@@ -152,7 +167,7 @@ public class StagingUserService {
     var metaData = MetadataUtil.createMetadata(okapiHeaders);
     return user.withActive(true)
       .withPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication())
-      .withExternalSystemId(stagingUser.getContactInfo() != null ? stagingUser.getContactInfo().getEmail() : null)
+      .withExternalSystemId(stagingUser.getExternalSystemId())
       .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
       .withPersonal(createOrUpdatePersonal(stagingUser, user.getPersonal(), homeAddressTypeId))
       .withMetadata(user.getMetadata().withUpdatedDate(metaData.getUpdatedDate()))
@@ -216,10 +231,11 @@ public class StagingUserService {
       .withPrimaryAddress(true);
   }
 
-  private Future<User> deleteStagingUser(Conn conn, String stagingUserId, User user) {
+  private Future<StagingUserUpdatesStorage<User>> deleteStagingUser(Conn conn, String stagingUserId,
+                                                                    StagingUserUpdatesStorage<User> stagingUserUpdatesStorage) {
     return conn.delete(STAGING_USERS_TABLE, stagingUserId)
       .compose(rowSet -> rowSet.size() !=0 ? failedFuture(String.format("Unable to delete the staging user %s", stagingUserId))
-      : Future.succeededFuture(user));
+      : Future.succeededFuture(stagingUserUpdatesStorage));
   }
 
 }

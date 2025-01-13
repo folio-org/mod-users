@@ -63,10 +63,6 @@ resourceTypes:
     is: [ validate ]
     description: Create a user
     responses:
-      200:
-        description: "When existing staging user record is updated"
-        body:
-          application/json:
       201:
         description: "when new staging user record is created"
         body:
@@ -85,6 +81,42 @@ resourceTypes:
         body:
           text/plain:
             example: "Internal server error, contact administrator"
+  /{externalSystemId}:
+     put:
+       description: Update an existing user based on externalSystemId
+       body:
+         application/json:
+           type: stagingUser
+       responses:
+         200:
+           description: "when staging user record is updated"
+           body:
+             application/json:
+         400:
+           description: "Bad request"
+           body:
+             application/json:
+         422:
+           description: Validation error
+           body:
+             application/json:
+               type: errors
+         500:
+           description: "Internal server error, e.g. due to misconfiguration"
+           body:
+             text/plain:
+               example: "Internal server error, contact administrator"
+         405:
+           description: "Internal server error, e.g. due to missing externalSystemId in the parameter"
+           body:
+             text/plain:
+               example: "the request's HTTP method is not supported by the server or the resource"
+         404:
+           description: "Staging user with a given externalSystemID not found"
+           body:
+             text/plain:
+               example: "Staging user not found"
+
   /{id}/mergeOrCreateUser:
     put:
       queryParameters:

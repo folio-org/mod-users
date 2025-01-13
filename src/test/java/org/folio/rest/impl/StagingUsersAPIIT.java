@@ -35,6 +35,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.Collections;
 import java.util.UUID;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
@@ -47,10 +48,8 @@ import static org.folio.service.impl.StagingUserService.REMOTE_NON_CIRCULATING;
 import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
 import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
 
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -86,40 +85,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void shouldCreateAndUpdateTheStagingUser_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
-    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
-    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
-    createdNewStagingUserResponse.statusCode(is(201));
-    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertThat(createdUser.getId(), is(notNullValue()));
-    assertEquals(createdUser.getStatus(), stagingUserToCreate.getStatus());
-    assertEquals(createdUser.getIsEmailVerified(), stagingUserToCreate.getIsEmailVerified());
-    assertEquals(createdUser.getContactInfo(), stagingUserToCreate.getContactInfo());
-    assertEquals(createdUser.getGeneralInfo(), stagingUserToCreate.getGeneralInfo());
-    assertEquals(createdUser.getAddressInfo(), stagingUserToCreate.getAddressInfo());
-
-    assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
-    assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
-
-    createdUser.setId(null);
-    createdUser.getGeneralInfo().setFirstName("updated_firstname");
-    createdUser.getAddressInfo().setCity("Updated_City");
-    createdUser.getContactInfo().setMobilePhone("updated_12345");
-
-    final var updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
-    updatedNewStagingUserResponse.statusCode(is(200));
-    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertEquals(updatedUser.getContactInfo(), createdUser.getContactInfo());
-    assertEquals(updatedUser.getGeneralInfo(), createdUser.getGeneralInfo());
-    assertEquals(updatedUser.getAddressInfo(), createdUser.getAddressInfo());
-    assertThat(updatedUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
-    assertThat(updatedUser.getMetadata().getUpdatedDate(), not(createdUser.getMetadata().getUpdatedDate()));
-  }
-
-  @Test
   void validateStatusAndIsEmailVerifiedIsSetWhenPassNonNull_positive() {
     String randomString = RandomStringUtils.random(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
@@ -131,6 +96,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
     assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
+    assertNotNull(createdUser.getExternalSystemId());
     assertTrue(createdUser.getIsEmailVerified());
   }
 
@@ -146,35 +112,8 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
 
     assertEquals(StagingUser.Status.TIER_1, createdUser.getStatus());
+    assertNotNull(createdUser.getExternalSystemId());
     assertFalse(createdUser.getIsEmailVerified());
-  }
-
-  @Test
-  void shouldCreateAndUpdatePreferredEmailCommunicationCorrectlyInTheStagingUser_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
-    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
-    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
-    createdNewStagingUserResponse.statusCode(is(201));
-    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    createdUser.setId(null);
-    createdUser.setPreferredEmailCommunication(Collections.emptySet());
-
-    var updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
-    updatedNewStagingUserResponse.statusCode(is(200));
-    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertTrue(updatedUser.getPreferredEmailCommunication().containsAll(stagingUserToCreate.getPreferredEmailCommunication()));
-
-    createdUser.setPreferredEmailCommunication(Set.of(PreferredEmailCommunication.PROGRAMS));
-    updatedNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(createdUser);
-    updatedNewStagingUserResponse.statusCode(is(200));
-    updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
-
-    assertEquals(1, updatedUser.getPreferredEmailCommunication().size());
-    assertTrue(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.PROGRAMS));
-    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
-    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
   }
 
   @Test
@@ -205,7 +144,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertThat(stagingUser.getMetadata().getCreatedDate(), is(createdUser.getMetadata().getCreatedDate()));
     assertThat(stagingUser.getMetadata().getUpdatedDate(), is(createdUser.getMetadata().getUpdatedDate()));
     assertThat(stagingUser.getMetadata().getCreatedByUserId(), is(createdUser.getMetadata().getCreatedByUserId()));
-
+    assertNotNull(stagingUser.getExternalSystemId());
   }
 
   @Test
@@ -273,7 +212,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     var newUser = mergeStagingUserAndFetch(stagingUser.getId(), null);
 
-    verifyUserDetails(stagingUserToCreate, newUser, homeAddressTypeId, updatedDate, remotePatronGroupId);
+    verifyUserDetails(stagingUser, newUser, homeAddressTypeId, updatedDate, remotePatronGroupId);
 
     assertEquals(
       LocalDate.now(ZoneId.systemDefault()).plusYears(2),
@@ -303,7 +242,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "New address should be added in the address list");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -327,7 +266,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(1, existingUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -353,7 +292,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -378,7 +317,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(1, mergedUser.getPersonal().getAddresses().size(), "New home address should be added");
-    verifyUserDetails(stagingUserToCreate, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
+    verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
     assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
@@ -503,7 +442,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(stagingGeneralInfo.getMiddleName(), userPersonal.getMiddleName());
     assertEquals(stagingGeneralInfo.getPreferredFirstName(), userPersonal.getPreferredFirstName());
     assertEquals(stagingContactInfo.getEmail(), userPersonal.getEmail());
-    assertEquals(stagingContactInfo.getEmail(), user.getExternalSystemId());
+    assertEquals(stagingUser.getExternalSystemId(), user.getExternalSystemId());
     assertEquals(stagingContactInfo.getPhone(), userPersonal.getPhone());
     assertEquals(stagingContactInfo.getMobilePhone(), userPersonal.getMobilePhone());
     assertEquals(CONTACT_TYPE_EMAIL_ID, userPersonal.getPreferredContactTypeId(), "user should always have 002 as its contact type");
@@ -544,5 +483,49 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   private String createRandomString() {
     return RandomStringUtils.random(5, true, true);
+  }
+
+  @Test
+  void shouldCreateAndUpdatePreferredEmailCommunicationCorrectlyInTheStagingUser_positive() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    createdUser.setId(null);
+    createdUser.setPreferredEmailCommunication(Collections.emptySet());
+
+    var updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(createdUser.getExternalSystemId(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertTrue(updatedUser.getPreferredEmailCommunication().containsAll(stagingUserToCreate.getPreferredEmailCommunication()));
+
+    createdUser.setPreferredEmailCommunication(Set.of(PreferredEmailCommunication.PROGRAMS));
+    updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(createdUser.getExternalSystemId(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(1, updatedUser.getPreferredEmailCommunication().size());
+    assertTrue(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.PROGRAMS));
+    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
+    assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
+  }
+
+  @Test
+  void updateStagingUser_negative() {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    createdUser.setId(null);
+    createdUser.setPreferredEmailCommunication(Collections.emptySet());
+
+    var updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(UUID.randomUUID().toString(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(404));
+
   }
 }

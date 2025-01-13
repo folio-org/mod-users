@@ -2,13 +2,18 @@ package org.folio.rest.utils;
 
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
+import static org.folio.service.event.EntityChangedEventPublisherFactory.userEventPublisher;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
+import io.vertx.core.Context;
+import io.vertx.core.json.Json;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,8 +40,9 @@ public final class ExpirationTool {
     this.postgresClientFactory = postgresClientFactory;
   }
 
-  public Future<Integer> doExpirationForTenant(Vertx vertx, String tenant) {
+  public Future<Integer> doExpirationForTenant(Context vertxContext, Map<String, String> okapiHeaders) {
     try {
+      String tenant = okapiHeaders.get(OKAPI_TENANT_HEADER);
       String nowDateString = ZonedDateTime.now().format(ISO_INSTANT);
       String query = String.format("active == true AND expirationDate < %s", nowDateString);
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(List.of(TABLE_NAME_USERS+".jsonb"));
@@ -48,21 +54,21 @@ public final class ExpirationTool {
           new IllegalArgumentException("Cannot expire users for undefined tenant"));
       }
 
-      PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
+      PostgresClient pgClient = postgresClientFactory.apply(vertxContext.owner(), tenant);
 
       return pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true)
         .onFailure(error ->
           logger.error(String.format("Error executing postgres query for tenant %s: '%s', %s",
             tenant, query, error.getMessage()), error))
-        .compose(results -> disableUsers(vertx, tenant, query, results));
+        .compose(results -> disableUsers(vertxContext, tenant, query, results, okapiHeaders));
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
       return Future.failedFuture(e);
     }
   }
 
-  private Future<Integer> disableUsers(Vertx vertx, String tenant,
-    String query, Results<User> results) {
+  private Future<Integer> disableUsers(Context vertxContext, String tenant,
+                                       String query, Results<User> results, Map<String, String> okapiHeaders) {
 
     if (results.getResults().isEmpty()) {
       logger.debug("No results found for tenant {} and query {}", tenant, query);
@@ -72,7 +78,7 @@ public final class ExpirationTool {
     List<Future<Void>> futureList = new ArrayList<>();
 
     results.getResults()
-      .forEach(user -> futureList.add(disableUser(vertx, tenant, user)));
+      .forEach(user -> futureList.add(disableUser(vertxContext, tenant, user, okapiHeaders)));
 
     return GenericCompositeFuture.join(futureList)
       .map(compRes -> futureList.stream()
@@ -81,15 +87,17 @@ public final class ExpirationTool {
         .sum());
   }
 
-  Future<Void> disableUser(Vertx vertx, String tenant, User user) {
+  Future<Void> disableUser(Context vertxContext, String tenant, User user, Map<String, String> okapiHeaders) {
     logger.info("Disabling expired user with id {} for tenant {}", user.getId(), tenant);
-
+    User oldUserEntity = Json.decodeValue(Json.encode(user), User.class);
     user.setActive(Boolean.FALSE);
 
     try {
-      PostgresClient pgClient = postgresClientFactory.apply(vertx, tenant);
+      PostgresClient pgClient = postgresClientFactory.apply(vertxContext.owner(), tenant);
 
       return pgClient.update(TABLE_NAME_USERS, user, user.getId())
+              .onSuccess(hander -> userEventPublisher(vertxContext, okapiHeaders)
+                      .publishUpdated(user.getId(), oldUserEntity, user))
         .onFailure(cause -> logger.error(String.format(
           "Error updating user %s for tenant %s: %s", user.getId(), tenant,
           cause.getMessage()), cause))
