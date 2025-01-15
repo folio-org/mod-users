@@ -110,6 +110,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .active(true)
       .id("999fd1a4-1865-4991-ae9d-6c9f75d4b043")
       .personal(Personal.builder()
+        .pronouns("He/Him")
         .firstName("julia")
         .preferredFirstName("jules")
         .lastName("brockhurst")
@@ -123,6 +124,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     assertThat(createdUser.getId(), is(notNullValue()));
     final var personal = createdUser.getPersonal();
 
+    assertThat(personal.getPronouns(), is("He/Him"));
     assertThat(personal.getLastName(), is("brockhurst"));
     assertThat(personal.getFirstName(), is("julia"));
     assertThat(personal.getPreferredFirstName(), is("jules"));
@@ -162,6 +164,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .username("juliab")
       .active(true)
       .personal(Personal.builder()
+        .pronouns("He/Him")
         .firstName("julia")
         .preferredFirstName("jules")
         .lastName("brockhurst")
@@ -181,6 +184,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var personal = fetchedUser.getPersonal();
 
+    assertThat(personal.getPronouns(), is("He/Him"));
     assertThat(personal.getLastName(), is("brockhurst"));
     assertThat(personal.getFirstName(), is("julia"));
     assertThat(personal.getPreferredFirstName(), is("jules"));
