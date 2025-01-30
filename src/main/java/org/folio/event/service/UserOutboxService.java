@@ -233,16 +233,17 @@ public class UserOutboxService {
     Personal oldPersonal = userFromStorage.getPersonal();
     Personal newPersonal = updatedUser.getPersonal();
 
-    if (isPersonalNotNull(oldPersonal, newPersonal) && isPersonalNameChanged(oldPersonal, newPersonal)) {
+    if (isPersonalNotNull(oldPersonal, newPersonal) && isPersonalNameOrEmailChanged(oldPersonal, newPersonal)) {
       logger.info("Personal name have been updated for user with id: {}", updatedUser.getId());
       return true;
     }
     return false;
   }
 
-  private boolean isPersonalNameChanged(Personal oldPersonal, Personal newPersonal) {
+  private boolean isPersonalNameOrEmailChanged(Personal oldPersonal, Personal newPersonal) {
     return ObjectUtils.notEqual(oldPersonal.getFirstName(), newPersonal.getFirstName())
-      || ObjectUtils.notEqual(oldPersonal.getLastName(), newPersonal.getLastName());
+      || ObjectUtils.notEqual(oldPersonal.getLastName(), newPersonal.getLastName())
+      || ObjectUtils.notEqual(oldPersonal.getEmail(), newPersonal.getEmail());
   }
 
   private boolean isPersonalNotNull(Personal oldPersonal, Personal newPersonal) {
