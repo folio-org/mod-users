@@ -182,13 +182,13 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
   }
 
   @Test
-  void canUpdateFirstNameForConsortia() {
+  void canUpdateNameAndEmailForConsortia() {
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = createUser(userId, "joannek", "julia", "staff");
+    final User userToCreate = createUser(userId, "joannek", "julia", "julia@email.com", "staff");
     usersClient.createUser(userToCreate);
-    final User userToUpdate = createUser(userId, "joannek", "new_julia", "staff");
+    final User userToUpdate = createUser(userId, "joannek", "new_julia", "new_julia@email.com", "staff");
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(is(204));
@@ -199,6 +199,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .untilAsserted(() -> {
         final var updatedUser = usersClient.getUser(userId);
         assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
+        assertThat(updatedUser.getPersonal().getEmail(), is("new_julia@email.com"));
       });
   }
 
@@ -394,18 +395,31 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
       .withUsername("user_test").withTenantId("tenant_test").withCentralTenantId("diku");
   }
 
+  private User createUser(String userId, String username, String firstName, String email, String type) {
+    return createUserBuilder(userId, username, type)
+      .personal(createPersonalBuilder(firstName).email(email).build())
+      .build();
+  }
+
   private User createUser(String userId, String username, String firstName, String type) {
+    return createUserBuilder(userId, username, type)
+      .personal(createPersonalBuilder(firstName).build())
+      .build();
+  }
+
+  private User.UserBuilder createUserBuilder(String userId, String username, String type) {
     return User.builder()
       .id(userId)
       .username(username)
       .active(true)
       .type(type)
-      .personal(Personal.builder()
-        .firstName(firstName)
-        .preferredFirstName("jules")
-        .lastName("test")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build());
+  }
+
+  private Personal.PersonalBuilder createPersonalBuilder(String firstName) {
+    return Personal.builder()
+      .firstName(firstName)
+      .preferredFirstName("jules")
+      .lastName("test");
   }
 }
