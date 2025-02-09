@@ -15,7 +15,8 @@
       }
     },
     "totalRecords": {
-      "type": "integer"
+      "type": "integer",
+      "description": "Estimated or exact total number of records, see https://github.com/folio-org/raml-module-builder#estimated-totalrecords for details"
     }
   },
   "required": ["departments", "totalRecords"]
