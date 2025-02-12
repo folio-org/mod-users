@@ -60,7 +60,8 @@
       "properties": {
         "pronouns": {
           "description": "The user's pronouns",
-          "type": "string"
+          "type": "string",
+          "maxLength": 300
         },
         "lastName": {
           "description": "The user's surname",
