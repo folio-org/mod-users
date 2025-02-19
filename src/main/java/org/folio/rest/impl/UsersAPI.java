@@ -224,9 +224,12 @@ public class UsersAPI implements Users {
 
     try {
       logger.debug("Getting users");
+      logger.info("The query is {}", query);
       // note that orderBy is NOT used
       String tableName = getTableName(query);
       CQLWrapper cql = getCQL(query, limit, offset);
+      logger.info("The CQL where Clause is {}", cql.getWhereClause());
+      logger.info("The CQL query is {}", cql.getQuery());
 
       PgUtil.streamGet(tableName, User.class, cql, emptyList(), TABLE_NAME_USERS,
         routingContext, okapiHeaders, vertxContext);
