@@ -183,7 +183,6 @@ public class UsersAPI implements Users {
   }
 
   public static CQLWrapper getCQL(String query, int limit, int offset) throws CQL2PgJSONException {
-    System.out.println();
     if (query != null && query.contains("patronGroup.")) {
       query = convertQuery(query);
       List<String> fields = new LinkedList<>();
@@ -193,11 +192,6 @@ public class UsersAPI implements Users {
       return new ViewCqlWrapper(cql2pgJson, query, limit, offset);
     } else {
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(USERS_JSONB);
-      logger.info("Original Query: {}", query);
-      if (query != null) {
-        query = query.replaceAll("\\(type=\"([^\"]+)\"\\)", "(type=/@\"$1\")");
-      }
-      logger.info("Modified Query: {}", query);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     }
   }
