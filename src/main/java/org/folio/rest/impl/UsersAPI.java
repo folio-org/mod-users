@@ -193,8 +193,8 @@ public class UsersAPI implements Users {
     } else {
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(USERS_JSONB);
       logger.info("Original Query: {}", query);
-      if (query != null && query.contains("type")) {
-        query = query.replace("type=", "type=/@");
+      if (query != null && query.matches(".*\\btype=\"[^\"]+\".*")) {
+        query = query.replaceAll("\\btype=\"([^\"]+)\"", "type=/@\"$1\"");
       }
       logger.info("Modified Query: {}", query);
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
