@@ -192,6 +192,9 @@ public class UsersAPI implements Users {
       return new ViewCqlWrapper(cql2pgJson, query, limit, offset);
     } else {
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(USERS_JSONB);
+      if (query != null && query.contains("type")) {
+        query = query.replace("type=", "type=/@"); // Ensure exact match behavior
+      }
       return new CQLWrapper(cql2pgJson, query).setLimit(new Limit(limit)).setOffset(new Offset(offset));
     }
   }
