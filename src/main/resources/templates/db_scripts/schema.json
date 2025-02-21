@@ -199,10 +199,6 @@
         {
           "fieldName" : "barcode",
           "tOps" : "ADD"
-        },
-        {
-          "fieldName" : "type",
-          "tOps" : "ADD"
         }
       ],
       "index" : [
