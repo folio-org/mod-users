@@ -933,6 +933,7 @@ public class UsersAPI implements Users {
             .onSuccess(user -> {
               if (StringUtils.equals(UserType.SHADOW.getTypeName(), user.getType())) {
                 logger.info("Skip sending Update domain event for shadow user with id: {}", user.getId());
+                return;
               }
               userEventPublisher(vertxContext, okapiHeaders).publishUpdated(entity.getId(), userFromStorage, user);
             })
