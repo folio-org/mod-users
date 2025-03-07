@@ -102,6 +102,12 @@ resourceTypes:
         description: "Internal server error"
   delete:
     description: Delete a user-tenant from member tenant. Deleting from the central tenant is forbidden.
+    queryParameters:
+      tenantId:
+        description: Filter by tenant id
+        type: string
+        example: sfs000
+        required: false
     responses:
       204:
         description: "Successful deletion"
