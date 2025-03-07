@@ -40,6 +40,7 @@ public class UserTenantRepository {
   private static final String INSERT_SQL = "INSERT INTO %s.%s (id, user_id, username, tenant_id, creation_date, central_tenant_id, email, mobile_phone_number, phone_number, barcode, external_system_id, consortium_id)" +
     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
   private static final String DELETE_SQL = "DELETE FROM %s.%s WHERE user_id = $1 AND tenant_id = $2";
+  private static final String DELETE_FOR_TENANT_SQL = "DELETE FROM %s.%s WHERE tenant_id = $2";
   private static final String UPDATE_SQL = "UPDATE %s.%s SET username = $1, email = $2, mobile_phone_number = $3, phone_number = $4, barcode = $5, external_system_id = $6 WHERE user_id = $7";
   private static final String SELECT_USER_TENANTS = "WITH cte AS (SELECT count(*) AS total_count FROM %1$s.%2$s %3$s) " +
     "SELECT j.*, cte.* FROM %1$s.%2$s j LEFT JOIN cte ON true " +
@@ -90,6 +91,14 @@ public class UserTenantRepository {
     return conn.execute(query, queryParams)
       .map(resultSet -> resultSet.rowCount() == 1)
       .recover(throwable -> handleFailures(throwable, userTenant.getId()));
+  }
+
+  public Future<Boolean> deleteUserTenants(Conn conn, String centralTenantId, String tenantId) {
+    String query = String.format(DELETE_FOR_TENANT_SQL, convertToPsqlStandard(centralTenantId), USER_TENANT_TABLE_NAME);
+    Tuple queryParams = Tuple.of(tenantId);
+    return conn.execute(query, queryParams)
+      .map(resultSet -> resultSet.rowCount() > 0)
+      .recover(throwable -> handleFailures(throwable, tenantId));
   }
 
   public Future<Boolean> deleteById(Conn conn, String id) {

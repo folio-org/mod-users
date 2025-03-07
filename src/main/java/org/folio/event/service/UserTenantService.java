@@ -108,6 +108,20 @@ public class UserTenantService {
       }));
   }
 
+  /**
+   * User-tenant table in central ECS tenant has all necessary records.
+   * This method deletes all record related to a specific tenant from user-tenant table in central ECS tenant.
+   *
+   * @param centralTenantId the central tenant id
+   * @param tenantId the tenant id
+   * @param vertx the vertx instance
+   * @return future with true if records were deleted or false otherwise
+   */
+  public Future<Boolean> deleteCentralUserTenants(String centralTenantId, String tenantId, Vertx vertx) {
+    PostgresClient pgClient = pgClientFactory.apply(vertx, centralTenantId);
+    return pgClient.withConn(conn -> tenantRepository.deleteUserTenants(conn, centralTenantId, tenantId));
+  }
+
   private Future<UserTenantCollection> fetchFirstUserTenant(Conn conn, String tenantId) {
     Criterion criterion = new Criterion().setLimit(new Limit(1)).setOffset(new Offset(0));
     return tenantRepository.fetchUserTenants(conn, tenantId, criterion);
