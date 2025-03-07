@@ -91,6 +91,7 @@ public class UserTenantService {
    * @throws IllegalStateException if deleting is not possible
    */
   public Future<Boolean> deleteMemberUserTenant(String tenantId, Vertx vertx) {
+    logger.info("deleteMemberUserTenant:: Deleting user-tenant record for tenant: '{}'", tenantId);
     PostgresClient pgClient = pgClientFactory.apply(vertx, tenantId);
     return pgClient.withConn(conn -> fetchFirstUserTenant(conn, tenantId)
       .compose(res -> {
@@ -118,6 +119,7 @@ public class UserTenantService {
    * @return future with true if records were deleted or false otherwise
    */
   public Future<Boolean> deleteCentralUserTenants(String centralTenantId, String tenantId, Vertx vertx) {
+    logger.info("deleteCentralUserTenants:: Deleting user-tenant records for tenant: '{}' from central tenant: '{}'", tenantId, centralTenantId);
     PostgresClient pgClient = pgClientFactory.apply(vertx, centralTenantId);
     return pgClient.withConn(conn -> tenantRepository.deleteUserTenants(conn, centralTenantId, tenantId));
   }

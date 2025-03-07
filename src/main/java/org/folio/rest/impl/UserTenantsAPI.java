@@ -85,11 +85,11 @@ public class UserTenantsAPI implements UserTenants {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
     deleteUserTenants(okapiTenantId, optionalTenantId, vertxContext.owner())
       .onSuccess(res -> {
-        logger.info("Record from member user-tenant has been deleted successfully. All http requests to this ECS tenant will be forbidden");
+        logger.info("Record(s) from user_tenant has been deleted successfully. For a member tenant, all http requests to it will be forbidden");
         asyncResultHandler.handle(succeededFuture(Response.status(204).build()));
       })
       .onFailure(cause -> {
-        logger.error("Could not delete member ECS user-tenant record", cause);
+        logger.error("Could not delete user_tenant record(s)", cause);
         asyncResultHandler.handle(succeededFuture(PostUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
       });
   }
