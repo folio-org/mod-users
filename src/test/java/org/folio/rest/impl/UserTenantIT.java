@@ -119,6 +119,7 @@ class UserTenantIT extends AbstractRestTestNoData {
     Assertions.assertEquals(3, initialCollection.getTotalRecords());
 
     String error = userTenantClient.deleteMemberUserTenantByTenantId(TENANT_X);
+    awaitHandlingEvent(1);
     Assertions.assertTrue(StringUtils.isBlank(error));
 
     var resultCollection = userTenantClient.getAllUsersTenants();

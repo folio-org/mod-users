@@ -110,7 +110,7 @@ public class UserTenantsAPI implements UserTenants {
   private Future<Boolean> deleteUserTenants(String tenantId, String optionalTenantId, Vertx vertx) {
     return StringUtils.isBlank(optionalTenantId)
       ? userTenantService.deleteMemberUserTenant(tenantId, vertx)
-      : userTenantService.deleteCentralUserTenants(tenantId, tenantId, vertx);
+      : userTenantService.deleteCentralUserTenants(tenantId, optionalTenantId, vertx);
   }
 
   private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {

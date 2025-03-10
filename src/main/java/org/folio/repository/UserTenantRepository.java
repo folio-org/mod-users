@@ -94,8 +94,8 @@ public class UserTenantRepository {
   }
 
   public Future<Boolean> deleteUserTenants(Conn conn, String centralTenantId, String tenantId) {
-    String query = String.format(DELETE_FOR_TENANT_SQL, convertToPsqlStandard(centralTenantId), USER_TENANT_TABLE_NAME);
-    Tuple queryParams = Tuple.of(tenantId);
+    var query = DELETE_FOR_TENANT_SQL.formatted(convertToPsqlStandard(centralTenantId), USER_TENANT_TABLE_NAME);
+    var queryParams = Tuple.of(tenantId);
     return conn.execute(query, queryParams)
       .map(resultSet -> resultSet.rowCount() > 0)
       .recover(throwable -> handleFailures(throwable, tenantId));
