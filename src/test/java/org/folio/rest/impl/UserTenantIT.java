@@ -110,6 +110,23 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void canDeleteFromCentralUserTenantTable() {
+    var initialCollection = userTenantClient.getAllUsersTenants();
+    var differentTenantRecordCount = initialCollection.getUserTenants().stream()
+      .filter(tenant -> !tenant.getTenantId().equals(TENANT_X))
+      .count();
+
+    Assertions.assertEquals(3, initialCollection.getTotalRecords());
+
+    String error = userTenantClient.deleteMemberUserTenantByTenantId(TENANT_X);
+    awaitHandlingEvent(1);
+    Assertions.assertTrue(StringUtils.isBlank(error));
+
+    var resultCollection = userTenantClient.getAllUsersTenants();
+    Assertions.assertEquals(differentTenantRecordCount, (long) resultCollection.getTotalRecords());
+  }
+
+  @Test
   void canUpdateUserTenant() {
     UserTenantCollection collection = userTenantClient.getAllUsersTenants();
     UserTenant userTenant = collection.getUserTenants().stream()

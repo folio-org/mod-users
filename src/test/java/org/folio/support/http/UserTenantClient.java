@@ -47,4 +47,13 @@ public class UserTenantClient {
      .then()
      .extract().asString();
   }
+
+  public String deleteMemberUserTenantByTenantId(String tenantId) {
+   return configuration.initialSpecification()
+     .param("tenantId", tenantId)
+     .when()
+     .delete()
+     .then()
+     .extract().asString();
+  }
 }
