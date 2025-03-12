@@ -1,3 +1,15 @@
+## 19.5.0 2025-03-12
+
+* upgraded folio-custom-fields versions
+* Extend User Record Schema to add Pronouns field (MODUSERS-454)
+* ECS | Update Member tenant user email value on Central tenant (MODCONSKC-61)
+* Add description for totalRecords in raml/*.json (PR#401)
+* Upgrade localstack from 0.11.3 to s3-latest (PR#402)
+* Pronouns field - Add character limit (MODUSERS-505)
+* Update to mod-users Java 21 (FOLIO-4222)
+* Staff User created in member tenant becomes as Shadow after updating email, firstname (MODUSERS-507)
+* Add support for deleting related module's data for consortia tenant hard delete (MODCONSKC-69)
+
 ## 19.4.5 2025-01-13
 
 * Changes for the POST /patron for patron registration API (MODUSERS-493)
