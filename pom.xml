@@ -229,7 +229,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
+        <version>3.14.0</version>
         <configuration>
           <release>${java.version}</release>
           <encoding>UTF-8</encoding>
@@ -252,7 +252,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.4.1</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <id>git submodule update</id>
@@ -429,7 +429,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.0.0</version>
+        <version>1.2.1</version>
         <executions>
           <execution>
             <goals>
@@ -502,7 +502,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.5.2</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
@@ -537,7 +537,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.5.2</version>
         <configuration>
           <systemPropertyVariables>
             <vertx.logger-delegate-factory-class-name>
@@ -593,7 +593,7 @@
     <raml-module-builder.version>35.4.0</raml-module-builder.version>
     <vertx.version>4.5.13</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
-    <junit.version>5.10.0</junit.version>
+    <junit.version>5.12.0</junit.version>
     <folio-service-tools.version>5.0.0</folio-service-tools.version>
     <folio-custom-fields.version>2.3.0</folio-custom-fields.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
@@ -602,7 +602,7 @@
     <lombok.version>1.18.36</lombok.version>
 
     <!--Folio dependencies properties-->
-    <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
-    <folio-s3-client.version>2.1.0</folio-s3-client.version>
+    <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
+    <folio-s3-client.version>2.2.1</folio-s3-client.version>
   </properties>
 </project>
