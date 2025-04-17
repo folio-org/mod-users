@@ -1,3 +1,7 @@
+## 19.5.1 2025-04-17
+
+* [Users - Patron preregistration] Update expiration date during user record merge (MODUSERS-513)
+
 ## 19.5.0 2025-03-12
 
 * upgraded folio-custom-fields versions
