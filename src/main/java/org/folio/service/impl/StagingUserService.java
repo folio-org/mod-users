@@ -22,11 +22,12 @@ import org.folio.rest.tools.utils.MetadataUtil;
 import org.folio.service.UsersService;
 import org.folio.support.StagingUserUpdatesStorage;
 
-import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static io.vertx.core.Future.failedFuture;
@@ -70,11 +71,10 @@ public class StagingUserService {
           String homeAddressId = homeAddress.getId();
 
           Usergroup remotePatronGroup = compositeFuture.resultAt(1);
-          String patronGroupId = remotePatronGroup != null ? remotePatronGroup.getId() : null;
 
           return fetchStagingUserById(conn, stagingUserId)
             .compose(stagingUser -> userId != null ? updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId)
-              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, patronGroupId))
+              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, remotePatronGroup))
             .compose(userUpdatesStorage -> deleteStagingUser(conn, stagingUserId, userUpdatesStorage));
         })).onSuccess(userUpdatesStorage-> {
           if(userId == null) {
@@ -103,6 +103,12 @@ public class StagingUserService {
       : Future.succeededFuture(null);
   }
 
+  private Future<Usergroup> fetchRemotePatronGroupById(Conn conn, String patronGroupId) {
+    log.debug("fetchRemotePatronGroupById:: fetching patronGroup with id {}", patronGroupId);
+    String patronGroupErrorMsg = String.format("Unable to find the patron group by id: %s", patronGroupId);
+    return fetchEntityByCriterion(conn, ID, patronGroupId, Usergroup.class, GROUP_TABLE, patronGroupErrorMsg);
+  }
+
   private Future<StagingUser> fetchStagingUserById(Conn conn, String stagingUserId) {
     log.debug("fetchStagingUserById:: fetching staging user with id {}", stagingUserId);
     return fetchEntityByCriterion(conn, ID, stagingUserId, StagingUser.class, STAGING_USERS_TABLE, STAGING_USER_NOT_FOUND);
@@ -124,9 +130,10 @@ public class StagingUserService {
 
   private Future<StagingUserUpdatesStorage<User>> createNewUserFromStagingUser(StagingUser stagUser, Conn conn,
                                                                           String homeAddressTypeId,
-                                                                         String patronGroupId) {
+                                                                               Usergroup remotePatronGroup) {
     log.debug("createNewUserFromStagingUser:: creating a new user from staging user {}", stagUser);
-    var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId, patronGroupId);
+    var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId, remotePatronGroup);
+    setUserExpirationDate(newUser, newUser.getEnrollmentDate(), remotePatronGroup);
     return usersService.saveAndReturnUser(conn, newUser)
             .compose(user->Future.succeededFuture(new StagingUserUpdatesStorage<>(user)));
   }
@@ -140,27 +147,44 @@ public class StagingUserService {
         if (existingUser != null) {
           User oldEntity = Json.decodeValue(Json.encode(existingUser), User.class);
           var updatedUser = updateUserFromStagingUser(stagUser, existingUser, homeAddressTypeId);
-          return usersService.updateUser(conn, updatedUser)
-                  .compose(user->Future.succeededFuture(new StagingUserUpdatesStorage<User>(true, oldEntity, user)));
+          return fetchRemotePatronGroupById(conn, existingUser.getPatronGroup())
+                  .compose(usergroup -> {
+                    setUserExpirationDate(updatedUser, updatedUser.getEnrollmentDate(), usergroup);
+                    return usersService.updateUser(conn, updatedUser)
+                            .compose(user -> Future.succeededFuture(new StagingUserUpdatesStorage<User>(true,
+                                    oldEntity, user)));
+                  });
         } else {
           return Future.failedFuture(String.format(USER_NOT_FOUND, userId));
         }
       });
   }
 
-  private User createUserEntityFromStagingUser(StagingUser stagingUser, String homeAddressTypeId, String patronGroupId) {
+  private User createUserEntityFromStagingUser(StagingUser stagingUser, String homeAddressTypeId, Usergroup remotePatronGroup) {
     return new User()
       .withId(UUID.randomUUID().toString())
       .withActive(true)
-      .withPatronGroup(patronGroupId)
+      .withPatronGroup(Objects.nonNull(remotePatronGroup) ? remotePatronGroup.getId() : null)
       .withPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication())
-      .withExpirationDate(Date.from(LocalDate.now().plusYears(2).atStartOfDay(ZoneId.systemDefault()).toInstant()))
       .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
       .withType(PATRON_TYPE)
       .withExternalSystemId(stagingUser.getExternalSystemId())
       .withPersonal(createOrUpdatePersonal(stagingUser, new Personal(), homeAddressTypeId))
       .withMetadata(MetadataUtil.createMetadata(okapiHeaders));
 
+  }
+
+  private void setUserExpirationDate(User newUser, Date enrollmentDate, Usergroup userPatronGroup) {
+    if(isPatronGroupHasExpirationDateOffset(userPatronGroup)) {
+      ZonedDateTime zonedDateTime = enrollmentDate.toInstant()
+              .atZone(ZoneId.systemDefault())
+              .plusDays(userPatronGroup.getExpirationOffsetInDays());
+      newUser.setExpirationDate(Date.from(zonedDateTime.toInstant()));
+    }
+  }
+
+  private boolean isPatronGroupHasExpirationDateOffset(Usergroup remotePatronGroup) {
+    return Objects.nonNull(remotePatronGroup) && remotePatronGroup.getExpirationOffsetInDays() != null;
   }
 
   private User updateUserFromStagingUser(StagingUser stagingUser, User user, String homeAddressTypeId) {

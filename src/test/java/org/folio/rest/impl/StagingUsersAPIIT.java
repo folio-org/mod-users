@@ -32,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -182,7 +183,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @Test
   void testMergeUser_withInvalidStagingUserId() {
     createAddressType(HOME);
-    createPatronGroup(REMOTE_NON_CIRCULATING);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
     var randomId = UUID.randomUUID().toString();
     var resp = stagingUsersClient.attemptToMergeStagingUser(randomId, null);
     resp.statusCode(is(404));
@@ -192,7 +193,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @Test
   void testMergeUser_withInvalidUserId() {
     createAddressType(HOME);
-    createPatronGroup(REMOTE_NON_CIRCULATING);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
     var response = stagingUsersClient.attemptToCreateStagingUser(getDummyStagingUser(createRandomString()));
     response.statusCode(is(201));
     StagingUser stagingUser = response.extract().response().as(StagingUser.class);
@@ -205,7 +206,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @Test
   void testMergeUser_withValidStagingUserId() {
     var homeAddressTypeId = createAddressType(HOME);
-    var remotePatronGroupId = createPatronGroup(REMOTE_NON_CIRCULATING);
+    var remotePatronGroupId = createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
@@ -227,14 +228,108 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void testMergeUser_validateCorrectExpirationDate() {
+    createAddressType(HOME);
+    var remotePatronGroup = createPatronGroup(REMOTE_NON_CIRCULATING);
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    StagingUser stagingUser = createStagingUser(stagingUserToCreate);
+    var updatedDate = stagingUser.getMetadata().getUpdatedDate();
+
+    var newUser = mergeStagingUserAndFetch(stagingUser.getId(), null);
+
+    ZonedDateTime zonedDateTime = updatedDate.toInstant()
+            .atZone(ZoneId.systemDefault())
+            .plusDays(remotePatronGroup.getExpirationOffsetInDays());
+    assertEquals(
+            zonedDateTime.toLocalDate(),
+            newUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
+            "Expiration date should be enrollmentDate + Patron Group ExpirationOffsetInDays");
+
+    var stagingUsersResponse =
+            stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
+  }
+
+  @Test
+  void testMergeUser_validateNoExpirationDateSetWhenExpirationOffsetInDaysIsNotExist() {
+    createAddressType(HOME);
+    createPatronGroup(REMOTE_NON_CIRCULATING, null);
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    StagingUser stagingUser = createStagingUser(stagingUserToCreate);
+
+    var newUser = mergeStagingUserAndFetch(stagingUser.getId(), null);
+
+    assertEquals(null, newUser.getExpirationDate(),
+            "Expiration date should be null if ExpirationOffsetInDays is not found in patron group");
+
+    var stagingUsersResponse =
+            stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
+  }
+
+  @Test
+  void testMergeUser_validateCorrectExpirationDateSetAndUserExist() {
+    var homeAddressTypeId = createAddressType(HOME);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    StagingUser stagingUser = createStagingUser(stagingUserToCreate);
+    var updatedDate = stagingUser.getMetadata().getUpdatedDate();
+    var patronGroup = createPatronGroup("patron", 50);
+    var patronGroupId = patronGroup.getId();
+    var existingUser = createUser(patronGroupId, List.of(createAddress(homeAddressTypeId)));
+
+    var mergedUser = mergeStagingUserAndFetch(stagingUser.getId(), existingUser.getId());
+
+    ZonedDateTime zonedDateTime = updatedDate.toInstant()
+            .atZone(ZoneId.systemDefault())
+            .plusDays(patronGroup.getExpirationOffsetInDays());
+    assertEquals(
+            zonedDateTime.toLocalDate(),
+            mergedUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
+            "Expiration date should be enrollmentDate + Patron Group ExpirationOffsetInDays");
+
+    var stagingUsersResponse =
+            stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
+  }
+
+  @Test
+  void testMergeUser_validateNoExpirationDateSetInUserAndUserExist() {
+    var homeAddressTypeId = createAddressType(HOME);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    StagingUser stagingUser = createStagingUser(stagingUserToCreate);
+    var patronGroup = createPatronGroup("patron", null);
+    var patronGroupId = patronGroup.getId();
+    var existingUser = createUser(patronGroupId, List.of(createAddress(homeAddressTypeId)));
+
+    var mergedUser = mergeStagingUserAndFetch(stagingUser.getId(), existingUser.getId());
+
+    assertEquals(existingUser.getExpirationDate().toLocalDate(), mergedUser.getExpirationDate().toLocalDate(),
+            "Expiration date should not be changed");
+
+    var stagingUsersResponse =
+      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+    stagingUsersResponse.statusCode(is(200));
+    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
+  }
+
+  @Test
   void testMergeUser_withValidStagingIdAndUserId_WithoutHomeAddress() {
     var homeAddressTypeId = createAddressType(HOME);
-    createPatronGroup(REMOTE_NON_CIRCULATING);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
     var workAddressTypeId = createAddressType("Work");
-    var patronGroupId = createPatronGroup("patron");
+    var patronGroupId = createPatronGroupAndGetId("patron");
     var existingUser = createUser(patronGroupId, List.of(createAddress(workAddressTypeId)));
     assertEquals(1, existingUser.getPersonal().getAddresses().size());
 
@@ -243,7 +338,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "New address should be added in the address list");
     verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
-    assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
       stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
@@ -255,11 +349,11 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @Test
   void testMergeUser_withValidStagingIdAndUserId_WithHomeAddress() {
     var homeAddressTypeId = createAddressType(HOME);
-    createPatronGroup(REMOTE_NON_CIRCULATING);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
-    var patronGroupId = createPatronGroup("patron");
+    var patronGroupId = createPatronGroupAndGetId("patron");
     var existingUser = createUser(patronGroupId, List.of(createAddress(homeAddressTypeId)));
 
     var mergedUser = mergeStagingUserAndFetch(stagingUser.getId(), existingUser.getId());
@@ -267,7 +361,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(1, existingUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
     verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
-    assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
       stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
@@ -279,11 +372,11 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @Test
   void testMergeUser_withValidStagingIdAndUserId_WithHomeAndWorkAddress() {
     var homeAddressTypeId = createAddressType(HOME);
-    createPatronGroup(REMOTE_NON_CIRCULATING);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
-    var patronGroupId = createPatronGroup("patron");
+    var patronGroupId = createPatronGroupAndGetId("patron");
     var workAddressTypeId = createAddressType("Work");
     var existingUser = createUser(patronGroupId, List.of(createAddress(homeAddressTypeId), createAddress(workAddressTypeId)));
     assertEquals(2, existingUser.getPersonal().getAddresses().size());
@@ -293,7 +386,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(2, mergedUser.getPersonal().getAddresses().size(), "Existing home address should be modified");
     verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
-    assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
       stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
@@ -305,11 +397,11 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @Test
   void testMergeUser_withValidStagingIdAndUserId_WithOutAddress() {
     var homeAddressTypeId = createAddressType(HOME);
-    createPatronGroup(REMOTE_NON_CIRCULATING);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
-    var patronGroupId = createPatronGroup("patron");
+    var patronGroupId = createPatronGroupAndGetId("patron");
     var existingUser = createUser(patronGroupId, List.of());
     assertEquals(0, existingUser.getPersonal().getAddresses().size());
 
@@ -318,7 +410,6 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(existingUser.getId(), mergedUser.getId(), "Returned userId should match the query param");
     assertEquals(1, mergedUser.getPersonal().getAddresses().size(), "New home address should be added");
     verifyUserDetails(stagingUser, mergedUser, homeAddressTypeId, updatedDate, patronGroupId);
-    assertNull(mergedUser.getExpirationDate(), "Expiration date should be null for an existing user as it is not set");
 
     var stagingUsersResponse =
       stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
@@ -336,14 +427,28 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
       .extract().response().as(AddressType.class).getId();
   }
 
-  private String createPatronGroup(String group) {
+  private Group createPatronGroup(String group) {
     return groupsClient.attemptToCreateGroup(Group.builder()
-        .group(group)
-        .desc(group)
-        .expirationOffsetInDays(730)
-        .build())
-      .statusCode(is(HTTP_CREATED))
-      .extract().response().as(Group.class).getId();
+                    .group(group)
+                    .desc(group)
+                    .expirationOffsetInDays(730)
+                    .build())
+            .statusCode(is(HTTP_CREATED))
+            .extract().response().as(Group.class);
+  }
+
+  private Group createPatronGroup(String group, Integer expirationOffsetInDays) {
+    return groupsClient.attemptToCreateGroup(Group.builder()
+                    .group(group)
+                    .desc(group)
+                    .expirationOffsetInDays(expirationOffsetInDays)
+                    .build())
+            .statusCode(is(HTTP_CREATED))
+            .extract().response().as(Group.class);
+  }
+
+  private String createPatronGroupAndGetId(String group) {
+    return createPatronGroup(group).getId();
   }
 
   private User createUser(String patronGroupId, List<Address> addressList) {
@@ -351,6 +456,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
       .active(true)
       .id("999fd1a4-1865-4991-ae9d-6c9f75d4b043")
       .patronGroup(patronGroupId)
+      .expirationDate(ZonedDateTime.now().minusMonths(5))
       .personal(Personal.builder()
         .firstName("julia")
         .preferredFirstName("jules")
