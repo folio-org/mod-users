@@ -1,3 +1,7 @@
+## 19.4.6 2025-04-25
+
+* [Users - Patron preregistration] Update expiration date during user record merge (MODUSERS-513)
+
 ## 19.4.5 2025-01-13
 
 * Changes for the POST /patron for patron registration API (MODUSERS-493)
