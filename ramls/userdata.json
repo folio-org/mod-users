@@ -58,6 +58,11 @@
       "description": "Personal information about the user",
       "type": "object",
       "properties": {
+        "pronouns": {
+          "description": "The user's pronouns",
+          "type": "string",
+          "maxLength": 300
+        },
         "lastName": {
           "description": "The user's surname",
           "type": "string"

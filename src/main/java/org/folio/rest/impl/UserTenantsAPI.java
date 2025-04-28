@@ -2,7 +2,9 @@ package org.folio.rest.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,17 +81,36 @@ public class UserTenantsAPI implements UserTenants {
   }
 
   @Override
-  public void deleteUserTenants(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+  public void deleteUserTenants(String optionalTenantId, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
-    userTenantService.deleteMemberUserTenant(okapiTenantId, vertxContext.owner())
+    deleteUserTenants(okapiTenantId, optionalTenantId, vertxContext.owner())
       .onSuccess(res -> {
-        logger.info("Record from member user-tenant has been deleted successfully. All http requests to this ECS tenant will be forbidden");
+        logger.info("Record(s) from user_tenant has been deleted successfully. For a member tenant, all http requests to it will be forbidden");
         asyncResultHandler.handle(succeededFuture(Response.status(204).build()));
       })
       .onFailure(cause -> {
-        logger.error("Could not delete member ECS user-tenant record", cause);
+        logger.error("Could not delete user_tenant record(s)", cause);
         asyncResultHandler.handle(succeededFuture(PostUserTenantsResponse.respond500WithTextPlain(cause.getMessage())));
       });
+  }
+
+  /**
+   * This method is used to delete user-tenant records from member tenant or central tenant table for two scenarios during ECS tenant deletion: <br/>
+   * 1. When we soft-delete a tenant, we need to delete a single record from the member tenant's user-tenant table. <br/>
+   * 2. When we hard-delete a tenant, we need to delete all records for this tenant from central tenant table. <br/>
+   * <br/>
+   * The <code>optionalTenantId</code> is an optional parameter, if it is not provided, then we assume that request was sent to the member tenant,
+   * and we need to delete a single record from user-tenant table, otherwise we need to delete all records for this tenant from central tenant table
+   *
+   * @param tenantId tenant id from request headers
+   * @param optionalTenantId optional tenant id
+   * @param vertx vertx instance
+   * @return future with boolean result
+   */
+  private Future<Boolean> deleteUserTenants(String tenantId, String optionalTenantId, Vertx vertx) {
+    return StringUtils.isBlank(optionalTenantId)
+      ? userTenantService.deleteMemberUserTenant(tenantId, vertx)
+      : userTenantService.deleteCentralUserTenants(tenantId, optionalTenantId, vertx);
   }
 
   private void addWhereClauseArgumentsToCriterion(ArgumentsHolder argumentsHolder, String queryOp, Criterion criterion) {
