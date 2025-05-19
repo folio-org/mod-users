@@ -61,7 +61,8 @@ public abstract class AbstractRestTest {
   protected static Vertx vertx;
 
   private static final KafkaContainer kafkaContainer =
-    new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE_NAME));
+    new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE_NAME))
+    .withStartupAttempts(3);
 
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
@@ -97,7 +98,8 @@ public abstract class AbstractRestTest {
   private static final LocalStackContainer localStackContainer = new LocalStackContainer(
     DockerImageName.parse("localstack/localstack:s3-latest")
   )
-    .withServices(LocalStackContainer.Service.S3);
+    .withServices(LocalStackContainer.Service.S3)
+    .withStartupAttempts(3);
 
   @BeforeClass
   public static void setUpClass() {
