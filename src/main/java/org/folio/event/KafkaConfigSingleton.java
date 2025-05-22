@@ -9,6 +9,8 @@ public enum KafkaConfigSingleton {
 
   private final KafkaConfig kafkaConfig;
 
+  private final boolean enabled = Boolean.parseBoolean(getPropertyValue("KAFKA_ENABLED", "true"));
+
   KafkaConfigSingleton() {
     String envId = getPropertyValue("ENV", "folio");
     String kafkaPort = getPropertyValue("KAFKA_PORT", "9092");
@@ -29,6 +31,10 @@ public enum KafkaConfigSingleton {
 
   public KafkaConfig getKafkaConfig() {
     return kafkaConfig;
+  }
+
+  public boolean isKafkaEnabled() {
+    return enabled;
   }
 
   public static String getPropertyValue(String propertyName, String defaultValue) {

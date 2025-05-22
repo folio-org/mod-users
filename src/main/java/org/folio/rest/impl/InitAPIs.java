@@ -38,6 +38,10 @@ public class InitAPIs implements InitAPI {
   }
 
   private Future<?> deployConsumersVerticles(Vertx vertx) {
+    if (!org.folio.event.KafkaConfigSingleton.INSTANCE.isKafkaEnabled()) {
+      return Future.succeededFuture();
+    }
+
     int usersConsortiumConsumerInstancesNumber = Integer.parseInt(getPropertyValue("users.consortium.kafka.consumer.instancesNumber", "1"));
 
     Promise<String> consortiumCreateEventConsumer = Promise.promise();
