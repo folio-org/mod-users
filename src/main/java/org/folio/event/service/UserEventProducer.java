@@ -28,18 +28,24 @@ public class UserEventProducer {
 
   private final KafkaConfig kafkaConfig;
 
+  private final boolean enabled;
+
   public UserEventProducer() {
-    this(KafkaConfigSingleton.INSTANCE.getKafkaConfig());
+    this(KafkaConfigSingleton.INSTANCE.getKafkaConfig(), KafkaConfigSingleton.INSTANCE.isKafkaEnabled());
   }
 
-  public UserEventProducer(KafkaConfig kafkaConfig) {
+  public UserEventProducer(KafkaConfig kafkaConfig, boolean enabled) {
     this.kafkaConfig = kafkaConfig;
+    this.enabled = enabled;
   }
 
   public Future<Boolean> sendUserEvent(User user,
                                        boolean isPersonalDataChanged,
                                        UserEvent.Action eventAction,
                                        Map<String, String> okapiHeaders) {
+    if (!enabled) {
+      return Future.succeededFuture(false);
+    }
     String tenantId = okapiHeaders.get("x-okapi-tenant");
     UserEvent event = getUserEvent(user, tenantId, isPersonalDataChanged, eventAction);
 
