@@ -184,6 +184,10 @@ public abstract class AbstractRestTest {
       envIdField.setAccessible(true);
       envIdField.set(kafkaConfig, newValue);
 
+      Field enabledField = KafkaConfigSingleton.class.getDeclaredField("enabled");
+      enabledField.setAccessible(true);
+      enabledField.setBoolean(instance, true);
+
       kafkaConfigField.set(instance, kafkaConfig);
     } catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.error("Could not update kafka config", e);
