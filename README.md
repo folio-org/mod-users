@@ -1,6 +1,6 @@
 # mod-users
 
-Copyright (C) 2016-2023 The Open Library Foundation
+Copyright (C) 2016-2025 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
@@ -11,7 +11,7 @@ Module to provide central user management for FOLIO systems.
 
 ## Prerequisites
 
-* Java 11 JDK
+* Java 21 JDK
 * Maven 3.3.9
 
 ## Additional information
