@@ -72,7 +72,7 @@ public class TenantRefAPI extends TenantAPI {
     // delete Kafka topics if tenant purged
     var tenantId = TenantTool.tenantId(headers);
     Future<Void> result =
-      KafkaConfigSingleton.INSTANCE.isKafkaEnabled() && tenantAttributes.getPurge() != null && tenantAttributes.getPurge()
+      KafkaConfigSingleton.INSTANCE.isKafkaEnabled() && Boolean.TRUE.equals(tenantAttributes.getPurge())
         ? new KafkaAdminClientService(context.owner()).deleteKafkaTopics(UsersKafkaTopic.values(), tenantId)
         : Future.succeededFuture();
       result.onComplete(x -> super.postTenant(tenantAttributes, headers, handler, context));

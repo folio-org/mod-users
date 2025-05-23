@@ -19,6 +19,7 @@ import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -75,13 +76,18 @@ public class UsersNoKafkaTest {
   }
 
   @AfterAll
-  public static void after(VertxTestContext context) {
+  static void after(VertxTestContext context) {
     module.purgeModule(okapiHeaders)
       .compose(v -> {
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
       })
       .onComplete(context.succeedingThenComplete());
+  }
+
+  @BeforeEach
+  void beforeEach() {
+    usersClient.deleteAllUsers();
   }
 
   @Test
