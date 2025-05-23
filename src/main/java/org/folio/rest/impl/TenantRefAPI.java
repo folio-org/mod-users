@@ -12,6 +12,7 @@ import io.vertx.core.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.dbschema.Versioned;
+import org.folio.event.KafkaConfigSingleton;
 import org.folio.kafka.services.KafkaAdminClientService;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -30,10 +31,13 @@ public class TenantRefAPI extends TenantAPI {
 
     return super.loadData(attributes, tenantId, headers, vertxContext)
         .compose(superRecordsLoaded -> {
-          log.info("creating kafka topics");
-          new KafkaAdminClientService(vertxContext.owner())
-            .createKafkaTopics(UsersKafkaTopic.values(), tenantId);
-
+          Future<Void> f = Future.succeededFuture();
+          if (KafkaConfigSingleton.INSTANCE.isKafkaEnabled()) {
+            log.info("creating kafka topics");
+            f = createTopics(tenantId, vertxContext);
+          } else {
+            log.info("Kafka is not enabled, skipping topic creation");
+          }
           log.info("loading data to tenant");
           TenantLoading tl = new TenantLoading();
 
@@ -56,7 +60,7 @@ public class TenantRefAPI extends TenantAPI {
             tl.withIdContent().add("groups-19.4.0", "groups");
           }
 
-          return tl.perform(attributes, headers, vertxContext, superRecordsLoaded);
+          return f.compose(x -> tl.perform(attributes, headers, vertxContext, superRecordsLoaded));
         });
   }
 
@@ -67,10 +71,22 @@ public class TenantRefAPI extends TenantAPI {
 
     // delete Kafka topics if tenant purged
     var tenantId = TenantTool.tenantId(headers);
-    Future<Void> result = tenantAttributes.getPurge() != null && tenantAttributes.getPurge()
-      ? new KafkaAdminClientService(context.owner()).deleteKafkaTopics(UsersKafkaTopic.values(), tenantId)
-      : Future.succeededFuture();
+    Future<Void> result =
+      KafkaConfigSingleton.INSTANCE.isKafkaEnabled() && Boolean.TRUE.equals(tenantAttributes.getPurge())
+        ? deleteTopics(tenantId, context)
+        : Future.succeededFuture();
     result.onComplete(x -> super.postTenant(tenantAttributes, headers, handler, context));
+  }
+
+
+  static Future<Void> createTopics(String tenantId, Context context) {
+    return new KafkaAdminClientService(context.owner())
+              .createKafkaTopics(UsersKafkaTopic.values(), tenantId);
+  }
+
+  static Future<Void> deleteTopics(String tenantId, Context context) {
+    return new KafkaAdminClientService(context.owner())
+      .deleteKafkaTopics(UsersKafkaTopic.values(), tenantId);
   }
 
   /**
