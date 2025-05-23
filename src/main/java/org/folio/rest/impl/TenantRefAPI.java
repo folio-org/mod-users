@@ -12,6 +12,7 @@ import io.vertx.core.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.dbschema.Versioned;
+import org.folio.event.KafkaConfigSingleton;
 import org.folio.kafka.services.KafkaAdminClientService;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.TenantAttributes;
@@ -30,10 +31,13 @@ public class TenantRefAPI extends TenantAPI {
 
     return super.loadData(attributes, tenantId, headers, vertxContext)
         .compose(superRecordsLoaded -> {
-          log.info("creating kafka topics");
-          new KafkaAdminClientService(vertxContext.owner())
-            .createKafkaTopics(UsersKafkaTopic.values(), tenantId);
-
+          if (KafkaConfigSingleton.INSTANCE.isKafkaEnabled()) {
+            log.info("creating kafka topics");
+            new KafkaAdminClientService(vertxContext.owner())
+              .createKafkaTopics(UsersKafkaTopic.values(), tenantId);
+          } else {
+            log.info("Kafka is not enabled, skipping topic creation");
+          }
           log.info("loading data to tenant");
           TenantLoading tl = new TenantLoading();
 
@@ -67,11 +71,12 @@ public class TenantRefAPI extends TenantAPI {
 
     // delete Kafka topics if tenant purged
     var tenantId = TenantTool.tenantId(headers);
-    Future<Void> result = tenantAttributes.getPurge() != null && tenantAttributes.getPurge()
-      ? new KafkaAdminClientService(context.owner()).deleteKafkaTopics(UsersKafkaTopic.values(), tenantId)
-      : Future.succeededFuture();
-    result.onComplete(x -> super.postTenant(tenantAttributes, headers, handler, context));
-  }
+    Future<Void> result =
+      KafkaConfigSingleton.INSTANCE.isKafkaEnabled() && tenantAttributes.getPurge() != null && tenantAttributes.getPurge()
+        ? new KafkaAdminClientService(context.owner()).deleteKafkaTopics(UsersKafkaTopic.values(), tenantId)
+        : Future.succeededFuture();
+      result.onComplete(x -> super.postTenant(tenantAttributes, headers, handler, context));
+    }
 
   /**
    * Returns attributes.getModuleFrom() < featureVersion or attributes.getModuleFrom() is null.
