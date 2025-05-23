@@ -5,6 +5,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
+import org.folio.event.KafkaConfigSingleton;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaProducerManager;
 import org.folio.kafka.SimpleKafkaProducerManager;
@@ -38,6 +39,9 @@ public class DomainEventPublisher<K, T> {
   }
 
   public Future<Void> publish(K key, DomainEvent<T> event, Map<String, String> okapiHeaders) {
+    if (!KafkaConfigSingleton.INSTANCE.isKafkaEnabled()) {
+      return Future.succeededFuture();
+    }
     log.info("publish:: key = {}, eventId = {}, type = {}, topic = {}", key, event.getId(),
       event.getType(), kafkaTopic);
 
