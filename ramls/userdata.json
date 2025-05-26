@@ -10,8 +10,10 @@
       "type": "string"
     },
     "id": {
-      "description" : "A globally unique (UUID) identifier for the user",
-      "type": "string"
+      "description": "A globally unique (UUID) identifier for the user",
+      "type": "string",
+      "format": "uuid",
+      "x-fqm-value-getter": ":user.id"
     },
     "externalSystemId": {
       "description": "A unique ID that corresponds to an external authority",
@@ -32,7 +34,15 @@
     "patronGroup": {
       "description": "A UUID corresponding to the group the user belongs to, see /groups API, example groups are undergraduate and faculty; loan rules, patron blocks, fees/fines and expiration days can use the patron group",
       "type": "string",
-      "$ref": "raml-util/schemas/uuid.schema"
+      "$ref": "raml-util/schemas/uuid.schema",
+      "x-fqm-joins-to": [
+        {
+          "targetModule": "mod-users",
+          "targetEntity": "group",
+          "targetField": "id",
+          "direction": "left"
+        }
+      ]
     },
     "departments": {
       "description": "A list of UUIDs corresponding to the departments the user belongs to, see /departments API",
@@ -48,10 +58,10 @@
       "type": "object"
     },
     "proxyFor": {
-      "description" : "Deprecated",
+      "description": "Deprecated",
       "type": "array",
       "items": {
-      "type": "string"
+        "type": "string"
       }
     },
     "personal": {
@@ -141,9 +151,7 @@
                 "type": "boolean"
               }
             },
-            "required":[
-              "addressTypeId"
-            ],
+            "required": ["addressTypeId"],
             "additionalProperties": false
           }
         },
@@ -158,9 +166,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [
-        "lastName"
-      ]
+      "required": ["lastName"]
     },
     "enrollmentDate": {
       "description": "The date in which the user joined the organization",
@@ -190,7 +196,7 @@
       "type": "object",
       "$ref": "raml-util/schemas/tags.schema"
     },
-    "customFields" : {
+    "customFields": {
       "description": "Object that contains custom field",
       "type": "object",
       "additionalProperties": true

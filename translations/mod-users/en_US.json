@@ -1,0 +1,3 @@
+{
+    "migration.warning-header": "This list was modified as part of a module upgrade on {date, date, medium}, and produced the following {count, plural, one {warning} other {# warnings}}:"
+}

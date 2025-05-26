@@ -36,8 +36,5 @@
       "readonly": true
     }
   },
-  "required": [
-    "name",
-    "code"
-  ]
+  "required": ["name", "code"]
 }

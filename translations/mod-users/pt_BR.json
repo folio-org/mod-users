@@ -1,0 +1,3 @@
+{
+    "migration.warning-header": "Esta lista foi modificada como parte de uma atualização do módulo em {date, date, medium} e produziu o seguinte {count, plural, one {aviso} other {# avisos}}:"
+}

@@ -1,0 +1,3 @@
+{
+    "migration.warning-header": "Tento seznam byl upraven v rámci aktualizace modulu ({date, date, medium}), přičemž vznikla následující varování {count, plural, one {} other {# varování}}:"
+}

@@ -1,0 +1,3 @@
+{
+    "migration.warning-header": "此列表已于{date, date, medium}作为模块升级的一部分进行修改，并生成了以下{count, plural, one { warning } other {# warnings }}  : "
+}

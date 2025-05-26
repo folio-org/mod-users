@@ -1,0 +1,47 @@
+[metadata]
+team = "test-team"
+domain = "users"
+module = "mod-users"
+
+[[sources]]
+name = "user"
+table = "users"
+
+[[sources]]
+name = "group"
+table = "groups"
+
+[[sources]]
+name = "dept"
+table = "departments"
+
+[[entityTypes]]
+name = "user"
+private = true
+schema = "./ramls/userdata.json"
+permissions = [
+  "users.read",
+]
+source = "user"
+sort = ["id", "ASC"]
+useRmbIndexStyle = true
+
+[[entityTypes]]
+name = "group"
+private = true
+schema = "./ramls/usergroup.json"
+permissions = []
+source = "group"
+sort = ["id", "ASC"]
+useRmbIndexStyle = true
+
+[[entityTypes]]
+name = "department"
+private = true
+schema = "./ramls/department.json"
+permissions = [
+  "department.read",
+]
+source = "dept"
+sort = ["id", "ASC"]
+useRmbIndexStyle = true

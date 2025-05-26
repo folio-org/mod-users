@@ -1,0 +1,3 @@
+{
+    "migration.warning-header": "Deze lijst werd gewijzigd als onderdeel van een module-upgrade op {date, date, medium} en produceerde het volgende {count, plural, one {waarschuwing} other {# waarschuwingen}}:"
+}
