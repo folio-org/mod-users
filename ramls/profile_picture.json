@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "id": {
-      "description": "uuid of profile picture",
+      "description": "uuid of profile picture, to be put into the personal.profilePictureLink field of the user record",
       "type": "string",
       "format": "uuid"
     },
