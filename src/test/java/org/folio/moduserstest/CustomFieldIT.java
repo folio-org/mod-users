@@ -47,14 +47,17 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .username("admin-user")
       .build());
 
-    customFieldsClient.createCustomField(
+    var createdCustomField = customFieldsClient.createCustomField(
       CustomField.builder()
         .name("Hobbies")
         .helpText("Describe hobbies")
         .entityType("user")
         .type("TEXTBOX_SHORT")
         .order(1)
+        .displayInAccordion("fee_fines")
         .build(), maintainingUser);
+
+    assertThat(createdCustomField.getDisplayInAccordion(), is("fee_fines"));
 
     final var createdUser = usersClient.attemptToCreateUser(User.builder()
       .username("some-user")

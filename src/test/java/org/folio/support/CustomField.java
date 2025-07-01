@@ -21,4 +21,5 @@ public class CustomField {
   String entityType;
   String type;
   Integer order;
+  String displayInAccordion;
 }
