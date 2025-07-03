@@ -13,6 +13,7 @@ import org.folio.rest.jaxrs.model.CustomFieldOptionStatistic;
 import org.folio.rest.jaxrs.model.CustomFieldStatistic;
 import org.folio.rest.jaxrs.model.CustomFields;
 import org.folio.rest.jaxrs.model.User;
+import org.folio.rest.persist.Conn;
 import org.folio.service.RecordService;
 
 import io.vertx.core.Future;
@@ -50,6 +51,11 @@ public class RecordServiceImpl implements RecordService {
       .onSuccess(users -> LOG.info("The number of users found with the given field: {}", users.size()));
 
     return related.compose(users -> removeCustomFieldFromUsers(users, field, tenantId));
+  }
+
+  @Override
+  public Future<Void> deleteAllValues(Conn conn, CustomField customField, String s) {
+    return Future.failedFuture(new UnsupportedOperationException("Not supported yet."));
   }
 
   @Override
