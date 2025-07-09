@@ -5,6 +5,8 @@ import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
+import java.util.List;
+
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,7 +64,7 @@ public class CustomFieldStatisticsTest extends CustomFieldTestBase {
   public void shouldReturnFieldOptionUsageIfFieldAssigned() {
     CustomField selectableField = createSelectableField();
     String optId = selectableField.getSelectField().getOptions().getValues().get(0).getId();
-    assignValue(testUser, selectableField.getRefId(), optId);
+    assignValue(testUser, selectableField.getRefId(), List.of(optId));
 
     String resourcePath = cfByIdOptIdStatsEndpoint(selectableField.getId(), optId);
     CustomFieldOptionStatistic stats = getWithOk(resourcePath).as(CustomFieldOptionStatistic.class);

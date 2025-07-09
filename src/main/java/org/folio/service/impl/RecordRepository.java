@@ -12,10 +12,6 @@ import io.vertx.core.Future;
 
 public interface RecordRepository {
 
-  Future<CustomFieldStatistic> retrieveStatisticForField(CustomField field, String tenantId);
-
-  Future<CustomFieldOptionStatistic> retrieveStatisticForFieldOption(CustomField field, String optId, String tenantId);
-
   Future<List<User>> findUsersByField(CustomField field, String tenantId);
 
   Future<List<User>> findUsersByFieldValues(RecordUpdate recordUpdate, String tenantId);

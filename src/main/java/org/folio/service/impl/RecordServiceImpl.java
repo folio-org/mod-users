@@ -1,8 +1,10 @@
 package org.folio.service.impl;
 
 import static io.vertx.core.Future.succeededFuture;
+import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -23,39 +25,42 @@ public class RecordServiceImpl implements RecordService {
 
   private static final Logger LOG = LogManager.getLogger(RecordServiceImpl.class);
 
+  private final RecordService delegate;
   private final RecordRepository repository;
 
   public RecordServiceImpl(Vertx vertx) {
+    var entityTableMap = Map.of("user", TABLE_NAME_USERS);
     this.repository = new RecordRepositoryImpl(vertx);
+    this.delegate = org.folio.service.RecordServiceImpl.createForSingleTable(vertx, entityTableMap);
   }
 
   @Override
   public Future<CustomFieldStatistic> retrieveStatistic(CustomField field, String tenantId) {
     LOG.info("Retrieving custom field statistic: field = {}", field);
 
-    return repository.retrieveStatisticForField(field, tenantId);
+    return delegate.retrieveStatistic(field, tenantId);
   }
 
   @Override
   public Future<CustomFieldOptionStatistic> retrieveOptionStatistic(CustomField field, String optId, String tenantId) {
     LOG.info("Retrieving custom field option statistic: field = {}, option ID = {}", field, optId);
 
-    return repository.retrieveStatisticForFieldOption(field, optId, tenantId);
+    return delegate.retrieveOptionStatistic(field, optId, tenantId);
   }
 
   @Override
   public Future<Void> deleteAllValues(CustomField field, String tenantId) {
     LOG.info("Removing custom field values from user records: field = {}", field);
 
-    Future<List<User>> related = repository.findUsersByField(field, tenantId)
-      .onSuccess(users -> LOG.info("The number of users found with the given field: {}", users.size()));
+    repository.findUsersByField(field, tenantId)
+      .onSuccess(RecordServiceImpl::logFoundUsersCount);
 
-    return related.compose(users -> removeCustomFieldFromUsers(users, field, tenantId));
+    return delegate.deleteAllValues(field, tenantId);
   }
 
   @Override
   public Future<Void> deleteAllValues(Conn conn, CustomField customField, String s) {
-    return Future.failedFuture(new UnsupportedOperationException("Not supported yet."));
+    return delegate.deleteAllValues(conn, customField, s);
   }
 
   @Override
@@ -63,21 +68,8 @@ public class RecordServiceImpl implements RecordService {
     LOG.info("Removing custom field values from user records: refId = {}", recordUpdate.getRefId());
 
     return repository.findUsersByFieldValues(recordUpdate, tenantId)
-      .onSuccess(users -> LOG.info("The number of users found with the given field: {}", users.size()))
+      .onSuccess(RecordServiceImpl::logFoundUsersCount)
       .compose(users -> removeCustomFieldValueOrSetDefault(users, recordUpdate, tenantId));
-  }
-
-  private Future<Void> removeCustomFieldFromUsers(List<User> users, CustomField field, String tenantId) {
-    Future<Void> updated = succeededFuture();
-
-    for (User user : users) {
-      user.getCustomFields().getAdditionalProperties().remove(field.getRefId());
-
-      updated = updated
-        .compose(v -> repository.updateUser(user, tenantId));
-    }
-
-    return updated;
   }
 
   private Future<Void> removeCustomFieldValueOrSetDefault(List<User> users, RecordUpdate recordUpdate, String tenantId) {
@@ -109,7 +101,7 @@ public class RecordServiceImpl implements RecordService {
     if (CollectionUtils.isEmpty(defaultIds)) {
       customFields.getAdditionalProperties().remove(refId);
     } else if (defaultIds.size() == 1) {
-      customFields.getAdditionalProperties().replace(refId, defaultIds.get(0));
+      customFields.getAdditionalProperties().replace(refId, defaultIds.getFirst());
     } else {
       customFields.getAdditionalProperties().replace(refId, defaultIds);
     }
@@ -127,10 +119,14 @@ public class RecordServiceImpl implements RecordService {
     if (values.isEmpty()) {
       customFields.getAdditionalProperties().remove(refId);
     } else if (values.size() == 1) {
-      customFields.setAdditionalProperty(refId, values.get(0));
+      customFields.setAdditionalProperty(refId, values.getFirst());
     } else {
       customFields.setAdditionalProperty(refId, values);
     }
+  }
+
+  private static void logFoundUsersCount(List<User> users) {
+    LOG.info("The number of users found with the given field: {}", users.size());
   }
 
 }

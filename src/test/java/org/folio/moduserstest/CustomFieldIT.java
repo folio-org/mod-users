@@ -6,10 +6,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.folio.support.CustomField;
+import org.folio.support.PutCustomFieldsRequest;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.CustomFieldsClient;
@@ -60,9 +63,9 @@ public class CustomFieldIT extends AbstractRestTestNoData {
     assertThat(createdCustomField.getDisplayInAccordion(), is("fee_fines"));
 
     final var createdUser = usersClient.attemptToCreateUser(User.builder()
-      .username("some-user")
-      .customFields(Map.of("hobbies", "cross-stitch"))
-      .build())
+        .username("some-user")
+        .customFields(Map.of("hobbies", "cross-stitch"))
+        .build())
       .statusCode(is(201))
       .extract().as(User.class);
 
@@ -73,6 +76,52 @@ public class CustomFieldIT extends AbstractRestTestNoData {
 
     assertThat(fetchedUser.getCustomFields().size(), is(1));
     assertThat(fetchedUser.getCustomFields().get("hobbies"), is("cross-stitch"));
+  }
+
+  @Test
+  void canCreateAndDeleteCustomField() {
+    final var maintainingUser = usersClient.createUser(User.builder()
+      .username("admin-user")
+      .build());
+
+    var createdCustomField = customFieldsClient.createCustomField(
+      hobbiesCustomField(), maintainingUser);
+
+    assertThat(createdCustomField.getDisplayInAccordion(), is("fee_fines"));
+    var foundCustomFields = customFieldsClient.getCustomFields("cql.allRecords=1");
+    assertThat(foundCustomFields.getTotalRecords(), is(1));
+
+    customFieldsClient.deleteCustomField(createdCustomField.getId());
+    var foundCustomFieldsAfterDelete = customFieldsClient.getCustomFields("cql.allRecords=1");
+    assertThat(foundCustomFieldsAfterDelete.getTotalRecords(), is(0));
+  }
+
+  @Test
+  void canCreateAndDeleteCustomFieldUsingUpdate() {
+    final var maintainingUser = usersClient.createUser(User.builder()
+      .username("admin-user")
+      .build());
+
+    var customFieldToCreate = hobbiesCustomField();
+
+    var bulkRequest = PutCustomFieldsRequest.builder()
+      .customFields(List.of(customFieldToCreate))
+      .entityType("user")
+      .build();
+
+    customFieldsClient.updateCustomFields(bulkRequest, maintainingUser);
+
+    var foundCustomFields = customFieldsClient.getCustomFields("cql.allRecords=1");
+    assertThat(foundCustomFields.getTotalRecords(), is(1));
+
+    var emptyBulkRequest = PutCustomFieldsRequest.builder()
+      .customFields(Collections.emptyList())
+      .entityType("user")
+      .build();
+
+    customFieldsClient.updateCustomFields(emptyBulkRequest, maintainingUser);
+    var foundCustomFieldsAfterUpdate = customFieldsClient.getCustomFields("cql.allRecords=1");
+    assertThat(foundCustomFieldsAfterUpdate.getTotalRecords(), is(0));
   }
 
   @Test
@@ -263,6 +312,17 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .entityType("user")
       .type("TEXTBOX_SHORT")
       .order(1)
+      .build();
+  }
+
+  private static CustomField hobbiesCustomField() {
+    return CustomField.builder()
+      .name("Hobbies")
+      .helpText("Describe hobbies")
+      .entityType("user")
+      .type("TEXTBOX_SHORT")
+      .order(1)
+      .displayInAccordion("fee_fines")
       .build();
   }
 }
