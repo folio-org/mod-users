@@ -1,11 +1,11 @@
 package org.folio.validate;
 
 import java.util.List;
-
 import org.apache.commons.lang3.Validate;
+import org.springframework.stereotype.Component;
+
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.validate.definition.Validatable;
-import org.springframework.stereotype.Component;
 
 @Component
 public class DisplayInAccordionValidator implements Validatable {
@@ -20,7 +20,7 @@ public class DisplayInAccordionValidator implements Validatable {
     "requests"
   );
 
-  public static final String INVALID_DISPLAY_IN_ACCORDION_MESSAGE =
+  private static final String INVALID_DISPLAY_IN_ACCORDION_MESSAGE =
     "Display in accordion value must be one of: %s";
 
   @Override
