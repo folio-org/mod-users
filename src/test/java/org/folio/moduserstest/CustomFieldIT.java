@@ -51,16 +51,9 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .build());
 
     var createdCustomField = customFieldsClient.createCustomField(
-      CustomField.builder()
-        .name("Hobbies")
-        .helpText("Describe hobbies")
-        .entityType("user")
-        .type("TEXTBOX_SHORT")
-        .order(1)
-        .displayInAccordion("fee_fines")
-        .build(), maintainingUser);
+      hobbiesCustomField(), maintainingUser);
 
-    assertThat(createdCustomField.getDisplayInAccordion(), is("fee_fines"));
+    assertThat(createdCustomField.getDisplayInAccordion(), is("user_information"));
 
     final var createdUser = usersClient.attemptToCreateUser(User.builder()
         .username("some-user")
@@ -87,7 +80,7 @@ public class CustomFieldIT extends AbstractRestTestNoData {
     var createdCustomField = customFieldsClient.createCustomField(
       hobbiesCustomField(), maintainingUser);
 
-    assertThat(createdCustomField.getDisplayInAccordion(), is("fee_fines"));
+    assertThat(createdCustomField.getDisplayInAccordion(), is("user_information"));
     var foundCustomFields = customFieldsClient.getCustomFields("cql.allRecords=1");
     assertThat(foundCustomFields.getTotalRecords(), is(1));
 
@@ -144,6 +137,27 @@ public class CustomFieldIT extends AbstractRestTestNoData {
 
     assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
     assertThat(firstError.getParameters().get(0).getValue(), is("does-not-exist"));
+  }
+
+  @Test
+  void cannotCreateCustomFieldWithInvalidValue() {
+    final var maintainingUser = usersClient.createUser(User.builder()
+      .username("admin-user")
+      .build());
+
+    var customField = CustomField.builder()
+      .name("Hobbies")
+      .helpText("Describe hobbies")
+      .entityType("user")
+      .type("TEXTBOX_SHORT")
+      .order(1)
+      .displayInAccordion("unknown-value")
+      .build();
+
+    customFieldsClient.attemptToCreateCustomField(customField, maintainingUser)
+      .statusCode(is(422))
+      .body("message", is("Display in accordion value must be one of: [user_information, " +
+        "extended_information, contact_information, default, fees_fines, loans, requests]"));
   }
 
   @Test
@@ -322,7 +336,7 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .entityType("user")
       .type("TEXTBOX_SHORT")
       .order(1)
-      .displayInAccordion("fee_fines")
+      .displayInAccordion("user_information")
       .build();
   }
 }

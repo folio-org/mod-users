@@ -5,14 +5,10 @@ import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.folio.test.util.TokenTestUtil.generateToken;
 
-import java.util.List;
-
-import org.folio.rest.jaxrs.model.PutCustomFieldCollection;
 import org.folio.support.CustomField;
 import org.folio.support.CustomFields;
 import org.folio.support.PutCustomFieldsRequest;
 import org.folio.support.User;
-import org.folio.test.util.TokenTestUtil;
 
 import io.restassured.response.ValidatableResponse;
 
@@ -92,6 +88,17 @@ public class CustomFieldsClient {
 
   public ValidatableResponse attemptToGetCustomField(String id) {
     return client.attemptToGetRecord(id);
+  }
+
+  public ValidatableResponse attemptToCreateCustomField(CustomField customField, User creatingUser) {
+    return client.initialSpecification()
+      .header("X-Okapi-Token", generateToken(creatingUser.getUsername(), creatingUser.getId()))
+      .header("X-Okapi-User-Id", creatingUser.getId())
+      .contentType(JSON)
+      .when()
+      .body(customField)
+      .post()
+      .then();
   }
 
   public CustomFields getCustomFields(String cqlQuery) {
