@@ -24,8 +24,10 @@ import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.kafka.TestKafkaProducer;
+import org.folio.support.tags.IntegrationTest;
 import lombok.SneakyThrows;
 
+@IntegrationTest
 @ExtendWith(VertxExtension.class)
 class UserTenantIT extends AbstractRestTestNoData {
 

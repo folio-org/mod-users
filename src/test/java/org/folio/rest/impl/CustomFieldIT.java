@@ -1,4 +1,4 @@
-package org.folio.moduserstest;
+package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
@@ -14,7 +14,6 @@ import java.util.Map;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
-import org.folio.rest.impl.CustomFieldTestBase;
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.PutCustomFieldCollection;
 import org.folio.support.User;

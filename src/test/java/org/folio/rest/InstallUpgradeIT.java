@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.folio.extensions.KafkaContainerExtension;
+import org.folio.support.tags.IntegrationTest;
+
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -20,6 +22,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+@IntegrationTest
 public class InstallUpgradeIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(InstallUpgradeIT.class);
