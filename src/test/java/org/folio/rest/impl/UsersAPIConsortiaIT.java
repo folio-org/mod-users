@@ -19,20 +19,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
@@ -51,25 +51,23 @@ import org.folio.support.tags.IntegrationTest;
 @IntegrationTest
 class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
-  private static final String userCreatedTopic = getTopicName(TENANT_NAME, USER_CREATED.getTopicName());
-  private static final String userUpdatedTopic = getTopicName(TENANT_NAME, USER_UPDATED.getTopicName());
-  private static final String userDeletedTopic = getTopicName(TENANT_NAME, USER_DELETED.getTopicName());
-
   private static UsersClient usersClient;
   private static UserTenantClient userTenantClient;
   private static FakeKafkaConsumer kafkaConsumer;
 
   @BeforeAll
   static void beforeAll(Vertx vertx) {
-    kafkaConsumer = new FakeKafkaConsumer()
-      .consume(vertx, userCreatedTopic, userUpdatedTopic, userDeletedTopic);
+    kafkaConsumer = new FakeKafkaConsumer().consume(vertx,
+      getTopicName(TENANT_NAME, USER_CREATED.getTopicName()),
+      getTopicName(TENANT_NAME, USER_UPDATED.getTopicName()),
+      getTopicName(TENANT_NAME, USER_DELETED.getTopicName()));
 
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     usersClient.deleteAllUsers();
     kafkaConsumer.removeAllEvents();
   }
@@ -267,7 +265,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     String userId = UUID.randomUUID().toString();
     final User userToCreate = createUser(userId, null, "julia", "staff");
     usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(400)
+      .statusCode(SC_BAD_REQUEST)
       .body(matchesPattern("The user with the ID .* must have a username since consortium mode is enabled"));
   }
 
@@ -279,7 +277,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, null, "julia", "staff"))
-      .statusCode(400)
+      .statusCode(SC_BAD_REQUEST)
       .body(matchesPattern("The user with the ID .* must have a username since consortium mode is enabled"));
   }
 
@@ -291,7 +289,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", null))
-      .statusCode(400)
+      .statusCode(SC_BAD_REQUEST)
       .body(is(String.format("An invalid user type has been populated to a user, allowed values: %s",
         Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
   }

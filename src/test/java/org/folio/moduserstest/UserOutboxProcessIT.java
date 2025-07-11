@@ -9,12 +9,10 @@ import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.folio.support.matchers.DomainEventAssertions.assertHeaders;
 import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Duration;
 import java.util.Date;
 import java.util.UUID;
 

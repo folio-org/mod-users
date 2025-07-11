@@ -37,7 +37,7 @@ import org.folio.support.tags.IntegrationTest;
 @IntegrationTest
 @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
 @ExtendWith({ VertxExtension.class, PostgresContainerExtension.class })
-public class UsersNoKafkaIT {
+class UsersNoKafkaIT {
   protected static VertxModule module;
   private static UsersClient usersClient;
   private static OkapiUrl okapiUrl;

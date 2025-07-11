@@ -35,7 +35,7 @@ public class TestKafkaProducer {
   }
 
   public void close() {
-    kafkaProducer.close(Duration.ofSeconds(5));
+    kafkaProducer.close();
   }
 
   @SneakyThrows

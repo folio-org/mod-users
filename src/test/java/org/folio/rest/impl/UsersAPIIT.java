@@ -36,7 +36,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.apache.commons.lang3.RandomStringUtils;

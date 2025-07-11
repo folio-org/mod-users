@@ -22,7 +22,7 @@ public class LocalStackContainerExtension implements BeforeAllCallback, AfterAll
     .withServices(LocalStackContainer.Service.S3)
     .withStartupAttempts(3);
 
-  public static FolioS3Client S3_CLIENT;
+  public static FolioS3Client s3Client;
 
   @Override
   public void beforeAll(ExtensionContext context) throws Exception {
@@ -36,7 +36,7 @@ public class LocalStackContainerExtension implements BeforeAllCallback, AfterAll
     System.setProperty("AWS_SECRET_ACCESS_KEY", localStackContainer.getSecretKey());
     System.setProperty("AWS_BUCKET", TENANT_NAME);
 
-    S3_CLIENT = S3ClientFactory.getS3Client(
+    s3Client = S3ClientFactory.getS3Client(
       S3ClientProperties
         .builder()
         .endpoint(localStackContainer.getEndpoint().toString())
@@ -47,7 +47,7 @@ public class LocalStackContainerExtension implements BeforeAllCallback, AfterAll
         .region(localStackContainer.getRegion())
         .build()
     );
-    S3_CLIENT.createBucketIfNotExists();
+    s3Client.createBucketIfNotExists();
   }
 
   @Override

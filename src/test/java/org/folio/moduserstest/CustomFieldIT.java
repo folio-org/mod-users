@@ -22,7 +22,7 @@ import org.folio.support.ValidationErrors;
 import org.folio.support.tags.IntegrationTest;
 
 @IntegrationTest
-public class CustomFieldIT extends CustomFieldTestBase {
+class CustomFieldIT extends CustomFieldTestBase {
 
   @Test
   void canCreateUserWithValueForCustomField() {
@@ -100,19 +100,19 @@ public class CustomFieldIT extends CustomFieldTestBase {
       .customFields(Map.of("does-not-exist", "abc"));
 
     final var errors = usersClient.attemptToCreateUser(userToCreate
-      .build())
+        .build())
       .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().size(), is(1));
 
-    final var firstError = errors.getErrors().getFirst() ;
+    final var firstError = errors.getErrors().getFirst();
 
     assertThat(firstError.getMessage(),
       is("Custom field with refId does-not-exist is not found"));
 
-    assertThat(firstError.getParameters().getFirst() .getKey(), is("customFields"));
-    assertThat(firstError.getParameters().getFirst() .getValue(), is("does-not-exist"));
+    assertThat(firstError.getParameters().getFirst().getKey(), is("customFields"));
+    assertThat(firstError.getParameters().getFirst().getValue(), is("does-not-exist"));
   }
 
   @Test
@@ -138,7 +138,7 @@ public class CustomFieldIT extends CustomFieldTestBase {
   @Test
   void cannotAssignCustomFieldThatDoesNotExistToAUser() {
     final var createdUser = usersClient.createUser(User.builder()
-        .username("some-user")
+      .username("some-user")
       .build());
 
     final var userToUpdate = User.builder()
@@ -153,7 +153,7 @@ public class CustomFieldIT extends CustomFieldTestBase {
 
     assertThat(errors.getErrors().size(), is(1));
 
-    final var firstError = errors.getErrors().getFirst() ;
+    final var firstError = errors.getErrors().getFirst();
 
     assertThat(firstError.getMessage(),
       is("Custom field with refId does-not-exist is not found"));
@@ -177,7 +177,7 @@ public class CustomFieldIT extends CustomFieldTestBase {
       .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
-    assertThat(errors.getErrors().getFirst() .getMessage(),
+    assertThat(errors.getErrors().getFirst().getMessage(),
       is("Maximum length of the value is 150"));
   }
 
@@ -286,7 +286,7 @@ public class CustomFieldIT extends CustomFieldTestBase {
       "name=Department");
 
     assertThat(foundCustomFields.getTotalRecords(), is(1));
-    assertThat(foundCustomFields.getCustomFields().getFirst() .getId(),
+    assertThat(foundCustomFields.getCustomFields().getFirst().getId(),
       is(departmentCustomField.getId()));
   }
 

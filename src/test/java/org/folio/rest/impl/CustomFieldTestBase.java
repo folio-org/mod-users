@@ -17,7 +17,7 @@ import org.folio.support.http.CustomFieldsClient;
 import org.folio.support.http.UsersClient;
 import org.folio.test.util.TokenTestUtil;
 
-public class CustomFieldTestBase extends AbstractRestTestNoData {
+class CustomFieldTestBase extends AbstractRestTestNoData {
 
   protected static final String USER_ID = "88888888-8888-4888-8888-888888888888";
   protected static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);

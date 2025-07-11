@@ -3,7 +3,6 @@ package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.service.impl.StagingUserService.CONTACT_TYPE_EMAIL_ID;
 import static org.folio.service.impl.StagingUserService.HOME;
 import static org.folio.service.impl.StagingUserService.REMOTE_NON_CIRCULATING;
@@ -17,6 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
@@ -27,15 +27,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.AddressInfo;
@@ -56,7 +54,6 @@ import org.folio.support.http.StagingUsersClient;
 import org.folio.support.http.UsersClient;
 import org.folio.support.tags.IntegrationTest;
 import org.folio.test.util.DBTestUtil;
-
 import lombok.SneakyThrows;
 
 @IntegrationTest
@@ -132,7 +129,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertNotNull(stagingUserdataCollection.getStagingUsers());
     assertFalse(stagingUserdataCollection.getStagingUsers().isEmpty());
     assertThat(stagingUserdataCollection.getTotalRecords(), is(1));
-    StagingUser stagingUser = stagingUserdataCollection.getStagingUsers().get(0);
+    StagingUser stagingUser = stagingUserdataCollection.getStagingUsers().getFirst();
 
     assertThat(stagingUser.getId(), is(notNullValue()));
     assertEquals(createdUser.getStatus(), stagingUser.getStatus());
@@ -260,8 +257,8 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     var newUser = mergeStagingUserAndFetch(stagingUser.getId(), null);
 
-    assertEquals(null, newUser.getExpirationDate(),
-            "Expiration date should be null if ExpirationOffsetInDays is not found in patron group");
+    assertNull(newUser.getExpirationDate(),
+      "Expiration date should be null if ExpirationOffsetInDays is not found in patron group");
 
     var stagingUsersResponse =
             stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
@@ -552,6 +549,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(stagingContactInfo.getMobilePhone(), userPersonal.getMobilePhone());
     assertEquals(CONTACT_TYPE_EMAIL_ID, userPersonal.getPreferredContactTypeId(), "user should always have 002 as its contact type");
     var address = fetchPrimaryAddressFromUser(user);
+    assertNotNull(address, "User should have a primary address");
     assertEquals(stagingAddressInfo.getAddressLine0(), address.getAddressLine1());
     assertEquals(stagingAddressInfo.getAddressLine1(), address.getAddressLine2());
     assertEquals(stagingAddressInfo.getCity(), address.getCity());
@@ -569,7 +567,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
       .stream()
       .filter(Address::getPrimaryAddress)
       .findFirst()
-      .get();
+      .orElse(null);
   }
 
   private Address createAddress(String addressTypeId) {

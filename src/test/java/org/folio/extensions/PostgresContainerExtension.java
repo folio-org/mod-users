@@ -35,5 +35,9 @@ public class PostgresContainerExtension implements BeforeAllCallback, AfterAllCa
   }
 
   @Override
-  public void afterAll(ExtensionContext context) {}
+  public void afterAll(ExtensionContext context) {
+    /* there is no need to stop the container,
+       it will be stopped automatically by Testcontainers
+    */
+  }
 }

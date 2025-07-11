@@ -81,14 +81,15 @@ class DepartmentsAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  @SuppressWarnings("TextBlockMigration")
   void shouldSaveSpecialCharacters() {
-    String name = "<script>\n"
-        + "document.getElementById(\"demo\").innerHTML = \"Hello JavaScript!\";\n"
-        + "</script><b>foo</b>";
-    String code =  "<script>\n"
-        + "document.getElementById(\"demo\").innerHTML = \"Bye JavaScript!\";\n"
-        + "</script>bar&pi;";
+    String name = """
+      <script>
+        document.getElementById("demo").innerHTML = "Hello JavaScript!";
+      </script><b>foo</b>""";
+    String code = """
+      <script>
+        document.getElementById("demo").innerHTML = "Bye JavaScript!";
+      </script>bar&pi;""";
     Department actual = post(createDepartment(null, name, code));
 
     assertThat(actual.getId(), notNullValue());
@@ -127,7 +128,7 @@ class DepartmentsAPIIT extends AbstractRestTestNoData {
 
   private void assertErrorAboutEmptyNameAndCode(Errors errors) {
     List<Parameter> parameters = errors.getErrors().stream()
-      .map(error -> error.getParameters().getFirst()).collect(Collectors.toList());
+      .map(error -> error.getParameters().getFirst()).toList();
     assertThat(parameters, containsInAnyOrder(
       new Parameter().withKey("name").withValue("null"),
       new Parameter().withKey("code").withValue("null")));

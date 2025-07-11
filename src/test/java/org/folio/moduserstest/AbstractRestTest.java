@@ -66,12 +66,11 @@ public abstract class AbstractRestTest {
       .onComplete(context.succeedingThenComplete());
   }
 
-
   @AfterAll
   static void afterAll(Vertx vertx, VertxTestContext context) {
     module.purgeModule(okapiHeaders)
       .onComplete(context.succeedingThenComplete())
-      .onComplete(_void -> vertx.close());
+      .onComplete(unused -> vertx.close());
   }
 
   private static List<String> getConsortiumTopicNames() {
