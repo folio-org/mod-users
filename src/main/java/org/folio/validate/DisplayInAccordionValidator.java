@@ -10,7 +10,7 @@ import org.folio.validate.definition.Validatable;
 @Component
 public class DisplayInAccordionValidator implements Validatable {
 
-  private final static List<String> ALLOWED_VALUES = List.of(
+  private static final List<String> ALLOWED_VALUES = List.of(
     "user_information",
     "extended_information",
     "contact_information",
