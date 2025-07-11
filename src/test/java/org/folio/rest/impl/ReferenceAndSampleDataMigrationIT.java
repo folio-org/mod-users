@@ -1,25 +1,22 @@
 
 package org.folio.rest.impl;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+
+import io.vertx.core.Future;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import org.folio.moduserstest.AbstractRestTestWithData;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import io.vertx.core.Future;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
+import org.folio.support.tags.IntegrationTest;
 import lombok.SneakyThrows;
 
-@Timeout(value = 30, timeUnit = SECONDS)
-@ExtendWith(VertxExtension.class)
+@IntegrationTest
 class ReferenceAndSampleDataMigrationIT extends AbstractRestTestWithData {
 
   private static UsersClient usersClient;

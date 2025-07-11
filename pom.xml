@@ -498,6 +498,7 @@
         <version>3.5.2</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
+          <groups>integration</groups>
         </configuration>
         <executions>
           <execution>
@@ -537,6 +538,7 @@
               io.vertx.core.logging.Log4j2LogDelegateFactory
             </vertx.logger-delegate-factory-class-name>
           </systemPropertyVariables>
+          <groups>unit</groups>
         </configuration>
       </plugin>
 

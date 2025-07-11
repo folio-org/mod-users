@@ -13,10 +13,13 @@ import java.util.UUID;
 import org.folio.rest.jaxrs.model.ProxiesFor;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.support.tags.UnitTest;
+
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.Future;
 
+@UnitTest
 class ProxiesForAPITest {
   @Test
   void userAndProxyUserComboExistsCanHandlePostgresClientFailure() {

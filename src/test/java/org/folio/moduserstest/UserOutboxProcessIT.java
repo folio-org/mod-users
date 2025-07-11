@@ -1,10 +1,26 @@
 package org.folio.moduserstest;
 
+import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.event.UserEventType.USER_CREATED;
+import static org.folio.support.TestConstants.TENANT_NAME;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+
 import org.folio.repository.UserEventsLogRepository;
 import org.folio.rest.jaxrs.model.Metadata;
 import org.folio.rest.jaxrs.model.OutboxEventLog;
@@ -12,25 +28,9 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.support.http.TimerInterfaceClient;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.folio.support.tags.IntegrationTest;
 
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-
-import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.USER_CREATED;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-@ExtendWith(VertxExtension.class)
+@IntegrationTest
 @Timeout(value = 10, unit = SECONDS)
 public class UserOutboxProcessIT extends AbstractRestTestNoData {
 

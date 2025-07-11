@@ -1,6 +1,7 @@
 package org.folio.rest.impl;
 
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -8,44 +9,43 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
 
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+
 import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.rest.jaxrs.model.CustomFieldCollection;
 import org.folio.rest.jaxrs.model.SelectFieldOption;
-import org.folio.rest.jaxrs.model.User;
+import org.folio.support.User;
+import org.folio.support.tags.IntegrationTest;
 
-@RunWith(VertxUnitRunner.class)
-public class CustomFieldRemovalTest extends CustomFieldTestBase {
+@IntegrationTest
+class CustomFieldRemovalIT extends CustomFieldTestBase {
 
   @Test
-  public void shouldRemoveFieldIfNotAssignedToUser() {
-    CustomField textField = createTextField();
+  void shouldRemoveFieldIfNotAssignedToUser() {
+    var textField = createTextField();
     deleteField(textField.getId());
 
-    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = customFieldsClient.getAllCustomFields();
 
     assertThat(cfs.getCustomFields(), empty());
     assertThat(cfs.getTotalRecords(), equalTo(0));
   }
 
   @Test
-  public void shouldRemoveFieldAndItsValueIfAssignedToUser() {
+  void shouldRemoveFieldAndItsValueIfAssignedToUser() {
     // assign a value
-    CustomField textField = createTextField();
+    var textField = createTextField();
     assignValue(testUser, textField.getRefId(), "someValue");
 
     // delete the field
     deleteField(textField.getId());
 
     //validate there is no field defined
-    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = customFieldsClient.getAllCustomFields();
 
     assertThat(cfs.getCustomFields(), empty());
     assertThat(cfs.getTotalRecords(), equalTo(0));
@@ -55,7 +55,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveFieldAndAllValuesIfAssignedToSeveralUsers() {
+  void shouldRemoveFieldAndAllValuesIfAssignedToSeveralUsers() {
     CustomField textField = createTextField();
 
     deleteUserIgnore("99999999-9999-4999-9999-999999999999");
@@ -71,7 +71,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
     deleteField(textField.getId());
 
     //validate there is no field defined
-    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = customFieldsClient.getAllCustomFields();
 
     assertThat(cfs.getCustomFields(), empty());
     assertThat(cfs.getTotalRecords(), equalTo(0));
@@ -84,7 +84,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveTheSpecificFieldAndItsValueButNotTheOtherField() {
+  void shouldRemoveTheSpecificFieldAndItsValueButNotTheOtherField() {
     // assign values
     CustomField textField = createTextField();
     CustomField checkbox = createCheckboxField();
@@ -94,28 +94,29 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
     // delete the field
     deleteField(textField.getId());
 
-    CustomFieldCollection cfs = getWithOk(cfEndpoint()).as(CustomFieldCollection.class);
+    CustomFieldCollection cfs = customFieldsClient.getAllCustomFields();
 
     //validate there is one field left
     assertThat(cfs.getCustomFields(), hasSize(1));
-    assertThat(cfs.getCustomFields().get(0).getName(), equalTo(checkbox.getName()));
+    assertThat(cfs.getCustomFields().getFirst().getName(), equalTo(checkbox.getName()));
     assertThat(cfs.getTotalRecords(), equalTo(1));
 
     //validate one field is still assigned to user
     User user = getUser(USER_ID);
-    assertThat(user.getCustomFields().getAdditionalProperties().size(), equalTo(1));
-    assertThat(user.getCustomFields().getAdditionalProperties(), hasEntry(checkbox.getRefId(), Boolean.FALSE));
+    assertThat(user.getCustomFields().size(), equalTo(1));
+    assertThat(user.getCustomFields(), hasEntry(checkbox.getRefId(), Boolean.FALSE));
   }
 
   @Test
   @SuppressWarnings("squid:S2699")
-  public void shouldFailIfFieldDoesntExist() {
+  void shouldFailIfFieldDoesntExist() {
     String fakeFieldId = "11111111-1111-1111-a111-111111111111";
-    deleteWithStatus(cfByIdEndpoint(fakeFieldId), SC_NOT_FOUND);
+    customFieldsClient.attemptToDeleteCustomField(fakeFieldId)
+      .statusCode(SC_NOT_FOUND);
   }
 
   @Test
-  public void shouldRemoveOneValueFromOneAssignedWhenOneOptionDeleted() {
+  void shouldRemoveOneValueFromOneAssignedWhenOneOptionDeleted() {
     // assign a value
     CustomField multiSelectField = createSelectableField();
     assignValue(testUser, multiSelectField.getRefId(), "opt_2");
@@ -129,9 +130,9 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueFromTwoAssignedWhenOneOptionDeleted() {
+  void shouldRemoveOneValueFromTwoAssignedWhenOneOptionDeleted() {
     // assign a value
-    CustomField multiSelectField = createSelectableField();
+    var multiSelectField = createSelectableField();
     assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
 
     // update the field. Remove "opt_2" option and no defaults
@@ -147,7 +148,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueFromThreeAssignedWhenOneOptionDeleted() {
+  void shouldRemoveOneValueFromThreeAssignedWhenOneOptionDeleted() {
     // assign a value
     CustomField multiSelectField = createSelectableField();
     assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1", "opt_0"));
@@ -166,7 +167,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveFieldAndAllValuesFromTwoAssignedWhenTwoOptionDeleted() {
+  void shouldRemoveFieldAndAllValuesFromTwoAssignedWhenTwoOptionDeleted() {
     // assign a value
     CustomField multiSelectField = createSelectableField();
     assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
@@ -182,7 +183,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueAndSetOneDefaultFromOneAssignedWhenOneOptionDeleted() {
+  void shouldRemoveOneValueAndSetOneDefaultFromOneAssignedWhenOneOptionDeleted() {
     // assign a value
     CustomField multiSelectField = createSelectableField();
     assignValue(testUser, multiSelectField.getRefId(), "opt_2");
@@ -202,7 +203,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveOneValueAndSetTwoDefaultFromOneAssignedWhenOneOptionDeleted() {
+  void shouldRemoveOneValueAndSetTwoDefaultFromOneAssignedWhenOneOptionDeleted() {
     // assign a value
     CustomField multiSelectField = createSelectableField();
     assignValue(testUser, multiSelectField.getRefId(), "opt_2");
@@ -225,7 +226,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   @Test
-  public void shouldRemoveTwoValueAndSetTwoDefaultFromTwoAssignedWhenTwoOptionDeleted() {
+  void shouldRemoveTwoValueAndSetTwoDefaultFromTwoAssignedWhenTwoOptionDeleted() {
     // assign a value
     CustomField multiSelectField = createSelectableField();
     assignValue(testUser, multiSelectField.getRefId(), Arrays.asList("opt_2", "opt_1"));
@@ -248,11 +249,11 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   private void validateFieldAbsent(User user, String fieldRefId) {
-    assertThat(user.getCustomFields().getAdditionalProperties(), not(hasKey(fieldRefId)));
+    assertThat(user.getCustomFields(), not(hasKey(fieldRefId)));
   }
 
   private void validateValueAbsent(User user, String fieldRefId, String value) {
-    Object assignedObject = user.getCustomFields().getAdditionalProperties().get(fieldRefId);
+    Object assignedObject = user.getCustomFields().get(fieldRefId);
     if (assignedObject instanceof List) {
       @SuppressWarnings("unchecked")
       List<String> values = (List<String>) assignedObject;
@@ -263,7 +264,7 @@ public class CustomFieldRemovalTest extends CustomFieldTestBase {
   }
 
   private void validateValueAssigned(User user, String fieldRefId, String value) {
-    Object assignedObject = user.getCustomFields().getAdditionalProperties().get(fieldRefId);
+    Object assignedObject = user.getCustomFields().get(fieldRefId);
     if (assignedObject instanceof List) {
       @SuppressWarnings("unchecked")
       List<String> values = (List<String>) assignedObject;

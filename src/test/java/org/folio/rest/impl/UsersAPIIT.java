@@ -7,11 +7,14 @@ import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.PROGRAMS;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.SERVICES;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.SUPPORT;
+import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.folio.support.kafka.DomainEventAssertions.assertCreateEvent;
 import static org.folio.support.kafka.DomainEventAssertions.assertDeleteEvent;
 import static org.folio.support.kafka.DomainEventAssertions.assertUpdateEvent;
@@ -25,6 +28,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
@@ -34,8 +39,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
-
+import com.fasterxml.jackson.databind.JsonMappingException;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.Timeout;
+import io.vertx.junit5.VertxExtension;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import org.folio.domain.UserType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.Config;
@@ -55,20 +71,7 @@ import org.folio.support.http.TimerInterfaceClient;
 import org.folio.support.http.UserProfilePictureClient;
 import org.folio.support.http.UsersClient;
 import org.folio.support.kafka.FakeKafkaConsumer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-
-import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 
 @Timeout(value = 20, timeUnit = SECONDS)
@@ -119,7 +122,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var createdUser = usersClient.createUser(userToCreate);
-    await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(1));
+    awaitUntilAsserted(() -> assertThat(getUsersEvents(userToCreate.getId()), hasSize(1)));
     assertCreateEventForUser(createdUser);
     assertThat(createdUser.getId(), is(notNullValue()));
     final var personal = createdUser.getPersonal();
@@ -214,7 +217,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     final var errors = usersClient.attemptToCreateUser(User.builder()
       .username("julia")
       .build())
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().get(0).getMessage(),
@@ -230,7 +233,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     final var errors = usersClient.attemptToCreateUser(User.builder()
       .barcode("12345")
       .build())
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().get(0).getMessage(),
@@ -247,7 +250,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .id(existingUser.getId())
       .username("steve")
       .build())
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().get(0).getMessage(),
@@ -341,7 +344,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(is(422));
+      .statusCode(SC_UNPROCESSABLE_ENTITY);
   }
 
   @Test
@@ -368,12 +371,9 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .username("julia-brockhurst")
         .build())
       .statusCode(is(204));
-    await().until(() -> getUsersEvents(id).size(), is(2));
+    awaitUntilAsserted(() -> assertEquals(2, getUsersEvents(id).size()));
     assertUpdateEventForUser(user);
-    Awaitility.await()
-      .atMost(1, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
         final var updatedUser = usersClient.getUser(user.getId());
         assertThat(updatedUser.getUsername(), is("julia-brockhurst"));
       });
@@ -464,7 +464,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .id(UUID.randomUUID().toString())
         .username("julia")
         .build())
-      .statusCode(is(400))
+      .statusCode(SC_BAD_REQUEST)
       .body(is("You cannot change the value of the id field"));
   }
 
@@ -632,10 +632,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
     usersClient.deleteUser(user.getId());
-    await().until(() -> getUsersEvents(userToCreate.getId()).size(), is(2));
+    awaitUntilAsserted(() -> assertThat(getUsersEvents(userToCreate.getId()), hasSize(2)));
     assertDeleteEventForUser(user);
     usersClient.attemptToGetUser(user.getId())
-      .statusCode(404);
+      .statusCode(SC_NOT_FOUND);
   }
 
   @Test
@@ -825,10 +825,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .build())
       .statusCode(is(204));
 
-    Awaitility.await()
-      .atMost(1, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
         final var updatedUser = usersClient.getUser(user.getId());
         assertThat(updatedUser.getPersonal().getProfilePictureLink(), is(response1.getId().toString()));
       });

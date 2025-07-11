@@ -1,25 +1,21 @@
 
 package org.folio.rest.impl;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import org.folio.moduserstest.AbstractRestTestWithData;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
+import org.folio.support.tags.IntegrationTest;
 
 // Loading the reference and sample data can take a long time
-@Timeout(value = 30, timeUnit = SECONDS)
-@ExtendWith(VertxExtension.class)
+@IntegrationTest
 class ReferenceAndSampleDataIT extends AbstractRestTestWithData {
 
   private static UsersClient usersClient;

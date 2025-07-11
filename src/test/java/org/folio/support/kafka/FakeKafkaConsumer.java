@@ -2,6 +2,8 @@ package org.folio.support.kafka;
 
 import static io.vertx.kafka.client.consumer.KafkaConsumer.create;
 import static java.util.Collections.emptyList;
+import static org.folio.support.TestConstants.ENV;
+import static org.folio.support.TestConstants.TENANT_NAME;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,19 +12,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.folio.kafka.services.KafkaEnvironmentProperties;
-
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.serialization.JsonObjectDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import org.folio.kafka.services.KafkaEnvironmentProperties;
 
 public final class FakeKafkaConsumer {
-  private static final String USER_GROUP_TOPIC_NAME = "folio.diku.users.userGroup";
-  private static final String USERS_TOPIC_NAME = "folio.diku.users.users";
+  private static final String USER_GROUP_TOPIC_NAME = String.format("%s.%s.users.userGroup", ENV, TENANT_NAME);
+  private static final String USERS_TOPIC_NAME = String.format("%s.%s.users.users", ENV, TENANT_NAME);
   private static final Map<String, List<KafkaConsumerRecord<String, JsonObject>>> userGroupEvents =
     new ConcurrentHashMap<>();
 

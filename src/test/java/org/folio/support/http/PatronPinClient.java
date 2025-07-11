@@ -1,6 +1,8 @@
 package org.folio.support.http;
 
 import static io.restassured.http.ContentType.JSON;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_OK;
 
 import java.net.URI;
 
@@ -25,7 +27,7 @@ public class PatronPinClient {
         .build())
       .post("/patron-pin")
       .then()
-      .statusCode(201);
+      .statusCode(SC_CREATED);
   }
 
   public ValidatableResponse attemptToVerifyPatronPin(String userId, String pin) {
@@ -49,6 +51,6 @@ public class PatronPinClient {
         .build())
       .delete("/patron-pin")
       .then()
-      .statusCode(200);
+      .statusCode(SC_OK);
   }
 }

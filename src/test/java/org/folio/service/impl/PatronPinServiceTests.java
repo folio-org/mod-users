@@ -13,8 +13,10 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import org.folio.support.tags.UnitTest;
 import lombok.SneakyThrows;
 
+@UnitTest
 class PatronPinServiceTests {
   @SneakyThrows
   @Test

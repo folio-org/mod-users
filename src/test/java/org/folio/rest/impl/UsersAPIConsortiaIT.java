@@ -1,20 +1,29 @@
 
 package org.folio.rest.impl;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.event.UserEventType.USER_CREATED;
 import static org.folio.event.UserEventType.USER_DELETED;
 import static org.folio.event.UserEventType.USER_UPDATED;
+import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import io.vertx.core.json.Json;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
@@ -26,20 +35,10 @@ import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
+import org.folio.support.tags.IntegrationTest;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-@Timeout(value = 20, timeUnit = SECONDS)
-@ExtendWith(VertxExtension.class)
-class UsersAPIConsortiaTest extends AbstractRestTestNoData {
+@IntegrationTest
+class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
   private static UserTenantClient userTenantClient;
@@ -66,7 +65,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     User userToUpdate = createUser(userId, "joannek", "new_julia", "patron");
 
     usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(204));
+      .statusCode(SC_NO_CONTENT);
     usersClient.deleteUser(user.getId());
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
@@ -78,7 +77,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     assertEquals(1, userDeletedEvents.size());
 
     usersClient.attemptToGetUser(user.getId())
-      .statusCode(404);
+      .statusCode(SC_NOT_FOUND);
   }
 
   @Test
@@ -92,7 +91,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     User userToUpdate = createUser(userId, "joannek", "new_julia", "shadow");
 
     usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(204));
+      .statusCode(SC_NO_CONTENT);
     usersClient.deleteUser(user.getId());
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
@@ -104,7 +103,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     assertEquals(1, userDeletedEvents.size());
 
     usersClient.attemptToGetUser(user.getId())
-      .statusCode(404);
+      .statusCode(SC_NOT_FOUND);
   }
 
   @Test
@@ -120,13 +119,13 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
 
     assertEquals(1, userCreatedEvents.size());
-    assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, user.getId());
+    assertEventContent(userCreatedEvents.getFirst(), UserEvent.Action.CREATE, user.getId());
 
     assertEquals(1, userDeletedEvents.size());
-    assertEventContent(userDeletedEvents.get(0), UserEvent.Action.DELETE, user.getId());
+    assertEventContent(userDeletedEvents.getFirst(), UserEvent.Action.DELETE, user.getId());
 
     usersClient.attemptToGetUser(user.getId())
-      .statusCode(404);
+      .statusCode(SC_NOT_FOUND);
   }
 
   @Test
@@ -139,7 +138,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     final User userToUpdate = createUser(userId, "joannek", "new_julia", "system");
 
     usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(204));
+      .statusCode(SC_NO_CONTENT);
     usersClient.deleteUser(user.getId());
 
     List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
@@ -147,16 +146,16 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
 
     assertEquals(1, userCreatedEvents.size());
-    assertEventContent(userCreatedEvents.get(0), UserEvent.Action.CREATE, user.getId());
+    assertEventContent(userCreatedEvents.getFirst(), UserEvent.Action.CREATE, user.getId());
 
     assertEquals(1, userUpdatedEvents.size());
-    assertEventContent(userUpdatedEvents.get(0), UserEvent.Action.EDIT, user.getId());
+    assertEventContent(userUpdatedEvents.getFirst(), UserEvent.Action.EDIT, user.getId());
 
     assertEquals(1, userDeletedEvents.size());
-    assertEventContent(userDeletedEvents.get(0), UserEvent.Action.DELETE, user.getId());
+    assertEventContent(userDeletedEvents.getFirst(), UserEvent.Action.DELETE, user.getId());
 
     usersClient.attemptToGetUser(user.getId())
-      .statusCode(404);
+      .statusCode(SC_NOT_FOUND);
   }
 
   @Test
@@ -169,12 +168,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     final User userToUpdate = createUser(userId, null, "new_julia", "system");
 
     usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(204));
+      .statusCode(SC_NO_CONTENT);
 
-    Awaitility.await()
-      .atMost(1, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
         final var updatedUser = usersClient.getUser(userId);
         assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
         assertNull(updatedUser.getUsername());
@@ -191,12 +187,9 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     final User userToUpdate = createUser(userId, "joannek", "new_julia", "new_julia@email.com", "staff");
 
     usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(204));
+      .statusCode(SC_NO_CONTENT);
 
-    Awaitility.await()
-      .atMost(1, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
         final var updatedUser = usersClient.getUser(userId);
         assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
         assertThat(updatedUser.getPersonal().getEmail(), is("new_julia@email.com"));
@@ -211,7 +204,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "user_test", "julia", "staff"))
-      .statusCode(400)
+      .statusCode(SC_BAD_REQUEST)
       .body(is("User with this username already exists"));
   }
 
@@ -222,7 +215,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     String userId = UUID.randomUUID().toString();
     final User userToCreate = createUser(userId, "user_test", "julia", "staff");
     usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(422)
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
   }
 
@@ -235,7 +228,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     String usernameInUpperCase = "User_Test";
     final User userToCreate = createUser(userId, usernameInUpperCase, "julia", "staff");
     usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(422)
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
   }
 
@@ -246,7 +239,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     String userId = UUID.randomUUID().toString();
     final User userToCreate = createUser(userId, "joannek", "julia", null);
     usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(422)
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
   }
 
@@ -293,7 +286,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     String userId = UUID.randomUUID().toString();
     final User userToCreate = createUser(userId, "joannek", "julia", "invalidType");
     usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(422)
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
   }
 
@@ -305,7 +298,7 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     usersClient.createUser(userToCreate);
     usersClient.attemptToUpdateUser(createUser(userId, "joannek", "julia", "invalidType"))
-      .statusCode(400)
+      .statusCode(SC_BAD_REQUEST)
       .body(is(String.format("An invalid user type has been populated to a user, allowed values: %s",
         Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
   }
@@ -322,19 +315,16 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     final User userToUpdate = createUser(userId, "joannek", "julia", "patron");
 
     usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(204));
+      .statusCode(is(SC_NO_CONTENT));
 
-    Awaitility.await()
-      .atMost(1, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
         final var updatedUser = usersClient.getUser(userId);
         assertThat(updatedUser.getType(), is("patron"));
       });
 
     List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
     assertEquals(1, userUpdatedEvents.size());
-    UserEvent userEvent = userUpdatedEvents.get(0);
+    UserEvent userEvent = userUpdatedEvents.getFirst();
     assertEventContent(userEvent, UserEvent.Action.EDIT, userToUpdate.getId());
     assertEquals(UserType.PATRON.getTypeName(), userEvent.getUser().getType());
   }
@@ -353,17 +343,14 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(is(204));
 
-    Awaitility.await()
-      .atMost(1, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
         final var updatedUser = usersClient.getUser(userId);
         assertThat(updatedUser.getType(), is("staff"));
       });
 
     List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
     assertEquals(1, userUpdatedEvents.size());
-    UserEvent userEvent = userUpdatedEvents.get(0);
+    UserEvent userEvent = userUpdatedEvents.getFirst();
     assertEventContent(userEvent, UserEvent.Action.EDIT, userToUpdate.getId());
     assertEquals(UserType.STAFF.getTypeName(), userEvent.getUser().getType());
   }

@@ -1,30 +1,28 @@
 package org.folio.rest.impl;
 
-import io.vertx.core.json.Json;
-import io.vertx.junit5.VertxExtension;
-import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
-import org.folio.event.ConsortiumEventType;
-import org.folio.moduserstest.AbstractRestTestNoData;
-import org.folio.rest.jaxrs.model.UserTenant;
-import org.folio.rest.jaxrs.model.UserTenantCollection;
-import org.folio.support.http.UserTenantClient;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.shaded.org.awaitility.Awaitility;
+import static org.folio.event.service.UserTenantService.MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD;
+import static org.folio.support.TestConstants.TENANT_NAME;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import io.vertx.core.json.Json;
+import io.vertx.junit5.VertxExtension;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.service.UserTenantService.MEMBER_USER_TENANT_SHOULD_CONTAIN_SINGLE_RECORD;
+import org.folio.event.ConsortiumEventType;
+import org.folio.moduserstest.AbstractRestTestNoData;
+import org.folio.rest.jaxrs.model.UserTenant;
+import org.folio.rest.jaxrs.model.UserTenantCollection;
+import org.folio.support.http.UserTenantClient;
+
+import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
 class UserTenantIT extends AbstractRestTestNoData {
@@ -139,10 +137,7 @@ class UserTenantIT extends AbstractRestTestNoData {
     userTenant.setBarcode("12345");
     userTenant.setExternalSystemId("54321");
     sendAffiliationUpdatedEvent(List.of(userTenant));
-    Awaitility.await()
-      .atMost(2, MINUTES)
-      .pollInterval(5, SECONDS)
-      .untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
         UserTenantCollection collection2 = userTenantClient.getAllUsersTenants();
         UserTenant tenant = collection2.getUserTenants().get(2);
         Assertions.assertEquals("Test", tenant.getEmail());
@@ -356,12 +351,9 @@ class UserTenantIT extends AbstractRestTestNoData {
   }
 
   private void awaitHandlingEvent(int expectedSize) {
-    Awaitility.await()
-      .atMost(1, TimeUnit.MINUTES)
-      .pollInterval(5, SECONDS)
-      .until(() -> {
+    awaitUntilAsserted(() -> {
         UserTenantCollection collection = userTenantClient.getAllUsersTenants();
-        return collection.getTotalRecords() == expectedSize;
+        Assertions.assertEquals(expectedSize, collection.getTotalRecords());
       });
   }
 

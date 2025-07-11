@@ -1,11 +1,42 @@
 
 package org.folio.rest.impl;
 
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
+import static java.net.HttpURLConnection.HTTP_CREATED;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.service.impl.StagingUserService.CONTACT_TYPE_EMAIL_ID;
+import static org.folio.service.impl.StagingUserService.HOME;
+import static org.folio.service.impl.StagingUserService.REMOTE_NON_CIRCULATING;
+import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
+import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
+import static org.folio.support.TestConstants.TENANT_NAME;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.AddressInfo;
 import org.folio.rest.jaxrs.model.ContactInfo;
@@ -23,44 +54,12 @@ import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.StagingUsersClient;
 import org.folio.support.http.UsersClient;
+import org.folio.support.tags.IntegrationTest;
 import org.folio.test.util.DBTestUtil;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.Collections;
-import java.util.UUID;
+import lombok.SneakyThrows;
 
-import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
-import static java.net.HttpURLConnection.HTTP_CREATED;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.folio.service.impl.StagingUserService.CONTACT_TYPE_EMAIL_ID;
-import static org.folio.service.impl.StagingUserService.HOME;
-import static org.folio.service.impl.StagingUserService.REMOTE_NON_CIRCULATING;
-import static org.folio.service.impl.StagingUserService.STAGING_USER_NOT_FOUND;
-import static org.folio.service.impl.StagingUserService.USER_NOT_FOUND;
-
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-@Timeout(value = 20, timeUnit = SECONDS)
-@ExtendWith(VertxExtension.class)
+@IntegrationTest
 class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   private static StagingUsersClient stagingUsersClient;

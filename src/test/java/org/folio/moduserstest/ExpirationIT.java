@@ -2,25 +2,22 @@ package org.folio.moduserstest;
 
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.time.ZonedDateTime;
 
-import org.folio.support.User;
-import org.folio.support.http.TimerInterfaceClient;
-import org.folio.support.http.UsersClient;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.junit5.VertxExtension;
+import org.folio.support.User;
+import org.folio.support.http.TimerInterfaceClient;
+import org.folio.support.http.UsersClient;
+import org.folio.support.tags.IntegrationTest;
 
-@ExtendWith(VertxExtension.class)
-@Timeout(value = 20, unit = SECONDS)
+@IntegrationTest
 class ExpirationIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
