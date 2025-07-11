@@ -129,7 +129,7 @@ public final class FakeKafkaConsumer {
     config.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     config.put(VALUE_DESERIALIZER_CLASS_CONFIG, JsonObjectDeserializer.class.getName());
     config.put(GROUP_ID_CONFIG, "folio_test");
-    config.put(AUTO_OFFSET_RESET_CONFIG, "latest");
+    config.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
     config.put(ENABLE_AUTO_COMMIT_CONFIG, "true");
 
     return config;
