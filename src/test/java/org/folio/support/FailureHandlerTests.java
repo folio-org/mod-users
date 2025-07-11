@@ -1,5 +1,6 @@
 package org.folio.support;
 
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -14,6 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.core.AsyncResult;
 
+import org.folio.support.tags.UnitTest;
+
+@UnitTest
 class FailureHandlerTests {
     final FakeHandler<AsyncResult<Response>> responseHandler = new FakeHandler<>();
     final Logger logger = mock(Logger.class);
@@ -33,7 +37,7 @@ class FailureHandlerTests {
 
     final var response = responseHandler.handledObject.result();
 
-    assertThat(response.getStatus(), is(500));
+    assertThat(response.getStatus(), is(SC_INTERNAL_SERVER_ERROR));
     assertThat(response.getHeaderString("Content-Type"), is("text/plain"));
     assertThat(response.getEntity(), is("some error"));
   }
