@@ -1,5 +1,8 @@
 package org.folio.extensions;
 
+import static org.folio.kafka.KafkaTopicNameHelper.getDefaultNameSpace;
+import static org.folio.support.TestConstants.ENV;
+
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Properties;
@@ -19,6 +22,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import org.folio.event.KafkaConfigSingleton;
 import org.folio.kafka.KafkaConfig;
+import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.support.TestConstants;
 
 public class KafkaContainerExtension implements BeforeAllCallback, AfterAllCallback {
@@ -87,6 +91,10 @@ public class KafkaContainerExtension implements BeforeAllCallback, AfterAllCallb
     updateKafkaConfigField("envId", TestConstants.ENV);
     updateKafkaConfigField("kafkaHost", KAFKA_CONTAINER.getHost());
     updateKafkaConfigField("kafkaPort", Integer.toString(KAFKA_CONTAINER.getFirstMappedPort()));
+  }
+
+  public static String getTopicName(String tenant, String eventType) {
+    return KafkaTopicNameHelper.formatTopicName(ENV, getDefaultNameSpace(), tenant, eventType);
   }
 
   public static void disableKafka(VertxTestContext context) {

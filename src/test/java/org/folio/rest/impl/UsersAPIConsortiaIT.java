@@ -8,18 +8,28 @@ import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.event.UserEventType.USER_CREATED;
 import static org.folio.event.UserEventType.USER_DELETED;
 import static org.folio.event.UserEventType.USER_UPDATED;
+import static org.folio.extensions.KafkaContainerExtension.getTopicName;
 import static org.folio.support.TestConstants.TENANT_NAME;
+import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.VertxTestContext;
+import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,16 +45,25 @@ import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.UserTenantClient;
 import org.folio.support.http.UsersClient;
+import org.folio.support.kafka.FakeKafkaConsumer;
 import org.folio.support.tags.IntegrationTest;
 
 @IntegrationTest
 class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
+  private static final String userCreatedTopic = getTopicName(TENANT_NAME, USER_CREATED.getTopicName());
+  private static final String userUpdatedTopic = getTopicName(TENANT_NAME, USER_UPDATED.getTopicName());
+  private static final String userDeletedTopic = getTopicName(TENANT_NAME, USER_DELETED.getTopicName());
+
   private static UsersClient usersClient;
   private static UserTenantClient userTenantClient;
+  private static FakeKafkaConsumer kafkaConsumer;
 
   @BeforeAll
-  static void beforeAll() {
+  static void beforeAll(Vertx vertx) {
+    kafkaConsumer = new FakeKafkaConsumer()
+      .consume(vertx, userCreatedTopic, userUpdatedTopic, userDeletedTopic);
+
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
   }
@@ -52,6 +71,12 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
   @BeforeEach
   public void beforeEach() {
     usersClient.deleteAllUsers();
+    kafkaConsumer.removeAllEvents();
+  }
+
+  @AfterAll
+  static void afterAll(VertxTestContext context) {
+    kafkaConsumer.closeAsync().onComplete(context.succeedingThenComplete());
   }
 
   @Test
@@ -68,13 +93,9 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(SC_NO_CONTENT);
     usersClient.deleteUser(user.getId());
 
-    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
-    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
-    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
-
-    assertEquals(0, userCreatedEvents.size());
-    assertEquals(0, userUpdatedEvents.size());
-    assertEquals(1, userDeletedEvents.size());
+    await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
+    await(3).until(() -> getUserEvents(USER_CREATED, userId), hasSize(0));
+    await().until(() -> getUserEvents(USER_UPDATED, userId), hasSize(0));
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
@@ -94,13 +115,9 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(SC_NO_CONTENT);
     usersClient.deleteUser(user.getId());
 
-    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
-    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
-    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
-
-    assertEquals(0, userCreatedEvents.size());
-    assertEquals(0, userUpdatedEvents.size());
-    assertEquals(1, userDeletedEvents.size());
+    await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
+    await(3).until(() -> getUserEvents(USER_CREATED, userId), hasSize(0));
+    await().until(() -> getUserEvents(USER_UPDATED, userId), hasSize(0));
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
@@ -115,8 +132,8 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     final var user = usersClient.createUser(userToCreate);
     usersClient.deleteUser(user.getId());
 
-    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
-    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
+    var userCreatedEvents = await().until(() -> getUserEvents(USER_CREATED, userId), hasSize(1));
+    var userDeletedEvents = await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
 
     assertEquals(1, userCreatedEvents.size());
     assertEventContent(userCreatedEvents.getFirst(), UserEvent.Action.CREATE, user.getId());
@@ -141,9 +158,9 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(SC_NO_CONTENT);
     usersClient.deleteUser(user.getId());
 
-    List<UserEvent> userCreatedEvents = getUserEventsAndFilterByUserId(USER_CREATED, userId);
-    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
-    List<UserEvent> userDeletedEvents = getUserEventsAndFilterByUserId(USER_DELETED, userId);
+    var userCreatedEvents = await().until(() -> getUserEvents(USER_CREATED, userId), hasSize(1));
+    var userUpdatedEvents = await().until(() -> getUserEvents(USER_UPDATED, userId), hasSize(1));
+    var userDeletedEvents = await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
 
     assertEquals(1, userCreatedEvents.size());
     assertEventContent(userCreatedEvents.getFirst(), UserEvent.Action.CREATE, user.getId());
@@ -171,10 +188,10 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(SC_NO_CONTENT);
 
     awaitUntilAsserted(() -> {
-        final var updatedUser = usersClient.getUser(userId);
-        assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
-        assertNull(updatedUser.getUsername());
-      });
+      final var updatedUser = usersClient.getUser(userId);
+      assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
+      assertNull(updatedUser.getUsername());
+    });
   }
 
   @Test
@@ -190,10 +207,10 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(SC_NO_CONTENT);
 
     awaitUntilAsserted(() -> {
-        final var updatedUser = usersClient.getUser(userId);
-        assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
-        assertThat(updatedUser.getPersonal().getEmail(), is("new_julia@email.com"));
-      });
+      final var updatedUser = usersClient.getUser(userId);
+      assertThat(updatedUser.getPersonal().getFirstName(), is("new_julia"));
+      assertThat(updatedUser.getPersonal().getEmail(), is("new_julia@email.com"));
+    });
   }
 
   @Test
@@ -318,11 +335,11 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(is(SC_NO_CONTENT));
 
     awaitUntilAsserted(() -> {
-        final var updatedUser = usersClient.getUser(userId);
-        assertThat(updatedUser.getType(), is("patron"));
-      });
+      final var updatedUser = usersClient.getUser(userId);
+      assertThat(updatedUser.getType(), is("patron"));
+    });
 
-    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
+    List<UserEvent> userUpdatedEvents = getUserEvents(USER_UPDATED, userId);
     assertEquals(1, userUpdatedEvents.size());
     UserEvent userEvent = userUpdatedEvents.getFirst();
     assertEventContent(userEvent, UserEvent.Action.EDIT, userToUpdate.getId());
@@ -344,29 +361,24 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(is(204));
 
     awaitUntilAsserted(() -> {
-        final var updatedUser = usersClient.getUser(userId);
-        assertThat(updatedUser.getType(), is("staff"));
-      });
+      final var updatedUser = usersClient.getUser(userId);
+      assertThat(updatedUser.getType(), is("staff"));
+    });
 
-    List<UserEvent> userUpdatedEvents = getUserEventsAndFilterByUserId(USER_UPDATED, userId);
+    List<UserEvent> userUpdatedEvents = getUserEvents(USER_UPDATED, userId);
     assertEquals(1, userUpdatedEvents.size());
     UserEvent userEvent = userUpdatedEvents.getFirst();
     assertEventContent(userEvent, UserEvent.Action.EDIT, userToUpdate.getId());
     assertEquals(UserType.STAFF.getTypeName(), userEvent.getUser().getType());
   }
 
-  private List<UserEvent> getUserEventsAndFilterByUserId(UserEventType eventType, String userId) {
-    List<UserEvent> usersList = getUserEvents(eventType);
-    return usersList.stream()
-      .filter(userEvent -> userId.equals(userEvent.getUser().getId()))
-      .collect(Collectors.toList());
-  }
-
-  private List<UserEvent> getUserEvents(UserEventType eventType) {
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.getTopicName());
-    return usersList.stream()
-      .map(s -> Json.decodeValue(s, UserEvent.class))
-      .collect(Collectors.toList());
+  private static List<UserEvent> getUserEvents(UserEventType eventType, String userId) {
+    var topicName = getTopicName(TENANT_NAME, eventType.getTopicName());
+    var events = kafkaConsumer.getEvents(topicName, userId);
+    return events.stream()
+      .map(KafkaConsumerRecord::value)
+      .map(msgValue -> Json.decodeValue(msgValue.encode(), UserEvent.class))
+      .toList();
   }
 
   private void assertEventContent(UserEvent userEvent, UserEvent.Action action, String userId) {

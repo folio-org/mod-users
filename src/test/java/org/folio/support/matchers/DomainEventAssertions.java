@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import io.vertx.core.MultiMap;
@@ -36,6 +37,12 @@ public final class DomainEventAssertions {
 
   public static ConditionFactory await() {
     return Awaitility.await().atMost(5, SECONDS);
+  }
+
+  public static ConditionFactory await(int seconds) {
+    return Awaitility.await()
+      .pollDelay(Duration.ofSeconds(seconds))
+      .atMost(5, SECONDS);
   }
 
 

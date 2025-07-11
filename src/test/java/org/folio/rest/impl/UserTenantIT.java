@@ -7,9 +7,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxExtension;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,13 +23,14 @@ import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserTenant;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
 import org.folio.support.http.UserTenantClient;
-
+import org.folio.support.kafka.TestKafkaProducer;
 import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
 class UserTenantIT extends AbstractRestTestNoData {
 
   private static UserTenantClient userTenantClient;
+  private static TestKafkaProducer kafkaProducer;
 
   private static final String USER_A = "user_a";
   private static final String USER_B = "user_b";
@@ -55,6 +58,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   @BeforeAll
   @SneakyThrows
   static void beforeAll() {
+    kafkaProducer = new TestKafkaProducer();
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
   }
 
@@ -62,6 +66,11 @@ class UserTenantIT extends AbstractRestTestNoData {
   public void beforeEach() {
     sendAffiliationCreatedEvent();
     awaitHandlingEvent(3);
+  }
+
+  @AfterAll
+  static void afterAll() {
+    kafkaProducer.close();
   }
 
   @Test
@@ -157,7 +166,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
 
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    UserTenant userTenant = collection.getUserTenants().getFirst();
     Assertions.assertEquals(1, collection.getTotalRecords());
     Assertions.assertEquals(userId, userTenant.getUserId());
   }
@@ -183,7 +192,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
     Assertions.assertEquals(1, collection.getTotalRecords());
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    UserTenant userTenant = collection.getUserTenants().getFirst();
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
   }
@@ -248,7 +257,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
     Assertions.assertEquals(1, collection.getTotalRecords());
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    UserTenant userTenant = collection.getUserTenants().getFirst();
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
     Assertions.assertEquals(email, userTenant.getEmail());
@@ -279,7 +288,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
     Assertions.assertEquals(1, collection.getTotalRecords());
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    UserTenant userTenant = collection.getUserTenants().getFirst();
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
     Assertions.assertEquals(externalSystemId, userTenant.getExternalSystemId());
@@ -310,7 +319,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
     Assertions.assertEquals(1, collection.getTotalRecords());
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    UserTenant userTenant = collection.getUserTenants().getFirst();
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
     Assertions.assertEquals(barcode, userTenant.getBarcode());
@@ -340,7 +349,7 @@ class UserTenantIT extends AbstractRestTestNoData {
 
     UserTenantCollection collection = userTenantClient.getUserTenants(params);
     Assertions.assertEquals(1, collection.getTotalRecords());
-    UserTenant userTenant = collection.getUserTenants().iterator().next();
+    UserTenant userTenant = collection.getUserTenants().getFirst();
     Assertions.assertEquals(username, userTenant.getUsername());
     Assertions.assertEquals(tenantId, userTenant.getTenantId());
     Assertions.assertEquals(email, userTenant.getEmail());
@@ -360,7 +369,8 @@ class UserTenantIT extends AbstractRestTestNoData {
   private void sendAffiliationCreatedEvent() {
     for (UserTenant userTenant : List.of(FIRST_AFFILIATION, SECOND_AFFILIATION, THIRD_AFFILIATION)) {
       String eventPayload = Json.encode(userTenant);
-      sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
+      kafkaProducer.sendEvent(TENANT_NAME,
+        ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_CREATED.getTopicName(),
         userTenant.getId(), eventPayload);
     }
     awaitHandlingEvent(3);
@@ -369,7 +379,7 @@ class UserTenantIT extends AbstractRestTestNoData {
   private void sendAffiliationUpdatedEvent(List<UserTenant> userTenants) {
     for (UserTenant userTenant : userTenants) {
       String eventPayload = Json.encode(userTenant);
-      sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED.getTopicName(),
+      kafkaProducer.sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_UPDATED.getTopicName(),
         userTenant.getId(), eventPayload);
     }
     awaitHandlingEvent(3);
@@ -382,7 +392,8 @@ class UserTenantIT extends AbstractRestTestNoData {
   private void sendAffiliationDeletedEvents(List<UserTenant> userTenants, int expectedSizeAfterDeleting) {
     for (UserTenant userTenant : userTenants) {
       String eventPayload = Json.encode(userTenant);
-      sendEvent(TENANT_NAME, ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED.getTopicName(),
+      kafkaProducer.sendEvent(TENANT_NAME,
+        ConsortiumEventType.CONSORTIUM_PRIMARY_AFFILIATION_DELETED.getTopicName(),
         userTenant.getId(), eventPayload);
     }
     awaitHandlingEvent(expectedSizeAfterDeleting);
