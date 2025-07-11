@@ -29,10 +29,10 @@ import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import org.folio.domain.UserType;
 import org.folio.event.UserEventType;
@@ -223,12 +223,18 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .body(is("User with this username already exists"));
   }
 
-  @Test
-  void cannotCreateUserWithSameUsernameAsExistingUserForConsortia() {
+  @ParameterizedTest
+  @DisplayName("cannotCreateUserForConsortia")
+  @CsvSource(nullValues = "null", value = {
+    "user_test, julia, staff",
+    "joannek, jules, null",
+    "joannek, jules, invalidType"
+  })
+  void cannotCreateUserForConsortia(String username, String firstName, String type) {
     UserTenant userTenant = getUserTenant();
     userTenantClient.attemptToSaveUserTenant(userTenant);
     String userId = UUID.randomUUID().toString();
-    final User userToCreate = createUser(userId, "user_test", "julia", "staff");
+    final User userToCreate = createUser(userId, username, firstName, type);
     usersClient.attemptToCreateUser(userToCreate)
       .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
@@ -242,17 +248,6 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     String userId = UUID.randomUUID().toString();
     String usernameInUpperCase = "User_Test";
     final User userToCreate = createUser(userId, usernameInUpperCase, "julia", "staff");
-    usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(SC_UNPROCESSABLE_ENTITY)
-      .extract().as(ValidationErrors.class);
-  }
-
-  @Test
-  void cannotCreateUserWithoutUserTypeForConsortia() {
-    UserTenant userTenant = getUserTenant();
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-    String userId = UUID.randomUUID().toString();
-    final User userToCreate = createUser(userId, "joannek", "julia", null);
     usersClient.attemptToCreateUser(userToCreate)
       .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
@@ -292,17 +287,6 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
       .statusCode(SC_BAD_REQUEST)
       .body(is(String.format("An invalid user type has been populated to a user, allowed values: %s",
         Arrays.stream(UserType.values()).map(UserType::getTypeName).toList())));
-  }
-
-  @Test
-  void cannotCreateUserWithInvalidUserTypeForConsortia() {
-    UserTenant userTenant = getUserTenant();
-    userTenantClient.attemptToSaveUserTenant(userTenant);
-    String userId = UUID.randomUUID().toString();
-    final User userToCreate = createUser(userId, "joannek", "julia", "invalidType");
-    usersClient.attemptToCreateUser(userToCreate)
-      .statusCode(SC_UNPROCESSABLE_ENTITY)
-      .extract().as(ValidationErrors.class);
   }
 
   @Test

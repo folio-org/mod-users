@@ -3,12 +3,11 @@ package org.folio.support.kafka;
 import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
-import static org.folio.extensions.KafkaContainerExtension.getTopicName;
 import static org.folio.extensions.KafkaContainerExtension.getBootstrapServers;
+import static org.folio.extensions.KafkaContainerExtension.getTopicName;
 import static org.folio.rest.utils.OkapiConnectionParams.OKAPI_TENANT_HEADER;
 import static org.folio.support.TestConstants.TENANT_NAME;
 
-import java.time.Duration;
 import java.util.Properties;
 
 import org.apache.kafka.clients.producer.KafkaProducer;

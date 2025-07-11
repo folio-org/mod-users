@@ -49,7 +49,7 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
     .withPayload(Json.encode(new User().withId(USER_ID).withMetadata(new Metadata())))
     .withIsPersonalDataChanged(true);
 
-  private static final String expectedTopic =
+  private static final String EXPECTED_TOPIC =
     getTopicName(TENANT_NAME, USER_CREATED.getTopicName());
 
   private static TimerInterfaceClient timerInterfaceClient;
@@ -58,7 +58,7 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
 
   @BeforeAll
   public static void beforeAll() {
-    kafkaConsumer = new FakeKafkaConsumer().consume(module.getVertx(), expectedTopic);
+    kafkaConsumer = new FakeKafkaConsumer().consume(module.getVertx(), EXPECTED_TOPIC);
     userEventsLogRepository = new UserEventsLogRepository();
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }
@@ -80,8 +80,8 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
   void shouldSendUserEventToKafkaAfterTrigger() {
     timerInterfaceClient.attemptToTriggerUsersOutboxProcess(TENANT_NAME)
       .statusCode(is(HTTP_OK));
-    await().until(() -> kafkaConsumer.getEvents(expectedTopic, USER_ID), hasSize(1));
-    var list = kafkaConsumer.getEvents(expectedTopic, USER_ID);
+    await().until(() -> kafkaConsumer.getEvents(EXPECTED_TOPIC, USER_ID), hasSize(1));
+    var list = kafkaConsumer.getEvents(EXPECTED_TOPIC, USER_ID);
 
     var message = list.iterator().next();
     var log = message.value();
@@ -94,7 +94,7 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
   void shouldFailAfterTriggerUsingNonExistsTenant() {
     timerInterfaceClient.attemptToTriggerUsersOutboxProcess("non-exist")
       .statusCode(is(HTTP_INTERNAL_ERROR));
-    await(3).until(() -> kafkaConsumer.getAllEvents(expectedTopic), hasSize(0));
-    kafkaConsumer.getAllEvents(expectedTopic);
+    await(3).until(() -> kafkaConsumer.getAllEvents(EXPECTED_TOPIC), hasSize(0));
+    kafkaConsumer.getAllEvents(EXPECTED_TOPIC);
   }
 }
