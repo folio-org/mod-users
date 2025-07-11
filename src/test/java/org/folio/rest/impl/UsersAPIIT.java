@@ -368,6 +368,8 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .username("julia")
       .build());
 
+    await().until(() -> kafkaConsumer.getUsersEvents(id).size(), is(1));
+
     usersClient.attemptToUpdateUser(User.builder()
         .id(user.getId())
         .username("julia-brockhurst")
