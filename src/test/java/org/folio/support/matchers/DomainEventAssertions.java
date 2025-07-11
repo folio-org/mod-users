@@ -1,6 +1,7 @@
 package org.folio.support.matchers;
 
 import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.kafka.KafkaHeaderUtils.kafkaHeadersToMap;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
@@ -36,13 +37,16 @@ public final class DomainEventAssertions {
   private DomainEventAssertions() { }
 
   public static ConditionFactory await() {
-    return Awaitility.await().atMost(5, SECONDS);
+    return Awaitility.await()
+      .pollInterval(500, MILLISECONDS)
+      .atMost(30, SECONDS);
   }
 
   public static ConditionFactory await(int seconds) {
     return Awaitility.await()
       .pollDelay(Duration.ofSeconds(seconds))
-      .atMost(5, SECONDS);
+      .pollInterval(500, MILLISECONDS)
+      .atMost(30, SECONDS);
   }
 
 
