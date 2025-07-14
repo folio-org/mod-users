@@ -3,6 +3,7 @@ package org.folio.support.http;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 
 import java.net.URI;
 import java.util.Map;
@@ -86,7 +87,7 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
 
   void deleteRecord(String id) {
     attemptToDeleteRecord(id)
-      .statusCode(204);
+      .statusCode(SC_NO_CONTENT);
   }
 
   ValidatableResponse attemptToDeleteRecord(String id) {
@@ -102,7 +103,7 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
       .queryParam("query", cqlQuery)
       .delete()
       .then()
-      .statusCode(204);
+      .statusCode(SC_NO_CONTENT);
   }
 
   RequestSpecification initialSpecification() {

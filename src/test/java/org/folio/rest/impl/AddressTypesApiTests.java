@@ -14,12 +14,15 @@ import javax.ws.rs.core.Response;
 
 import org.folio.service.impl.UserRepository;
 import org.folio.support.FakeHandler;
+import org.folio.support.tags.UnitTest;
+
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 
+@UnitTest
 class AddressTypesApiTests {
   @Test
   void canHandleFailureWhenFetchingUsersWithAddressType() {

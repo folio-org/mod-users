@@ -3,21 +3,26 @@ package org.folio.support.http;
 import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.folio.test.util.TokenTestUtil.generateToken;
 
-import org.folio.support.CustomField;
-import org.folio.support.CustomFields;
-import org.folio.support.PutCustomFieldsRequest;
-import org.folio.support.User;
-
+import io.restassured.http.Header;
+import io.restassured.http.Headers;
 import io.restassured.response.ValidatableResponse;
 
+import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.CustomFieldCollection;
+import org.folio.rest.jaxrs.model.CustomFieldOptionStatistic;
+import org.folio.rest.jaxrs.model.CustomFieldStatistic;
+import org.folio.rest.jaxrs.model.PutCustomFieldCollection;
+import org.folio.support.User;
+
 public class CustomFieldsClient {
-  private final RestAssuredCollectionApiClient<CustomField, CustomFields> client;
+  private final RestAssuredCollectionApiClient<CustomField, CustomFieldCollection> client;
 
   public CustomFieldsClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
     client = new RestAssuredCollectionApiClient<>(okapiUrl.asURI("/custom-fields"),
-      defaultHeaders, CustomField.class, CustomFields.class);
+      defaultHeaders, CustomField.class, CustomFieldCollection.class);
   }
 
   /**
@@ -30,9 +35,16 @@ public class CustomFieldsClient {
    * @return the created custom field
    */
   public CustomField createCustomField(CustomField customField, User creatingUser) {
+    return createCustomField(customField, getOkapiUserHeaders(creatingUser));
+  }
+
+  public CustomField createCustomField(CustomField customField, Header userId, Header token) {
+    return createCustomField(customField, getOkapiUserHeaders(userId, token));
+  }
+
+  public CustomField createCustomField(CustomField customField, Headers headers) {
     return client.initialSpecification()
-      .header("X-Okapi-Token", generateToken(creatingUser.getUsername(), creatingUser.getId()))
-      .header("X-Okapi-User-Id", creatingUser.getId())
+      .headers(headers)
       .contentType(JSON)
       .when()
       .body(customField)
@@ -51,9 +63,16 @@ public class CustomFieldsClient {
    *                     and be referenced when creating a custom field this way
    */
   public void updateCustomField(CustomField customField, User updatingUser) {
+    updateCustomField(customField, getOkapiUserHeaders(updatingUser));
+  }
+
+  public void updateCustomField(CustomField customField, Header userId, Header token) {
+    updateCustomField(customField, getOkapiUserHeaders(userId, token));
+  }
+
+  public void updateCustomField(CustomField customField, Headers headers) {
     client.initialSpecification()
-      .header("X-Okapi-Token", generateToken(updatingUser.getUsername(), updatingUser.getId()))
-      .header("X-Okapi-User-Id", updatingUser.getId())
+      .headers(headers)
       .contentType(JSON)
       .when()
       .body(customField)
@@ -70,10 +89,17 @@ public class CustomFieldsClient {
    *                     as custom fields specifically requires that a user exist
    *                     and be referenced when creating a custom field this way
    */
-  public void updateCustomFields(PutCustomFieldsRequest bulkRequest, User updatingUser) {
+  public void updateCustomFields(PutCustomFieldCollection bulkRequest, User updatingUser) {
+    updateCustomFields(bulkRequest, getOkapiUserHeaders(updatingUser));
+  }
+
+  public void updateCustomFields(PutCustomFieldCollection bulkRequest, Header userId, Header token) {
+    updateCustomFields(bulkRequest, getOkapiUserHeaders(userId, token));
+  }
+
+  public void updateCustomFields(PutCustomFieldCollection bulkRequest, Headers headers) {
     client.initialSpecification()
-      .header("X-Okapi-Token", generateToken(updatingUser.getUsername(), updatingUser.getId()))
-      .header("X-Okapi-User-Id", updatingUser.getId())
+      .headers(headers)
       .contentType(JSON)
       .when()
       .body(bulkRequest)
@@ -92,8 +118,7 @@ public class CustomFieldsClient {
 
   public ValidatableResponse attemptToCreateCustomField(CustomField customField, User creatingUser) {
     return client.initialSpecification()
-      .header("X-Okapi-Token", generateToken(creatingUser.getUsername(), creatingUser.getId()))
-      .header("X-Okapi-User-Id", creatingUser.getId())
+      .headers(getOkapiUserHeaders(creatingUser))
       .contentType(JSON)
       .when()
       .body(customField)
@@ -101,11 +126,11 @@ public class CustomFieldsClient {
       .then();
   }
 
-  public CustomFields getCustomFields(String cqlQuery) {
+  public CustomFieldCollection getCustomFields(String cqlQuery) {
     return client.getRecords(cqlQuery);
   }
 
-  private CustomFields getAllCustomFields() {
+  public CustomFieldCollection getAllCustomFields() {
     return client.getAllRecords();
   }
 
@@ -118,9 +143,54 @@ public class CustomFieldsClient {
   }
 
   public void deleteAllCustomFields() {
-    final CustomFields customFields = getAllCustomFields();
+    var customFields = getAllCustomFields();
 
     customFields.getCustomFields()
       .forEach(field -> deleteCustomField(field.getId()));
+  }
+
+  public CustomFieldStatistic getCustomFieldStats(String customFieldId) {
+    return attemptGetCustomFieldStats(customFieldId)
+      .statusCode(SC_OK)
+      .extract()
+      .as(CustomFieldStatistic.class);
+  }
+
+  public ValidatableResponse attemptGetCustomFieldStats(String customFieldId) {
+    return client.initialSpecification()
+      .contentType(JSON)
+      .when()
+      .get("/{id}/stats", customFieldId)
+      .then();
+  }
+
+  public CustomFieldOptionStatistic getCustomFieldOptionStats(String cfId, String optionId) {
+    return attemptGetCustomFieldOptionStats(cfId, optionId)
+      .statusCode(SC_OK)
+      .extract()
+      .as(CustomFieldOptionStatistic.class);
+  }
+
+  public ValidatableResponse attemptGetCustomFieldOptionStats(String cfId, String optionId) {
+    return client.initialSpecification()
+      .contentType(JSON)
+      .when()
+      .get("/{cfId}/options/{optionId}/stats", cfId, optionId)
+      .then();
+  }
+
+  private static Headers getOkapiUserHeaders(User user) {
+    if (user == null) {
+      return new Headers();
+    }
+
+    return new Headers(
+      new Header("X-Okapi-Token", generateToken(user.getUsername(), user.getId())),
+      new Header("X-Okapi-User-Id", user.getId())
+    );
+  }
+
+  private static Headers getOkapiUserHeaders(Header userIdHeader, Header tokenHeader) {
+    return new Headers(userIdHeader, tokenHeader);
   }
 }

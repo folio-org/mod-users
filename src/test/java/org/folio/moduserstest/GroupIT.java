@@ -4,12 +4,10 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.support.kafka.DomainEventAssertions.assertCreateEvent;
 import static org.folio.support.kafka.DomainEventAssertions.assertDeleteEvent;
 import static org.folio.support.kafka.DomainEventAssertions.assertUpdateEvent;
-import static org.folio.support.kafka.FakeKafkaConsumer.getLastUserGroupEvent;
-import static org.folio.support.kafka.FakeKafkaConsumer.getUserGroupsEvents;
-import static org.folio.support.kafka.FakeKafkaConsumer.removeAllEvents;
 import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -18,23 +16,24 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.UUID;
 
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
 import org.folio.support.Group;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
 import org.folio.support.kafka.FakeKafkaConsumer;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.folio.support.tags.IntegrationTest;
 
-import io.vertx.junit5.VertxExtension;
-
-@ExtendWith(VertxExtension.class)
+@IntegrationTest
 @Timeout(value = 20, unit = SECONDS)
 class GroupIT extends AbstractRestTestNoData {
 
@@ -47,13 +46,17 @@ class GroupIT extends AbstractRestTestNoData {
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     kafkaConsumer = new FakeKafkaConsumer().consume(module.getVertx());
-    removeAllEvents();
   }
 
   @BeforeEach
   public void beforeEach() {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
+  }
+
+  @AfterAll
+  static void afterAll(VertxTestContext context) {
+    kafkaConsumer.closeAsync().onComplete(context.succeedingThenComplete());
   }
 
   @Test
@@ -67,7 +70,7 @@ class GroupIT extends AbstractRestTestNoData {
       .build();
 
     final var createdGroup = groupsClient.createGroup(group);
-    await().until(() -> getUserGroupsEvents(groupId).size(), is(1));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(groupId).size(), is(1));
     assertCreateEventForUserGroup(createdGroup);
 
 
@@ -88,7 +91,7 @@ class GroupIT extends AbstractRestTestNoData {
       .build();
 
     final var createdGroup = groupsClient.createGroup(group);
-    await().until(() -> getUserGroupsEvents(groupId).size(), is(1));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(groupId).size(), is(1));
     assertCreateEventForUserGroup(createdGroup);
 
 
@@ -98,7 +101,7 @@ class GroupIT extends AbstractRestTestNoData {
       .desc("A new description")
       .expirationOffsetInDays(365)
       .build());
-    await().until(() -> getUserGroupsEvents(groupId).size(), is(2));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(groupId).size(), is(2));
     assertUpdateEventForUserGroup(createdGroup);
 
     final var updatedGroup = groupsClient.getGroup(createdGroup.getId());
@@ -114,11 +117,11 @@ class GroupIT extends AbstractRestTestNoData {
       .id(groupId)
       .group("New Group")
       .build());
-    await().until(() -> getUserGroupsEvents(groupId).size(), is(1));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(groupId).size(), is(1));
     assertCreateEventForUserGroup(group);
 
     groupsClient.deleteGroup(group.getId());
-    await().until(() -> getUserGroupsEvents(groupId).size(), is(2));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(groupId).size(), is(2));
     assertDeleteEventForUserGroup(group);
 
     groupsClient.attemptToGetGroup(group.getId()).statusCode(HTTP_NOT_FOUND);
@@ -166,11 +169,11 @@ class GroupIT extends AbstractRestTestNoData {
       .group("New group")
       .build());
 
-    response.statusCode(is(422));
+    response.statusCode(SC_UNPROCESSABLE_ENTITY);
 
     final var errors = response.extract().as(ValidationErrors.class);
 
-    assertThat(errors.getErrors().get(0).getMessage(),
+    assertThat(errors.getErrors().getFirst().getMessage(),
       is("lower(f_unaccent(jsonb ->> 'group'::text)) value already exists in table groups: new group"));
   }
 
@@ -204,7 +207,7 @@ class GroupIT extends AbstractRestTestNoData {
       .group("First new group")
       .desc("First group description")
       .build());
-    await().until(() -> getUserGroupsEvents(firstGroupId).size(), is(1));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(firstGroupId).size(), is(1));
     assertCreateEventForUserGroup(firstCreatedGroup);
 
     String secondGroupId = UUID.randomUUID().toString();
@@ -213,7 +216,7 @@ class GroupIT extends AbstractRestTestNoData {
       .group("Second new group")
       .desc("Second group description")
       .build());
-    await().until(() -> getUserGroupsEvents(secondGroupId).size(), is(1));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(secondGroupId).size(), is(1));
     assertCreateEventForUserGroup(secondCreatedGroup);
 
     final var groups = groupsClient.getAllGroups();
@@ -389,24 +392,21 @@ class GroupIT extends AbstractRestTestNoData {
   public static void assertCreateEventForUserGroup(Group userGroup) {
     final String userGroupId = userGroup.getId();
 
-    await().until(() -> getUserGroupsEvents(userGroupId).size(), greaterThan(0));
-
-    assertCreateEvent(getLastUserGroupEvent(userGroupId));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(userGroupId).size(), greaterThan(0));
+    assertCreateEvent(kafkaConsumer.getLastUserGroupEvent(userGroupId));
   }
 
   public static void assertUpdateEventForUserGroup(Group userGroup) {
     final String userGroupId = userGroup.getId();
 
-    await().until(() -> getUserGroupsEvents(userGroupId).size(), greaterThan(0));
-
-    assertUpdateEvent(getLastUserGroupEvent(userGroupId));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(userGroupId).size(), greaterThan(0));
+    assertUpdateEvent(kafkaConsumer.getLastUserGroupEvent(userGroupId));
   }
 
   public static void assertDeleteEventForUserGroup(Group userGroup) {
     final String userGroupId = userGroup.getId();
 
-    await().until(() -> getUserGroupsEvents(userGroupId).size(), greaterThan(0));
-
-    assertDeleteEvent(getLastUserGroupEvent(userGroupId));
+    await().until(() -> kafkaConsumer.getUserGroupsEvents(userGroupId).size(), greaterThan(0));
+    assertDeleteEvent(kafkaConsumer.getLastUserGroupEvent(userGroupId));
   }
 }

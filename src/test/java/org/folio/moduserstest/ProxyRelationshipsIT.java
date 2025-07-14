@@ -3,7 +3,7 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -11,17 +11,14 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.folio.support.ProxyRelationship;
 import org.folio.support.ValidationErrors;
 import org.folio.support.http.ProxiesClient;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import io.vertx.junit5.VertxExtension;
+import org.folio.support.tags.IntegrationTest;
 
 /**
  * At the moment, proxy relationships do not require the user to exist
@@ -29,8 +26,7 @@ import io.vertx.junit5.VertxExtension;
  * users involved.
  * This is NOT how the system is intended to be used
  */
-@ExtendWith(VertxExtension.class)
-@Timeout(value = 20, unit = SECONDS)
+@IntegrationTest
 class ProxyRelationshipsIT extends AbstractRestTestNoData {
 
   private static ProxiesClient proxiesClient;
@@ -136,7 +132,7 @@ class ProxyRelationshipsIT extends AbstractRestTestNoData {
           .userId(userId)
           .proxyUserId(proxyUserId)
           .build())
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().get(0).getMessage(),

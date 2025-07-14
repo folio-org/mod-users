@@ -1,16 +1,20 @@
 package org.folio.rest;
 
-import io.restassured.RestAssured;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.is;
 
-import org.folio.moduserstest.AbstractRestTest;
+import java.nio.file.Path;
+import io.restassured.RestAssured;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.folio.extensions.KafkaContainerExtension;
+import org.folio.support.tags.IntegrationTest;
+
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -18,8 +22,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.nio.file.Path;
-
+@IntegrationTest
 public class InstallUpgradeIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(InstallUpgradeIT.class);
@@ -28,7 +31,7 @@ public class InstallUpgradeIT {
 
   @ClassRule(order = 1)
   public static final KafkaContainer KAFKA =
-    new KafkaContainer(DockerImageName.parse(AbstractRestTest.KAFKA_IMAGE_NAME))
+    new KafkaContainer(DockerImageName.parse(KafkaContainerExtension.KAFKA_IMAGE_ID))
       .withNetwork(NETWORK)
       .withNetworkAliases("mykafka");
 

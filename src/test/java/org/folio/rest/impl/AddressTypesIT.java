@@ -5,13 +5,16 @@ import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.support.Address;
@@ -22,16 +25,9 @@ import org.folio.support.ValidationErrors;
 import org.folio.support.http.AddressTypesClient;
 import org.folio.support.http.GroupsClient;
 import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.folio.support.tags.IntegrationTest;
 
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
-
-@Timeout(value = 20, timeUnit = SECONDS)
-@ExtendWith(VertxExtension.class)
+@IntegrationTest
 class AddressTypesIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
@@ -67,7 +63,7 @@ class AddressTypesIT extends AbstractRestTestNoData {
         AddressType.builder()
           .id(UUID.randomUUID().toString())
           .build())
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors(), hasSize(1));

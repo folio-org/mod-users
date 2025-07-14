@@ -11,8 +11,11 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.vertx.core.json.JsonObject;
+
+import org.folio.support.tags.UnitTest;
 import lombok.SneakyThrows;
 
+@UnitTest
 class JsonUserDeserializationTests {
   @Test
   @SneakyThrows
@@ -26,6 +29,6 @@ class JsonUserDeserializationTests {
 
     assertThat(user.getUsername(), is("foo"));
     assertThat(user.getPersonal().getAddresses(), hasSize(1));
-    assertThat(user.getPersonal().getAddresses().get(0).getAddressTypeId(), is("12345"));
+    assertThat(user.getPersonal().getAddresses().getFirst().getAddressTypeId(), is("12345"));
   }
 }

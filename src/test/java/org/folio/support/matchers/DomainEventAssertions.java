@@ -1,31 +1,33 @@
 package org.folio.support.matchers;
 
 import static io.vertx.core.MultiMap.caseInsensitiveMultiMap;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.folio.kafka.KafkaHeaderUtils.kafkaHeadersToMap;
-import static org.folio.moduserstest.AbstractRestTest.TENANT_NAME;
 import static org.folio.okapi.common.XOkapiHeaders.TENANT;
 import static org.folio.okapi.common.XOkapiHeaders.USER_ID;
+import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-
-import org.awaitility.Awaitility;
-import org.awaitility.core.ConditionFactory;
-import org.folio.service.event.DomainEventType;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
-
 import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
 import io.vertx.kafka.client.producer.KafkaHeader;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
+
+import org.folio.service.event.DomainEventType;
+
 import lombok.SneakyThrows;
 
 public final class DomainEventAssertions {
@@ -35,7 +37,16 @@ public final class DomainEventAssertions {
   private DomainEventAssertions() { }
 
   public static ConditionFactory await() {
-    return Awaitility.await().atMost(5, SECONDS);
+    return Awaitility.await()
+      .pollInterval(500, MILLISECONDS)
+      .atMost(30, SECONDS);
+  }
+
+  public static ConditionFactory await(int seconds) {
+    return Awaitility.await()
+      .pollDelay(Duration.ofSeconds(seconds))
+      .pollInterval(500, MILLISECONDS)
+      .atMost(30, SECONDS);
   }
 
 

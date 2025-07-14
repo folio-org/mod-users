@@ -1,29 +1,28 @@
 
 package org.folio.rest.impl;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.hamcrest.CoreMatchers.is;
+
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.support.User;
 import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
+import org.folio.support.tags.IntegrationTest;
 import org.folio.test.util.DBTestUtil;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
-
-@Timeout(value = 20, timeUnit = SECONDS)
-@ExtendWith(VertxExtension.class)
+@IntegrationTest
 class PatronPinAPIIT extends AbstractRestTestNoData {
 
   private static UsersClient usersClient;
@@ -97,12 +96,12 @@ class PatronPinAPIIT extends AbstractRestTestNoData {
 
   private void enteredPinIsValid(User user, String pin) {
     patronPinClient.attemptToVerifyPatronPin(user.getId(), pin)
-      .statusCode(is(200));
+      .statusCode(SC_OK);
   }
 
   private void enteredPinIsInvalid(User user, String pin) {
     patronPinClient.attemptToVerifyPatronPin(user.getId(), pin)
-      .statusCode(is(422));
+      .statusCode(SC_UNPROCESSABLE_ENTITY);
   }
 
   private void deleteAllPatronPins(Vertx vertx) {

@@ -9,9 +9,12 @@ import java.util.UUID;
 import org.folio.rest.jaxrs.model.Address;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
+import org.folio.support.tags.UnitTest;
+
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class MultipleAddressesWithSameTypeValidationTests {
   private final String HOME_ADDRESS_TYPE = UUID.randomUUID().toString();
   private final String CLAIM_ADDRESS_TYPE = UUID.randomUUID().toString();

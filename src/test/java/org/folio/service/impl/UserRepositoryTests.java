@@ -16,10 +16,13 @@ import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.rest.impl.UsersAPI;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
+import org.folio.support.tags.UnitTest;
+
 import org.junit.jupiter.api.Test;
 
 import io.vertx.core.Future;
 
+@UnitTest
 class UserRepositoryTests {
   @Test
   void canHandleFailureWhenFetchingUsersWithAddressType() {

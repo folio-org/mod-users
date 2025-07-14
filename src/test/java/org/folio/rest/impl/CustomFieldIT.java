@@ -1,48 +1,27 @@
-package org.folio.moduserstest;
+package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.folio.rest.jaxrs.model.CustomField.Type.TEXTBOX_SHORT;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.support.CustomField;
-import org.folio.support.PutCustomFieldsRequest;
+import org.junit.jupiter.api.Test;
+
+import org.folio.rest.jaxrs.model.CustomField;
+import org.folio.rest.jaxrs.model.PutCustomFieldCollection;
 import org.folio.support.User;
 import org.folio.support.ValidationErrors;
-import org.folio.support.http.CustomFieldsClient;
-import org.folio.support.http.UsersClient;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.folio.support.tags.IntegrationTest;
 
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
-
-@Timeout(value = 20, timeUnit = SECONDS)
-@ExtendWith(VertxExtension.class)
-public class CustomFieldIT extends AbstractRestTestNoData {
-
-  private static UsersClient usersClient;
-  private static CustomFieldsClient customFieldsClient;
-
-  @BeforeAll
-  public static void beforeAll() {
-    usersClient = new UsersClient(okapiUrl, okapiHeaders);
-    customFieldsClient = new CustomFieldsClient(okapiUrl, okapiHeaders);
-  }
-
-  @BeforeEach
-  public void beforeEach() {
-    usersClient.deleteAllUsers();
-    customFieldsClient.deleteAllCustomFields();
-  }
+@IntegrationTest
+class CustomFieldIT extends CustomFieldTestBase {
 
   @Test
   void canCreateUserWithValueForCustomField() {
@@ -59,7 +38,7 @@ public class CustomFieldIT extends AbstractRestTestNoData {
         .username("some-user")
         .customFields(Map.of("hobbies", "cross-stitch"))
         .build())
-      .statusCode(is(201))
+      .statusCode(SC_CREATED)
       .extract().as(User.class);
 
     assertThat(createdUser.getCustomFields().size(), is(1));
@@ -97,20 +76,16 @@ public class CustomFieldIT extends AbstractRestTestNoData {
 
     var customFieldToCreate = hobbiesCustomField();
 
-    var bulkRequest = PutCustomFieldsRequest.builder()
-      .customFields(List.of(customFieldToCreate))
-      .entityType("user")
-      .build();
+    var bulkRequest = new PutCustomFieldCollection()
+      .withCustomFields(List.of(customFieldToCreate))
+      .withEntityType("user");
 
     customFieldsClient.updateCustomFields(bulkRequest, maintainingUser);
 
     var foundCustomFields = customFieldsClient.getCustomFields("cql.allRecords=1");
     assertThat(foundCustomFields.getTotalRecords(), is(1));
 
-    var emptyBulkRequest = PutCustomFieldsRequest.builder()
-      .customFields(Collections.emptyList())
-      .entityType("user")
-      .build();
+    var emptyBulkRequest = new PutCustomFieldCollection().withEntityType("user");
 
     customFieldsClient.updateCustomFields(emptyBulkRequest, maintainingUser);
     var foundCustomFieldsAfterUpdate = customFieldsClient.getCustomFields("cql.allRecords=1");
@@ -124,19 +99,19 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .customFields(Map.of("does-not-exist", "abc"));
 
     final var errors = usersClient.attemptToCreateUser(userToCreate
-      .build())
-      .statusCode(is(422))
+        .build())
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().size(), is(1));
 
-    final var firstError = errors.getErrors().get(0);
+    final var firstError = errors.getErrors().getFirst();
 
     assertThat(firstError.getMessage(),
       is("Custom field with refId does-not-exist is not found"));
 
-    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
-    assertThat(firstError.getParameters().get(0).getValue(), is("does-not-exist"));
+    assertThat(firstError.getParameters().getFirst().getKey(), is("customFields"));
+    assertThat(firstError.getParameters().getFirst().getValue(), is("does-not-exist"));
   }
 
   @Test
@@ -145,17 +120,16 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .username("admin-user")
       .build());
 
-    var customField = CustomField.builder()
-      .name("Hobbies")
-      .helpText("Describe hobbies")
-      .entityType("user")
-      .type("TEXTBOX_SHORT")
-      .order(1)
-      .displayInAccordion("unknown-value")
-      .build();
+    var customField = new CustomField()
+      .withName("Hobbies")
+      .withHelpText("Describe hobbies")
+      .withEntityType("user")
+      .withType(TEXTBOX_SHORT)
+      .withOrder(1)
+      .withDisplayInAccordion("unknown-value");
 
     customFieldsClient.attemptToCreateCustomField(customField, maintainingUser)
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .body("message", is("Display in accordion value must be one of: [user_information, " +
         "extended_information, contact_information, default, fees_fines, loans, requests]"));
   }
@@ -163,7 +137,7 @@ public class CustomFieldIT extends AbstractRestTestNoData {
   @Test
   void cannotAssignCustomFieldThatDoesNotExistToAUser() {
     final var createdUser = usersClient.createUser(User.builder()
-        .username("some-user")
+      .username("some-user")
       .build());
 
     final var userToUpdate = User.builder()
@@ -173,18 +147,18 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .build();
 
     final var errors = usersClient.attemptToUpdateUser(userToUpdate)
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
     assertThat(errors.getErrors().size(), is(1));
 
-    final var firstError = errors.getErrors().get(0);
+    final var firstError = errors.getErrors().getFirst();
 
     assertThat(firstError.getMessage(),
       is("Custom field with refId does-not-exist is not found"));
 
-    assertThat(firstError.getParameters().get(0).getKey(), is("customFields"));
-    assertThat(firstError.getParameters().get(0).getValue(), is("does-not-exist"));
+    assertThat(firstError.getParameters().getFirst().getKey(), is("customFields"));
+    assertThat(firstError.getParameters().getFirst().getValue(), is("does-not-exist"));
   }
 
   @Test
@@ -199,10 +173,10 @@ public class CustomFieldIT extends AbstractRestTestNoData {
         .username("some-user")
         .customFields(Map.of("department", RandomStringUtils.randomAlphanumeric(151)))
         .build())
-      .statusCode(is(422))
+      .statusCode(SC_UNPROCESSABLE_ENTITY)
       .extract().as(ValidationErrors.class);
 
-    assertThat(errors.getErrors().get(0).getMessage(),
+    assertThat(errors.getErrors().getFirst().getMessage(),
       is("Maximum length of the value is 150"));
   }
 
@@ -251,30 +225,28 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .build());
 
     final var createdCustomField = customFieldsClient.createCustomField(
-      CustomField.builder()
-        .name("Department")
-        .visible(true)
-        .required(true)
-        .helpText("Provide a department")
-        .entityType("user")
-        .type("TEXTBOX_SHORT")
-        .order(1)
-        .build(), creatingUser);
+      new CustomField()
+        .withName("Department")
+        .withVisible(true)
+        .withRequired(true)
+        .withHelpText("Provide a department")
+        .withEntityType("user")
+        .withType(TEXTBOX_SHORT)
+        .withOrder(1), creatingUser);
 
     final var updatingUser = usersClient.createUser(User.builder()
       .username("some-other-user")
       .build());
 
-    customFieldsClient.updateCustomField(CustomField.builder()
-      .id(createdCustomField.getId())
-      .name("Department updated")
-      .visible(false)
-      .required(true)
-      .helpText("Provide a department")
-      .entityType("user")
-      .type("TEXTBOX_SHORT")
-      .order(1)
-      .build(), updatingUser);
+    customFieldsClient.updateCustomField(new CustomField()
+      .withId(createdCustomField.getId())
+      .withName("Department updated")
+      .withVisible(false)
+      .withRequired(true)
+      .withHelpText("Provide a department")
+      .withEntityType("user")
+      .withType(TEXTBOX_SHORT)
+      .withOrder(1), updatingUser);
 
     final var fetchedCustomField = customFieldsClient.getCustomField(
       createdCustomField.getId());
@@ -290,53 +262,49 @@ public class CustomFieldIT extends AbstractRestTestNoData {
       .build());
 
     final var departmentCustomField = customFieldsClient.createCustomField(
-      CustomField.builder()
-        .name("Department")
-        .visible(true)
-        .required(true)
-        .helpText("Provide a department")
-        .entityType("user")
-        .type("TEXTBOX_SHORT")
-        .order(1)
-        .build(), creatingUser);
+      new CustomField()
+        .withName("Department")
+        .withVisible(true)
+        .withRequired(true)
+        .withHelpText("Provide a department")
+        .withEntityType("user")
+        .withType(TEXTBOX_SHORT)
+        .withOrder(1), creatingUser);
 
     customFieldsClient.createCustomField(
-      CustomField.builder()
-        .name("Hobbies")
-        .visible(true)
-        .required(true)
-        .helpText("Describe user's hobbies")
-        .entityType("user")
-        .type("TEXTBOX_SHORT")
-        .order(2)
-        .build(), creatingUser);
+      new CustomField()
+        .withName("Hobbies")
+        .withVisible(true)
+        .withRequired(true)
+        .withHelpText("Describe user's hobbies")
+        .withEntityType("user")
+        .withType(TEXTBOX_SHORT)
+        .withOrder(2), creatingUser);
 
     final var foundCustomFields = customFieldsClient.getCustomFields(
       "name=Department");
 
     assertThat(foundCustomFields.getTotalRecords(), is(1));
-    assertThat(foundCustomFields.getCustomFields().get(0).getId(),
+    assertThat(foundCustomFields.getCustomFields().getFirst().getId(),
       is(departmentCustomField.getId()));
   }
 
   private static CustomField departmentCustomField() {
-    return CustomField.builder()
-      .name("Department")
-      .helpText("Provide a department")
-      .entityType("user")
-      .type("TEXTBOX_SHORT")
-      .order(1)
-      .build();
+    return new CustomField()
+      .withName("Department")
+      .withHelpText("Provide a department")
+      .withEntityType("user")
+      .withType(TEXTBOX_SHORT)
+      .withOrder(1);
   }
 
   private static CustomField hobbiesCustomField() {
-    return CustomField.builder()
-      .name("Hobbies")
-      .helpText("Describe hobbies")
-      .entityType("user")
-      .type("TEXTBOX_SHORT")
-      .order(1)
-      .displayInAccordion("user_information")
-      .build();
+    return new CustomField()
+      .withName("Hobbies")
+      .withHelpText("Describe hobbies")
+      .withEntityType("user")
+      .withType(TEXTBOX_SHORT)
+      .withOrder(1)
+      .withDisplayInAccordion("user_information");
   }
 }
