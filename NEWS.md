@@ -1,3 +1,6 @@
+## 19.6.0 (in progress)
+* Improve build time (MODUSERS-536)
+
 ## 19.5.1 2025-04-17
 
 * [Users - Patron preregistration] Update expiration date during user record merge (MODUSERS-513)
