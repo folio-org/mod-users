@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -45,11 +46,12 @@ public class StagingUserService {
   public static final String USER_NOT_FOUND = "user with id %s not found";
   public static final String STAGING_USER_NOT_FOUND = "staging user with id %s not found";
   public static final String HOME_ADDRESS_TYPE_NOT_FOUND = "unable to find address with home as address type";
-  public static final String REMOTE_PATRON_GROUP_NOT_FOUND = "unable to find patron group with Remote Non-circulating as group";
+  public static final String PATRON_GROUP_NOT_FOUND = "unable to find patron group with %s as group";
   public static final String ADDRESS_TYPE = "addressType";
   public static final String HOME = "Home";
   public static final String GROUP = "group";
   public static final String REMOTE_NON_CIRCULATING = "Remote Non-circulating";
+  public static final String BASIC_MINOR_INTERNAL_PATRON_GROUP = "Basic -- Minor (INTERNAL)";
   private static final Logger log = LogManager.getLogger(StagingUserService.class);
   private final Context vertxContext;
   private final Map<String, String> okapiHeaders;
@@ -65,26 +67,36 @@ public class StagingUserService {
     log.debug("mergeOrCreateUserFromStagingUser:: Creating or updating user with id {} from stagingUserId {}",
       userId, stagingUserId);
     return PgUtil.postgresClient(vertxContext, okapiHeaders)
-      .withTrans(conn -> Future.all(fetchHomeAddressType(conn), fetchRemotePatronGroupOnlyIfUserIdNotPresent(conn, userId))
-        .compose(compositeFuture -> {
-          AddressType homeAddress = compositeFuture.resultAt(0);
-          String homeAddressId = homeAddress.getId();
+      .withTrans(conn -> fetchStagingUserById(conn, stagingUserId)
+        .compose(stagingUser -> {
 
-          Usergroup remotePatronGroup = compositeFuture.resultAt(1);
+          List<Future<?>> requiredFetches = List.of(
+            fetchHomeAddressType(conn),
+            fetchRemotePatronGroupOnlyIfNotMinorAndUserIdNotPresent(conn, userId, stagingUser.getMinor()),
+            fetchBasicMinorPatronGroupOnlyIfMinorTrue(conn, stagingUser.getMinor())
+          );
 
-          return fetchStagingUserById(conn, stagingUserId)
-            .compose(stagingUser -> userId != null ? updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId)
-              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, remotePatronGroup))
-            .compose(userUpdatesStorage -> deleteStagingUser(conn, stagingUserId, userUpdatesStorage));
-        })).onSuccess(userUpdatesStorage-> {
-          if(userId == null) {
-            userEventPublisher(vertxContext, okapiHeaders)
-                    .publishCreated(userUpdatesStorage.getNewEntity().getId(), userUpdatesStorage.getNewEntity());
-          } else {
-            userEventPublisher(vertxContext, okapiHeaders)
-                    .publishUpdated(userId, userUpdatesStorage.getOldEntity(), userUpdatesStorage.getNewEntity());
-          }
-        }).compose(userUpdatesStorage-> Future.succeededFuture(userUpdatesStorage.getNewEntity()))
+          return Future.all(requiredFetches).compose(compositeFuture -> {
+            AddressType homeAddress = compositeFuture.resultAt(0);
+            String homeAddressId = homeAddress.getId();
+            Usergroup remotePatronGroup = compositeFuture.resultAt(1);
+            Usergroup basicMinorPatronGroup = compositeFuture.resultAt(2);
+
+            Future<StagingUserUpdatesStorage<User>> createOrUpdateUser = (userId != null ?
+              updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId, basicMinorPatronGroup)
+              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, remotePatronGroup, basicMinorPatronGroup));
+            return createOrUpdateUser.compose(userUpdatesStorage -> deleteStagingUser(conn, stagingUserId,
+              userUpdatesStorage));
+          });
+        })).onSuccess(userUpdatesStorage -> {
+        if (userId == null) {
+          userEventPublisher(vertxContext, okapiHeaders)
+            .publishCreated(userUpdatesStorage.getNewEntity().getId(), userUpdatesStorage.getNewEntity());
+        } else {
+          userEventPublisher(vertxContext, okapiHeaders)
+            .publishUpdated(userId, userUpdatesStorage.getOldEntity(), userUpdatesStorage.getNewEntity());
+        }
+      }).compose(userUpdatesStorage -> succeededFuture(userUpdatesStorage.getNewEntity()))
       .onFailure(t -> log.error("mergeOrCreateUserFromStagingUser:: Merge or creation failed for stagingUserId {}, userId {}: {}",
         stagingUserId, userId, t.getMessage()));
   }
@@ -95,11 +107,23 @@ public class StagingUserService {
       HOME_ADDRESS_TYPE_NOT_FOUND);
   }
 
-  private Future<Usergroup> fetchRemotePatronGroupOnlyIfUserIdNotPresent(Conn conn, String userId) {
+  private Future<Usergroup> fetchRemotePatronGroupOnlyIfNotMinorAndUserIdNotPresent(Conn conn, String userId, Boolean minor) {
     log.debug("fetchRemotePatronGroupOnlyIfUserIdNotPresent:: fetching Remote patron group with userId {}", userId);
-    return userId == null
+    return isUserIdNullAndNotMinor(userId, minor)
       ? fetchEntityByCriterion(conn, GROUP, REMOTE_NON_CIRCULATING,
-      Usergroup.class, GROUP_TABLE, REMOTE_PATRON_GROUP_NOT_FOUND)
+      Usergroup.class, GROUP_TABLE, String.format(PATRON_GROUP_NOT_FOUND, REMOTE_NON_CIRCULATING))
+      : Future.succeededFuture(null);
+  }
+
+  private static boolean isUserIdNullAndNotMinor(String userId, Boolean minor) {
+    return userId == null && (Objects.isNull(minor) || !minor);
+  }
+
+  private Future<Usergroup> fetchBasicMinorPatronGroupOnlyIfMinorTrue(Conn conn, Boolean minor) {
+    log.debug("fetchBasicMinorPatronGroup:: fetching {} patron group", BASIC_MINOR_INTERNAL_PATRON_GROUP);
+    return Objects.nonNull(minor) && Boolean.TRUE.equals(minor) ?
+      fetchEntityByCriterion(conn, GROUP, BASIC_MINOR_INTERNAL_PATRON_GROUP,
+        Usergroup.class, GROUP_TABLE, String.format(PATRON_GROUP_NOT_FOUND, BASIC_MINOR_INTERNAL_PATRON_GROUP))
       : Future.succeededFuture(null);
   }
 
@@ -129,17 +153,18 @@ public class StagingUserService {
   }
 
   private Future<StagingUserUpdatesStorage<User>> createNewUserFromStagingUser(StagingUser stagUser, Conn conn,
-                                                                          String homeAddressTypeId,
-                                                                               Usergroup remotePatronGroup) {
+                                                                               String homeAddressTypeId,
+                                                                               Usergroup remotePatronGroup, Usergroup basicMinorPatronGroup) {
     log.debug("createNewUserFromStagingUser:: creating a new user from staging user {}", stagUser);
-    var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId, remotePatronGroup);
-    setUserExpirationDate(newUser, newUser.getEnrollmentDate(), remotePatronGroup);
+    var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId);
+    setUserPatronGroupAndExpirationDate(newUser, stagUser, remotePatronGroup, basicMinorPatronGroup, true);
     return usersService.saveAndReturnUser(conn, newUser)
             .compose(user->Future.succeededFuture(new StagingUserUpdatesStorage<>(user)));
   }
 
   private Future<StagingUserUpdatesStorage<User>> updateExistingUserDetailsFromStagingUser(StagingUser stagUser, String userId,
-                                                                Conn conn, String homeAddressTypeId) {
+                                                                                           Conn conn, String homeAddressTypeId,
+                                                                                           Usergroup basicMinorPatronGroup) {
     log.debug("updateExistingUserDetailsFromStagingUser:: updating existing user {} with stagUser details {}",
       userId, stagUser);
     return usersService.getUserById(conn, userId)
@@ -147,6 +172,7 @@ public class StagingUserService {
         if (existingUser != null) {
           User oldEntity = Json.decodeValue(Json.encode(existingUser), User.class);
           var updatedUser = updateUserFromStagingUser(stagUser, existingUser, homeAddressTypeId);
+          setUserPatronGroupAndExpirationDate(updatedUser, stagUser, null, basicMinorPatronGroup, false);
           return fetchRemotePatronGroupById(conn, existingUser.getPatronGroup())
                   .compose(usergroup -> {
                     setUserExpirationDate(updatedUser, updatedUser.getEnrollmentDate(), usergroup);
@@ -160,11 +186,10 @@ public class StagingUserService {
       });
   }
 
-  private User createUserEntityFromStagingUser(StagingUser stagingUser, String homeAddressTypeId, Usergroup remotePatronGroup) {
+  private User createUserEntityFromStagingUser(StagingUser stagingUser, String homeAddressTypeId) {
     return new User()
       .withId(UUID.randomUUID().toString())
       .withActive(true)
-      .withPatronGroup(Objects.nonNull(remotePatronGroup) ? remotePatronGroup.getId() : null)
       .withPreferredEmailCommunication(stagingUser.getPreferredEmailCommunication())
       .withEnrollmentDate(stagingUser.getMetadata().getUpdatedDate())
       .withType(PATRON_TYPE)
@@ -172,6 +197,17 @@ public class StagingUserService {
       .withPersonal(createOrUpdatePersonal(stagingUser, new Personal(), homeAddressTypeId))
       .withMetadata(MetadataUtil.createMetadata(okapiHeaders));
 
+  }
+
+  private void setUserPatronGroupAndExpirationDate(User user, StagingUser stagingUser,
+                                                   Usergroup remotePatronGroup, Usergroup basicMinorPatronGroup, boolean isNewUser) {
+    if (Boolean.TRUE.equals(stagingUser.getMinor())) {
+      user.setPatronGroup(basicMinorPatronGroup.getId());
+      setUserExpirationDate(user, user.getEnrollmentDate(), basicMinorPatronGroup);
+    } else if (isNewUser &&  Objects.nonNull(remotePatronGroup)) {
+      user.setPatronGroup(remotePatronGroup.getId());
+      setUserExpirationDate(user, user.getEnrollmentDate(), remotePatronGroup);
+    }
   }
 
   private void setUserExpirationDate(User newUser, Date enrollmentDate, Usergroup userPatronGroup) {
