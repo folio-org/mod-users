@@ -57,6 +57,8 @@ import org.folio.support.tags.IntegrationTest;
 import org.folio.test.util.DBTestUtil;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import lombok.SneakyThrows;
 
@@ -117,6 +119,21 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertFalse(createdUser.getIsEmailVerified());
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = { true, false })
+  @NullSource
+  void validateMinorFlag(Boolean minor) {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+
+    stagingUserToCreate.setMinor(minor);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(minor, createdUser.getMinor(), "Minor flag should be set to " + minor);
+  }
+
   @Test
   void shouldCreateAndGetTheStagingUserByCQL_success() {
     String randomString = RandomStringUtils.random(5, true, true);
@@ -146,6 +163,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertThat(stagingUser.getMetadata().getUpdatedDate(), is(createdUser.getMetadata().getUpdatedDate()));
     assertThat(stagingUser.getMetadata().getCreatedByUserId(), is(createdUser.getMetadata().getCreatedByUserId()));
     assertNotNull(stagingUser.getExternalSystemId());
+    assertFalse(stagingUser.getMinor());
   }
 
   @Test
@@ -663,6 +681,31 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertTrue(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.PROGRAMS));
     assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
     assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "false, true",
+    "true, false",
+  })
+  void shouldCreateUpdateProperMinorFlagInTheStagingUser_positive(Boolean createdMinor, Boolean updatedMinor) {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    stagingUserToCreate.setMinor(createdMinor);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    //Validate minor flag is set to true
+    assertEquals(createdMinor, createdUser.getMinor(), "created Minor flag should be set to " + createdMinor);
+
+    createdUser.setMinor(updatedMinor);
+
+    var updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(createdUser.getExternalSystemId(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(updatedMinor, updatedUser.getMinor(), "updated Minor flag should be set to " + createdMinor);
   }
 
   @Test
