@@ -82,23 +82,31 @@ public class StagingUserService {
             Usergroup remotePatronGroup = compositeFuture.resultAt(1);
             Usergroup basicMinorPatronGroup = compositeFuture.resultAt(2);
 
-            Future<StagingUserUpdatesStorage<User>> createOrUpdateUser = (userId != null ?
-              updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId, basicMinorPatronGroup)
-              : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, remotePatronGroup, basicMinorPatronGroup));
-            return createOrUpdateUser.compose(userUpdatesStorage -> deleteStagingUser(conn, stagingUserId,
+            return getCreateOrUpdateUser(userId, conn, stagingUser, homeAddressId, basicMinorPatronGroup,
+              remotePatronGroup).compose(userUpdatesStorage -> deleteStagingUser(conn, stagingUserId,
               userUpdatesStorage));
           });
-        })).onSuccess(userUpdatesStorage -> {
-        if (userId == null) {
-          userEventPublisher(vertxContext, okapiHeaders)
-            .publishCreated(userUpdatesStorage.getNewEntity().getId(), userUpdatesStorage.getNewEntity());
-        } else {
-          userEventPublisher(vertxContext, okapiHeaders)
-            .publishUpdated(userId, userUpdatesStorage.getOldEntity(), userUpdatesStorage.getNewEntity());
-        }
-      }).compose(userUpdatesStorage -> succeededFuture(userUpdatesStorage.getNewEntity()))
+        })).onSuccess(userUpdatesStorage -> publishUserEvent(userId, userUpdatesStorage))
+      .compose(userUpdatesStorage -> succeededFuture(userUpdatesStorage.getNewEntity()))
       .onFailure(t -> log.error("mergeOrCreateUserFromStagingUser:: Merge or creation failed for stagingUserId {}, userId {}: {}",
         stagingUserId, userId, t.getMessage()));
+  }
+
+  private Future<StagingUserUpdatesStorage<User>> getCreateOrUpdateUser(String userId, Conn conn,
+    StagingUser stagingUser, String homeAddressId, Usergroup basicMinorPatronGroup, Usergroup remotePatronGroup) {
+    return (userId != null ?
+      updateExistingUserDetailsFromStagingUser(stagingUser, userId, conn, homeAddressId, basicMinorPatronGroup)
+      : createNewUserFromStagingUser(stagingUser, conn, homeAddressId, remotePatronGroup, basicMinorPatronGroup));
+  }
+
+  private void publishUserEvent(String userId, StagingUserUpdatesStorage<User> userUpdatesStorage) {
+    if (userId == null) {
+      userEventPublisher(vertxContext, okapiHeaders)
+        .publishCreated(userUpdatesStorage.getNewEntity().getId(), userUpdatesStorage.getNewEntity());
+    } else {
+      userEventPublisher(vertxContext, okapiHeaders)
+        .publishUpdated(userId, userUpdatesStorage.getOldEntity(), userUpdatesStorage.getNewEntity());
+    }
   }
 
   private Future<AddressType> fetchHomeAddressType(Conn conn) {
