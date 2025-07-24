@@ -121,7 +121,7 @@ public class StagingUserService {
 
   private Future<Usergroup> fetchBasicMinorPatronGroupOnlyIfMinorTrue(Conn conn, Boolean minor) {
     log.debug("fetchBasicMinorPatronGroup:: fetching {} patron group", BASIC_MINOR_INTERNAL_PATRON_GROUP);
-    return Objects.nonNull(minor) && Boolean.TRUE.equals(minor) ?
+    return Boolean.TRUE.equals(minor) ?
       fetchEntityByCriterion(conn, GROUP, BASIC_MINOR_INTERNAL_PATRON_GROUP,
         Usergroup.class, GROUP_TABLE, String.format(PATRON_GROUP_NOT_FOUND, BASIC_MINOR_INTERNAL_PATRON_GROUP))
       : Future.succeededFuture(null);
