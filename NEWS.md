@@ -1,5 +1,6 @@
 ## 19.6.0 (in progress)
 * Improve build time (MODUSERS-536)
+* Add "minor" boolean field to the staging_users table and assign appropriate patron group to created user record (MODUSERS-533)
 
 ## 19.5.1 2025-04-17
 
