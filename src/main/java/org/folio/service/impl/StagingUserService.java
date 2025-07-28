@@ -72,8 +72,8 @@ public class StagingUserService {
 
           List<Future<?>> requiredFetches = List.of(
             fetchHomeAddressType(conn),
-            fetchRemotePatronGroupOnlyIfNotMinorAndUserIdNotPresent(conn, userId, stagingUser.getMinor()),
-            fetchBasicMinorPatronGroupOnlyIfMinorTrue(conn, stagingUser.getMinor())
+            fetchRemotePatronGroup(conn, userId, stagingUser.getMinor()),
+            fetchBasicMinorPatronGroup(conn, stagingUser.getMinor())
           );
 
           return Future.all(requiredFetches).compose(compositeFuture -> {
@@ -115,7 +115,7 @@ public class StagingUserService {
       HOME_ADDRESS_TYPE_NOT_FOUND);
   }
 
-  private Future<Usergroup> fetchRemotePatronGroupOnlyIfNotMinorAndUserIdNotPresent(Conn conn, String userId, Boolean minor) {
+  private Future<Usergroup> fetchRemotePatronGroup(Conn conn, String userId, Boolean minor) {
     log.debug("fetchRemotePatronGroupOnlyIfUserIdNotPresent:: fetching Remote patron group with userId {}", userId);
     return isUserIdNullAndNotMinor(userId, minor)
       ? fetchEntityByCriterion(conn, GROUP, REMOTE_NON_CIRCULATING,
@@ -127,7 +127,7 @@ public class StagingUserService {
     return userId == null && (Objects.isNull(minor) || !minor);
   }
 
-  private Future<Usergroup> fetchBasicMinorPatronGroupOnlyIfMinorTrue(Conn conn, Boolean minor) {
+  private Future<Usergroup> fetchBasicMinorPatronGroup(Conn conn, Boolean minor) {
     log.debug("fetchBasicMinorPatronGroup:: fetching {} patron group", BASIC_MINOR_INTERNAL_PATRON_GROUP);
     return Boolean.TRUE.equals(minor) ?
       fetchEntityByCriterion(conn, GROUP, BASIC_MINOR_INTERNAL_PATRON_GROUP,
