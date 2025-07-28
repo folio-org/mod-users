@@ -116,7 +116,7 @@ public class StagingUserService {
   }
 
   private Future<Usergroup> fetchRemotePatronGroup(Conn conn, String userId, Boolean minor) {
-    log.debug("fetchRemotePatronGroupOnlyIfUserIdNotPresent:: fetching Remote patron group with userId {}", userId);
+    log.debug("fetchRemotePatronGroup:: fetching Remote patron group with userId {}", userId);
     return isUserIdNullAndNotMinor(userId, minor)
       ? fetchEntityByCriterion(conn, GROUP, REMOTE_NON_CIRCULATING,
       Usergroup.class, GROUP_TABLE, String.format(PATRON_GROUP_NOT_FOUND, REMOTE_NON_CIRCULATING))
