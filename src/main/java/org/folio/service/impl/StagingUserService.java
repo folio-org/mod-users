@@ -165,33 +165,9 @@ public class StagingUserService {
                                                                                Usergroup remotePatronGroup, Usergroup basicMinorPatronGroup) {
     log.debug("createNewUserFromStagingUser:: creating a new user from staging user {}", stagUser);
     var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId);
-    setUserPatronGroupAndExpirationDate(newUser, stagUser, remotePatronGroup, basicMinorPatronGroup, true);
+    setNewUserPatronGroupAndExpirationDate(newUser, stagUser, remotePatronGroup, basicMinorPatronGroup);
     return usersService.saveAndReturnUser(conn, newUser)
             .compose(user->Future.succeededFuture(new StagingUserUpdatesStorage<>(user)));
-  }
-
-  private Future<StagingUserUpdatesStorage<User>> updateExistingUserDetailsFromStagingUser(StagingUser stagUser, String userId,
-                                                                                           Conn conn, String homeAddressTypeId,
-                                                                                           Usergroup basicMinorPatronGroup) {
-    log.debug("updateExistingUserDetailsFromStagingUser:: updating existing user {} with stagUser details {}",
-      userId, stagUser);
-    return usersService.getUserById(conn, userId)
-      .compose(existingUser -> {
-        if (existingUser != null) {
-          User oldEntity = Json.decodeValue(Json.encode(existingUser), User.class);
-          var updatedUser = updateUserFromStagingUser(stagUser, existingUser, homeAddressTypeId);
-          setUserPatronGroupAndExpirationDate(updatedUser, stagUser, null, basicMinorPatronGroup, false);
-          return fetchRemotePatronGroupById(conn, existingUser.getPatronGroup())
-                  .compose(usergroup -> {
-                    setUserExpirationDate(updatedUser, updatedUser.getEnrollmentDate(), usergroup);
-                    return usersService.updateUser(conn, updatedUser)
-                            .compose(user -> Future.succeededFuture(new StagingUserUpdatesStorage<User>(true,
-                                    oldEntity, user)));
-                  });
-        } else {
-          return Future.failedFuture(String.format(USER_NOT_FOUND, userId));
-        }
-      });
   }
 
   private User createUserEntityFromStagingUser(StagingUser stagingUser, String homeAddressTypeId) {
@@ -204,17 +180,51 @@ public class StagingUserService {
       .withExternalSystemId(stagingUser.getExternalSystemId())
       .withPersonal(createOrUpdatePersonal(stagingUser, new Personal(), homeAddressTypeId))
       .withMetadata(MetadataUtil.createMetadata(okapiHeaders));
-
   }
 
-  private void setUserPatronGroupAndExpirationDate(User user, StagingUser stagingUser,
-                                                   Usergroup remotePatronGroup, Usergroup basicMinorPatronGroup, boolean isNewUser) {
+  private void setNewUserPatronGroupAndExpirationDate(User user, StagingUser stagingUser,
+    Usergroup remotePatronGroup, Usergroup basicMinorPatronGroup) {
     if (Boolean.TRUE.equals(stagingUser.getMinor())) {
       user.setPatronGroup(basicMinorPatronGroup.getId());
       setUserExpirationDate(user, user.getEnrollmentDate(), basicMinorPatronGroup);
-    } else if (isNewUser &&  Objects.nonNull(remotePatronGroup)) {
+    } else if (Objects.nonNull(remotePatronGroup)) {
       user.setPatronGroup(remotePatronGroup.getId());
       setUserExpirationDate(user, user.getEnrollmentDate(), remotePatronGroup);
+    }
+  }
+
+  private Future<StagingUserUpdatesStorage<User>> updateExistingUserDetailsFromStagingUser(StagingUser stagUser, String userId,
+                                                                                           Conn conn, String homeAddressTypeId,
+                                                                                           Usergroup basicMinorPatronGroup) {
+    log.debug("updateExistingUserDetailsFromStagingUser:: updating existing user {} with stagUser details {}",
+      userId, stagUser);
+    return usersService.getUserById(conn, userId)
+      .compose(existingUser -> {
+        if (existingUser != null) {
+          User oldEntity = Json.decodeValue(Json.encode(existingUser), User.class);
+          var updatedUser = updateUserFromStagingUser(stagUser, existingUser, homeAddressTypeId);
+          return setExistingUserPatronGroupAndExpirationDate(conn, updatedUser, stagUser, basicMinorPatronGroup)
+            .compose(finalUpdatedUser -> usersService.updateUser(conn, finalUpdatedUser)
+              .compose(user -> Future.succeededFuture(new StagingUserUpdatesStorage<User>(true, oldEntity, user))));
+        } else {
+          return Future.failedFuture(String.format(USER_NOT_FOUND, userId));
+        }
+      });
+  }
+
+  private Future<User> setExistingUserPatronGroupAndExpirationDate(Conn conn, User user, StagingUser stagingUser, Usergroup basicMinorPatronGroup) {
+    if (Boolean.TRUE.equals(stagingUser.getMinor())) {
+      user.setPatronGroup(basicMinorPatronGroup.getId());
+      setUserExpirationDate(user, user.getEnrollmentDate(), basicMinorPatronGroup);
+      return Future.succeededFuture(user);
+    } else {
+      // Keeping existing logic for non-minor users
+      // For existing non-minor users, update the patron group expiration on the existing user patron group
+      return fetchRemotePatronGroupById(conn, user.getPatronGroup())
+        .compose(usergroup -> {
+          setUserExpirationDate(user, user.getEnrollmentDate(), usergroup);
+          return Future.succeededFuture(user);
+        });
     }
   }
 
