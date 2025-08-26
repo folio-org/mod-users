@@ -29,6 +29,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -42,6 +46,7 @@ import java.util.UUID;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.folio.service.impl.StagingUserService.BASIC_MINOR_INTERNAL_PATRON_GROUP;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.folio.service.impl.StagingUserService.CONTACT_TYPE_EMAIL_ID;
 import static org.folio.service.impl.StagingUserService.HOME;
@@ -117,6 +122,21 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertFalse(createdUser.getIsEmailVerified());
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = { true, false })
+  @NullSource
+  void validateMinorFlag(Boolean minor) {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+
+    stagingUserToCreate.setMinor(minor);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(minor, createdUser.getMinor(), "Minor flag should be set to " + minor);
+  }
+
   @Test
   void shouldCreateAndGetTheStagingUserByCQL_success() {
     String randomString = RandomStringUtils.random(5, true, true);
@@ -133,7 +153,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertNotNull(stagingUserdataCollection.getStagingUsers());
     assertFalse(stagingUserdataCollection.getStagingUsers().isEmpty());
     assertThat(stagingUserdataCollection.getTotalRecords(), is(1));
-    StagingUser stagingUser = stagingUserdataCollection.getStagingUsers().get(0);
+    StagingUser stagingUser = stagingUserdataCollection.getStagingUsers().getFirst();
 
     assertThat(stagingUser.getId(), is(notNullValue()));
     assertEquals(createdUser.getStatus(), stagingUser.getStatus());
@@ -146,6 +166,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertThat(stagingUser.getMetadata().getUpdatedDate(), is(createdUser.getMetadata().getUpdatedDate()));
     assertThat(stagingUser.getMetadata().getCreatedByUserId(), is(createdUser.getMetadata().getCreatedByUserId()));
     assertNotNull(stagingUser.getExternalSystemId());
+    assertFalse(stagingUser.getMinor());
   }
 
   @Test
@@ -178,6 +199,21 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     var resp = stagingUsersClient.attemptToMergeStagingUser(stagingUser.getId(), null);
     resp.statusCode(is(500));
     assertThat(resp.extract().asString(), is("unable to find patron group with Remote Non-circulating as group"));
+  }
+
+  @Test
+  void testMergeUser_whenBasicMinorPatronGroupNotFound() {
+    createAddressType(HOME);
+    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
+    StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    stagingUserToCreate.setMinor(true);
+    final var response = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    response.statusCode(is(201));
+    StagingUser stagingUser = response.extract().response().as(StagingUser.class);
+
+    var resp = stagingUsersClient.attemptToMergeStagingUser(stagingUser.getId(), null);
+    resp.statusCode(is(500));
+    assertThat(resp.extract().asString(), is("unable to find patron group with Basic -- Minor (INTERNAL) as group"));
   }
 
   @Test
@@ -227,97 +263,126 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
-  @Test
-  void testMergeUser_validateCorrectExpirationDate() {
+  @ParameterizedTest
+  @CsvSource({
+    REMOTE_NON_CIRCULATING + ", " + false,
+    BASIC_MINOR_INTERNAL_PATRON_GROUP + ", " + true,
+  })
+  void testMergeUser_validateCorrectPatronGroupAndExpirationDateAndUserNotExist(String patronGroupName, boolean minor) {
     createAddressType(HOME);
-    var remotePatronGroup = createPatronGroup(REMOTE_NON_CIRCULATING);
+    var patronGroup = createPatronGroup(patronGroupName);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    stagingUserToCreate.setMinor(minor);
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
 
     var newUser = mergeStagingUserAndFetch(stagingUser.getId(), null);
 
     ZonedDateTime zonedDateTime = updatedDate.toInstant()
-            .atZone(ZoneId.systemDefault())
-            .plusDays(remotePatronGroup.getExpirationOffsetInDays());
+      .atZone(ZoneId.systemDefault())
+      .plusDays(patronGroup.getExpirationOffsetInDays());
     assertEquals(
-            zonedDateTime.toLocalDate(),
-            newUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
-            "Expiration date should be enrollmentDate + Patron Group ExpirationOffsetInDays");
+      zonedDateTime.toLocalDate(),
+      newUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
+      "Expiration date should be enrollmentDate + Patron Group ExpirationOffsetInDays");
+    assertEquals(newUser.getPatronGroup(), patronGroup.getId(),
+      String.format("Patron group should be set to %s", patronGroupName));
 
     var stagingUsersResponse =
-            stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+      stagingUsersClient.attemptToGetUsers("id=" + stagingUser.getId());
     stagingUsersResponse.statusCode(is(200));
-    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    StagingUserdataCollection stagingUserdataCollection =
+      stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
     assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
-  @Test
-  void testMergeUser_validateNoExpirationDateSetWhenExpirationOffsetInDaysIsNotExist() {
+  @ParameterizedTest
+  @CsvSource({
+    REMOTE_NON_CIRCULATING + ", " + false,
+    BASIC_MINOR_INTERNAL_PATRON_GROUP + ", " + true,
+  })
+  void testMergeUser_validatePatronGroupAndNoExpirationDateSetWhenExpirationOffsetInDaysIsNotExistAndUserNotExist(
+    String patronGroupName, boolean minor) {
     createAddressType(HOME);
-    createPatronGroup(REMOTE_NON_CIRCULATING, null);
+    var patronGroup = createPatronGroup(patronGroupName, null);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    stagingUserToCreate.setMinor(minor);
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
 
     var newUser = mergeStagingUserAndFetch(stagingUser.getId(), null);
 
-    assertEquals(null, newUser.getExpirationDate(),
-            "Expiration date should be null if ExpirationOffsetInDays is not found in patron group");
+    assertNull(newUser.getExpirationDate(),
+      "Expiration date should be null if ExpirationOffsetInDays is not found in patron group");
+    assertEquals(newUser.getPatronGroup(), patronGroup.getId(),
+      String.format("Patron group should be set to %s", patronGroupName));
 
     var stagingUsersResponse =
-            stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+      stagingUsersClient.attemptToGetUsers("id=" + stagingUser.getId());
     stagingUsersResponse.statusCode(is(200));
-    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    StagingUserdataCollection stagingUserdataCollection =
+      stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
     assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
-  @Test
-  void testMergeUser_validateCorrectExpirationDateSetAndUserExist() {
+  @ParameterizedTest
+  @CsvSource({
+    REMOTE_NON_CIRCULATING + ", " + false,
+    BASIC_MINOR_INTERNAL_PATRON_GROUP + ", " + true,
+  })
+  void testMergeUser_validateCorrectPatronGroupAndExpirationDateSetAndUserExist(String patronGroupName, boolean minor) {
     var homeAddressTypeId = createAddressType(HOME);
-    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
+    var patronGroup = createPatronGroup(patronGroupName);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    stagingUserToCreate.setMinor(minor);
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
     var updatedDate = stagingUser.getMetadata().getUpdatedDate();
-    var patronGroup = createPatronGroup("patron", 50);
-    var patronGroupId = patronGroup.getId();
-    var existingUser = createUser(patronGroupId, List.of(createAddress(homeAddressTypeId)));
+    var existingUser = createUser(patronGroup.getId(), List.of(createAddress(homeAddressTypeId)));
 
     var mergedUser = mergeStagingUserAndFetch(stagingUser.getId(), existingUser.getId());
 
     ZonedDateTime zonedDateTime = updatedDate.toInstant()
-            .atZone(ZoneId.systemDefault())
-            .plusDays(patronGroup.getExpirationOffsetInDays());
+      .atZone(ZoneId.systemDefault())
+      .plusDays(patronGroup.getExpirationOffsetInDays());
     assertEquals(
-            zonedDateTime.toLocalDate(),
-            mergedUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
-            "Expiration date should be enrollmentDate + Patron Group ExpirationOffsetInDays");
+      zonedDateTime.toLocalDate(),
+      mergedUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
+      "Expiration date should be enrollmentDate + Patron Group ExpirationOffsetInDays");
+    assertEquals(mergedUser.getPatronGroup(), patronGroup.getId(),
+      "Patron group should be set to Remote Non-circulating");
 
     var stagingUsersResponse =
-            stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+      stagingUsersClient.attemptToGetUsers("id=" + stagingUser.getId());
     stagingUsersResponse.statusCode(is(200));
-    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    StagingUserdataCollection stagingUserdataCollection =
+      stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
     assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
-  @Test
-  void testMergeUser_validateNoExpirationDateSetInUserAndUserExist() {
+  @ParameterizedTest
+  @CsvSource({
+    REMOTE_NON_CIRCULATING + ", " + false,
+    BASIC_MINOR_INTERNAL_PATRON_GROUP + ", " + true,
+  })
+  void testMergeUser_validatePatronGroupAndNoExpirationDateSetInUserAndUserExist(String patronGroupName, boolean minor) {
     var homeAddressTypeId = createAddressType(HOME);
-    createPatronGroupAndGetId(REMOTE_NON_CIRCULATING);
+    var patronGroup = createPatronGroup(patronGroupName, null);
     StagingUser stagingUserToCreate = getDummyStagingUser(createRandomString());
+    stagingUserToCreate.setMinor(minor);
     StagingUser stagingUser = createStagingUser(stagingUserToCreate);
-    var patronGroup = createPatronGroup("patron", null);
-    var patronGroupId = patronGroup.getId();
-    var existingUser = createUser(patronGroupId, List.of(createAddress(homeAddressTypeId)));
+    var existingUser = createUser(patronGroup.getId(), List.of(createAddress(homeAddressTypeId)));
 
     var mergedUser = mergeStagingUserAndFetch(stagingUser.getId(), existingUser.getId());
 
     assertEquals(existingUser.getExpirationDate().toLocalDate(), mergedUser.getExpirationDate().toLocalDate(),
-            "Expiration date should not be changed");
+      "Expiration date should not be changed");
+    assertEquals(mergedUser.getPatronGroup(), patronGroup.getId(),
+      "Patron group should be set to Remote Non-circulating");
 
     var stagingUsersResponse =
-      stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
+      stagingUsersClient.attemptToGetUsers("id=" + stagingUser.getId());
     stagingUsersResponse.statusCode(is(200));
-    StagingUserdataCollection stagingUserdataCollection = stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
+    StagingUserdataCollection stagingUserdataCollection =
+      stagingUsersResponse.extract().response().as(StagingUserdataCollection.class);
     assertEquals(0, stagingUserdataCollection.getStagingUsers().size(), "staging users should not be present after merge");
   }
 
@@ -493,6 +558,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     StagingUser stagingUserToCreate = new StagingUser();
 
     stagingUserToCreate.setIsEmailVerified(false);
+    stagingUserToCreate.setMinor(false);
     stagingUserToCreate.setStatus(StagingUser.Status.TIER_1);
     stagingUserToCreate.setPreferredEmailCommunication(Set.of(PreferredEmailCommunication.PROGRAMS,
       PreferredEmailCommunication.SUPPORT, PreferredEmailCommunication.SERVICES));
@@ -553,6 +619,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(stagingContactInfo.getMobilePhone(), userPersonal.getMobilePhone());
     assertEquals(CONTACT_TYPE_EMAIL_ID, userPersonal.getPreferredContactTypeId(), "user should always have 002 as its contact type");
     var address = fetchPrimaryAddressFromUser(user);
+    assertNotNull(address, "User should have a primary address");
     assertEquals(stagingAddressInfo.getAddressLine0(), address.getAddressLine1());
     assertEquals(stagingAddressInfo.getAddressLine1(), address.getAddressLine2());
     assertEquals(stagingAddressInfo.getCity(), address.getCity());
@@ -570,7 +637,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
       .stream()
       .filter(Address::getPrimaryAddress)
       .findFirst()
-      .get();
+      .orElse(null);
   }
 
   private Address createAddress(String addressTypeId) {
@@ -617,6 +684,31 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertTrue(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.PROGRAMS));
     assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SERVICES));
     assertFalse(updatedUser.getPreferredEmailCommunication().contains(PreferredEmailCommunication.SUPPORT));
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "false, true",
+    "true, false",
+  })
+  void shouldCreateUpdateProperMinorFlagInTheStagingUser_positive(Boolean createdMinor, Boolean updatedMinor) {
+    String randomString = RandomStringUtils.random(5, true, true);
+    StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
+    stagingUserToCreate.setMinor(createdMinor);
+    final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
+    createdNewStagingUserResponse.statusCode(is(201));
+    StagingUser createdUser = createdNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    //Validate minor flag is set to true
+    assertEquals(createdMinor, createdUser.getMinor(), "created Minor flag should be set to " + createdMinor);
+
+    createdUser.setMinor(updatedMinor);
+
+    var updatedNewStagingUserResponse = stagingUsersClient.attemptToUpdateStagingUser(createdUser.getExternalSystemId(), createdUser);
+    updatedNewStagingUserResponse.statusCode(is(200));
+    StagingUser updatedUser = updatedNewStagingUserResponse.extract().response().as(StagingUser.class);
+
+    assertEquals(updatedMinor, updatedUser.getMinor(), "updated Minor flag should be set to " + createdMinor);
   }
 
   @Test
