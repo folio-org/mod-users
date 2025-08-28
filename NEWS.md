@@ -1,3 +1,7 @@
+## 19.5.2 2025-08-26
+
+* Add "minor" boolean field to the staging_users table and assign appropriate patron group to created user record (MODUSERS-533)
+
 ## 19.5.1 2025-04-17
 
 * [Users - Patron preregistration] Update expiration date during user record merge (MODUSERS-513)
@@ -13,6 +17,10 @@
 * Update to mod-users Java 21 (FOLIO-4222)
 * Staff User created in member tenant becomes as Shadow after updating email, firstname (MODUSERS-507)
 * Add support for deleting related module's data for consortia tenant hard delete (MODCONSKC-69)
+
+## 19.4.6 2025-04-25
+
+* [Users - Patron preregistration] Update expiration date during user record merge (MODUSERS-513)
 
 ## 19.4.5 2025-01-13
 
