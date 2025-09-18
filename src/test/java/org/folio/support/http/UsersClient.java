@@ -76,6 +76,10 @@ public class UsersClient {
     client.deleteRecords(cqlQuery);
   }
 
+  public ValidatableResponse attemptToDeleteUsers(String cqlQuery) {
+    return client.attemptToDeleteRecords(cqlQuery);
+  }
+
   public void deleteAllUsers() {
     deleteUsers("cql.allRecords=1");
   }

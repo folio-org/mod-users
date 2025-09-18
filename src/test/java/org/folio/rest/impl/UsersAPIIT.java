@@ -670,6 +670,13 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void cannotDeleteWithEmptyCQL() {
+    usersClient.attemptToDeleteUsers(" ")
+      .statusCode(400)
+      .body(is("Expected CQL but query parameter is empty"));
+  }
+
+  @Test
   void createJPGProfilePictureInDb() {
     configurationClient.updateConfiguration(new Config()
       .withConfigName("PROFILE_PICTURE_CONFIG")
