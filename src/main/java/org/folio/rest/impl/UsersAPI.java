@@ -496,6 +496,11 @@ public class UsersAPI implements Users {
       Context vertxContext) {
 
     try {
+      if (StringUtils.isBlank(query)) {
+        var msg = "Expected CQL but query parameter is empty";
+        asyncResultHandler.handle(Future.succeededFuture(DeleteUsersResponse.respond400WithTextPlain(msg)));
+        return;
+      }
       CQLWrapper wrapper = getCQL(query, -1, -1);
       PgUtil.postgresClient(vertxContext, okapiHeaders).withTrans(conn -> conn.execute(createDeleteQuery(wrapper, okapiHeaders))
         .compose(rows -> {

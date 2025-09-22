@@ -98,12 +98,17 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
   }
 
   void deleteRecords(String cqlQuery) {
-    initialSpecification()
+    attemptToDeleteRecords(cqlQuery)
+      .statusCode(SC_NO_CONTENT);
+  }
+
+
+  ValidatableResponse attemptToDeleteRecords(String cqlQuery) {
+    return initialSpecification()
       .when()
       .queryParam("query", cqlQuery)
       .delete()
-      .then()
-      .statusCode(SC_NO_CONTENT);
+      .then();
   }
 
   RequestSpecification initialSpecification() {
