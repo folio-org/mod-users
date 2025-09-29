@@ -1,5 +1,6 @@
 package org.folio.moduserstest;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static org.folio.extensions.KafkaContainerExtension.createTopics;
@@ -35,6 +36,9 @@ import org.folio.support.VertxModule;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+
 import lombok.SneakyThrows;
 
 @ExtendWith({
@@ -45,6 +49,8 @@ import lombok.SneakyThrows;
 })
 public abstract class AbstractRestTest {
 
+  public static final WireMockServer wireMockServer = new WireMockServer(options().dynamicPort());
+
   protected static OkapiUrl okapiUrl;
   protected static VertxModule module;
   protected static OkapiHeaders okapiHeaders;
@@ -52,6 +58,7 @@ public abstract class AbstractRestTest {
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
     System.setProperty("ENV", ENV);
+    wireMockServer.start();
     KafkaContainerExtension.enableKafka();
     createTopics(getConsortiumTopicNames());
     final var port = NetworkUtils.nextFreePort();
@@ -71,6 +78,7 @@ public abstract class AbstractRestTest {
     module.purgeModule(okapiHeaders)
       .onComplete(context.succeedingThenComplete())
       .onComplete(unused -> vertx.close());
+    wireMockServer.stop();
   }
 
   private static List<String> getConsortiumTopicNames() {

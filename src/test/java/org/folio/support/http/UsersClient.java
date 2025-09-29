@@ -3,6 +3,8 @@ package org.folio.support.http;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
+import java.util.Map;
+
 import org.folio.support.User;
 import org.folio.support.Users;
 
@@ -66,6 +68,10 @@ public class UsersClient {
 
   public void deleteUser(String id) {
     client.deleteRecord(id);
+  }
+
+  public void deleteUser(String id, Map<String, String> customHeaders) {
+    client.deleteRecord(id, customHeaders);
   }
 
   public ValidatableResponse attemptToDeleteUser(String id) {

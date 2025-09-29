@@ -1,4 +1,3 @@
-
 package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
@@ -26,11 +25,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -621,6 +623,30 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void canDeleteAUser() {
+    // Mock the manual blocks get endpoint
+    wireMockServer.stubFor(get(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*"))
+        .willReturn(aResponse()
+            .withStatus(200)
+            .withHeader("Content-Type", "application/json")
+            .withBody("""
+              {
+                  "manualblocks": [
+                      {
+                          "expirationDate": "2025-09-20T00:00:00.000+00:00",
+                          "userId": "f2c9e891-501f-4445-9915-8891d403c357",
+                          "id": "93d4eae6-7049-47f0-bf8f-297a3c75a357"
+                      }
+                  ],
+                  "totalRecords": 1
+              }
+              """)));
+
+    // Mock the delete manual block endpoint
+    wireMockServer.stubFor(delete(urlPathMatching("/manualblocks/.*"))
+      .willReturn(aResponse()
+        .withStatus(204)));
+
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
@@ -635,11 +661,24 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var user = usersClient.createUser(userToCreate);
-    usersClient.deleteUser(user.getId());
+
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
+
     await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(2));
     assertDeleteEventForUser(user);
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
+
+    // Verify that the mock was called
+    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+    wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
   }
 
   @Test
