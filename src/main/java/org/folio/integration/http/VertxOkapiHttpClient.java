@@ -56,7 +56,7 @@ public class VertxOkapiHttpClient {
       .timeout(timeout);
 
     queryParameters.forEach(request::addQueryParam);
-    logger.info("get:: request.uri() {}", request.uri());
+
     return request.send()
       .toCompletionStage()
       .toCompletableFuture()
