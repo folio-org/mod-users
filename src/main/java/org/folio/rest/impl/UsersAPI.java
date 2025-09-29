@@ -476,6 +476,11 @@ public class UsersAPI implements Users {
         // Create FeesFinesModuleClient and delete manual blocks first
         FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
         return Future.fromCompletionStage(feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders))
+          .recover(throwable -> {
+            logger.error("Failed to delete manual blocks for user {}: {}", userId, throwable.getMessage(), throwable);
+            // Return error response instead of continuing with user deletion
+            return failedFuture(throwable);
+          })
           .compose(v-> conn.delete(TABLE_NAME_USERS, userId)
             .compose(rows -> {
               userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user);
@@ -493,8 +498,11 @@ public class UsersAPI implements Users {
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
           asyncResultHandler.handle(reply);
-        }).onFailure(cause -> asyncResultHandler.handle(
-        succeededFuture(PostUsersExpireTimerResponse.respond500WithTextPlain(cause.getMessage()))));
+        })
+      .recover(throwable -> {
+        return succeededFuture(DeleteUsersByUserIdResponse.respond500WithTextPlain(
+          "Failed to delete error due to: " + throwable.getMessage()));
+      });
   }
 
   private static @NotNull FeesFinesModuleClientImpl getFeesFinesModuleClient(Context vertxContext) {

@@ -10,6 +10,7 @@ import org.folio.client.FeesFinesModuleClient;
 import org.folio.exceptions.HttpException;
 import org.folio.integration.http.ResponseInterpreter;
 import org.folio.integration.http.VertxOkapiHttpClient;
+import org.folio.util.PercentCodec;
 import org.folio.util.StringUtil;
 
 import com.google.common.collect.Maps;
@@ -79,9 +80,9 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
    */
   @Override
   public CompletableFuture<Void> deleteManualBlocksByUserId(String userId, Map<String, String> okapiHeaders) {
-//    String query = PercentCodec.encode("(userId==" + StringUtil.cqlEncode(userId) + ")").toString();
+    String query = PercentCodec.encode("(userId==" + StringUtil.cqlEncode(userId) + ")").toString();
 //    String query = String.format("userId==%s", userId);
-    String query = String.format("(userId==%s)", StringUtil.cqlEncode(userId));
+//    String query = String.format("(userId==%s)", StringUtil.cqlEncode(userId));
     return getManualBlocksByCQL(query, okapiHeaders)
       .thenCompose(manualBlocks -> {
         JsonArray blocks = manualBlocks.getJsonArray("manualblocks");
