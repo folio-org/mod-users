@@ -73,7 +73,7 @@ class VertxOkapiHttpClientTest {
       "/record", Headers.toMap(fakeWebServer.baseUrl()));
 
     Exception exception = assertThrows(ExecutionException.class, ()-> {
-      getCompleted.get(6, SECONDS);
+      getCompleted.toCompletionStage().toCompletableFuture().get(6, SECONDS);
     });
 
     String err = "The timeout period of 5000ms has been exceeded";
@@ -95,7 +95,7 @@ class VertxOkapiHttpClientTest {
     final var getCompleted = client.get(
       "/record", Headers.toMap(fakeWebServer.baseUrl()));
 
-    final var response = getCompleted.get(2, SECONDS);
+    final var response = getCompleted.toCompletionStage().toCompletableFuture().get(2, SECONDS);
 
     assertThat(response.statusCode, is(HTTP_OK.toInt()));
     assertThat(asJson(response.body).getString("message"), is("hello"));
@@ -121,7 +121,7 @@ class VertxOkapiHttpClientTest {
     final var getCompleted = client.get(
       "/record", queryParameters, Headers.toMap(fakeWebServer.baseUrl()));
 
-    final var response = getCompleted.get(2, SECONDS);
+    final var response = getCompleted.toCompletionStage().toCompletableFuture().get(2, SECONDS);
 
     assertThat(response.statusCode, is(HTTP_OK.toInt()));
     assertThat(asJson(response.body).getString("message"), is("hello"));
@@ -145,7 +145,7 @@ class VertxOkapiHttpClientTest {
     final var postCompleted = client.post(
       "/record", dummyJsonRequestBody(), Headers.toMap(fakeWebServer.baseUrl()));
 
-    final var response = postCompleted.get(2, SECONDS);
+    final var response = postCompleted.toCompletionStage().toCompletableFuture().get(2, SECONDS);
 
     assertThat(response.statusCode, is(HTTP_CREATED.toInt()));
     assertThat(asJson(response.body).getString("message"), is("hello"));
@@ -167,7 +167,7 @@ class VertxOkapiHttpClientTest {
     final var putCompleted = client.put(
       "/record", dummyJsonRequestBody(), Headers.toMap(fakeWebServer.baseUrl()));
 
-    final var response = putCompleted.get(2, SECONDS);
+    final var response = putCompleted.toCompletionStage().toCompletableFuture().get(2, SECONDS);
 
     assertThat(response.statusCode, is(HTTP_NO_CONTENT.toInt()));
     assertThat(response.body, is(nullValue()));
@@ -186,7 +186,7 @@ class VertxOkapiHttpClientTest {
 
     final var deleteCompleted = client.delete("/record", Headers.toMap(fakeWebServer.baseUrl()));
 
-    final var response = deleteCompleted.get(2, SECONDS);
+    final var response = deleteCompleted.toCompletionStage().toCompletableFuture().get(2, SECONDS);
 
     assertThat(response.statusCode, is(HTTP_NO_CONTENT.toInt()));
     assertThat(response.body, is(nullValue()));

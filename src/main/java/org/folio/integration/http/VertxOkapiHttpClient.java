@@ -3,12 +3,12 @@ package org.folio.integration.http;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -27,23 +27,23 @@ public class VertxOkapiHttpClient {
     this.client = client;
   }
 
-  public CompletableFuture<Response> get(String path, Map<String, String> okapiHeaders) {
+  public Future<Response> get(String path, Map<String, String> okapiHeaders) {
     return get(path, Map.of(), okapiHeaders);
   }
 
-  public CompletableFuture<Response> get(String path,
+  public Future<Response> get(String path,
     Map<String, String> queryParameters, Map<String, String> okapiHeaders) {
 
     return get(path, queryParameters, okapiHeaders, DEFAULT_TIMEOUT_MS);
   }
 
-  public CompletableFuture<Response> getExtendedTimeout(String path,
+  public Future<Response> getExtendedTimeout(String path,
     Map<String, String> queryParameters, Map<String, String> okapiHeaders) {
 
     return get(path, queryParameters, okapiHeaders, EXTENDED_TIMEOUT_MS);
   }
 
-  public CompletableFuture<Response> get(String path,
+  public Future<Response> get(String path,
     Map<String, String> queryParameters, Map<String, String> okapiHeaders, long timeout) {
 
     logger.info("get:: path {}, timeout {}", path, timeout);
@@ -58,24 +58,22 @@ public class VertxOkapiHttpClient {
     queryParameters.forEach(request::addQueryParam);
 
     return request.send()
-      .toCompletionStage()
-      .toCompletableFuture()
-      .thenApply(this::toResponse);
+      .map(this::toResponse);
   }
 
-  public CompletableFuture<Response> post(String path, JsonObject body,
+  public Future<Response> post(String path, JsonObject body,
     Map<String, String> okapiHeaders) {
 
     return post(path, body, okapiHeaders, DEFAULT_TIMEOUT_MS);
   }
 
-  public CompletableFuture<Response> postExtendedTimeout(String path, JsonObject body,
+  public Future<Response> postExtendedTimeout(String path, JsonObject body,
     Map<String, String> okapiHeaders) {
 
     return post(path, body, okapiHeaders, EXTENDED_TIMEOUT_MS);
   }
 
-  public CompletableFuture<Response> post(String path, JsonObject body,
+  public Future<Response> post(String path, JsonObject body,
     Map<String, String> okapiHeaders, long timeout) {
 
     logger.info("post:: path {}, timeout {}", path, timeout);
@@ -90,7 +88,7 @@ public class VertxOkapiHttpClient {
     return makeRequestWithBody(request, body);
   }
 
-  public CompletableFuture<Response> put(String path, JsonObject body,
+  public Future<Response> put(String path, JsonObject body,
     Map<String, String> okapiHeaders) {
 
     URL url = buildUrl(path, okapiHeaders);
@@ -102,7 +100,7 @@ public class VertxOkapiHttpClient {
     return makeRequestWithBody(request, body);
   }
 
-  public CompletableFuture<Response> delete(String path, Map<String, String> okapiHeaders) {
+  public Future<Response> delete(String path, Map<String, String> okapiHeaders) {
     logger.info("delete:: path {}", path);
 
     URL url = buildUrl(path, okapiHeaders);
@@ -113,18 +111,14 @@ public class VertxOkapiHttpClient {
       .timeout(DEFAULT_TIMEOUT_MS);
 
     return request.send()
-      .toCompletionStage()
-      .toCompletableFuture()
-      .thenApply(this::toResponse);
+      .map(this::toResponse);
   }
 
-  private CompletableFuture<Response> makeRequestWithBody(
+  private Future<Response> makeRequestWithBody(
     HttpRequest<Buffer> request, JsonObject body) {
 
     return request.sendJson(body)
-      .toCompletionStage()
-      .toCompletableFuture()
-      .thenApply(this::toResponse);
+      .map(this::toResponse);
   }
 
   private URL buildUrl(String path, Map<String, String> okapiHeaders) {

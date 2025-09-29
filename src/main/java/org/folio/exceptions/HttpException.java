@@ -1,6 +1,6 @@
 package org.folio.exceptions;
 
-public class HttpException extends Exception {
+public class HttpException extends RuntimeException {
   private static final long serialVersionUID = 8109197948434861504L;
 
   private final int code;

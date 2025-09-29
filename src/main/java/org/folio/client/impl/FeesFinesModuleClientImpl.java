@@ -1,7 +1,6 @@
 package org.folio.client.impl;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,11 +9,11 @@ import org.folio.client.FeesFinesModuleClient;
 import org.folio.exceptions.HttpException;
 import org.folio.integration.http.ResponseInterpreter;
 import org.folio.integration.http.VertxOkapiHttpClient;
-import org.folio.util.PercentCodec;
 import org.folio.util.StringUtil;
 
 import com.google.common.collect.Maps;
 
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -37,17 +36,20 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
    *
    * @param cqlQuery Query string to filter manual blocks
    * @param okapiHeaders Okapi headers
-   * @return CompletableFuture with JsonObject containing manual blocks
+   * @return Future with JsonObject containing manual blocks
    */
   @Override
-  public CompletableFuture<JsonObject> getManualBlocksByCQL(String cqlQuery, Map<String, String> okapiHeaders) {
+  public Future<JsonObject> getManualBlocksByCQL(String cqlQuery, Map<String, String> okapiHeaders) {
     logger.info("getManualBlocksByCQL::Retrieving manualBlocks by cqlQuery {}", cqlQuery);
     Map<String, String> queryParameters = Maps.newLinkedHashMap();
     queryParameters.put(QUERY, cqlQuery);
     return client.get(MANUAL_BLOCKS_PATH, queryParameters, okapiHeaders)
-      .thenApply(response -> {
+      .compose(response -> {
         logger.info("getManualBlocksByCQL::Successfully retrieved manual blocks by query: {}", cqlQuery);
         return ResponseInterpreter.verifyAndExtractBody(response);
+      }).recover(throwable -> {
+        logger.error("getManualBlocksByCQL::Error occurred while retrieving manual blocks by query: {}", cqlQuery, throwable);
+        return Future.failedFuture(throwable);
       });
   }
 
@@ -56,18 +58,21 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
    *
    * @param manualBlockId ID of the manual block to delete
    * @param okapiHeaders Okapi headers
-   * @return CompletableFuture with void result
+   * @return Future with void result
    */
   @Override
-  public CompletableFuture<Void> deleteManualBlockById(String manualBlockId, Map<String, String> okapiHeaders) {
+  public Future<Void> deleteManualBlockById(String manualBlockId, Map<String, String> okapiHeaders) {
     String path = MANUAL_BLOCKS_PATH + SLASH + manualBlockId;
     return client.delete(path, okapiHeaders)
-      .thenApply(response -> {
+      .compose(response -> {
         if (!response.isDeleted()) {
           throw new CompletionException(new HttpException(response.statusCode,
             String.format("Failed to delete manual block. Status code: %s, body: %s", response.statusCode, response.body)));
         }
-        return null;
+        return Future.<Void>succeededFuture();
+      }).recover(throwable -> {
+        logger.error("deleteManualBlockById::Error occurred while deleting manual block with id: {}", manualBlockId, throwable);
+        return Future.failedFuture(throwable);
       });
   }
 
@@ -76,30 +81,28 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
    *
    * @param userId User ID to delete manual blocks for
    * @param okapiHeaders Okapi headers
-   * @return CompletableFuture with void result
+   * @return Future with void result
    */
   @Override
-  public CompletableFuture<Void> deleteManualBlocksByUserId(String userId, Map<String, String> okapiHeaders) {
-    String query = PercentCodec.encode("(userId==" + StringUtil.cqlEncode(userId) + ")").toString();
-//    String query = String.format("userId==%s", userId);
-//    String query = String.format("(userId==%s)", StringUtil.cqlEncode(userId));
+  public Future<Void> deleteManualBlocksByUserId(String userId, Map<String, String> okapiHeaders) {
+    String query = String.format("(userId==%s)", StringUtil.cqlEncode(userId));
     return getManualBlocksByCQL(query, okapiHeaders)
-      .thenCompose(manualBlocks -> {
+      .compose(manualBlocks -> {
         JsonArray blocks = manualBlocks.getJsonArray("manualblocks");
-        CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+        Future<Void> future = Future.succeededFuture(null);
 
         for (int i = 0; i < blocks.size(); i++) {
           JsonObject block = blocks.getJsonObject(i);
           String blockId = block.getString("id");
-          future = future.thenCompose(v -> deleteManualBlockById(blockId, okapiHeaders));
+          future = future.compose(v -> deleteManualBlockById(blockId, okapiHeaders));
         }
 
         return future;
       })
-      .exceptionally(throwable -> {
+      .recover(throwable -> {
         logger.error("deleteManualBlocksByUserId::Error occurred while retrieving or deleting manual blocks for userId: {}", userId,
           throwable);
-        throw new CompletionException(throwable);
+        return Future.failedFuture(throwable);
       });
   }
 }

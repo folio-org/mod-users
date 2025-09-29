@@ -78,6 +78,10 @@ public class UsersClient {
     return client.attemptToDeleteRecord(id);
   }
 
+  public ValidatableResponse attemptToDeleteUser(String id, Map<String, String> customHeaders) {
+    return client.attemptToDeleteRecord(id, customHeaders);
+  }
+
   public void deleteUsers(String cqlQuery) {
     client.deleteRecords(cqlQuery);
   }
