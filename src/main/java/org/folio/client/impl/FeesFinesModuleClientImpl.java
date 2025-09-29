@@ -65,7 +65,7 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
       .thenApply(response -> {
         if (!response.isDeleted()) {
           throw new CompletionException(new HttpException(response.statusCode,
-            "Failed to delete manual block. Status code: " + response.statusCode));
+            String.format("Failed to delete manual block. Status code: %s, body: %s", response.statusCode, response.body)));
         }
         return null;
       });
@@ -93,6 +93,11 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
         }
 
         return future;
+      })
+      .exceptionally(throwable -> {
+        logger.error("deleteManualBlocksByUserId::Error occurred while retrieving or deleting manual blocks for userId: {}", userId,
+          throwable);
+        throw new CompletionException(throwable);
       });
   }
 }

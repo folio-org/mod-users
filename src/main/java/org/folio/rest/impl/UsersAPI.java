@@ -493,7 +493,8 @@ public class UsersAPI implements Users {
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
           asyncResultHandler.handle(reply);
-        });
+        }).onFailure(cause -> asyncResultHandler.handle(
+        succeededFuture(PostUsersExpireTimerResponse.respond500WithTextPlain(cause.getMessage()))));
   }
 
   private static @NotNull FeesFinesModuleClientImpl getFeesFinesModuleClient(Context vertxContext) {
