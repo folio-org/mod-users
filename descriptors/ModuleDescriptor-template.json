@@ -1,6 +1,12 @@
 {
   "id": "${artifactId}-${version}",
   "name": "users",
+  "requires":[
+    {
+      "id": "feesfines",
+      "version": "19.1"
+    }
+  ],
   "provides": [
     {
       "id": "users",
@@ -67,7 +73,11 @@
         {
           "methods": [ "DELETE" ],
           "pathPattern": "/users/{id}",
-          "permissionsRequired": [ "users.item.delete" ]
+          "permissionsRequired": [ "users.item.delete" ],
+          "modulePermissions": [
+            "manualblocks.collection.get",
+            "manualblocks.item.delete"
+          ]
         },
         {
           "methods": [ "DELETE" ],
