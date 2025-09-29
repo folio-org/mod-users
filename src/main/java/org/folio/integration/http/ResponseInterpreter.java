@@ -14,7 +14,7 @@ public class ResponseInterpreter {
   private ResponseInterpreter() {}
 
   public static Future<JsonObject> verifyAndExtractBody(Response response) {
-    log.info("verifyAndExtractBody:: statusCode: {}, body: {}", response.statusCode, response.body);
+    log.debug("verifyAndExtractBody:: statusCode: {}, body: {}", response.statusCode, response.body);
     if (!response.isSuccess()) {
       throw new HttpException(response.statusCode, response.body);
     }

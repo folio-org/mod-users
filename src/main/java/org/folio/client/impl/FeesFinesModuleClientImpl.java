@@ -21,6 +21,7 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
 
   private static final Logger logger = LogManager.getLogger(FeesFinesModuleClientImpl.class);
   private static final String QUERY = "query";
+  private static final String LIMIT = "limit";
   private static final String MANUAL_BLOCKS_PATH = "/manualblocks";
   private static final String SLASH = "/";
 
@@ -40,12 +41,13 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
    */
   @Override
   public Future<JsonObject> getManualBlocksByCQL(String cqlQuery, Map<String, String> okapiHeaders) {
-    logger.info("getManualBlocksByCQL::Retrieving manualBlocks by cqlQuery {}", cqlQuery);
+    logger.debug("getManualBlocksByCQL::Retrieving manualBlocks by cqlQuery {}", cqlQuery);
     Map<String, String> queryParameters = Maps.newLinkedHashMap();
     queryParameters.put(QUERY, cqlQuery);
+    queryParameters.put(LIMIT, "5000");
     return client.get(MANUAL_BLOCKS_PATH, queryParameters, okapiHeaders)
       .compose(response -> {
-        logger.info("getManualBlocksByCQL::Successfully retrieved manual blocks by query: {}", cqlQuery);
+        logger.debug("getManualBlocksByCQL::Successfully retrieved manual blocks by query: {}", cqlQuery);
         return ResponseInterpreter.verifyAndExtractBody(response);
       }).recover(throwable -> {
         logger.error("getManualBlocksByCQL::Error occurred while retrieving manual blocks by query: {}", cqlQuery, throwable);
