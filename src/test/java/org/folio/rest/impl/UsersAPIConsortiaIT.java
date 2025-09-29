@@ -90,7 +90,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(SC_NO_CONTENT);
-    usersClient.deleteUser(user.getId());
+    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
 
     await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
     await(3).until(() -> getUserEvents(USER_CREATED, userId), hasSize(0));
