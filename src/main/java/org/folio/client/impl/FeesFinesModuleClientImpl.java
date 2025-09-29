@@ -1,7 +1,6 @@
 package org.folio.client.impl;
 
 import java.util.Map;
-import java.util.concurrent.CompletionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,8 +67,8 @@ public class FeesFinesModuleClientImpl implements FeesFinesModuleClient {
     return client.delete(path, okapiHeaders)
       .compose(response -> {
         if (!response.isDeleted()) {
-          throw new CompletionException(new HttpException(response.statusCode,
-            String.format("Failed to delete manual block. Status code: %s, body: %s", response.statusCode, response.body)));
+          throw new HttpException(response.statusCode,
+            String.format("Failed to delete manual block. Status code: %s, body: %s", response.statusCode, response.body));
         }
         return Future.<Void>succeededFuture();
       }).recover(throwable -> {

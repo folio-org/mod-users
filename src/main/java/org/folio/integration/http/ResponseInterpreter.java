@@ -22,7 +22,7 @@ public class ResponseInterpreter {
     // Parsing an empty body to JSON causes an exception
     if (isBlank(response.body)) {
       log.info("verifyAndExtractBody:: response is empty");
-      return null;
+      return Future.succeededFuture(null);
     }
     return Future.succeededFuture(new JsonObject(response.body));
   }

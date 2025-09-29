@@ -13,10 +13,6 @@ public class Response {
     return statusCode >= 200 && statusCode < 300;
   }
 
-  public boolean isNotFound() {
-    return statusCode == 404;
-  }
-
   public boolean isDeleted() {
     return statusCode == 204;
   }
