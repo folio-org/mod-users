@@ -90,8 +90,21 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
       .statusCode(SC_NO_CONTENT);
   }
 
+  void deleteRecord(String id, Map<String, String> customHeaders) {
+    attemptToDeleteRecord(id, customHeaders)
+      .statusCode(204);
+  }
+
   ValidatableResponse attemptToDeleteRecord(String id) {
     return initialSpecification()
+      .when()
+      .delete("/{id}", Map.of("id", id))
+      .then();
+  }
+
+  ValidatableResponse attemptToDeleteRecord(String id, Map<String, String> customHeaders) {
+    return initialSpecification()
+      .headers(customHeaders)
       .when()
       .delete("/{id}", Map.of("id", id))
       .then();

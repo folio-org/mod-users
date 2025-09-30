@@ -1,4 +1,3 @@
-
 package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
@@ -14,6 +13,10 @@ import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.PROGRAMS;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.SERVICES;
 import static org.folio.rest.jaxrs.model.PreferredEmailCommunication.SUPPORT;
+import static org.folio.rest.utils.ManualBlockWiremockStubs.addManualBlockStubForDeleteUserById;
+import static org.folio.rest.utils.ManualBlockWiremockStubs.blankManualBlockByCQLStubForDeleteUserById1;
+import static org.folio.rest.utils.ManualBlockWiremockStubs.deleteManualBlockByIdStub500Error;
+import static org.folio.rest.utils.ManualBlockWiremockStubs.manualBlockByCQLStubForDeleteUserById500Error;
 import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.folio.support.kafka.DomainEventAssertions.assertCreateEvent;
 import static org.folio.support.kafka.DomainEventAssertions.assertDeleteEvent;
@@ -26,6 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -635,11 +639,109 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var user = usersClient.createUser(userToCreate);
-    usersClient.deleteUser(user.getId());
+
+    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
+
     await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(2));
     assertDeleteEventForUser(user);
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
+
+    // Verify that the mock was called
+    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+    wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
+  }
+
+  @Test
+  void canDeleteAUser_manualBlockByCQL_Error500_negative() {
+    String userId = UUID.randomUUID().toString();
+    final var userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
+
+    usersClient.attemptToDeleteUser(user.getId(), manualBlockByCQLStubForDeleteUserById500Error(wireMockServer))
+      .statusCode(500)
+      .body(is("Failed to delete user error due to: Simulated error"));
+
+    // Verify that the mock was called
+    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
+  }
+
+  @Test
+  void canDeleteAUser_delete_manualBlocks_Error500_negative() {
+    String userId = UUID.randomUUID().toString();
+    final var userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
+
+    usersClient.attemptToDeleteUser(user.getId(), deleteManualBlockByIdStub500Error(wireMockServer))
+      .statusCode(500)
+      .body(is("Failed to delete user error due to: Failed to delete manual block. Status code: 500, body: null"));
+
+    // Verify that the mock was called
+    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+    wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
+  }
+
+  @Test
+  void canDeleteAUser_delete_manualBlocks_EmptyResBodyError500_negative() {
+    String userId = UUID.randomUUID().toString();
+    final var userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
+
+    usersClient.attemptToDeleteUser(user.getId(), blankManualBlockByCQLStubForDeleteUserById1(wireMockServer))
+      .statusCode(500)
+      .body(containsString("Failed to delete user error due to:"));
+
+    // Verify that the mock was called
+    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
   }
 
   @Test

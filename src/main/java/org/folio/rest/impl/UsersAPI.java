@@ -71,12 +71,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.folio.client.impl.FeesFinesModuleClientImpl;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.CQL2PgJSONException;
 import org.folio.cql2pgjson.exception.FieldException;
 import org.folio.cql2pgjson.exception.QueryValidationException;
 import org.folio.domain.UserType;
 import org.folio.event.service.UserTenantService;
+import org.folio.integration.http.HttpClientFactory;
+import org.folio.integration.http.VertxOkapiHttpClient;
 import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Stream;
 import org.folio.rest.annotations.Validate;
@@ -106,6 +109,7 @@ import org.folio.support.FailureHandler;
 import org.folio.support.ProfilePictureHelper;
 import org.folio.validate.CustomFieldValidationException;
 import org.folio.validate.ValidationServiceImpl;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.z3950.zing.cql.CQLParseException;
 
@@ -469,23 +473,33 @@ public class UsersAPI implements Users {
         if (user == null) {
           return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
         }
-        return conn.delete(TABLE_NAME_USERS, userId)
-          .compose(rows -> {
-            userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user);
-            if (rows.rowCount() != 0) {
-              return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId),
-                  UserEvent.Action.DELETE, okapiHeaders)
-                .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
-                .map(Response.class::cast);
-            } else {
-              return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
-            }
-          });
+        // Create FeesFinesModuleClient and delete manual blocks first
+        FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
+        return feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
+          .compose(v-> conn.delete(TABLE_NAME_USERS, userId)
+            .compose(rows -> {
+              userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user);
+              if (rows.rowCount() != 0) {
+                return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId),
+                    UserEvent.Action.DELETE, okapiHeaders)
+                  .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
+                  .map(Response.class::cast);
+              } else {
+                return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
+              }
+            })
+          ).recover(throwable -> succeededFuture(DeleteUsersByUserIdResponse.respond500WithTextPlain(
+            "Failed to delete user error due to: " + throwable.getMessage())));
       }))
         .onComplete(reply -> {
           userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
           asyncResultHandler.handle(reply);
         });
+  }
+
+  private @NotNull FeesFinesModuleClientImpl getFeesFinesModuleClient(Context vertxContext) {
+    VertxOkapiHttpClient httpClient = HttpClientFactory.getHttpClient(vertxContext.owner());
+    return new FeesFinesModuleClientImpl(httpClient);
   }
 
   @Validate

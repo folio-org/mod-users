@@ -9,6 +9,7 @@ import static org.folio.event.UserEventType.USER_CREATED;
 import static org.folio.event.UserEventType.USER_DELETED;
 import static org.folio.event.UserEventType.USER_UPDATED;
 import static org.folio.extensions.KafkaContainerExtension.getTopicName;
+import static org.folio.rest.utils.ManualBlockWiremockStubs.addManualBlockStubForDeleteUserById;
 import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.is;
@@ -89,7 +90,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(SC_NO_CONTENT);
-    usersClient.deleteUser(user.getId());
+    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
 
     await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
     await(3).until(() -> getUserEvents(USER_CREATED, userId), hasSize(0));
@@ -111,7 +112,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(SC_NO_CONTENT);
-    usersClient.deleteUser(user.getId());
+    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
 
     await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
     await(3).until(() -> getUserEvents(USER_CREATED, userId), hasSize(0));
@@ -119,6 +120,9 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
   }
 
   @Test
@@ -128,7 +132,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     String userId = UUID.randomUUID().toString();
     final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     final var user = usersClient.createUser(userToCreate);
-    usersClient.deleteUser(user.getId());
+    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
 
     var userCreatedEvents = await().until(() -> getUserEvents(USER_CREATED, userId), hasSize(1));
     var userDeletedEvents = await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
@@ -141,6 +145,9 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
   }
 
   @Test
@@ -154,7 +161,7 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(SC_NO_CONTENT);
-    usersClient.deleteUser(user.getId());
+    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
 
     var userCreatedEvents = await().until(() -> getUserEvents(USER_CREATED, userId), hasSize(1));
     var userUpdatedEvents = await().until(() -> getUserEvents(USER_UPDATED, userId), hasSize(1));
@@ -171,6 +178,9 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
   }
 
   @Test
