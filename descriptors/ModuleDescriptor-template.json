@@ -680,6 +680,15 @@
     }
 
   ],
+  "metadata": {
+    "user": {
+      "type": "system",
+      "permissions": [
+        "manualblocks.collection.get",
+        "manualblocks.item.delete"
+      ]
+    }
+  },
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerPull": false,
