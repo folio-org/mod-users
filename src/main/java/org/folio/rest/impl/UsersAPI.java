@@ -497,7 +497,7 @@ public class UsersAPI implements Users {
         });
   }
 
-  private static @NotNull FeesFinesModuleClientImpl getFeesFinesModuleClient(Context vertxContext) {
+  private @NotNull FeesFinesModuleClientImpl getFeesFinesModuleClient(Context vertxContext) {
     VertxOkapiHttpClient httpClient = HttpClientFactory.getHttpClient(vertxContext.owner());
     return new FeesFinesModuleClientImpl(httpClient);
   }

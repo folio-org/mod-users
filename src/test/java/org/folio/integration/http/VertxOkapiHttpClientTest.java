@@ -197,10 +197,10 @@ class VertxOkapiHttpClientTest {
   private MappingBuilder matchingFolioHeaders(MappingBuilder mappingBuilder) {
     return mappingBuilder
       .withHeader("X-Okapi-Url", equalTo(fakeWebServer.baseUrl()))
-      .withHeader("X-Okapi-Tenant", equalTo(Headers.tenantId))
-      .withHeader("X-Okapi-Token", equalTo(Headers.token))
-      .withHeader("X-Okapi-User-Id", equalTo(Headers.userId))
-      .withHeader("X-Okapi-Request-Id", equalTo(Headers.requestId));
+      .withHeader("X-Okapi-Tenant", equalTo(Headers.TENANT_ID))
+      .withHeader("X-Okapi-Token", equalTo(Headers.TOKEN))
+      .withHeader("X-Okapi-User-Id", equalTo(Headers.USER_ID))
+      .withHeader("X-Okapi-Request-Id", equalTo(Headers.REQUEST_ID));
   }
 
   private VertxOkapiHttpClient createClient() {
@@ -231,18 +231,18 @@ class VertxOkapiHttpClientTest {
   }
 
   private static class Headers {
-    private static final String tenantId = "test-tenant";
-    private static final String token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkaWt1X2FkbWluIiwidXNlcl9pZCI6ImFhMjZjYjg4LTc2YjEtNTQ1OS1hMjM1LWZjYTRmZDI3MGMyMyIsImlhdCI6MTU3NjAxMzY3MiwidGVuYW50IjoiZGlrdSJ9.oGCb0gDIdkXGlCiECvJHgQMXD3QKKW2vTh7PPCrpds8";
-    private static final String userId = "aa26cb88-76b1-5459-a235-fca4fd270c23";
-    private static final String requestId = "test-request-id";
+    private static final String TENANT_ID = "test-tenant";
+    private static final String TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkaWt1X2FkbWluIiwidXNlcl9pZCI6ImFhMjZjYjg4LTc2YjEtNTQ1OS1hMjM1LWZjYTRmZDI3MGMyMyIsImlhdCI6MTU3NjAxMzY3MiwidGVuYW50IjoiZGlrdSJ9.oGCb0gDIdkXGlCiECvJHgQMXD3QKKW2vTh7PPCrpds8";
+    private static final String USER_ID = "aa26cb88-76b1-5459-a235-fca4fd270c23";
+    private static final String REQUEST_ID = "test-request-id";
 
     static Map<String, String> toMap(String okapiUrl) {
       return Map.of(
         "X-Okapi-Url", okapiUrl,
-        "X-Okapi-Tenant", Headers.tenantId,
-        "X-Okapi-Token", Headers.token,
-        "X-Okapi-User-Id", Headers.userId,
-        "X-Okapi-Request-Id", Headers.requestId);
+        "X-Okapi-Tenant", Headers.TENANT_ID,
+        "X-Okapi-Token", Headers.TOKEN,
+        "X-Okapi-User-Id", Headers.USER_ID,
+        "X-Okapi-Request-Id", Headers.REQUEST_ID);
     }
   }
 }

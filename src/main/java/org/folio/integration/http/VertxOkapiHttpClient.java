@@ -1,6 +1,7 @@
 package org.folio.integration.http;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.CompletionException;
@@ -125,8 +126,7 @@ public class VertxOkapiHttpClient {
     try {
       final var okapiURL = okapiHeaders.getOrDefault("X-Okapi-Url", "");
 
-      return new URL(okapiURL + path);
-
+      return URI.create(okapiURL + path).toURL();
     } catch (MalformedURLException e) {
       throw new CompletionException(e.getCause());
     }
