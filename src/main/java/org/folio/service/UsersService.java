@@ -28,7 +28,7 @@ public class UsersService {
           String errorMsg = String.format("User with id %s was not found", user.getId());
           return Future.failedFuture(new HttpException(Response.Status.NOT_FOUND.getStatusCode(), errorMsg));
         }
-        return Future.succeededFuture(user);
+        return conn.getById(TABLE_NAME_USERS, user.getId(), User.class);
       })
       .onSuccess(x -> logger.info("updateUser complete, userId={}", user.getId()))
       .onFailure(e -> logger.error("updateUser failed, userId={}", user.getId(), e));
