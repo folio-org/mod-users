@@ -458,6 +458,35 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void updateUserPreservesDeprecatedCreatedDate() {
+    final var createdUser = usersClient.createUser(User.builder()
+      .username("test-user")
+      .personal(Personal.builder().lastName("Test").build())
+      .build());
+
+    final var originalDeprecatedCreatedDate = createdUser.getCreatedDate();
+    final var originalDeprecatedUpdatedDate = createdUser.getUpdatedDate();
+    assertThat(originalDeprecatedCreatedDate, is(notNullValue()));
+    assertThat(originalDeprecatedUpdatedDate, is(notNullValue()));
+
+    usersClient.attemptToUpdateUser(User.builder()
+        .id(createdUser.getId())
+        .username("test-user-updated")
+        .personal(Personal.builder().lastName("Test").build())
+        .build())
+      .statusCode(is(204));
+
+    awaitUntilAsserted(() -> {
+      final var updatedUser = usersClient.getUser(createdUser.getId());
+
+      assertThat(updatedUser.getUsername(), is("test-user-updated"));
+      assertThat(updatedUser.getCreatedDate(), is(originalDeprecatedCreatedDate));
+      assertThat(updatedUser.getUpdatedDate(), is(notNullValue()));
+      assertThat(updatedUser.getUpdatedDate().after(originalDeprecatedUpdatedDate), is(true));
+    });
+  }
+
+  @Test
   void cannotChangeAUsersId() {
     final var julia = usersClient.createUser(User.builder()
       .username("julia")

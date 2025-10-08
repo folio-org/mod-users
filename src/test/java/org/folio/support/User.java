@@ -33,6 +33,8 @@ public class User {
   Set<PreferredEmailCommunication> preferredEmailCommunication;
   String externalSystemId;
   Date enrollmentDate;
+  Date createdDate;
+  Date updatedDate;
 
   @Builder.Default
   Map<String, Object> customFields = new LinkedHashMap<>();
