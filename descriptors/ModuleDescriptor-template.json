@@ -1,7 +1,7 @@
 {
   "id": "${artifactId}-${version}",
   "name": "users",
-  "requires":[
+  "optional": [
     {
       "id": "feesfines",
       "version": "19.1"
