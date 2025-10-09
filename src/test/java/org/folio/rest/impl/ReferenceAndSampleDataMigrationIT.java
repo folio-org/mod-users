@@ -1,8 +1,11 @@
 
 package org.folio.rest.impl;
 
+import static org.folio.rest.utils.ManualBlockWiremockStubs.addManualBlockStubForDeleteUserById;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.util.Map;
 
 import io.vertx.core.Future;
 import io.vertx.junit5.VertxTestContext;
@@ -33,12 +36,17 @@ class ReferenceAndSampleDataMigrationIT extends AbstractRestTestWithData {
 
   @Test
   void testMigration(VertxTestContext vtc) {
-    usersClient.deleteUser("ab579dc3-219b-4f5b-8068-ab1c7a55c402"); // users-15.4.0/User001.json
-    usersClient.deleteUser("bec20636-fb68-41fd-84ea-2cf910673599"); // users-17.3.0/User301.json
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = addManualBlockStubForDeleteUserById(wireMockServer);
+    usersClient.deleteUser("ab579dc3-219b-4f5b-8068-ab1c7a55c402", customHeaders); // users-15.4.0/User001.json
+    usersClient.deleteUser("bec20636-fb68-41fd-84ea-2cf910673599" ,customHeaders); // users-17.3.0/User301.json
     migrate("17.3.0", 5, 6, 301)
     .compose(x -> migrate("15.4.0", 5, 6, 302))
     .compose(x -> migrate("15.3.9", 5, 6, 303))
     .onComplete(vtc.succeedingThenComplete());
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
   }
 
   Future<Void> migrate(String fromVersion, int groups, int addressTypes, int users) {

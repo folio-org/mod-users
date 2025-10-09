@@ -90,6 +90,11 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
       .statusCode(SC_NO_CONTENT);
   }
 
+  void deleteRecord(String id, Map<String, String> customHeaders) {
+    attemptToDeleteRecord(id, customHeaders)
+      .statusCode(204);
+  }
+
   ValidatableResponse attemptToDeleteRecord(String id) {
     return initialSpecification()
       .when()
@@ -97,13 +102,26 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
       .then();
   }
 
+  ValidatableResponse attemptToDeleteRecord(String id, Map<String, String> customHeaders) {
+    return initialSpecification()
+      .headers(customHeaders)
+      .when()
+      .delete("/{id}", Map.of("id", id))
+      .then();
+  }
+
   void deleteRecords(String cqlQuery) {
-    initialSpecification()
+    attemptToDeleteRecords(cqlQuery)
+      .statusCode(SC_NO_CONTENT);
+  }
+
+
+  ValidatableResponse attemptToDeleteRecords(String cqlQuery) {
+    return initialSpecification()
       .when()
       .queryParam("query", cqlQuery)
       .delete()
-      .then()
-      .statusCode(SC_NO_CONTENT);
+      .then();
   }
 
   RequestSpecification initialSpecification() {
