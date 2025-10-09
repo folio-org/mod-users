@@ -46,7 +46,7 @@ resourceTypes:
   delete:
     description: Delete a collection of users selected by a CQL query; this doesn't delete proxyFor records that reference them
     is: [
-      searchable: {description: "CQL query", example: "active==false"}
+      searchable: {description: "CQL to select users to delete, use cql.allRecords=1 to delete all", example: "active==false"}
     ]
     responses:
       204:
@@ -55,7 +55,7 @@ resourceTypes:
         description: "Bad request"
         body:
           text/plain:
-            example: "Invalid CQL syntax"
+            example: "Expected CQL but query parameter is empty"
       500:
         description: "Internal server error, e.g. due to misconfiguration"
         body:
