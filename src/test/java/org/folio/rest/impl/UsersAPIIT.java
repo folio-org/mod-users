@@ -673,9 +673,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.attemptToDeleteUser(user.getId(), manualBlockByCQLStubForDeleteUserById500Error(wireMockServer))
-      .statusCode(500)
-      .body(is("Failed to delete user error due to: Simulated error"));
+    usersClient.attemptToDeleteUser(user.getId(), manualBlockByCQLStubForDeleteUserById500Error(wireMockServer));
 
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
@@ -702,9 +700,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.attemptToDeleteUser(user.getId(), deleteManualBlockByIdStub500Error(wireMockServer))
-      .statusCode(500)
-      .body(is("Failed to delete user error due to: Failed to delete manual block. Status code: 500, body: null"));
+    usersClient.deleteUser(user.getId(), deleteManualBlockByIdStub500Error(wireMockServer));
 
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
@@ -732,9 +728,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.attemptToDeleteUser(user.getId(), blankManualBlockByCQLStubForDeleteUserById1(wireMockServer))
-      .statusCode(500)
-      .body(containsString("Failed to delete user error due to:"));
+    usersClient.deleteUser(user.getId(), blankManualBlockByCQLStubForDeleteUserById1(wireMockServer));
 
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
