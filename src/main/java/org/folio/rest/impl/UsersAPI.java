@@ -473,28 +473,37 @@ public class UsersAPI implements Users {
         if (user == null) {
           return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
         }
-        // Create FeesFinesModuleClient and delete manual blocks first
-        FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
-        return feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
-          .compose(v-> conn.delete(TABLE_NAME_USERS, userId)
-            .compose(rows -> {
-              userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user);
-              if (rows.rowCount() != 0) {
-                return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId),
-                    UserEvent.Action.DELETE, okapiHeaders)
-                  .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
-                  .map(Response.class::cast);
-              } else {
-                return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
-              }
-            })
-          ).recover(throwable -> succeededFuture(DeleteUsersByUserIdResponse.respond500WithTextPlain(
-            "Failed to delete user error due to: " + throwable.getMessage())));
+        // Delete user first within the transaction
+        return conn.delete(TABLE_NAME_USERS, userId)
+          .compose(rows -> {
+            userEventPublisher(vertxContext, okapiHeaders).publishRemoved(userId, user);
+            if (rows.rowCount() != 0) {
+              return userOutboxService.saveUserOutboxLogForDeleteUser(conn, new User().withId(userId),
+                  UserEvent.Action.DELETE, okapiHeaders)
+                .map(bVoid -> DeleteUsersByUserIdResponse.respond204())
+                .map(Response.class::cast);
+            } else {
+              return succeededFuture(DeleteUsersByUserIdResponse.respond404WithTextPlain(userId));
+            }
+          });
       }))
-        .onComplete(reply -> {
-          userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
-          asyncResultHandler.handle(reply);
-        });
+      .compose(response -> {
+        // After transaction completes successfully, delete manual blocks
+        if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) { // Only if user was successfully deleted
+          FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
+          return feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
+            .map(v -> response) // Return the original transaction response
+            .recover(throwable -> {
+              logger.warn("Failed to delete manual blocks for user {}: {}", userId, throwable.getMessage());
+              return succeededFuture(response); // Still return success since user was deleted
+            });
+        }
+        return succeededFuture(response);
+      })
+      .onComplete(reply -> {
+        userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
+        asyncResultHandler.handle(reply);
+      });
   }
 
   private @NotNull FeesFinesModuleClientImpl getFeesFinesModuleClient(Context vertxContext) {
