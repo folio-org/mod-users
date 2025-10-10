@@ -5,6 +5,7 @@ import static org.folio.rest.utils.ManualBlockWiremockStubs.addManualBlockStubFo
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import io.vertx.core.Future;
@@ -36,8 +37,10 @@ class ReferenceAndSampleDataMigrationIT extends AbstractRestTestWithData {
 
   @Test
   void testMigration(VertxTestContext vtc) {
+    addManualBlockStubForDeleteUserById(wireMockServer);
     // Create custom Okapi headers with WireMock base URL for the delete operation
-    Map<String, String> customHeaders = addManualBlockStubForDeleteUserById(wireMockServer);
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
     usersClient.deleteUser("ab579dc3-219b-4f5b-8068-ab1c7a55c402", customHeaders); // users-15.4.0/User001.json
     usersClient.deleteUser("bec20636-fb68-41fd-84ea-2cf910673599" ,customHeaders); // users-17.3.0/User301.json
     migrate("17.3.0", 5, 6, 301)

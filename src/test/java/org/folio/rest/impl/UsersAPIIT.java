@@ -33,8 +33,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -640,7 +642,11 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
+    addManualBlockStubForDeleteUserById(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(2));
     assertDeleteEventForUser(user);
@@ -657,7 +663,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canDeleteAUser_manualBlockByCQL_Error500_negative() {
+  void canDeleteAUserManualBlockByCQLResponse500() {
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
@@ -673,7 +679,11 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.attemptToDeleteUser(user.getId(), manualBlockByCQLStubForDeleteUserById500Error(wireMockServer));
+    manualBlockByCQLStubForDeleteUserById500Error(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.attemptToDeleteUser(user.getId(), customHeaders);
 
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
@@ -684,7 +694,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canDeleteAUser_delete_manualBlocks_Error500_negative() {
+  void canDeleteAUserWhenDeleteManualBlocksResponseIs500() {
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
@@ -700,7 +710,11 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.deleteUser(user.getId(), deleteManualBlockByIdStub500Error(wireMockServer));
+    deleteManualBlockByIdStub500Error(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
@@ -712,7 +726,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canDeleteAUser_delete_manualBlocks_EmptyResBodyError500_negative() {
+  void canDeleteAUserWhenDeleteManualBlocksEmptyResponseIs500() {
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
@@ -728,7 +742,11 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.deleteUser(user.getId(), blankManualBlockByCQLStubForDeleteUserById1(wireMockServer));
+    blankManualBlockByCQLStubForDeleteUserById1(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
