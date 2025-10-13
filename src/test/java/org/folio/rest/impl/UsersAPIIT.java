@@ -641,6 +641,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var user = usersClient.createUser(userToCreate);
+    await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(1));
 
     addManualBlockStubForDeleteUserById(wireMockServer);
     // Create custom Okapi headers with WireMock base URL for the delete operation
@@ -653,6 +654,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
 
+    await().pollDelay(5, SECONDS).until(() -> true);
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
       .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
@@ -678,6 +680,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var user = usersClient.createUser(userToCreate);
+    await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(1));
 
     manualBlockByCQLStubForDeleteUserById500Error(wireMockServer);
     // Create custom Okapi headers with WireMock base URL for the delete operation
@@ -685,6 +688,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
     usersClient.attemptToDeleteUser(user.getId(), customHeaders);
 
+    await().pollDelay(5, SECONDS).until(() -> true);
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
       .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
@@ -716,6 +720,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
     usersClient.deleteUser(user.getId(), customHeaders);
 
+    await().pollDelay(5, SECONDS).until(() -> true);
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
       .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
@@ -748,6 +753,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
     customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
     usersClient.deleteUser(user.getId(), customHeaders);
 
+    await().pollDelay(5, SECONDS).until(() -> true);
     // Verify that the mock was called
     wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
       .withQueryParam("query", matching(".*userId.*" + userId + ".*")));

@@ -487,18 +487,14 @@ public class UsersAPI implements Users {
             }
           });
       }))
-      .compose(response -> {
+      .map(response -> {
         // After transaction completes successfully, delete manual blocks
-        if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) { // Only if user was successfully deleted
+        if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) {
           FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
-          return feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
-            .map(v -> response) // Return the original transaction response
-            .recover(throwable -> {
-              logger.warn("Failed to delete manual blocks for user {}: {}", userId, throwable.getMessage());
-              return succeededFuture(response); // Still return success since user was deleted
-            });
+          feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
+            .onFailure(throwable -> logger.warn("Failed to delete manual blocks for user {}: {}", userId, throwable.getMessage()));
         }
-        return succeededFuture(response);
+        return response;
       })
       .onComplete(reply -> {
         userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
