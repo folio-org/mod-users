@@ -654,11 +654,12 @@ class UsersAPIIT extends AbstractRestTestNoData {
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
 
-    await().pollDelay(5, SECONDS).until(() -> true);
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
-    wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+    awaitUntilAsserted(()-> {
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+      wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+    });
 
     // Clean up WireMock
     wireMockServer.resetRequests();
@@ -688,10 +689,10 @@ class UsersAPIIT extends AbstractRestTestNoData {
     customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
     usersClient.attemptToDeleteUser(user.getId(), customHeaders);
 
-    await().pollDelay(5, SECONDS).until(() -> true);
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+    awaitUntilAsserted(()->
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*"))));
 
     // Clean up WireMock
     wireMockServer.resetRequests();
@@ -720,11 +721,12 @@ class UsersAPIIT extends AbstractRestTestNoData {
     customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
     usersClient.deleteUser(user.getId(), customHeaders);
 
-    await().pollDelay(5, SECONDS).until(() -> true);
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
-    wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+    awaitUntilAsserted(()-> {
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+      wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+    });
 
     // Clean up WireMock
     wireMockServer.resetRequests();

@@ -489,7 +489,7 @@ public class UsersAPI implements Users {
       }))
       .map(response -> {
         // After transaction completes successfully, delete manual blocks
-        if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) {
+        if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) { // Only if user was successfully deleted
           FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
           feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
             .onFailure(throwable -> logger.warn("Failed to delete manual blocks for user {}: {}", userId, throwable.getMessage()));
