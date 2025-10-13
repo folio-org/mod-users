@@ -487,19 +487,23 @@ public class UsersAPI implements Users {
             }
           });
       }))
-      .map(response -> {
+      .map(response ->
         // After transaction completes successfully, delete manual blocks
-        if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) { // Only if user was successfully deleted
-          FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
-          feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
-            .onFailure(throwable -> logger.warn("Failed to delete manual blocks for user {}: {}", userId, throwable.getMessage()));
-        }
-        return response;
-      })
+        removeManualPatronBlocks(userId, okapiHeaders, vertxContext, response)
+      )
       .onComplete(reply -> {
         userOutboxService.processOutboxEventLogs(vertxContext.owner(), okapiHeaders);
         asyncResultHandler.handle(reply);
       });
+  }
+
+  private @NotNull Response removeManualPatronBlocks(String userId, Map<String, String> okapiHeaders, Context vertxContext, Response response) {
+    if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode()) { // Only if user was successfully deleted
+      FeesFinesModuleClientImpl feesFinesClient = getFeesFinesModuleClient(vertxContext);
+      feesFinesClient.deleteManualBlocksByUserId(userId, okapiHeaders)
+        .onFailure(throwable -> logger.warn("Failed to delete manual blocks for user {}: {}", userId, throwable.getMessage()));
+    }
+    return response;
   }
 
   private @NotNull FeesFinesModuleClientImpl getFeesFinesModuleClient(Context vertxContext) {
