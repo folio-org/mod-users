@@ -755,10 +755,11 @@ class UsersAPIIT extends AbstractRestTestNoData {
     customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
     usersClient.deleteUser(user.getId(), customHeaders);
 
-    await().pollDelay(5, SECONDS).until(() -> true);
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+    awaitUntilAsserted(()->
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*")))
+    );
 
     // Clean up WireMock
     wireMockServer.resetRequests();
