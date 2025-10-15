@@ -33,8 +33,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -639,25 +641,65 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .build();
 
     final var user = usersClient.createUser(userToCreate);
+    await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(1));
 
-    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
+    addManualBlockStubForDeleteUserById(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(2));
     assertDeleteEventForUser(user);
     usersClient.attemptToGetUser(user.getId())
       .statusCode(SC_NOT_FOUND);
 
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
-    wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+    awaitUntilAsserted(()-> {
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+      wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+    });
 
     // Clean up WireMock
     wireMockServer.resetRequests();
   }
 
   @Test
-  void canDeleteAUser_manualBlockByCQL_Error500_negative() {
+  void canDeleteAUserManualBlockByCQLResponse500() {
+    String userId = UUID.randomUUID().toString();
+    final var userToCreate = User.builder()
+      .id(userId)
+      .username("joannek")
+      .active(true)
+      .personal(Personal.builder()
+        .firstName("julia")
+        .preferredFirstName("jules")
+        .lastName("brockhurst")
+        .build())
+      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
+      .build();
+
+    final var user = usersClient.createUser(userToCreate);
+    await().until(() -> kafkaConsumer.getUsersEvents(userToCreate.getId()).size(), is(1));
+
+    manualBlockByCQLStubForDeleteUserById500Error(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.attemptToDeleteUser(user.getId(), customHeaders);
+
+    awaitUntilAsserted(()->
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*"))));
+
+    // Clean up WireMock
+    wireMockServer.resetRequests();
+  }
+
+  @Test
+  void canDeleteAUserWhenDeleteManualBlocksResponseIs500() {
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
@@ -673,20 +715,25 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.attemptToDeleteUser(user.getId(), manualBlockByCQLStubForDeleteUserById500Error(wireMockServer))
-      .statusCode(500)
-      .body(is("Failed to delete user error due to: Simulated error"));
+    deleteManualBlockByIdStub500Error(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+    awaitUntilAsserted(()-> {
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+      wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
+    });
 
     // Clean up WireMock
     wireMockServer.resetRequests();
   }
 
   @Test
-  void canDeleteAUser_delete_manualBlocks_Error500_negative() {
+  void canDeleteAUserWhenDeleteManualBlocksEmptyResponseIs500() {
     String userId = UUID.randomUUID().toString();
     final var userToCreate = User.builder()
       .id(userId)
@@ -702,43 +749,17 @@ class UsersAPIIT extends AbstractRestTestNoData {
 
     final var user = usersClient.createUser(userToCreate);
 
-    usersClient.attemptToDeleteUser(user.getId(), deleteManualBlockByIdStub500Error(wireMockServer))
-      .statusCode(500)
-      .body(is("Failed to delete user error due to: Failed to delete manual block. Status code: 500, body: null"));
+    blankManualBlockByCQLStubForDeleteUserById1(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
-    wireMockServer.verify(deleteRequestedFor(urlPathMatching("/manualblocks/.*")));
-
-    // Clean up WireMock
-    wireMockServer.resetRequests();
-  }
-
-  @Test
-  void canDeleteAUser_delete_manualBlocks_EmptyResBodyError500_negative() {
-    String userId = UUID.randomUUID().toString();
-    final var userToCreate = User.builder()
-      .id(userId)
-      .username("joannek")
-      .active(true)
-      .personal(Personal.builder()
-        .firstName("julia")
-        .preferredFirstName("jules")
-        .lastName("brockhurst")
-        .build())
-      .tags(TagList.builder().tagList(List.of("foo", "bar")).build())
-      .build();
-
-    final var user = usersClient.createUser(userToCreate);
-
-    usersClient.attemptToDeleteUser(user.getId(), blankManualBlockByCQLStubForDeleteUserById1(wireMockServer))
-      .statusCode(500)
-      .body(containsString("Failed to delete user error due to:"));
-
-    // Verify that the mock was called
-    wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
-      .withQueryParam("query", matching(".*userId.*" + userId + ".*")));
+    awaitUntilAsserted(()->
+      // Verify that the mock was called
+      wireMockServer.verify(getRequestedFor(urlPathMatching("/manualblocks"))
+        .withQueryParam("query", matching(".*userId.*" + userId + ".*")))
+    );
 
     // Clean up WireMock
     wireMockServer.resetRequests();

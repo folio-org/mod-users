@@ -20,7 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import io.vertx.core.Vertx;
@@ -90,7 +92,11 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(SC_NO_CONTENT);
-    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
+    addManualBlockStubForDeleteUserById(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
     await(3).until(() -> getUserEvents(USER_CREATED, userId), hasSize(0));
@@ -112,7 +118,11 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(SC_NO_CONTENT);
-    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
+    addManualBlockStubForDeleteUserById(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
     await(3).until(() -> getUserEvents(USER_CREATED, userId), hasSize(0));
@@ -132,7 +142,11 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     String userId = UUID.randomUUID().toString();
     final User userToCreate = createUser(userId, "joannek", "julia", "staff");
     final var user = usersClient.createUser(userToCreate);
-    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
+    addManualBlockStubForDeleteUserById(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     var userCreatedEvents = await().until(() -> getUserEvents(USER_CREATED, userId), hasSize(1));
     var userDeletedEvents = await().until(() -> getUserEvents(USER_DELETED, userId), hasSize(1));
@@ -161,7 +175,11 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
 
     usersClient.attemptToUpdateUser(userToUpdate)
       .statusCode(SC_NO_CONTENT);
-    usersClient.deleteUser(user.getId(), addManualBlockStubForDeleteUserById(wireMockServer));
+    addManualBlockStubForDeleteUserById(wireMockServer);
+    // Create custom Okapi headers with WireMock base URL for the delete operation
+    Map<String, String> customHeaders = new HashMap<>();
+    customHeaders.put("X-Okapi-Url",  "http://localhost:" + wireMockServer.port());
+    usersClient.deleteUser(user.getId(), customHeaders);
 
     var userCreatedEvents = await().until(() -> getUserEvents(USER_CREATED, userId), hasSize(1));
     var userUpdatedEvents = await().until(() -> getUserEvents(USER_UPDATED, userId), hasSize(1));
