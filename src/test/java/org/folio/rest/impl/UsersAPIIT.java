@@ -33,6 +33,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -461,6 +462,60 @@ class UsersAPIIT extends AbstractRestTestNoData {
           .build())
       .statusCode(is(400))
       .body(is("This barcode has already been taken"));
+  }
+
+  @Test
+  void updateUserPublishesCorrectMetadataInKafkaEvent() {
+    final var createdUser = usersClient.createUser(User.builder()
+      .username("kafka-test-user")
+      .barcode("12345")
+      .active(true)
+      .personal(Personal.builder().lastName("KafkaTest").firstName("User").build())
+      .build());
+
+    await().until(() -> kafkaConsumer.getUsersEvents(createdUser.getId()).size(), is(1));
+
+    final var originalMetadata = createdUser.getMetadata();
+    final var originalCreatedDate = originalMetadata.getCreatedDate();
+    final var originalUpdatedDate = originalMetadata.getUpdatedDate();
+    final var originalCreatedBy = originalMetadata.getCreatedByUserId();
+
+    usersClient.attemptToUpdateUser(User.builder()
+        .id(createdUser.getId())
+        .username("kafka-test-user-updated")
+        .barcode("67890")
+        .active(false)
+        .personal(Personal.builder().lastName("KafkaTest").firstName("UpdatedUser").build())
+        .build())
+      .statusCode(is(204));
+
+    await().until(() -> kafkaConsumer.getUsersEvents(createdUser.getId()).size(), is(2));
+
+    awaitUntilAsserted(() -> {
+      final var updateEvent = kafkaConsumer.getLastUserEvent(createdUser.getId());
+      final var data = updateEvent.value().getJsonObject("data");
+
+      final var oldUser = data.getJsonObject("old");
+      assertThat(oldUser.getString("username"), is("kafka-test-user"));
+      assertThat(oldUser.getString("barcode"), is("12345"));
+      assertThat(oldUser.getBoolean("active"), is(true));
+      assertThat(oldUser.getJsonObject("personal").getString("firstName"), is("User"));
+
+      final var newUser = data.getJsonObject("new");
+      assertThat(newUser.getString("username"), is("kafka-test-user-updated"));
+      assertThat(newUser.getString("barcode"), is("67890"));
+      assertThat(newUser.getBoolean("active"), is(false));
+      assertThat(newUser.getJsonObject("personal").getString("firstName"), is("UpdatedUser"));
+
+      final var newUserMetadata = newUser.getJsonObject("metadata");
+      final var createdDateInEvent = ZonedDateTime.parse(newUserMetadata.getString("createdDate"));
+      final var createdByInEvent = newUserMetadata.getString("createdByUserId");
+      final var updatedDateInEvent = ZonedDateTime.parse(newUserMetadata.getString("updatedDate"));
+
+      assertThat(createdDateInEvent, is(originalCreatedDate));
+      assertThat(updatedDateInEvent.isAfter(originalUpdatedDate), is(true));
+      assertThat(createdByInEvent, is(originalCreatedBy));
+    });
   }
 
   @Test
