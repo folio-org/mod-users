@@ -947,7 +947,6 @@ public class UsersAPI implements Users {
   private void updateUser(User entity, Map<String, String> okapiHeaders, PostgresClient pgClient,
                           Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     Date now = new Date();
-    entity.setCreatedDate(now);
     entity.setUpdatedDate(now);
 
     pgClient.withTrans(conn -> usersService.getUserByIdForUpdate(conn, entity.getId())
@@ -955,6 +954,8 @@ public class UsersAPI implements Users {
         if (userFromStorage == null) {
           return succeededFuture(PutUsersByUserIdResponse.respond404WithTextPlain(entity.getId()));
         }
+
+        entity.setCreatedDate(userFromStorage.getCreatedDate());
 
         return userTenantService.validateUserAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
           .compose(aVoid -> usersService.updateUser(conn, entity)
