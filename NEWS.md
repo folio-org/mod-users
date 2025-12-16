@@ -1,3 +1,8 @@
+## 19.4.7 2025-12-17
+
+* Update to RMB 35.3.1, Vert.x 4.5.22 (MODUSERS-556)
+* Update to folio-custom-fields 2.2.1 (MODUSERS-556)
+
 ## 19.4.6 2025-04-25
 
 * [Users - Patron preregistration] Update expiration date during user record merge (MODUSERS-513)
