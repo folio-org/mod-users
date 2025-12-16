@@ -590,8 +590,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>35.4.0</raml-module-builder.version>
-    <vertx.version>4.5.13</vertx.version>
+    <raml-module-builder.version>35.4.1</raml-module-builder.version>
+    <vertx.version>4.5.22</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.12.0</junit.version>
     <folio-service-tools.version>5.0.0</folio-service-tools.version>
