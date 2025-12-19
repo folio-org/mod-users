@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-users</artifactId>
-  <version>19.4.7-SNAPSHOT</version>
+  <version>19.4.8-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -590,12 +590,12 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>35.3.0</raml-module-builder.version>
-    <vertx.version>4.5.10</vertx.version>
+    <raml-module-builder.version>35.3.1</raml-module-builder.version>
+    <vertx.version>4.5.22</vertx.version>
     <generate_routing_context>/users</generate_routing_context>
     <junit.version>5.10.0</junit.version>
     <folio-service-tools.version>4.1.0</folio-service-tools.version>
-    <folio-custom-fields.version>2.2.0</folio-custom-fields.version>
+    <folio-custom-fields.version>2.2.1</folio-custom-fields.version>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <java.version>17</java.version>
     <aspectj.version>1.9.22.1</aspectj.version>
