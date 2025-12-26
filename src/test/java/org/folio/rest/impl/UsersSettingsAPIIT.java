@@ -2,7 +2,7 @@ package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -21,7 +21,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.support.Setting;
-import org.folio.support.Settings;
 import org.folio.support.http.UsersSettingsClient;
 import org.folio.support.tags.IntegrationTest;
 import org.junit.jupiter.api.BeforeAll;
@@ -51,17 +50,9 @@ class UsersSettingsAPIIT extends AbstractRestTestNoData {
 
   @BeforeEach
   void beforeEach() {
-    try {
-      final var response = settingsClient.attemptToGetSettings("cql.allRecords=1");
-      if (response.extract().statusCode() == HTTP_OK) {
-        final var allSettings = response.extract().as(Settings.class);
-        if (allSettings != null && allSettings.getSettings() != null) {
-          allSettings.getSettings().forEach(setting -> settingsClient.attemptToDeleteSetting(setting.getId()));
-        }
-      }
-    } catch (Exception e) {
-      log.warn("Error during cleanup: {}", e.getMessage());
-    }
+    settingsClient.getAllSettings().getSettings().forEach(setting ->
+      settingsClient.attemptToDeleteSetting(setting.getId()).statusCode(is(HTTP_NO_CONTENT))
+    );
   }
 
   // ========== CREATE TESTS ==========
@@ -293,7 +284,7 @@ class UsersSettingsAPIIT extends AbstractRestTestNoData {
       .value("value3")
       .build());
 
-    final var filteredSettings = settingsClient.getSettings("key=prefix.*");
+    final var filteredSettings = settingsClient.getSettings("key=prefix*");
 
     assertThat(filteredSettings.getTotalRecords(), is(greaterThan(0)));
   }

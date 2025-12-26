@@ -65,7 +65,12 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
   }
 
   Collection getAllRecords() {
-    return getRecords("cql.AllRecords=1");
+    return initialSpecification()
+      .when()
+      .queryParams("limit", Integer.MAX_VALUE)
+      .get()
+      .then()
+      .extract().as(collectionDeserializesTo);
   }
 
   ValidatableResponse attemptToGetRecords(String cqlQuery) {
