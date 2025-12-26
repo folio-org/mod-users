@@ -492,7 +492,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       assertThat(updatedUser.getUpdatedDate().after(originalDeprecatedUpdatedDate), is(true));
       });
   }
-  
+
   @Test
   void updateUserPublishesCorrectMetadataInKafkaEvent() {
     final var createdUser = usersClient.createUser(User.builder()
