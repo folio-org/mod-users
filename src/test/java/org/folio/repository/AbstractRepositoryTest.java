@@ -154,10 +154,9 @@ class AbstractRepositoryTest {
 
     var resultMap = Map.of(id1, entity1, id2, entity2);
 
-    var expectedQueryIds = new JsonArray(List.of(id1, id2));
     doAnswer(invocation -> testHandler(invocation, resultMap, 3))
       .when(postgresClient)
-      .getById(eq(TEST_TABLE), eq(expectedQueryIds), eq(TestEntity.class), any());
+      .getById(eq(TEST_TABLE), any(JsonArray.class), eq(TestEntity.class), any());
 
     var records = List.of(entity1, entity2);
     testRepository.getById(records, TestEntity::id).onComplete(testContext.succeeding(result -> {

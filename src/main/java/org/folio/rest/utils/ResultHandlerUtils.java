@@ -4,11 +4,16 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ResultHandlerUtils {
+
+  /**
+   * Private constructor to prevent instantiation of this utility class.
+   *
+   * @throws IllegalStateException always thrown to indicate instantiation is not allowed
+   */
+  private ResultHandlerUtils() {
+    throw new IllegalStateException("Utility class cannot be instantiated");
+  }
 
   /**
    * Returns a handler that completes the given promise based on the result of the asynchronous operation.
