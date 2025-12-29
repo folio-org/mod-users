@@ -93,8 +93,8 @@ public class UserEventProducer {
     Promise<Boolean> promise = Promise.promise();
 
     KafkaProducer<String, String> producer = createProducer(eventType.getTopicName());
-    producer.write(producerRecord, ar -> {
-      producer.end(ear -> producer.close());
+    producer.write(producerRecord).onComplete(ar -> {
+      producer.end().onSuccess(e -> producer.close());
       if (ar.succeeded()) {
         logger.info("Event with type '{}' for user with id: '{}' was sent to kafka topic '{}'", eventType, key, topicName);
         promise.complete(true);

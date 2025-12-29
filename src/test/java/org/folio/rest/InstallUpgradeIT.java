@@ -4,6 +4,8 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.is;
 
 import java.nio.file.Path;
+import java.util.UUID;
+
 import io.restassured.RestAssured;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -27,22 +29,25 @@ public class InstallUpgradeIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(InstallUpgradeIT.class);
   private static final boolean IS_LOG_ENABLED = false;
+  private static final String KAFKA_NETWORK_ALIAS = UUID.randomUUID().toString();
   private static final Network NETWORK = Network.newNetwork();
 
   @ClassRule(order = 1)
   public static final KafkaContainer KAFKA =
     new KafkaContainer(DockerImageName.parse(KafkaContainerExtension.KAFKA_IMAGE_ID))
       .withNetwork(NETWORK)
-      .withNetworkAliases("mykafka");
+      .withNetworkAliases(KAFKA_NETWORK_ALIAS)
+      .withListener(KAFKA_NETWORK_ALIAS + ":9095");
 
   @ClassRule(order = 2)
   public static final GenericContainer<?> MOD_USERS =
     new GenericContainer<>(
       new ImageFromDockerfile("mod-users").withFileFromPath(".", Path.of(".")))
       .withNetwork(NETWORK)
-      .withExposedPorts(8081)
-      .withEnv("KAFKA_HOST", "mykafka")
-      .withEnv("KAFKA_PORT", "9092");
+      .withExposedPorts(8081, 5005)
+      .withEnv("JAVA_OPTIONS", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
+      .withEnv("KAFKA_HOST", KAFKA_NETWORK_ALIAS)
+      .withEnv("KAFKA_PORT", "9095");
 
   @BeforeClass
   public static void beforeClass() {
@@ -63,6 +68,7 @@ public class InstallUpgradeIT {
   @Test
   public void health() {
     // request without X-Okapi-Tenant
+    // RMB 36.0.0-SNAPSHOT health endpoint returns empty body with 200 status
     when().
       get("/admin/health").
       then().

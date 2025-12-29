@@ -3,6 +3,7 @@ package org.folio.repository;
 import static io.vertx.core.Future.succeededFuture;
 import static io.vertx.core.Promise.promise;
 import static java.lang.String.format;
+import static org.folio.rest.utils.ResultHandlerUtils.getAsyncResultHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,17 +48,14 @@ public abstract class AbstractRepository<T> {
   }
 
   public Future<List<T>> get(Criterion criterion) {
-    final Promise<Results<T>> getItemsResult = promise();
-
-    postgresClient.get(tableName, recordType, criterion, false, getItemsResult);
-
-    return getItemsResult.future().map(Results::getResults);
+    return postgresClient.get(tableName, recordType, criterion, false).map(Results::getResults);
   }
 
   public Future<List<T>> get(AsyncResult<SQLConnection> connection, Criterion criterion) {
     final Promise<Results<T>> getItemsResult = promise();
 
-    postgresClient.get(connection, tableName, recordType, criterion, false, true, getItemsResult);
+    postgresClient.get(connection, tableName, recordType, criterion, false, true,
+      getAsyncResultHandler(getItemsResult));
 
     return getItemsResult.future().map(Results::getResults);
   }
@@ -65,7 +63,8 @@ public abstract class AbstractRepository<T> {
   public Future<Map<String, T>> getById(Collection<String> ids) {
     final Promise<Map<String, T>> promise = promise();
 
-    postgresClient.getById(tableName, new JsonArray(new ArrayList<>(ids)), recordType, promise);
+    postgresClient.getById(tableName, new JsonArray(new ArrayList<>(ids)), recordType,
+      getAsyncResultHandler(promise));
 
     return promise.future();
   }
@@ -82,7 +81,7 @@ public abstract class AbstractRepository<T> {
     final Promise<RowSet<Row>> promise = promise();
 
     postgresClient.update(connection, tableName, rec, "jsonb",
-        format("WHERE id = '%s'", id), false, promise);
+        format("WHERE id = '%s'", id), false, getAsyncResultHandler(promise));
 
     return promise.future();
   }
@@ -92,19 +91,11 @@ public abstract class AbstractRepository<T> {
   }
 
   public Future<RowSet<Row>> update(String id, T rec) {
-    final Promise<RowSet<Row>> promise = promise();
-
-    postgresClient.update(tableName, rec, id, promise);
-
-    return promise.future();
+    return postgresClient.update(tableName, rec, id);
   }
 
   public Future<RowSet<Row>> update(List<T> records) {
-    final Promise<RowSet<Row>> promise = promise();
-
-    postgresClient.upsertBatch(tableName, records, promise);
-
-    return promise.future();
+    return postgresClient.upsertBatch(tableName, records);
   }
 
   public Future<String> upsert(String id, T rec) {
@@ -118,5 +109,4 @@ public abstract class AbstractRepository<T> {
   public Future<RowSet<Row>> deleteById(String id) {
     return postgresClient.delete(tableName, id);
   }
-
 }

@@ -5,11 +5,10 @@ import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.resource.interfaces.InitAPI;
 import org.folio.verticle.ConsortiumCreateEventConsumersVerticle;
 import org.folio.verticle.ConsortiumDeleteEventConsumersVerticle;
@@ -42,31 +41,31 @@ public class InitAPIs implements InitAPI {
       return Future.succeededFuture();
     }
 
-    int usersConsortiumConsumerInstancesNumber = Integer.parseInt(getPropertyValue("users.consortium.kafka.consumer.instancesNumber", "1"));
+    int usersConsortiumConsumerInstancesNumber = Integer.parseInt(
+      getPropertyValue("users.consortium.kafka.consumer.instancesNumber", "1"));
 
-    Promise<String> consortiumCreateEventConsumer = Promise.promise();
-    Promise<String> consortiumUpdateEventConsumer = Promise.promise();
-    Promise<String> consortiumDeleteEventConsumer = Promise.promise();
-
-    vertx.deployVerticle((ConsortiumCreateEventConsumersVerticle.class.getName()),
+    var consortiumCreateEventConsumer = vertx.deployVerticle(
+      ConsortiumCreateEventConsumersVerticle.class.getName(),
       new DeploymentOptions()
-        .setWorker(true)
-        .setInstances(usersConsortiumConsumerInstancesNumber), consortiumCreateEventConsumer);
+        .setThreadingModel(ThreadingModel.WORKER)
+        .setInstances(usersConsortiumConsumerInstancesNumber));
 
-    vertx.deployVerticle((ConsortiumUpdateEventConsumersVerticle.class.getName()),
+    var consortiumUpdateEventConsumer = vertx.deployVerticle(
+      ConsortiumUpdateEventConsumersVerticle.class.getName(),
       new DeploymentOptions()
-        .setWorker(true)
-        .setInstances(usersConsortiumConsumerInstancesNumber), consortiumUpdateEventConsumer);
+        .setThreadingModel(ThreadingModel.WORKER)
+        .setInstances(usersConsortiumConsumerInstancesNumber));
 
-    vertx.deployVerticle((ConsortiumDeleteEventConsumersVerticle.class.getName()),
+    var consortiumDeleteEventConsumer = vertx.deployVerticle(
+      ConsortiumDeleteEventConsumersVerticle.class.getName(),
       new DeploymentOptions()
-        .setWorker(true)
-        .setInstances(usersConsortiumConsumerInstancesNumber), consortiumDeleteEventConsumer);
+        .setThreadingModel(ThreadingModel.WORKER)
+        .setInstances(usersConsortiumConsumerInstancesNumber));
 
-    return GenericCompositeFuture.all(Arrays.asList(
-      consortiumCreateEventConsumer.future(),
-      consortiumDeleteEventConsumer.future(),
-      consortiumUpdateEventConsumer.future()
+    return Future.all(Arrays.asList(
+      consortiumCreateEventConsumer,
+      consortiumDeleteEventConsumer,
+      consortiumUpdateEventConsumer
     ));
   }
 

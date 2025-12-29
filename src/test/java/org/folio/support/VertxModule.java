@@ -73,7 +73,7 @@ public class VertxModule {
         headers.getTenantId(), headers.getToken(), webClient);
 
     TenantAttributes ta = new TenantAttributes();
-    ta.setModuleTo("999999.0.0");
+    ta.setModuleTo("mod-users-999999.0.0");
     ta.setModuleFrom(versionFrom);
 
     List<Parameter> parameters = new LinkedList<>();

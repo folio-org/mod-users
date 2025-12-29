@@ -7,7 +7,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.OutboxEventLog;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
@@ -67,7 +66,7 @@ public class UserOutboxService {
 
         logger.info("processOutboxEventLogs:: Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
-        return GenericCompositeFuture.join(futures)
+        return Future.join(futures)
           .map(logs.stream().map(OutboxEventLog::getEventId).toList())
           .compose(eventIds -> {
             if (CollectionUtils.isNotEmpty(eventIds)) {

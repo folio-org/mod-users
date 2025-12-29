@@ -316,7 +316,10 @@ class GroupIT extends AbstractRestTestNoData {
   }
 
   @ParameterizedTest
-  @CsvSource({"patronGroup.group/sort.ascending,julia", "patronGroup.group/sort.descending,alex"})
+  @CsvSource({
+    "patronGroup.group/sort.ascending,julia",
+    "patronGroup.group/sort.descending,alex"
+  })
   void canSortUsersByPatronGroupNameAscending(String sortClause,
     String expectedFirstUsername) {
 

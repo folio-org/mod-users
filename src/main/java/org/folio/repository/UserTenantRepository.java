@@ -115,7 +115,7 @@ public class UserTenantRepository {
   }
 
   private <T> Future<T> handleFailures(Throwable throwable, String id) {
-    return (throwable instanceof PgException pgException && pgException.getCode().equals(UNIQUE_CONSTRAINT_VIOLATION_CODE)) ?
+    return (throwable instanceof PgException pgException && pgException.getSqlState().equals(UNIQUE_CONSTRAINT_VIOLATION_CODE)) ?
       Future.failedFuture(new DuplicateEventException(String.format("Event with Id=%s is already processed.", id))) :
       Future.failedFuture(throwable);
   }

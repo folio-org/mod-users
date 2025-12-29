@@ -80,7 +80,6 @@ import org.folio.domain.UserType;
 import org.folio.event.service.UserTenantService;
 import org.folio.integration.http.HttpClientFactory;
 import org.folio.integration.http.VertxOkapiHttpClient;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.annotations.Stream;
 import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.Address;
@@ -1119,7 +1118,7 @@ public class UsersAPI implements Users {
     addressTypes.forEach(addressTypeId -> futureList.add(
       checkAddressTypeValid(addressTypeId, postgresClient)));
 
-    return GenericCompositeFuture.all(futureList)
+    return Future.all(futureList)
       .map(res -> futureList.stream()
         .map(Future::result)
         .allMatch(Predicate.isEqual(true)));

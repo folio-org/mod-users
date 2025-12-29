@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.cql2pgjson.CQL2PgJSON;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
@@ -80,7 +79,7 @@ public final class ExpirationTool {
     results.getResults()
       .forEach(user -> futureList.add(disableUser(vertxContext, tenant, user, okapiHeaders)));
 
-    return GenericCompositeFuture.join(futureList)
+    return Future.join(futureList)
       .map(compRes -> futureList.stream()
         .filter(Future::succeeded)
         .mapToInt(a -> 1)

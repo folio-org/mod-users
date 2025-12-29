@@ -1,5 +1,7 @@
 package org.folio.service.impl;
 
+import static org.folio.rest.utils.ResultHandlerUtils.getAsyncResultHandler;
+
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +41,7 @@ public class RecordRepositoryImpl implements RecordRepository {
 
     Promise<Results<User>> promise = Promise.promise();
 
-    pgClient(tenantId).get(USERS_TABLE, User.class, new Criterion(criteria), false, promise);
+    pgClient(tenantId).get(USERS_TABLE, User.class, new Criterion(criteria), false, getAsyncResultHandler(promise));
 
     return promise.future().map(Results::getResults);
   }
@@ -52,7 +54,7 @@ public class RecordRepositoryImpl implements RecordRepository {
     String path = "jsonb -> 'customFields' -> '" + recordUpdate.getRefId() + "'";
     CQLWrapper filter = new CQLWrapper().setWhereClause("WHERE " + path + " ?| ARRAY[" + joinedIds + "]");
     Promise<Results<User>> promise = Promise.promise();
-    pgClient(tenantId).get(USERS_TABLE, User.class, filter, false, promise);
+    pgClient(tenantId).get(USERS_TABLE, User.class, filter, false, getAsyncResultHandler(promise));
     return promise.future().map(Results::getResults);
   }
 
@@ -62,7 +64,7 @@ public class RecordRepositoryImpl implements RecordRepository {
 
     Promise<RowSet<Row>> promise = Promise.promise();
 
-    pgClient(tenantId).update(USERS_TABLE, user, user.getId(), promise);
+    pgClient(tenantId).update(USERS_TABLE, user, user.getId(), getAsyncResultHandler(promise));
 
     return promise.future().mapEmpty();
   }
