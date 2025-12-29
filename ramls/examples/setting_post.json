@@ -1,0 +1,9 @@
+{
+  "id": "65de6432-be11-48ba-9686-a65101634040",
+  "key": "settingKey",
+  "scope": "mod-users",
+  "value": {
+    "someProperty": "value1",
+    "someOtherProperty": "value2"
+  }
+}
