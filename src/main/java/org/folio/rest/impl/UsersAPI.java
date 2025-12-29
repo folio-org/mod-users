@@ -68,6 +68,7 @@ import io.vertx.sqlclient.Tuple;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -959,7 +960,7 @@ public class UsersAPI implements Users {
         return userTenantService.validateUserAcrossTenants(entity, userFromStorage, okapiHeaders, conn, vertxContext)
           .compose(aVoid -> usersService.updateUser(conn, entity)
             .onSuccess(user -> {
-              if (StringUtils.equals(UserType.SHADOW.getTypeName(), user.getType())) {
+              if (Strings.CS.equals(UserType.SHADOW.getTypeName(), user.getType())) {
                 logger.info("Skip sending Update domain event for shadow user with id: {}", user.getId());
                 return;
               }
