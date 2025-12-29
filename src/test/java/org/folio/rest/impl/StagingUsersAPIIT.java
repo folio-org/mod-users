@@ -80,7 +80,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   }
 
   @BeforeEach
-  public void beforeEach(Vertx vertx) {
+  void beforeEach(Vertx vertx) {
     deleteAllStagingUsers(vertx);
     usersClient.deleteAllUsers();
     addressTypesClient.deleteAllAddressTypes();

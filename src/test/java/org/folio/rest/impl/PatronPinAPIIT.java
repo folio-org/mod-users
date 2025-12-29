@@ -4,7 +4,6 @@ package org.folio.rest.impl;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.support.TestConstants.TENANT_NAME;
-import static org.hamcrest.CoreMatchers.is;
 
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
@@ -35,7 +34,7 @@ class PatronPinAPIIT extends AbstractRestTestNoData {
   }
 
   @BeforeEach
-  public void beforeEach(Vertx vertx, VertxTestContext context) {
+  void beforeEach(Vertx vertx, VertxTestContext context) {
     deleteAllPatronPins(vertx);
     usersClient.deleteAllUsers();
 

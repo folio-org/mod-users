@@ -103,7 +103,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();

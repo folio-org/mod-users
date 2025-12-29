@@ -24,13 +24,13 @@ class ExpirationIT extends AbstractRestTestNoData {
   private static TimerInterfaceClient timerInterfaceClient;
 
   @BeforeAll
-  public static void beforeAll() {
+  static void beforeAll() {
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     usersClient.deleteAllUsers();
   }
 

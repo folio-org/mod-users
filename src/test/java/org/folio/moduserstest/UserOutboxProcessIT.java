@@ -37,7 +37,7 @@ import org.folio.support.tags.IntegrationTest;
 
 @IntegrationTest
 @Timeout(value = 10, unit = SECONDS)
-public class UserOutboxProcessIT extends AbstractRestTestNoData {
+class UserOutboxProcessIT extends AbstractRestTestNoData {
 
   private static final String USER_ID = UUID.randomUUID().toString();
 
@@ -57,14 +57,14 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
   private static FakeKafkaConsumer kafkaConsumer;
 
   @BeforeAll
-  public static void beforeAll() {
+  static void beforeAll() {
     kafkaConsumer = new FakeKafkaConsumer().consume(module.getVertx(), EXPECTED_TOPIC);
     userEventsLogRepository = new UserEventsLogRepository();
     timerInterfaceClient = new TimerInterfaceClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
-  public void beforeEach(Vertx vertx, VertxTestContext context) {
+  void beforeEach(Vertx vertx, VertxTestContext context) {
     PostgresClient postgresClient = PostgresClient.getInstance(vertx, TENANT_NAME);
     postgresClient.withConn(conn -> userEventsLogRepository.saveEventLog(conn, OUTBOX_EVENT_LOG, TENANT_NAME))
       .onComplete(context.succeedingThenComplete());

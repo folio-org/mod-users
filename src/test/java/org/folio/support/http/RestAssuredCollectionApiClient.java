@@ -14,15 +14,15 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import lombok.NonNull;
 
-public class RestAssuredCollectionApiClient<Record, Collection> {
-  private final Class<Record> recordDeserializesTo;
-  private final Class<Collection> collectionDeserializesTo;
+public class RestAssuredCollectionApiClient<R, C> {
+  private final Class<R> recordDeserializesTo;
+  private final Class<C> collectionDeserializesTo;
 
   private final RestAssuredConfiguration configuration;
 
   RestAssuredCollectionApiClient(URI baseUri, OkapiHeaders defaultHeaders,
-    Class<Record> recordDeserializesTo,
-    Class<Collection> collectionDeserializesTo) {
+    Class<R> recordDeserializesTo,
+    Class<C> collectionDeserializesTo) {
 
     configuration = new RestAssuredConfiguration(baseUri, defaultHeaders);
 
@@ -30,22 +30,22 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
     this.collectionDeserializesTo = collectionDeserializesTo;
   }
 
-  Record createRecord(@NotNull Record user) {
+  R createRecord(@NotNull R user) {
     return attemptToCreateRecord(user)
       .statusCode(HTTP_CREATED)
       .extract().as(recordDeserializesTo);
   }
 
-  ValidatableResponse attemptToCreateRecord(@NotNull Record record) {
+  ValidatableResponse attemptToCreateRecord(@NotNull R recordBody) {
     return initialSpecification()
       .contentType(JSON)
       .when()
-      .body(record)
+      .body(recordBody)
       .post()
       .then();
   }
 
-  Record getRecord(String id) {
+  R getRecord(String id) {
     return attemptToGetRecord(id)
       .statusCode(HTTP_OK)
       .extract().as(recordDeserializesTo);
@@ -58,13 +58,13 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
       .then();
   }
 
-  Collection getRecords(String cqlQuery) {
+  C getRecords(String cqlQuery) {
     return attemptToGetRecords(cqlQuery)
       .statusCode(HTTP_OK)
       .extract().as(collectionDeserializesTo);
   }
 
-  Collection getAllRecords() {
+  C getAllRecords() {
     return getRecords("cql.AllRecords=1");
   }
 
@@ -76,11 +76,11 @@ public class RestAssuredCollectionApiClient<Record, Collection> {
       .then();
   }
 
-  ValidatableResponse attemptToUpdateRecord(String id, @NonNull Record record) {
+  ValidatableResponse attemptToUpdateRecord(String id, @NonNull R recordBody) {
     return initialSpecification()
       .contentType(JSON)
       .when()
-      .body(record)
+      .body(recordBody)
       .put("/{id}", Map.of("id", id))
       .then();
   }
