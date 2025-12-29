@@ -5,9 +5,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ResultHandlerUtils {
 
   /**

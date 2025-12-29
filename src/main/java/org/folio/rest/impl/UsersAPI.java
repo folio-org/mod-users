@@ -297,15 +297,15 @@ public class UsersAPI implements Users {
           return new ValidationServiceImpl(vertxContext)
             .validateCustomFields(getCustomFields(entity), TenantTool.tenantId(okapiHeaders));
         })
-        .compose(o -> checkAllAddressTypesValid(entity, postgresClient.getValue()))
+        .compose(o -> checkAllAddressTypesValid(entity, postgresClient.get()))
         .compose(result -> {
           if (Boolean.FALSE.equals(result)) {
             asyncResultHandler.handle(succeededFuture(
               PostUsersResponse.respond400WithTextPlain(
                 "You cannot add addresses with non-existent address types")));
           } else {
-            validatePatronGroup(entity.getPatronGroup(), postgresClient.getValue(), asyncResultHandler,
-                    handler -> saveUser(entity, okapiHeaders, postgresClient.getValue(), asyncResultHandler, vertxContext));
+            validatePatronGroup(entity.getPatronGroup(), postgresClient.get(), asyncResultHandler,
+                    handler -> saveUser(entity, okapiHeaders, postgresClient.get(), asyncResultHandler, vertxContext));
           }
           return succeededFuture();
         })
@@ -438,7 +438,7 @@ public class UsersAPI implements Users {
         return reply.result().getEntity().toString().matches(errMsg);
       }
       if (reply.result().getStatus() == 422) {
-        String msg = ((Errors)reply.result().getEntity()).getErrors().iterator().next().getMessage();
+        String msg = ((Errors)reply.result().getEntity()).getErrors().getFirst().getMessage();
         return msg.matches(errMsg);
       }
     } else if (reply.cause() instanceof PgException) {
