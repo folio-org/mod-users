@@ -103,7 +103,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
@@ -1224,7 +1224,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_NOT_FOUND);
 
     //Trying to update profile picture with unsupported image
-    InputStream inputStream2 = new ByteArrayInputStream(RandomStringUtils.randomAlphanumeric(100).getBytes());
+    InputStream inputStream2 = new ByteArrayInputStream(RandomStringUtils.secure().nextAlphanumeric(100).getBytes());
     var response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream2)
       .statusCode(HTTP_INTERNAL_ERROR);
     System.out.println(response.extract().asString());
@@ -1262,7 +1262,7 @@ class UsersAPIIT extends AbstractRestTestNoData {
       .statusCode(HTTP_NOT_FOUND);
 
     //Trying to update profile picture with unsupported image
-    InputStream inputStream2 = new ByteArrayInputStream(RandomStringUtils.randomAlphanumeric(100).getBytes());
+    InputStream inputStream2 = new ByteArrayInputStream(RandomStringUtils.secure().nextAlphanumeric(100).getBytes());
     var response = userProfilePictureClient.updateUserProfilePicture(UUID.randomUUID().toString(), inputStream2)
       .statusCode(HTTP_INTERNAL_ERROR);
     System.out.println(response.extract().asString());

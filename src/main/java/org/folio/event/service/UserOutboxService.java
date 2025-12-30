@@ -7,7 +7,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.jaxrs.model.OutboxEventLog;
 import org.folio.rest.jaxrs.model.Personal;
 import org.folio.rest.jaxrs.model.User;
@@ -25,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import static java.lang.Boolean.TRUE;
 import static org.folio.domain.UserType.PATRON;
 import static org.folio.domain.UserType.STAFF;
 import static org.folio.domain.UserType.SYSTEM;
@@ -67,7 +67,7 @@ public class UserOutboxService {
 
         logger.info("processOutboxEventLogs:: Fetched {} event logs from outbox table, going to send them to kafka", logs.size());
         List<Future<Boolean>> futures = getKafkaFutures(logs, okapiHeaders);
-        return GenericCompositeFuture.join(futures)
+        return Future.join(futures)
           .map(logs.stream().map(OutboxEventLog::getEventId).toList())
           .compose(eventIds -> {
             if (CollectionUtils.isNotEmpty(eventIds)) {
@@ -86,7 +86,7 @@ public class UserOutboxService {
     logger.debug("saveUserOutboxLogForCreateUser:: Trying to save UserOutBoxLog for create user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
         .compose(isConsortiaTenant -> {
-          if (isConsortiaTenant && isStaffOrSystemUser(user)) {
+          if (TRUE.equals(isConsortiaTenant) && isStaffOrSystemUser(user)) {
             return saveUserOutboxLog(conn, user, action, okapiHeaders);
           }
           logger.info("saveUserOutboxLogForCreateUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
@@ -98,7 +98,7 @@ public class UserOutboxService {
     logger.debug("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete user action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
-        if (isConsortiaTenant) {
+        if (TRUE.equals(isConsortiaTenant)) {
           return saveUserOutboxLog(conn, user, action, okapiHeaders);
         }
         logger.info("saveUserOutboxLogForDeleteUser:: OutBoxLog was NOT saved because user is NOT belong to consortia tenant");
@@ -114,7 +114,7 @@ public class UserOutboxService {
         boolean isPersonalDataChanged = isPersonalDataChanged(user, userFromStorage);
         boolean isStaffOrSystem = isStaffOrSystemUserUpdated(user, isConsortiaFieldsUpdated, isPersonalDataChanged);
         boolean isChangedUserTypeBetweenPatronAndStaff = isChangedUserTypeBetweenPatronAndStaff(user, userFromStorage);
-        if (isConsortiaTenant && (isStaffOrSystem || isChangedUserTypeBetweenPatronAndStaff)) {
+        if (TRUE.equals(isConsortiaTenant) && (isStaffOrSystem || isChangedUserTypeBetweenPatronAndStaff)) {
           logger.info("saveUserOutboxLogForUpdateUser:: isStaffOrSystem={}, isChangedUserTypeBetweenPatronAndStaff={}", isStaffOrSystem, isChangedUserTypeBetweenPatronAndStaff);
           return saveUserOutboxLog(conn, user, isPersonalDataChanged, UserEvent.Action.EDIT, okapiHeaders);
         }
@@ -127,7 +127,7 @@ public class UserOutboxService {
     logger.debug("saveUserOutboxLogForDeleteUser:: Trying to save UserOutBoxLog for delete users action");
     return userTenantService.isConsortiaTenant(conn, okapiHeaders)
       .compose(isConsortiaTenant -> {
-        if (isConsortiaTenant) {
+        if (TRUE.equals(isConsortiaTenant)) {
           List<Future<Boolean>> resultFuture = new ArrayList<>();
           Future<Boolean> lineFuture = Future.succeededFuture();
           for (User user : users) {

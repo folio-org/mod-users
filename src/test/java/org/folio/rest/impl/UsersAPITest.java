@@ -170,6 +170,7 @@ class UsersAPITest {
       @Override
       public String get(Object key) {
         throw new IllegalArgumentException() {
+          @Override
           public String getMessage() {
             throw new IllegalArgumentException();
           }

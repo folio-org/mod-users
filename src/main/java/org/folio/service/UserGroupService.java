@@ -2,6 +2,7 @@ package org.folio.service;
 
 import static org.folio.repository.UserGroupRepository.GROUP_TABLE;
 import static org.folio.rest.persist.PgUtil.postgresClient;
+import static org.folio.rest.utils.ResultHandlerUtils.getAsyncResultHandler;
 import static org.folio.service.event.EntityChangedEventPublisherFactory.userGroupEventPublisher;
 
 import java.util.Map;
@@ -48,7 +49,7 @@ public class UserGroupService {
     log.debug("create:: parameters userGroup: {}", () -> userGroup);
     Promise<Response> createResult = Promise.promise();
     PgUtil.post(GROUP_TABLE, userGroup, okapiHeaders, vertxContext,
-      Groups.PostGroupsResponse.class, createResult);
+      Groups.PostGroupsResponse.class, getAsyncResultHandler(createResult));
 
     return createResult.future()
       .compose(eventPublisher.publishCreated());

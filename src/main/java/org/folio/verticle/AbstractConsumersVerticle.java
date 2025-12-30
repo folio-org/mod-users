@@ -11,7 +11,6 @@ import org.folio.kafka.SubscriptionDefinition;
 import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.kafka.KafkaConsumerWrapper;
 import org.folio.kafka.AsyncRecordHandler;
-import org.folio.okapi.common.GenericCompositeFuture;
 import org.folio.rest.tools.utils.ModuleName;
 
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public abstract class AbstractConsumersVerticle extends AbstractVerticle {
         constructModuleName() + "_" + getClass().getSimpleName()));
     });
 
-    GenericCompositeFuture.all(futures).onComplete(ar -> startPromise.complete());
+    Future.all(futures).onComplete(ar -> startPromise.complete());
   }
 
   private String constructModuleName() {

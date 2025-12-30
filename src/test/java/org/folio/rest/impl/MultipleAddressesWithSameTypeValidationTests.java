@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,8 +17,8 @@ import org.junit.jupiter.api.Test;
 
 @UnitTest
 class MultipleAddressesWithSameTypeValidationTests {
-  private final String HOME_ADDRESS_TYPE = UUID.randomUUID().toString();
-  private final String CLAIM_ADDRESS_TYPE = UUID.randomUUID().toString();
+  private static final String HOME_ADDRESS_TYPE = UUID.randomUUID().toString();
+  private static final String CLAIM_ADDRESS_TYPE = UUID.randomUUID().toString();
   private final AddressValidator validator = new AddressValidator();
 
   @Test
@@ -38,8 +39,7 @@ class MultipleAddressesWithSameTypeValidationTests {
 
   @Test
   void validWhenUserHasNoAddresses() {
-    final var user = userWithAddresses(List.of(address(HOME_ADDRESS_TYPE),
-      address(CLAIM_ADDRESS_TYPE)));
+    final var user = userWithAddresses(Collections.emptyList());
 
     assertThat(validator.hasMultipleAddressesWithSameType(user), is(false));
   }
