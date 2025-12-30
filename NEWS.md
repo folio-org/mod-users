@@ -1,3 +1,8 @@
+## 19.5.3 2025-12-17
+
+* Update to RMB 35.4.1, Vert.x 4.5.22 (MODUSERS-557)
+* Update to folio-custom-fields 2.3.1 (MODUSERS-557)
+
 ## 19.5.2 2025-08-26
 
 * Add "minor" boolean field to the staging_users table and assign appropriate patron group to created user record (MODUSERS-533)
