@@ -131,6 +131,12 @@ public class UsersSettingsClient {
     client.deleteRecord(id);
   }
 
+  public void deleteAllSettings() {
+      final var settings = getAllSettings();
+
+      settings.getSettings().forEach(setting -> deleteSetting(setting.getId()));
+  }
+
   /**
    * Attempts to delete a setting by ID and returns the response for validation.
    *

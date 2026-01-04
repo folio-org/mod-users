@@ -77,5 +77,23 @@ public class Setting {
       .metadata(this.metadata)
       .build();
   }
+
+  /**
+   * Creates a new Setting with updated _version.
+   *
+   * @param newVersion the new version to set
+   * @return a new Setting instance with the updated _version
+   */
+  public Setting withVersion(int newVersion) {
+    return Setting.builder()
+      .id(this.id)
+      .scope(this.scope)
+      .key(this.key)
+      .value(this.value)
+      .userId(this.userId)
+      .version(newVersion)
+      .metadata(this.metadata)
+      .build();
+  }
 }
 

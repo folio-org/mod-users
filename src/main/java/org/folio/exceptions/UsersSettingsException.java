@@ -40,6 +40,20 @@ public class UsersSettingsException extends RuntimeException {
   }
 
   /**
+   * Creates an exception for a setting not found by key.
+   *
+   * @param key the key of the setting that was not found
+   * @return a UsersSettingsException with NOT_FOUND status
+   */
+  public static UsersSettingsException notFoundByKey(String key) {
+    var err = new Error()
+      .withMessage("Setting entity not found by key: " + key)
+      .withCode("not_found_error")
+      .withParameters(List.of(new Parameter().withKey("key").withValue(key)));
+    return new UsersSettingsException(err, Response.Status.NOT_FOUND);
+  }
+
+  /**
    * Constructs a UsersSettingsException without capturing a stack trace.
    *
    * <p>The stack trace is disabled to reduce allocation overhead for expected control-flow errors.

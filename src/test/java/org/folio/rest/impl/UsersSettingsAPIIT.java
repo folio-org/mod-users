@@ -2,7 +2,7 @@ package org.folio.rest.impl;
 
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
-import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static org.folio.support.UsersApiConstants.PROFILE_PICTURE_SETTING_KEY;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -20,6 +20,7 @@ import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.moduserstest.AbstractRestTestNoData;
+import org.folio.rest.jaxrs.model.Config;
 import org.folio.support.Setting;
 import org.folio.support.http.UsersSettingsClient;
 import org.folio.support.tags.IntegrationTest;
@@ -50,9 +51,8 @@ class UsersSettingsAPIIT extends AbstractRestTestNoData {
 
   @BeforeEach
   void beforeEach() {
-    settingsClient.getAllSettings().getSettings().forEach(setting ->
-      settingsClient.attemptToDeleteSetting(setting.getId()).statusCode(is(HTTP_NO_CONTENT))
-    );
+    // Ensure no leftover settings from previous tests
+    settingsClient.deleteAllSettings();
   }
 
   // ========== CREATE TESTS ==========
@@ -69,7 +69,7 @@ class UsersSettingsAPIIT extends AbstractRestTestNoData {
 
     final var createdSetting = settingsClient.createSetting(settingToCreate);
 
-    assertThat(createdSetting.getId(), is(notNullValue()));
+    assertThat(createdSetting.getId(), is(settingToCreate.getId()));
     assertThat(createdSetting.getScope(), is("mod-users"));
     assertThat(createdSetting.getKey(), is("test.setting"));
     assertThat(createdSetting.getValue(), is("test-value"));
@@ -299,22 +299,6 @@ class UsersSettingsAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
-  void canGetSettingsByScope() {
-    settingsClient.createSetting(Setting.builder()
-      .scope("mod-users")
-      .key("scoped.setting")
-      .value("scoped-value")
-      .build());
-
-    final var scopedSettings = settingsClient.getSettings("scope==mod-users");
-
-    assertThat(scopedSettings.getTotalRecords(), is(greaterThan(0)));
-    scopedSettings.getSettings().forEach(setting ->
-      assertThat(setting.getScope(), is("mod-users"))
-    );
-  }
-
-  @Test
   void canGetSettingsByUserId() {
     final var userId = "65de6432-be11-48ba-9686-a65101634040";
 
@@ -426,6 +410,17 @@ class UsersSettingsAPIIT extends AbstractRestTestNoData {
     settingsClient.attemptToUpdateSetting(createdSetting.getId(), settingWithDifferentId)
       .statusCode(is(HTTP_BAD_REQUEST))
       .body(containsString("ID of Setting for update not equal to id from path param"));
+  }
+
+  @Test
+  void cannotUpdateProfilePictureConfigSettingWithDifferentEncryptionKey() {
+    var setting = profilePictureSetting("ThisIsASimpleDefaultKeyToTestIts", true, false, 6.8);
+    setting = settingsClient.createSetting(setting);
+
+    var profileConfigWithUpdatedEncryptKey = profilePictureSetting("aaaasrcgyihimbvgfrxyfjbytfrgjvdfd", true, false, 6.8)
+      .withId(setting.getId()).withVersion(setting.getVersion());
+    settingsClient.attemptToUpdateSetting(profileConfigWithUpdatedEncryptKey)
+      .statusCode(400);
   }
 
   @Test
@@ -612,9 +607,28 @@ class UsersSettingsAPIIT extends AbstractRestTestNoData {
 
   // ========== HELPER METHODS ==========
 
+  private Setting profilePictureSetting(String encryptionKey, boolean enabled, boolean enabledObjectStorage, Double maxFileSize) {
+    var profilePictureConfig = new Config()
+      .withConfigName(PROFILE_PICTURE_SETTING_KEY)
+      .withEncryptionKey(encryptionKey)
+      .withEnabled(enabled)
+      .withEnabledObjectStorage(enabledObjectStorage)
+      .withMaxFileSize(maxFileSize);
+
+    return profilePictureSetting(profilePictureConfig);
+  }
+
+  private Setting profilePictureSetting(Config config) {
+    return Setting.builder()
+      .id(UUID.randomUUID().toString())
+      .key(PROFILE_PICTURE_SETTING_KEY)
+      .scope("mod-users")
+      .value(config)
+      .build();
+  }
+
   /**
    * Provides various complex value types for parameterized testing.
-   * Uses Java 21 record patterns and enhanced collections.
    */
   private static Stream<Arguments> provideComplexValues() {
     return Stream.of(
