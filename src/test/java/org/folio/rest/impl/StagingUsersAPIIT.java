@@ -89,7 +89,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void validateStatusAndIsEmailVerifiedIsSetWhenPassNonNull_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
+    String randomString = RandomStringUtils.secure().next(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
 
     stagingUserToCreate.setStatus(StagingUser.Status.TIER_1);
@@ -105,7 +105,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void validateStatusAndIsEmailVerifiedIsSetWhenPassNull_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
+    String randomString = RandomStringUtils.secure().next(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
 
     stagingUserToCreate.setStatus(null);
@@ -123,7 +123,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   @ValueSource(booleans = { true, false })
   @NullSource
   void validateMinorFlag(Boolean minor) {
-    String randomString = RandomStringUtils.random(5, true, true);
+    String randomString = RandomStringUtils.secure().next(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
 
     stagingUserToCreate.setMinor(minor);
@@ -136,7 +136,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void shouldCreateAndGetTheStagingUserByCQL_success() {
-    String randomString = RandomStringUtils.random(5, true, true);
+    String randomString = RandomStringUtils.secure().next(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
     final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
     createdNewStagingUserResponse.statusCode(is(201));
@@ -652,12 +652,12 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   }
 
   private String createRandomString() {
-    return RandomStringUtils.random(5, true, true);
+    return RandomStringUtils.secure().next(5, true, true);
   }
 
   @Test
   void shouldCreateAndUpdatePreferredEmailCommunicationCorrectlyInTheStagingUser_positive() {
-    String randomString = RandomStringUtils.random(5, true, true);
+    String randomString = RandomStringUtils.secure().next(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
     final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
     createdNewStagingUserResponse.statusCode(is(201));
@@ -689,7 +689,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     "true, false",
   })
   void shouldCreateUpdateProperMinorFlagInTheStagingUser_positive(Boolean createdMinor, Boolean updatedMinor) {
-    String randomString = RandomStringUtils.random(5, true, true);
+    String randomString = RandomStringUtils.secure().next(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
     stagingUserToCreate.setMinor(createdMinor);
     final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
@@ -710,7 +710,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
   @Test
   void updateStagingUser_negative() {
-    String randomString = RandomStringUtils.random(5, true, true);
+    String randomString = RandomStringUtils.secure().next(5, true, true);
     StagingUser stagingUserToCreate = getDummyStagingUser(randomString);
     final var createdNewStagingUserResponse = stagingUsersClient.attemptToCreateStagingUser(stagingUserToCreate);
     createdNewStagingUserResponse.statusCode(is(201));

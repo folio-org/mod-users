@@ -58,7 +58,7 @@ public class DomainEventPublisher<K, T> {
 
     return producer.send(producerRecord)
       .onComplete(r -> {
-        producer.end(ear -> producer.close());
+        producer.end().onSuccess(e -> producer.close());
         if (r.succeeded()) {
           log.info("publish:: Succeeded sending domain event with key = {}, eventId = {}, type = {}, topic = {}",
             key, event.getId(), event.getType(), kafkaTopic);

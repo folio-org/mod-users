@@ -6,6 +6,48 @@
   <version>19.6.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <generate_routing_context>/users</generate_routing_context>
+    <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
+    <java.version>21</java.version>
+
+    <vertx.version>5.0.6</vertx.version>
+    <lombok.version>1.18.42</lombok.version>
+    <aspectj.version>1.9.25.1</aspectj.version>
+    <kafka-clients.version>3.9.1</kafka-clients.version>
+    <log4j-bom.version>2.25.3</log4j-bom.version>
+    <commons-lang3.version>3.20.0</commons-lang3.version>
+    <commons-compress.version>1.26.2</commons-compress.version>
+    <jackson-datatype-jsr310.version>2.20.1</jackson-datatype-jsr310.version>
+
+    <!-- Folio dependencies properties -->
+    <folio-s3-client.version>3.0.0-SNAPSHOT</folio-s3-client.version>
+    <folio-custom-fields.version>3.0.0-SNAPSHOT</folio-custom-fields.version>
+    <folio-service-tools.version>6.0.0-SNAPSHOT</folio-service-tools.version>
+    <raml-module-builder.version>36.0.0-SNAPSHOT</raml-module-builder.version>
+
+    <!-- Test Dependency Versions -->
+    <hamcrest.version>3.0</hamcrest.version>
+    <awaitility.version>4.3.0</awaitility.version>
+    <okapi-testing.version>7.1.0-SNAPSHOT</okapi-testing.version>
+    <rest-assured.version>6.0.0</rest-assured.version>
+    <junit-bom.version>6.0.1</junit-bom.version>
+    <mockito-bom.version>5.21.0</mockito-bom.version>
+    <testcontainers-bom.version>1.20.2</testcontainers-bom.version>
+
+    <!-- Plugin Versions -->
+    <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+    <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
+    <maven-failsafe-plugin.version>3.5.4</maven-failsafe-plugin.version>
+    <maven-resources-plugin.version>3.4.0</maven-resources-plugin.version>
+    <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
+    <exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
+    <aspectj-maven-plugin.version>1.14</aspectj-maven-plugin.version>
+    <folio-kafka-wrapper.version>4.0.0-SNAPSHOT</folio-kafka-wrapper.version>
+  </properties>
+
   <licenses>
     <license>
       <name>Apache License 2.0</name>
@@ -34,7 +76,7 @@
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-bom</artifactId>
-        <version>2.24.0</version>
+        <version>${log4j-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -46,9 +88,23 @@
         <scope>import</scope>
       </dependency>
       <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-bom</artifactId>
+        <version>${mockito-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-bom</artifactId>
-        <version>1.20.2</version>
+        <version>${testcontainers-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -80,12 +136,12 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-kafka-wrapper</artifactId>
-      <version>3.1.1</version>
+      <version>${folio-kafka-wrapper.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
-      <version>3.7.0</version>
+      <version>${kafka-clients.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -102,23 +158,23 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.14.0</version>
+      <version>${commons-lang3.version}</version>
     </dependency>
-    <!-- downgrade commons-compress to avoid java.lang.NoSuchMethodError:
-         long org.apache.commons.io.file.attribute.FileTimes.toUnixTime
-         https://github.com/testcontainers/testcontainers-java/pull/8354
-    -->
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>1.26.2</version>
+      <version>${commons-compress.version}</version>
     </dependency>
 
     <!-- test dependencies -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -134,13 +190,11 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
-      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -161,19 +215,19 @@
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
-      <version>5.5.0</version>
+      <version>${rest-assured.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
-      <version>2.17.0</version>
+      <version>${jackson-datatype-jsr310.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest</artifactId>
-      <version>2.2</version>
+      <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -197,13 +251,17 @@
     <dependency>
       <groupId>org.folio.okapi</groupId>
       <artifactId>okapi-testing</artifactId>
-      <version>5.3.0</version>
+      <version>${okapi-testing.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>4.6.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -214,7 +272,7 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <version>4.0.3</version>
+      <version>${awaitility.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -222,7 +280,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
+        <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <release>${java.version}</release>
           <encoding>UTF-8</encoding>
@@ -281,7 +339,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>${exec-maven-plugin.version}</version>
         <executions>
           <execution>
             <id>git submodule update</id>
@@ -305,7 +363,7 @@
       <plugin>
         <groupId>dev.aspectj</groupId>
         <artifactId>aspectj-maven-plugin</artifactId>
-        <version>1.14</version>
+        <version>${aspectj-maven-plugin.version}</version>
         <configuration>
           <verbose>true</verbose>
           <showWeaveInfo>false</showWeaveInfo>
@@ -342,7 +400,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>3.3.1</version>
+        <version>${maven-resources-plugin.version}</version>
         <executions>
           <execution>
             <id>copy-resources</id>
@@ -507,6 +565,7 @@
                     <Multi-Release>true</Multi-Release>
                   </manifestEntries>
                 </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
               <artifactSet />
               <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
@@ -531,7 +590,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.5.2</version>
+        <version>${maven-failsafe-plugin.version}</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
@@ -554,7 +613,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>${maven-release-plugin.version}</version>
         <configuration>
           <preparationGoals>clean verify</preparationGoals>
           <tagNameFormat>v@{project.version}</tagNameFormat>
@@ -566,7 +625,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.2</version>
+        <version>${maven-failsafe-plugin.version}</version>
         <configuration>
           <systemPropertyVariables>
             <vertx.logger-delegate-factory-class-name>
@@ -616,23 +675,4 @@
     <developerConnection>scm:git:git@github.com:folio-org/mod-users.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <raml-module-builder.version>35.4.0</raml-module-builder.version>
-    <vertx.version>4.5.13</vertx.version>
-    <generate_routing_context>/users</generate_routing_context>
-    <junit.version>5.12.0</junit.version>
-    <folio-service-tools.version>5.0.0</folio-service-tools.version>
-    <folio-custom-fields.version>3.0.0-SNAPSHOT</folio-custom-fields.version>
-    <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
-    <java.version>21</java.version>
-    <aspectj.version>1.9.22.1</aspectj.version>
-    <lombok.version>1.18.36</lombok.version>
-
-    <!--Folio dependencies properties-->
-    <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
-    <folio-s3-client.version>2.2.1</folio-s3-client.version>
-  </properties>
 </project>

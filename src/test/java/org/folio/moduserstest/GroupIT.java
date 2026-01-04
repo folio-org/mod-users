@@ -42,14 +42,14 @@ class GroupIT extends AbstractRestTestNoData {
   protected static FakeKafkaConsumer kafkaConsumer;
 
   @BeforeAll
-  public static void before() {
+  static void before() {
     groupsClient = new GroupsClient(okapiUrl, okapiHeaders);
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     kafkaConsumer = new FakeKafkaConsumer().consume(module.getVertx());
   }
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
   }
@@ -316,7 +316,10 @@ class GroupIT extends AbstractRestTestNoData {
   }
 
   @ParameterizedTest
-  @CsvSource({"patronGroup.group/sort.ascending,julia", "patronGroup.group/sort.descending,alex"})
+  @CsvSource({
+    "patronGroup.group/sort.ascending,julia",
+    "patronGroup.group/sort.descending,alex"
+  })
   void canSortUsersByPatronGroupNameAscending(String sortClause,
     String expectedFirstUsername) {
 

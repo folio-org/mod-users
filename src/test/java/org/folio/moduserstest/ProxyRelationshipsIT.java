@@ -32,12 +32,12 @@ class ProxyRelationshipsIT extends AbstractRestTestNoData {
   private static ProxiesClient proxiesClient;
 
   @BeforeAll
-  public static void beforeAll() {
+  static void beforeAll() {
     proxiesClient = new ProxiesClient(okapiUrl, okapiHeaders);
   }
 
   @BeforeEach
-  public void beforeEach() {
+  void beforeEach() {
     proxiesClient.deleteAllProxies();
   }
 
