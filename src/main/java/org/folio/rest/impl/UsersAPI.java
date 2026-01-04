@@ -52,6 +52,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import javax.annotation.Priority;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
@@ -114,6 +115,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.z3950.zing.cql.CQLParseException;
 
+@Priority(100)
 @Path("users")
 public class UsersAPI implements Users {
 

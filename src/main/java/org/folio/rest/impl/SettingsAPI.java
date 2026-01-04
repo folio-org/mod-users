@@ -5,6 +5,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_SETTINGS;
 
+import javax.annotation.Priority;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 import io.vertx.core.AsyncResult;
@@ -20,13 +21,14 @@ import org.folio.rest.jaxrs.resource.UsersSettings;
 import org.folio.rest.persist.PgUtil;
 import org.folio.service.UsersSettingsService;
 
-public class UsersSettingsAPI implements UsersSettings {
+@Priority(1)
+public class SettingsAPI implements UsersSettings {
 
-  private static final Logger logger = LogManager.getLogger(UsersSettingsAPI.class);
+  private static final Logger logger = LogManager.getLogger(SettingsAPI.class);
 
   private final UsersSettingsService settingsService;
 
-  public UsersSettingsAPI() {
+  public SettingsAPI() {
     this.settingsService = new UsersSettingsService();
   }
 
@@ -91,3 +93,4 @@ public class UsersSettingsAPI implements UsersSettings {
       .build();
   }
 }
+

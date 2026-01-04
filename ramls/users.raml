@@ -65,6 +65,10 @@ resourceTypes:
           text/plain:
             example: "Internal server error, contact administrator"
   /{userId}:
+    uriParameters:
+      userId:
+        description: The UUID of a user
+        type: UUID
     type:
       collection-item:
         exampleItem: !include examples/user.sample
