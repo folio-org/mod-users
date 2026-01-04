@@ -5,8 +5,7 @@
   "properties": {
     "id": {
       "description": "Identifier",
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      "$ref": "raml-util/schemas/uuid.schema"
     },
     "scope": {
       "type": "string",
@@ -22,8 +21,8 @@
     },
     "userId": {
       "description": "Owner of this setting (optional)",
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+      "$ref": "raml-util/schemas/uuid.schema"
+
     },
     "_version": {
       "type": "integer",

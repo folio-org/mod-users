@@ -35,5 +35,12 @@ public class Settings {
   public int size() {
     return settings != null ? settings.size() : 0;
   }
+
+  public Setting getFirst() {
+    if (isEmpty()) {
+      return null;
+    }
+    return settings.getFirst();
+  }
 }
 

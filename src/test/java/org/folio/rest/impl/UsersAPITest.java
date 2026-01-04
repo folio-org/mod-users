@@ -34,8 +34,10 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.interfaces.Results;
 import org.folio.support.tags.UnitTest;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.z3950.zing.cql.CQLParseException;
 
 import io.vertx.junit5.Timeout;
@@ -46,11 +48,23 @@ import io.vertx.junit5.VertxTestContext;
 @ExtendWith(VertxExtension.class)
 @Timeout(value = 5, timeUnit = TimeUnit.SECONDS)
 class UsersAPITest {
+  private static final String TENANT_ID = "test_tenant";
+
   String response(String message, Throwable e) {
     Response response = UsersAPI.response(message, e,
         s -> Response.ok("400 " + s).build(),
         s -> Response.ok("500 " + s).build());
     return response.getEntity().toString();
+  }
+
+  @Mock
+  Vertx vertx;
+
+  private UsersAPI usersAPI;
+
+  @BeforeEach
+  void setUp() {
+    usersAPI = new UsersAPI(vertx, TENANT_ID);
   }
 
   @Test
@@ -87,7 +101,7 @@ class UsersAPITest {
 
   @Test
   void getUsersExceptionInCatch(VertxTestContext vtc) {
-    new UsersAPI().getUsers(null, null, 0, 0, null, null,
+    usersAPI.getUsers(null, null, 0, 0, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -96,7 +110,7 @@ class UsersAPITest {
 
   @Test
   void postUsersException(VertxTestContext vtc) {
-    new UsersAPI().postUsers(null, null, null,
+    usersAPI.postUsers(null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -109,7 +123,7 @@ class UsersAPITest {
     CustomFields customFields = new CustomFields().withAdditionalProperty("test", "");
     User user = new User().withCustomFields(customFields);
 
-    new UsersAPI().postUsers(user, null, okapiHeaders,
+    usersAPI.postUsers(user, null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertTrue(user.getCustomFields().getAdditionalProperties().isEmpty());
         vtc.completeNow();
@@ -121,7 +135,7 @@ class UsersAPITest {
     Map<String,String> okapiHeaders = new HashMap<>();
     User user = new User().withType(UserType.DCB.getTypeName());
 
-    new UsersAPI().postUsers(user, null, okapiHeaders,
+    usersAPI.postUsers(user, null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertTrue(user.getType().equalsIgnoreCase(UserType.DCB.getTypeName()));
         vtc.completeNow();
@@ -133,7 +147,7 @@ class UsersAPITest {
     Map<String,String> okapiHeaders = new HashMap<>();
     okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
 
-    new UsersAPI().postUsersProfilePicture(null, okapiHeaders,
+    usersAPI.postUsersProfilePicture(null, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertThat(response.getStatus(), is(500));
         assertThat(response.getEntity(), is("failed to save profile picture Stream closed"));
@@ -147,7 +161,7 @@ class UsersAPITest {
     okapiHeaders.put("X-Okapi-Tenant", "folio_shared");
     okapiHeaders.put("COMPLETE", "completed");
     InputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
-    new UsersAPI().postUsersProfilePicture(emptyInputStream, okapiHeaders,
+    usersAPI.postUsersProfilePicture(emptyInputStream, okapiHeaders,
       vtc.succeeding(response -> vtc.verify( () -> {
         assertThat(response.getStatus(), is(500));
         assertThat(response.getEntity(), is("Requested file size should be within allowed size updated in profile_picture configuration"));
@@ -157,7 +171,7 @@ class UsersAPITest {
 
   @Test
   void postUsersExceptionInOtherwise(VertxTestContext vtc) {
-    new UsersAPI().postUsers(new User(), null, null,
+    usersAPI.postUsers(new User(), null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -170,13 +184,14 @@ class UsersAPITest {
       @Override
       public String get(Object key) {
         throw new IllegalArgumentException() {
+          @Override
           public String getMessage() {
             throw new IllegalArgumentException();
           }
         };
       }
     };
-    new UsersAPI().postUsers(new User(), null, okapiHeaders,
+    usersAPI.postUsers(new User(), null, okapiHeaders,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -185,7 +200,7 @@ class UsersAPITest {
 
   @Test
   void putUsersByUserIdException(VertxTestContext vtc) {
-    new UsersAPI().putUsersByUserId(null, null, null,
+    usersAPI.putUsersByUserId(null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
@@ -210,8 +225,7 @@ class UsersAPITest {
 
   @Test
   void checkAddressTypeValidCanHandleNullPostgresClient(VertxTestContext context) {
-    final var future = new UsersAPI()
-      .checkAddressTypeValid("myId", null);
+    final var future = usersAPI.checkAddressTypeValid("myId", null);
 
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
@@ -224,7 +238,7 @@ class UsersAPITest {
     Address address = new Address().withAddressTypeId("someAddressTypeId");
     Personal personal = new Personal().withAddresses(Collections.singletonList(address));
     User user = new User().withPersonal(personal);
-    Future<Boolean> future = new UsersAPI().checkAllAddressTypesValid(user, null);
+    Future<Boolean> future = usersAPI.checkAllAddressTypesValid(user, null);
     future.onComplete(context.failing(e -> context.verify(() -> {
       assertThat(future.cause(), is(instanceOf(NullPointerException.class)));
       context.completeNow();
@@ -239,8 +253,7 @@ class UsersAPITest {
     when(postgresClient.get(anyString(), any(), any(Criterion.class), anyBoolean()))
       .thenReturn(result);
 
-    final var future = new UsersAPI()
-      .checkAddressTypeValid("someAddressTypeId", postgresClient);
+    final var future = usersAPI.checkAddressTypeValid("someAddressTypeId", postgresClient);
 
     future.onComplete(context.failing(handler));
   }
