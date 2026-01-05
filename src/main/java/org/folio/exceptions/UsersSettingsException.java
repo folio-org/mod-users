@@ -16,12 +16,7 @@ import org.folio.rest.jaxrs.model.Parameter;
 public class UsersSettingsException extends RuntimeException {
 
   private final int statusCode;
-  /**
-   * -- GETTER --
-   *  Returns the error payload associated with this exception.
-   *
-   * @return the {@link Error} object containing error details
-   */
+
   @Getter
   private final transient Error error;
 
@@ -65,35 +60,6 @@ public class UsersSettingsException extends RuntimeException {
     super(error.getMessage(), null, true, false);
     this.error = error;
     this.statusCode = statusCode.getStatusCode();
-  }
-
-  /**
-   * Constructs a UsersSettingsException without capturing a stack trace.
-   *
-   * <p>The stack trace is disabled to reduce allocation overhead for expected control-flow errors.
-   *
-   * @param error      the error payload to return to the client
-   * @param statusCode the HTTP status to use for the response
-   */
-  public UsersSettingsException(Error error, int statusCode) {
-    super(error.getMessage(), null, true, false);
-    this.error = error;
-    this.statusCode = statusCode;
-  }
-
-  /**
-   * Constructs a UsersSettingsException with a cause, without capturing a stack trace.
-   *
-   * <p>The stack trace is disabled to reduce allocation overhead for expected control-flow errors.
-   *
-   * @param error      the error payload to return to the client
-   * @param statusCode the HTTP status to use for the response
-   * @param cause      the cause of this exception
-   */
-  public UsersSettingsException(Error error, int statusCode, Throwable cause) {
-    super(error.getMessage(), cause, true, false);
-    this.error = error;
-    this.statusCode = statusCode;
   }
 
   /**
