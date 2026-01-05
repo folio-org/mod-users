@@ -292,46 +292,10 @@
         <version>${raml-module-builder.version}</version>
         <executions>
           <execution>
-            <id>generate_settings_interface</id>
+            <id>generate_interfaces</id>
             <goals>
               <goal>java</goal>
             </goals>
-            <configuration>
-              <ramlDirs>${basedir}/ramls</ramlDirs>
-              <ramlFiles>
-                <ramlFile>settings.raml</ramlFile>
-              </ramlFiles>
-            </configuration>
-          </execution>
-          <execution>
-            <id>generate_users_interface</id>
-            <goals>
-              <goal>java</goal>
-            </goals>
-            <configuration>
-              <ramlDirs>${basedir}/ramls</ramlDirs>
-              <ramlFiles>
-                <ramlFile>users.raml</ramlFile>
-              </ramlFiles>
-            </configuration>
-          </execution>
-          <execution>
-            <id>generate_other_interfaces</id>
-            <goals>
-              <goal>java</goal>
-            </goals>
-            <configuration>
-              <ramlDirs>${basedir}/ramls</ramlDirs>
-              <ramlFiles>
-                <ramlFile>proxiesFor.raml</ramlFile>
-                <ramlFile>staging_users.raml</ramlFile>
-                <ramlFile>departments.raml</ramlFile>
-                <ramlFile>groups.raml</ramlFile>
-                <ramlFile>userTenants.raml</ramlFile>
-                <ramlFile>addressTypes.raml</ramlFile>
-                <ramlFile>patronpin.raml</ramlFile>
-              </ramlFiles>
-            </configuration>
           </execution>
         </executions>
       </plugin>

@@ -15,7 +15,7 @@ public class UsersSettingsClient {
 
   public UsersSettingsClient(OkapiUrl okapiUrl, OkapiHeaders defaultHeaders) {
     client = new RestAssuredCollectionApiClient<>(
-      okapiUrl.asURI("/users/settings"),
+      okapiUrl.asURI("/users/settings/entries"),
       defaultHeaders,
       Setting.class,
       Settings.class
