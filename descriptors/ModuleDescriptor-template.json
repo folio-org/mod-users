@@ -350,6 +350,37 @@
           "permissionsRequired": [ "staging-users.external-system-id.put" ]
         }
       ]
+    },
+    {
+      "id": "users.settings",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": ["GET"],
+          "pathPattern": "/users/settings/entries",
+          "permissionsRequired": ["users.settings.collection.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/users/settings/entries/{id}",
+          "permissionsRequired": ["users.settings.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/users/settings/entries",
+          "permissionsRequired": ["users.settings.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/users/settings/entries/{id}",
+          "permissionsRequired": ["users.settings.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/users/settings/entries/{id}",
+          "permissionsRequired": ["users.settings.item.delete"]
+        }
+      ]
     }
   ],
   "permissionSets" : [
@@ -562,6 +593,43 @@
       "description" : "Delete user-tenant record"
     },
     {
+      "permissionName" : "users.settings.collection.get",
+      "displayName" : "mod-users - retrieve settings collection",
+      "description" : "Get a collection of settings"
+    },
+    {
+      "permissionName" : "users.settings.item.get",
+      "displayName" : "mod-users - retrieve a setting by id",
+      "description" : "Fetch a setting"
+    },
+    {
+      "permissionName" : "users.settings.item.put",
+      "displayName" : "mod-users - Update a setting by id",
+      "description" : "Update a setting"
+    },
+    {
+      "permissionName" : "users.settings.item.post",
+      "displayName" : "mod-users - Save a setting",
+      "description" : "Add a setting"
+    },
+    {
+      "permissionName" : "users.settings.item.delete",
+      "displayName" : "mod-users - Remove a setting by id",
+      "description" : "Delete a setting"
+    },
+    {
+      "permissionName" : "users.settings.all",
+      "displayName" : "mod-users - settings all",
+      "description" : "All permissions for setting",
+      "subPermissions" : [
+        "users.settings.collection.get",
+        "users.settings.item.get",
+        "users.settings.item.post",
+        "users.settings.item.put",
+        "users.settings.item.delete"
+      ]
+    },
+    {
       "permissionName" : "users.all",
       "displayName" : "users all",
       "description" : "All permissions for the mod-users module",
@@ -605,7 +673,8 @@
         "user-tenants.item.delete",
         "users.profile-picture.item.get",
         "users.profile-picture.item.put",
-        "users.profile-picture.item.post"
+        "users.profile-picture.item.post",
+        "users.settings.all"
       ]
     },{
       "permissionName": "user-settings.custom-fields.collection.get",
