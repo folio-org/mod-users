@@ -3,8 +3,8 @@ package org.folio.service;
 import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.folio.rest.jaxrs.resource.UsersSettings.PutUsersSettingsByIdResponse.respond400WithTextPlain;
-import static org.folio.rest.jaxrs.resource.UsersSettings.PutUsersSettingsByIdResponse.respond500WithTextPlain;
+import static org.folio.rest.jaxrs.resource.UsersSettingsEntries.PutUsersSettingsEntriesByIdResponse.respond400WithTextPlain;
+import static org.folio.rest.jaxrs.resource.UsersSettingsEntries.PutUsersSettingsEntriesByIdResponse.respond500WithTextPlain;
 import static org.folio.support.UsersApiConstants.PROFILE_PICTURE_SETTING_KEY;
 import static org.folio.support.UsersApiConstants.TABLE_NAME_SETTINGS;
 
@@ -21,7 +21,7 @@ import org.folio.rest.jaxrs.model.Config;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Parameter;
 import org.folio.rest.jaxrs.model.Setting;
-import org.folio.rest.jaxrs.resource.UsersSettings;
+import org.folio.rest.jaxrs.resource.UsersSettingsEntries;
 import org.folio.rest.persist.Conn;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
@@ -100,7 +100,7 @@ public class UsersSettingsService {
 
     return conn.update(TABLE_NAME_SETTINGS, newValue, id)
       .onSuccess(rows -> log.debug("updateSetting:: updated entity with id: {}", id))
-      .map(rows -> UsersSettings.PutUsersSettingsByIdResponse.respond204());
+      .map(rows -> UsersSettingsEntries.PutUsersSettingsEntriesByIdResponse.respond204());
   }
 
   private org.folio.rest.jaxrs.model.Error getUpdateEntityIdMismatchError(String id) {

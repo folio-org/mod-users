@@ -15,9 +15,6 @@ types:
   userEvent: !include userEvent.json
   config: !include configuration.json
   errors: !include raml-util/schemas/errors.schema
-  UUID:
-    type: string
-    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
 
 traits:
   pageable: !include raml-util/traits/pageable.raml
@@ -65,10 +62,6 @@ resourceTypes:
           text/plain:
             example: "Internal server error, contact administrator"
   /{userId}:
-    uriParameters:
-      userId:
-        description: The UUID of a user
-        type: UUID
     type:
       collection-item:
         exampleItem: !include examples/user.sample

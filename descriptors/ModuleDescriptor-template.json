@@ -357,27 +357,27 @@
       "handlers": [
         {
           "methods": ["GET"],
-          "pathPattern": "/users/settings",
+          "pathPattern": "/users/settings/entries",
           "permissionsRequired": ["users.settings.collection.get"]
         },
         {
           "methods": ["GET"],
-          "pathPattern": "/users/settings/{id}",
+          "pathPattern": "/users/settings/entries/{id}",
           "permissionsRequired": ["users.settings.item.get"]
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/users/settings",
+          "pathPattern": "/users/settings/entries",
           "permissionsRequired": ["users.settings.item.post"]
         },
         {
           "methods": ["PUT"],
-          "pathPattern": "/users/settings/{id}",
+          "pathPattern": "/users/settings/entries/{id}",
           "permissionsRequired": ["users.settings.item.put"]
         },
         {
           "methods": ["DELETE"],
-          "pathPattern": "/users/settings/{id}",
+          "pathPattern": "/users/settings/entries/{id}",
           "permissionsRequired": ["users.settings.item.delete"]
         }
       ]
