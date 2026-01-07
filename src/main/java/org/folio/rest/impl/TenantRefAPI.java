@@ -81,7 +81,7 @@ public class TenantRefAPI extends TenantAPI {
 
   static Future<Void> createTopics(String tenantId, Context context) {
     return new KafkaAdminClientService(context.owner())
-              .createKafkaTopics(UsersKafkaTopic.values(), tenantId);
+      .createKafkaTopics(UsersKafkaTopic.values(), tenantId);
   }
 
   static Future<Void> deleteTopics(String tenantId, Context context) {

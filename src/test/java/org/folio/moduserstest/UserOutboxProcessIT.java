@@ -3,9 +3,9 @@ package org.folio.moduserstest;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.USER_CREATED;
 import static org.folio.extensions.KafkaContainerExtension.getTopicName;
 import static org.folio.support.TestConstants.TENANT_NAME;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_CREATED;
 import static org.folio.support.matchers.DomainEventAssertions.assertHeaders;
 import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.is;
@@ -50,7 +50,7 @@ class UserOutboxProcessIT extends AbstractRestTestNoData {
     .withIsPersonalDataChanged(true);
 
   private static final String EXPECTED_TOPIC =
-    getTopicName(TENANT_NAME, USER_CREATED.getTopicName());
+    getTopicName(TENANT_NAME, USER_CREATED.topicName());
 
   private static TimerInterfaceClient timerInterfaceClient;
   private static UserEventsLogRepository userEventsLogRepository;

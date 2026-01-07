@@ -8,7 +8,6 @@ import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.event.KafkaConfigSingleton;
-import org.folio.event.UserEventType;
 import org.folio.kafka.KafkaConfig;
 import org.folio.kafka.KafkaTopicNameHelper;
 import org.folio.kafka.services.KafkaProducerRecordBuilder;
@@ -17,6 +16,7 @@ import org.folio.rest.jaxrs.model.User;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.service.UsersService;
+import org.folio.support.kafka.topic.UsersKafkaTopic;
 
 import java.util.Date;
 import java.util.Map;
@@ -52,15 +52,15 @@ public class UserEventProducer {
     return switch (eventAction) {
       case CREATE -> {
         logger.info("Starting to send user created event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-        yield sendToKafka(UserEventType.USER_CREATED, event, okapiHeaders, user.getId());
+        yield sendToKafka(UsersKafkaTopic.USER_CREATED, event, okapiHeaders, user.getId());
       }
       case DELETE -> {
         logger.info("Starting to send user deleted event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-        yield sendToKafka(UserEventType.USER_DELETED, event, okapiHeaders, user.getId());
+        yield sendToKafka(UsersKafkaTopic.USER_DELETED, event, okapiHeaders, user.getId());
       }
       case EDIT -> {
         logger.info("Starting to send user edit event with id: {} for User to Kafka for userId: {}", event.getId(), user.getId());
-        yield sendToKafka(UserEventType.USER_UPDATED, event, okapiHeaders, user.getId());
+        yield sendToKafka(UsersKafkaTopic.USER_UPDATED, event, okapiHeaders, user.getId());
       }
     };
   }
@@ -82,17 +82,17 @@ public class UserEventProducer {
     return event;
   }
 
-  private Future<Boolean> sendToKafka(UserEventType eventType,
+  private Future<Boolean> sendToKafka(UsersKafkaTopic eventType,
                                       UserEvent userEvent,
                                       Map<String, String> okapiHeaders,
                                       String key) {
     String tenantId = TenantTool.tenantId(okapiHeaders);
-    String topicName = createTopicName(kafkaConfig.getEnvId(), tenantId, eventType.getTopicName());
+    String topicName = createTopicName(kafkaConfig.getEnvId(), tenantId, eventType.topicName());
     KafkaProducerRecord<String, String> producerRecord = createProducerRecord(tenantId, topicName, key, userEvent, okapiHeaders);
 
     Promise<Boolean> promise = Promise.promise();
 
-    KafkaProducer<String, String> producer = createProducer(eventType.getTopicName());
+    KafkaProducer<String, String> producer = createProducer(eventType.topicName());
     producer.write(producerRecord).onComplete(ar -> {
       producer.end().onSuccess(e -> producer.close());
       if (ar.succeeded()) {
