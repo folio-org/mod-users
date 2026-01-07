@@ -3,9 +3,9 @@ package org.folio.rest.impl;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.USER_CREATED;
-import static org.folio.event.UserEventType.USER_DELETED;
-import static org.folio.event.UserEventType.USER_UPDATED;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_CREATED;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_DELETED;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_UPDATED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -15,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
+import org.folio.support.kafka.topic.UsersKafkaTopic;
 import org.folio.domain.UserType;
-import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UserTenant;
@@ -368,15 +368,15 @@ class UsersAPIConsortiaTest extends AbstractRestTestNoData {
     assertEquals(UserType.STAFF.getTypeName(), userEvent.getUser().getType());
   }
 
-  private List<UserEvent> getUserEventsAndFilterByUserId(UserEventType eventType, String userId) {
+  private List<UserEvent> getUserEventsAndFilterByUserId(UsersKafkaTopic eventType, String userId) {
     List<UserEvent> usersList = getUserEvents(eventType);
     return usersList.stream()
       .filter(userEvent -> userId.equals(userEvent.getUser().getId()))
       .collect(Collectors.toList());
   }
 
-  private List<UserEvent> getUserEvents(UserEventType eventType) {
-    List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.getTopicName());
+  private List<UserEvent> getUserEvents(UsersKafkaTopic eventType) {
+    List<String> usersList = checkKafkaEventSent(TENANT_NAME, eventType.topicName());
     return usersList.stream()
       .map(s -> Json.decodeValue(s, UserEvent.class))
       .collect(Collectors.toList());
