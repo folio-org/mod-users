@@ -25,7 +25,7 @@ import java.util.UUID;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.folio.event.UserEventType.USER_CREATED;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_CREATED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -62,7 +62,7 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
   void shouldSendUserEventToKafkaAfterTrigger() {
     timerInterfaceClient.attemptToTriggerUsersOutboxProcess(TENANT_NAME)
       .statusCode(is(HTTP_OK));
-    List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+    List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.topicName());
     assertEquals(1, list.size());
     JsonObject log = (JsonObject) Json.decodeValue(list.get(0));
     assertEquals(UserEvent.Action.CREATE.value(), log.getString("action"));
@@ -73,7 +73,7 @@ public class UserOutboxProcessIT extends AbstractRestTestNoData {
   void shouldFailAfterTriggerUsingNonExistsTenant() {
     timerInterfaceClient.attemptToTriggerUsersOutboxProcess("non-exist")
       .statusCode(is(HTTP_INTERNAL_ERROR));
-    List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.getTopicName());
+    List<String> list = checkKafkaEventSent(TENANT_NAME, USER_CREATED.topicName());
     assertEquals(0, list.size());
   }
 

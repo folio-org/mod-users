@@ -1,3 +1,7 @@
+## 19.5.4 2026-01-07
+
+* Training ECS: Problem upgrading patron user to staff user (MODUSERS-535)
+
 ## 19.5.3 2025-12-17
 
 * Update to RMB 35.4.1, Vert.x 4.5.22 (MODUSERS-557)
