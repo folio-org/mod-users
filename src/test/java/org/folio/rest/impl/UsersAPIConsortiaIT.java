@@ -5,12 +5,12 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.folio.event.UserEventType.USER_CREATED;
-import static org.folio.event.UserEventType.USER_DELETED;
-import static org.folio.event.UserEventType.USER_UPDATED;
 import static org.folio.extensions.KafkaContainerExtension.getTopicName;
 import static org.folio.rest.utils.ManualBlockWiremockStubs.addManualBlockStubForDeleteUserById;
 import static org.folio.support.TestConstants.TENANT_NAME;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_CREATED;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_DELETED;
+import static org.folio.support.kafka.topic.UsersKafkaTopic.USER_UPDATED;
 import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,6 +29,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+import org.folio.support.kafka.topic.UsersKafkaTopic;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +39,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import org.folio.domain.UserType;
-import org.folio.event.UserEventType;
 import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.UserEvent;
 import org.folio.rest.jaxrs.model.UserTenant;
@@ -61,9 +61,9 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
   @BeforeAll
   static void beforeAll(Vertx vertx) {
     kafkaConsumer = new FakeKafkaConsumer().consume(vertx,
-      getTopicName(TENANT_NAME, USER_CREATED.getTopicName()),
-      getTopicName(TENANT_NAME, USER_UPDATED.getTopicName()),
-      getTopicName(TENANT_NAME, USER_DELETED.getTopicName()));
+      getTopicName(TENANT_NAME, USER_CREATED.topicName()),
+      getTopicName(TENANT_NAME, USER_UPDATED.topicName()),
+      getTopicName(TENANT_NAME, USER_DELETED.topicName()));
 
     usersClient = new UsersClient(okapiUrl, okapiHeaders);
     userTenantClient = new UserTenantClient(okapiUrl, okapiHeaders);
@@ -382,8 +382,8 @@ class UsersAPIConsortiaIT extends AbstractRestTestNoData {
     assertEquals(UserType.STAFF.getTypeName(), userEvent.getUser().getType());
   }
 
-  private static List<UserEvent> getUserEvents(UserEventType eventType, String userId) {
-    var topicName = getTopicName(TENANT_NAME, eventType.getTopicName());
+  private static List<UserEvent> getUserEvents(UsersKafkaTopic eventType, String userId) {
+    var topicName = getTopicName(TENANT_NAME, eventType.topicName());
     var events = kafkaConsumer.getEvents(topicName, userId);
     return events.stream()
       .map(KafkaConsumerRecord::value)
