@@ -59,7 +59,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgException;
 
@@ -131,8 +130,8 @@ public class UsersAPI implements Users {
   private final ProfilePictureStorage profilePictureStorage;
 
   @Autowired
-  public UsersAPI(Vertx vertx, String tenantId) {
-    this.profilePictureStorage = new ProfilePictureStorage(vertx, tenantId);
+  public UsersAPI() {
+    this.profilePictureStorage = new ProfilePictureStorage();
     this.userOutboxService = new UserOutboxService();
     this.usersService = new UsersService();
     this.userTenantService = new UserTenantService();
@@ -663,7 +662,7 @@ public class UsersAPI implements Users {
         logger.error("postUsersProfilePicture:: Stream aborted");
         handleStreamAbort(asyncResultHandler);
       } else {
-        processProfilePicture(okapiHeaders, asyncResultHandler);
+        processProfilePicture(okapiHeaders, asyncResultHandler, vertxContext);
       }
     } catch (Exception e) {
       logger.error("postUsersProfilePicture:: failed to save profile picture due to %s", e.getCause());
@@ -672,32 +671,33 @@ public class UsersAPI implements Users {
   }
 
   private void processProfilePicture(Map<String, String> okapiHeaders,
-                                     Handler<AsyncResult<Response>> asyncResultHandler) {
+                                     Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
-      processValidProfilePicture(okapiHeaders, asyncResultHandler);
+      processValidProfilePicture(okapiHeaders, asyncResultHandler, vertxContext);
     } else {
       handleInvalidProfilePictureSize(asyncResultHandler);
     }
   }
 
   private void processValidProfilePicture(Map<String, String> okapiHeaders,
-                                          Handler<AsyncResult<Response>> asyncResultHandler) {
+                                          Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (ProfilePictureHelper.detectFileType(requestBytesArray).equals("Unknown")) {
       logger.error("processValidProfilePicture:: Unknown type received");
       handleInvalidFileType(asyncResultHandler);
     } else {
-      processProfilePictureStorage(okapiHeaders, asyncResultHandler);
+      processProfilePictureStorage(okapiHeaders, asyncResultHandler, vertxContext);
     }
   }
 
   private void processProfilePictureStorage(Map<String, String> okapiHeaders,
-                                            Handler<AsyncResult<Response>> asyncResultHandler) {
-    profilePictureStorage.getProfilePictureSetting()
-      .onSuccess(config -> handleProfilePictureConfig(config, okapiHeaders, asyncResultHandler));
+                                            Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
+      .onSuccess(config ->
+        handleProfilePictureConfig(config, okapiHeaders, asyncResultHandler, vertxContext));
   }
 
   private void handleProfilePictureConfig(Config config, Map<String, String> okapiHeaders,
-                                          Handler<AsyncResult<Response>> asyncResultHandler) {
+                                          Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
       logger.info("handleProfilePictureConfig:: Profile picture feature is disable");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
@@ -710,7 +710,7 @@ public class UsersAPI implements Users {
     } else {
       if (config != null && config.getEncryptionKey() != null) {
         logger.info("handleProfilePictureConfig:: Storing images into DB storage");
-        profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, config.getEncryptionKey());
+        profilePictureStorage.storeProfilePictureInDbStorage(requestBytesArray, okapiHeaders, asyncResultHandler, config.getEncryptionKey(), vertxContext);
       } else {
         logger.error("handleProfilePictureConfig:: Encryption key is null");
         asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse
@@ -749,13 +749,13 @@ public class UsersAPI implements Users {
   @Override
   public void getUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders,
                                                 Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    profilePictureStorage.getProfilePictureSetting()
-      .onSuccess(config -> handleProfilePictureConfig(config, profileId, okapiHeaders, asyncResultHandler))
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
+      .onSuccess(config -> handleProfilePictureConfig(config, profileId, okapiHeaders, asyncResultHandler, vertxContext))
       .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
   }
 
   private void handleProfilePictureConfig(Config config, String profileId, Map<String, String> okapiHeaders,
-                                          Handler<AsyncResult<Response>> asyncResultHandler) {
+                                          Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
       logger.error("handleProfilePictureConfig:: Profile Picture feature is not enabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
@@ -765,7 +765,7 @@ public class UsersAPI implements Users {
     } else {
       if (config != null && config.getEncryptionKey() != null) {
         logger.info("handleProfilePictureConfig:: Getting image from DB storage");
-        profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, config.getEncryptionKey());
+        profilePictureStorage.getProfilePictureFromDbStorage(profileId, asyncResultHandler, okapiHeaders, config.getEncryptionKey(), vertxContext);
       } else {
         logger.error("handleProfilePictureConfig:: Encryption key is null");
         asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse
@@ -795,7 +795,7 @@ public class UsersAPI implements Users {
       } else if (Objects.nonNull(okapiHeaders.get(STREAM_ABORT))) {
         handleStreamAbort(asyncResultHandler);
       } else {
-        processPutProfilePicture(okapiHeaders, profileId, asyncResultHandler);
+        processPutProfilePicture(okapiHeaders, profileId, asyncResultHandler, vertxContext);
       }
     } catch (Exception e) {
       handleException(asyncResultHandler, e);
@@ -803,12 +803,12 @@ public class UsersAPI implements Users {
   }
 
   private void processPutProfilePicture(Map<String, String> okapiHeaders, String profileId,
-                                        Handler<AsyncResult<Response>> asyncResultHandler) {
+                                        Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(requestBytesArray) && requestBytesArray.length != 0) {
       if (ProfilePictureHelper.detectFileType(requestBytesArray).equals("Unknown")) {
         handleInvalidFileType(asyncResultHandler);
       } else {
-        processPutProfilePictureStorage(okapiHeaders, profileId, asyncResultHandler);
+        processPutProfilePictureStorage(okapiHeaders, profileId, asyncResultHandler, vertxContext);
       }
     } else {
       handleInvalidProfilePictureSize(asyncResultHandler);
@@ -816,14 +816,14 @@ public class UsersAPI implements Users {
   }
 
   private void processPutProfilePictureStorage(Map<String, String> okapiHeaders, String profileId,
-                                            Handler<AsyncResult<Response>> asyncResultHandler) {
-    profilePictureStorage.getProfilePictureSetting()
+                                            Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config ->
-        handlePutProfilePictureConfig(config, okapiHeaders, profileId, asyncResultHandler));
+        handlePutProfilePictureConfig(config, okapiHeaders, profileId, asyncResultHandler, vertxContext));
   }
 
   private void handlePutProfilePictureConfig(Config config, Map<String, String> okapiHeaders, String profileId,
-                                          Handler<AsyncResult<Response>> asyncResultHandler) {
+                                          Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
       logger.info("handleProfilePictureConfig:: Profile picture feature is disabled");
       handleDisabledProfilePictureFeature(okapiHeaders, asyncResultHandler);
@@ -836,7 +836,7 @@ public class UsersAPI implements Users {
     } else {
       if (config != null && config.getEncryptionKey() != null) {
         logger.info("handleProfilePictureConfig:: Updating image data into DB storage for id {}", profileId);
-        profilePictureStorage.updateProfilePictureInDbStorage(profileId, requestBytesArray, asyncResultHandler, okapiHeaders, config.getEncryptionKey());
+        profilePictureStorage.updateProfilePictureInDbStorage(profileId, requestBytesArray, asyncResultHandler, okapiHeaders, config.getEncryptionKey(), vertxContext);
       } else {
         logger.error("handlePutProfilePictureConfig:: Encryption key is null");
         asyncResultHandler.handle(succeededFuture(Users.PostUsersProfilePictureResponse
@@ -849,7 +849,7 @@ public class UsersAPI implements Users {
   public void deleteUsersProfilePictureByProfileId(String profileId, Map<String, String> okapiHeaders,
                                                    Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.debug("deleteUsersProfilePictureByProfileId:: Deleting profile picture with id {} ", profileId);
-    profilePictureStorage.getProfilePictureSetting()
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config -> handleProfilePictureConfigForDelete(config, okapiHeaders, profileId, asyncResultHandler, vertxContext))
       .onFailure(throwable -> handleProfileConfigFailure(asyncResultHandler));
   }
@@ -857,7 +857,7 @@ public class UsersAPI implements Users {
   @Override
   public void postUsersProfilePictureCleanup(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("postUsersProfilePictureCleanup:: CleanUp job starting..");
-    profilePictureStorage.cleanUp(okapiHeaders)
+    profilePictureStorage.cleanUp(okapiHeaders, vertxContext)
       .onSuccess(res -> asyncResultHandler.handle(Future.succeededFuture(Response.status(Response.Status.OK).build())))
       .onFailure(cause -> {
         logger.warn("postUsersProfilePictureCleanup:: CleanUp job has been failed", cause);
@@ -929,7 +929,7 @@ public class UsersAPI implements Users {
   @Override
   public void putUsersConfigurationsEntryByConfigId(String configId, Config entity, Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     logger.info("putUsersConfigurationsEntryByConfigId:: Updating configuration");
-    profilePictureStorage.getProfilePictureConfig(okapiHeaders)
+    profilePictureStorage.getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config -> {
         if (Objects.isNull(entity.getEncryptionKey()) || !Objects.equals(config.getEncryptionKey(), entity.getEncryptionKey())) {
           asyncResultHandler.handle(succeededFuture(Users.PutUsersConfigurationsEntryByConfigIdResponse.respond400WithTextPlain("Cannot update the Encryption key")));

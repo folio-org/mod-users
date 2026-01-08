@@ -9,11 +9,9 @@ public class UsersApiConstants {
   public static final String PROFILE_PICTURE_FOR_SHADOW_USER_ERROR_MSG = "Profile Picture feature is not applicable for user's type SHADOW";
   public static final String KEY_ERROR = "Encryption key is null";
   public static final String TABLE_NAME_PROFILE_PICTURE = "profile_picture";
-  public static final String TABLE_NAME_SETTINGS = "settings";
   public static final String TABLE_NAME_USERS = "users";
   public static final String TABLE_NAME_CONFIG = "configuration";
   public static final String SAVE_PROFILE_PICTURE_SQL = "INSERT INTO %s.%s (id, profile_picture_blob, hmac, picture_details) VALUES ($1, $2, $3, $4)";
-  public static final String PROFILE_PICTURE_SETTING_KEY = "PROFILE_PICTURE_CONFIG";
   public static final String GET_CONFIGURATION_SQL = "SELECT * FROM %s.%s WHERE configName = 'PROFILE_PICTURE_CONFIG'";
   public static final String DELETE_USERS_SQL = "DELETE from %s.%s";
   public static final String UPDATE_PROFILE_PICTURE_SQL = "UPDATE %s.%s SET profile_picture_blob = $1, hmac = $2, picture_details = $3 WHERE id = $4 RETURNING id";

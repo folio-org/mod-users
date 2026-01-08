@@ -1,31 +1,25 @@
 package org.folio.service.storage;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.rest.jaxrs.model.Config;
 import org.folio.rest.jaxrs.model.ProfilePicture;
 import org.folio.rest.jaxrs.resource.Users;
-import org.folio.rest.persist.Conn;
-import org.folio.rest.persist.Criteria.Criteria;
-import org.folio.rest.persist.Criteria.Criterion;
-import org.folio.rest.persist.Criteria.Limit;
-import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.PgUtil;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.rest.utils.OkapiConnectionParams;
 import org.folio.s3.client.FolioS3Client;
 import org.folio.s3.exception.S3ClientException;
-import org.folio.service.UsersSettingsService;
 
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
@@ -63,7 +57,6 @@ import static org.folio.support.UsersApiConstants.JSONB;
 import static org.folio.support.UsersApiConstants.MAX_FILE_SIZE;
 import static org.folio.support.UsersApiConstants.MAX_IDS_COUNT;
 import static org.folio.support.UsersApiConstants.PROFILE_LINK_IDS;
-import static org.folio.support.UsersApiConstants.PROFILE_PICTURE_SETTING_KEY;
 import static org.folio.support.UsersApiConstants.SAVE_PROFILE_PICTURE_SQL;
 import static org.folio.support.UsersApiConstants.SELECT_USERS_PROFILE_LINK_ID;
 import static org.folio.support.UsersApiConstants.SIZE_IN_MB;
@@ -73,19 +66,9 @@ import static org.folio.support.UsersApiConstants.TABLE_NAME_USERS;
 import static org.folio.support.UsersApiConstants.UPDATE_PROFILE_PICTURE_SQL;
 
 public class ProfilePictureStorage {
-  private static final Logger logger = LogManager.getLogger(ProfilePictureStorage.class);
-
-  private final FolioS3ClientFactory folioS3ClientFactory;
-  private final UsersSettingsService settingsService;
-  private final PostgresClient postgresClient;
-
+  private final FolioS3ClientFactory folioS3ClientFactory = new FolioS3ClientFactory();
   private String path;
-
-  public ProfilePictureStorage(Vertx vertx, String tenantId) {
-    folioS3ClientFactory = new FolioS3ClientFactory();
-    settingsService = new UsersSettingsService();
-    postgresClient = PostgresClient.getInstance(vertx, tenantId);
-  }
+  private static final Logger logger = LogManager.getLogger(ProfilePictureStorage.class);
 
   public void storeProfilePictureInObjectStorage(byte[] fileBytes, Map<String, String> okapiHeaders, String profileId,
                         Handler<AsyncResult<Response>> asyncResultHandler) {
@@ -165,14 +148,15 @@ public class ProfilePictureStorage {
   }
 
   public void storeProfilePictureInDbStorage(byte[] requestBytesArray, Map<String, String> okapiHeaders,
-                                             Handler<AsyncResult<Response>> asyncResultHandler, String encryptionKey) {
+                                             Handler<AsyncResult<Response>> asyncResultHandler, String encryptionKey, Context vertxContext) {
     try {
       UUID profileId = UUID.randomUUID();
       byte[] encryptedData = encryptAES(requestBytesArray, encryptionKey);
       byte[] hmac = calculateHmac(encryptedData, encryptionKey);
       JsonObject profilePictureDetails = createProfilePictureDetails(bytesToMegabytes(encryptedData.length));
       Tuple params = Tuple.of(profileId, encryptedData, hmac, profilePictureDetails);
-      postgresClient.execute(createInsertQuery(okapiHeaders), params)
+      PgUtil.postgresClient(vertxContext, okapiHeaders)
+        .execute(createInsertQuery(okapiHeaders), params)
         .map(rows -> Users.PostUsersProfilePictureResponse.respond201WithApplicationJson(new ProfilePicture().withId(profileId)))
         .map(Response.class::cast)
         .onComplete(reply -> {
@@ -199,10 +183,11 @@ public class ProfilePictureStorage {
   }
 
   public void getProfilePictureFromDbStorage(String profileId, Handler<AsyncResult<Response>> asyncResultHandler,
-                                             Map<String, String> okapiHeaders, String encryptionKey) {
+                                             Map<String, String> okapiHeaders, String encryptionKey, Context vertxContext) {
     logger.info("getProfilePictureFromDbStorage:: Getting profile picture from db storage with id {}", profileId);
     Tuple params = Tuple.of(profileId);
-    postgresClient.execute(createSelectQuery(okapiHeaders, GET_PROFILE_PICTURE_SQL, TABLE_NAME_PROFILE_PICTURE), params)
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .execute(createSelectQuery(okapiHeaders, GET_PROFILE_PICTURE_SQL, TABLE_NAME_PROFILE_PICTURE), params)
       .compose(rows -> {
         if (rows.rowCount() != 0) {
           Row row = rows.iterator().next();
@@ -234,12 +219,12 @@ public class ProfilePictureStorage {
   }
 
   public void updateProfilePictureInDbStorage (String profileId, byte[] requestedBytesArray,
-                                                 Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, String encryptionKey) {
+                                                 Handler<AsyncResult<Response>> asyncResultHandler, Map<String, String> okapiHeaders, String encryptionKey, Context vertxContext) {
     try {
       byte[] encryptedData = encryptAES(requestedBytesArray, encryptionKey);
       byte[] hmac = calculateHmac(encryptedData, encryptionKey);
       JsonObject profilePictureDetails = createProfilePictureDetails(bytesToMegabytes(encryptedData.length));
-      postgresClient
+      PgUtil.postgresClient(vertxContext, okapiHeaders)
         .execute(createUpdateQuery(okapiHeaders), Tuple.of(encryptedData, hmac, profilePictureDetails, profileId))
         .compose(rows -> {
           if (rows.rowCount() != 0) {
@@ -266,37 +251,51 @@ public class ProfilePictureStorage {
     }
   }
 
-  public Future<Config> getProfilePictureConfig(Map<String, String> okapiHeaders) {
+  private Future<Config> mapResultSetToConfig(RowSet<Row> rows) {
+    Promise<Config> promise = Promise.promise();
+    Config config = new Config();
+
+    if (rows.rowCount() != 0) {
+      Row row = rows.iterator().next();
+      JsonObject json = row.get(JsonObject.class, JSONB);
+      if (json != null) {
+        config
+          .withId(String.valueOf(row.getUUID(ID)))
+          .withConfigName(row.getString(CONFIG_NAME))
+          .withEnabled(json.getBoolean(ENABLED))
+          .withEnabledObjectStorage(json.getBoolean(ENABLED_OBJECT_STORAGE))
+          .withEncryptionKey(json.getString(ENCRYPTION_KEY))
+          .withMaxFileSize(json.getDouble(MAX_FILE_SIZE));
+      }
+      promise.complete(config);
+    } else {
+      promise.fail("No rows found in the result set");
+    }
+    return promise.future();
+  }
+
+  public Future<Config> getProfilePictureConfig(Map<String, String> okapiHeaders, Context vertxContext) {
     logger.info("getProfilePictureConfig:: Getting profile picture configuration...");
-    return postgresClient
+    return PgUtil.postgresClient(vertxContext, okapiHeaders)
       .execute(createSelectQuery(okapiHeaders, GET_CONFIGURATION_SQL, TABLE_NAME_CONFIG))
       .compose(this::mapResultSetToConfig);
   }
 
-  public Future<Config> getProfilePictureSetting() {
-    logger.info("getProfilePictureSetting:: Getting profile picture config setting...");
-    return postgresClient.withConn(conn -> settingsService.getProfilePictureConfigSetting(conn)
-        .recover(err -> tryToFindAndMigrateSettingsFromConfigurationRepo(err, conn))
-        .onFailure(err -> logger.warn("Failed to find Profile Picture config setting: {} {}",
-          err.getClass().getSimpleName(), err.getMessage()))
-      );
-  }
-
-  public Future<Void> cleanUp(Map<String, String> okapiHeaders) {
+  public Future<Void> cleanUp(Map<String, String> okapiHeaders, Context vertxContext) {
     logger.info("cleanUp:: Cleaning profile ids..");
     Promise<Void> resultPromise = Promise.promise();
-    getProfilePictureSetting()
+    getProfilePictureConfig(okapiHeaders, vertxContext)
       .onSuccess(config -> {
         if (Objects.nonNull(config) && Boolean.FALSE.equals(config.getEnabled())) {
           logger.info("getProfileIdsAsync:: Profile picture feature is disabled");
           resultPromise.complete();
         } else if (Objects.nonNull(config) && Boolean.TRUE.equals(config.getEnabledObjectStorage())) {
           logger.info("cleanUp:: Cleaning profile picture from Object storage");
-          removeUnusedProfileIdsFromObjectStorageAsync(okapiHeaders);
+          removeUnusedProfileIdsFromObjectStorageAsync(okapiHeaders, vertxContext);
           resultPromise.complete();
         } else {
           logger.info("cleanUp:: Cleaning profile picture from db storage");
-          removeUnusedProfileIdsFromDBStorageAsync(okapiHeaders)
+          removeUnusedProfileIdsFromDBStorageAsync(okapiHeaders, vertxContext)
             .onSuccess(v -> resultPromise.complete())
             .onFailure(resultPromise::fail);
         }
@@ -305,11 +304,12 @@ public class ProfilePictureStorage {
     return resultPromise.future();
   }
 
-  public Future<Void> removeUnusedProfileIdsFromDBStorageAsync(Map<String, String> okapiHeaders) {
+  public Future<Void> removeUnusedProfileIdsFromDBStorageAsync(Map<String, String> okapiHeaders, Context vertxContext) {
     logger.info("removeUnusedProfileIdsFromDBAsync:: Removing unused profile ids from DB..");
     Promise<Void> resultPromise = Promise.promise();
 
-    postgresClient.execute(createDeleteQuery(okapiHeaders, DELETE_UNUSED_PROFILE_IDS, TABLE_NAME_PROFILE_PICTURE))
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .execute(createDeleteQuery(okapiHeaders, DELETE_UNUSED_PROFILE_IDS, TABLE_NAME_PROFILE_PICTURE))
       .onComplete(ar -> {
         if (ar.succeeded()) {
           logger.info("removeUnusedProfileIdsFromDBAsync:: Removed unused profilePictures successfully");
@@ -323,10 +323,10 @@ public class ProfilePictureStorage {
     return resultPromise.future();
   }
 
-  public void removeUnusedProfileIdsFromObjectStorageAsync(Map<String, String> okapiHeaders) {
+  public void removeUnusedProfileIdsFromObjectStorageAsync(Map<String, String> okapiHeaders, Context vertxContext) {
     logger.info("getUsersProfileLinkIdsAsync:: Getting users profile linked ids..");
     CompletableFuture<Void> resultFuture = new CompletableFuture<>();
-    CompletableFuture<List<String>> userProfileIdsFuture = getUsersProfileLinkIdsAsync(okapiHeaders);
+    CompletableFuture<List<String>> userProfileIdsFuture = getUsersProfileLinkIdsAsync(okapiHeaders, vertxContext);
     final String TENANT_FOLDER = okapiHeaders.get(OkapiConnectionParams.OKAPI_TENANT_HEADER) + "/";
     userProfileIdsFuture.thenAccept(userProfileIds -> {
       try {
@@ -352,12 +352,13 @@ public class ProfilePictureStorage {
     });
   }
 
-  public CompletableFuture<List<String>> getUsersProfileLinkIdsAsync(Map<String, String> okapiHeaders) {
+  public CompletableFuture<List<String>> getUsersProfileLinkIdsAsync(Map<String, String> okapiHeaders, Context vertxContext) {
     logger.info("getUsersProfileLinkIdsAsync:: Getting users profile linked ids..");
 
     CompletableFuture<List<String>> resultFuture = new CompletableFuture<>();
 
-    postgresClient.execute(createSelectQuery(okapiHeaders, SELECT_USERS_PROFILE_LINK_ID, TABLE_NAME_USERS))
+    PgUtil.postgresClient(vertxContext, okapiHeaders)
+      .execute(createSelectQuery(okapiHeaders, SELECT_USERS_PROFILE_LINK_ID, TABLE_NAME_USERS))
       .onComplete(ar -> {
         if (ar.succeeded()) {
           List<String> ids = new ArrayList<>();
@@ -372,64 +373,6 @@ public class ProfilePictureStorage {
         }
       });
     return resultFuture;
-  }
-
-  private Future<Config> mapResultSetToConfig(RowSet<Row> rows) {
-    Promise<Config> promise = Promise.promise();
-    Config config = new Config();
-
-    if (rows.rowCount() != 0) {
-      Row row = rows.iterator().next();
-      JsonObject json = row.get(JsonObject.class, JSONB);
-      if (json != null) {
-        config
-          .withId(String.valueOf(row.getUUID(ID)))
-          .withConfigName(row.getString(CONFIG_NAME))
-          .withEnabled(json.getBoolean(ENABLED))
-          .withEnabledObjectStorage(json.getBoolean(ENABLED_OBJECT_STORAGE))
-          .withEncryptionKey(json.getString(ENCRYPTION_KEY))
-          .withMaxFileSize(json.getDouble(MAX_FILE_SIZE));
-      }
-      promise.complete(config);
-    } else {
-      promise.fail("No rows found in the result set");
-    }
-    return promise.future();
-  }
-
-  private Future<Config> tryToFindAndMigrateSettingsFromConfigurationRepo(Throwable err, Conn conn) {
-    logger.info("tryToFindAndMigrateSettingsFromConfigurationRepo:: setting is absent: {} {}",
-      err.getClass().getSimpleName(), err.getMessage());
-
-    var searchCriteria = new Criteria().addField("'configName'").setOperation("=").setVal(PROFILE_PICTURE_SETTING_KEY);
-    var criterion = new Criterion().addCriterion(searchCriteria).setLimit(new Limit(1));
-
-    return conn.get(TABLE_NAME_CONFIG, Config.class, criterion, true)
-      .compose(results -> {
-        if (results.getResults().isEmpty()) {
-          logger.info("tryToFindAndMigrateSettingsFromConfigurationRepo:: no configuration found to migrate");
-          return Future.failedFuture("No Profile Picture configuration is found");
-        } else {
-          logger.info("tryToFindAndMigrateSettingsFromConfigurationRepo:: Profile Picture configuration is found");
-          return Future.succeededFuture(results.getResults().getFirst());
-        }
-      })
-      .compose(profilePictureConfig -> settingsService.createProfilePictureConfigSetting(conn, profilePictureConfig)
-        .map(newProfilePictureConfig -> Pair.of(profilePictureConfig.getId(), newProfilePictureConfig)))
-      .compose(profilePictureConfigPair -> deleteDeprecatedProfilePictureConfig(conn, profilePictureConfigPair))
-      .onSuccess(result ->
-        logger.debug("tryToFindAndMigrateSettingsFromConfigurationRepo:: result: {}", () -> result));
-  }
-
-  private Future<Config> deleteDeprecatedProfilePictureConfig(Conn conn, Pair<String, Config> configPair) {
-    var deprecatedConfigId = configPair.getLeft();
-    var newConfig = configPair.getRight();
-    logger.info("deleteDeprecatedProfilePictureConfig:: Deleting deprecated profile picture configuration with id {}", deprecatedConfigId);
-    return conn.delete(TABLE_NAME_CONFIG, deprecatedConfigId)
-      .map(result -> result.rowCount() > 0)
-      .onSuccess(result ->
-        logger.info("deleteDeprecatedProfilePictureConfig:: Deleted deprecated profile picture configuration: {}", result))
-      .map(result -> newConfig);
   }
 
   private List<String> getObjectStorageIdsPage(String path, String startAfter, FolioS3Client client) {

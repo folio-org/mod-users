@@ -42,7 +42,7 @@ class AddressTypesIT extends AbstractRestTestNoData {
   }
 
   @BeforeEach
-  void beforeEach() {
+  public void beforeEach() {
     usersClient.deleteAllUsers();
     groupsClient.deleteAllGroups();
     addressTypesClient.deleteAllAddressTypes();
