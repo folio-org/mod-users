@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 public class AbstractRestTestNoData extends AbstractRestTest {
 
   @BeforeAll
-  static void beforeAll(Vertx vertx, VertxTestContext context) {
+  public static void beforeAll(Vertx vertx, VertxTestContext context) {
     AbstractRestTest.beforeAll(vertx, context, false);
   }
 }
