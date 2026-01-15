@@ -65,7 +65,7 @@ public class RestAssuredCollectionApiClient<R, C> {
   }
 
   C getAllRecords() {
-    return getRecords("cql.AllRecords=1");
+    return getRecords("cql.allRecords=1");
   }
 
   ValidatableResponse attemptToGetRecords(String cqlQuery) {

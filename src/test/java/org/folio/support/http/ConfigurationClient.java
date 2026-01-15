@@ -32,4 +32,11 @@ public class ConfigurationClient {
       .jsonPath()
       .getString("id");
   }
+
+  public ValidatableResponse attemptToGetConfiguration() {
+    return client.initialSpecification()
+      .when()
+      .get()
+      .then();
+  }
 }

@@ -370,6 +370,18 @@
       "tableName" : "patronpin",
       "fromModuleVersion" : "18.3",
       "withMetadata" : true
+    },
+    {
+      "tableName": "settings",
+      "fromModuleVersion": "19.6.0",
+      "withMetadata": true,
+      "withOptimisticLocking": "failOnConflict",
+      "uniqueIndex": [
+        {
+          "fieldName": "key",
+          "caseSensitive": false
+        }
+      ]
     }
   ],
   "views" : [
