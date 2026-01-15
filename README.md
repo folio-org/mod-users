@@ -47,7 +47,58 @@ See [configuration](https://dev.folio.org/download/artifacts) for repository acc
 and the [Docker image](https://hub.docker.com/r/folioorg/mod-users/).
 
 # Configuration setting for Profile-Picture Feature
-To enable this feature for a tenant, we need to perform below operations
+To enable this feature for a tenant, we need to perform one of the two ways described below
+
+## 1. Configuration using `users.settings` interface
+
+This is a preferred method of configuring Profile-Picture feature.
+
+### Permissions
+
+###### users.settings.all - to fully manage user profile-picture (and other) settings
+
+or, depending on the required operations, any of the below permissions can be used
+
+###### users.settings.collection.get - to view all user settings items
+###### users.settings.item.get       - to view a specific user settings item
+###### users.settings.item.post      - to create a new user settings item
+###### users.settings.item.put       - to update an existing user settings item
+###### users.settings.item.delete    - to delete a user settings item
+
+### Invoke POST endpoint to create setting
+#### Example request to create profile-picture configuration
+
+`POST /users/settings/entries`
+```json
+{
+  "id": "3346f338-593c-447e-924e-bbfb2a883715",
+  "scope": "mod-users",
+  "key": "PROFILE_PICTURE_CONFIG",
+  "value": {
+    "enabled": true,
+    "maxFileSize": 5.0,
+    "encryptionKey": "ThisIsASimpleDefaultKeyToTestIts",
+    "enabledObjectStorage": false
+  }
+}
+```
+
+Required parameters:
+* `key = "PROFILE_PICTURE_CONFIG"`
+* `scope = "mod-users"`
+* `value.enabled` - true/false to enable/disable profile-picture feature
+* `value.maxFileSize` - maximum file size in megabytes (range 0.1 to 10)
+* `value.encryptionKey` - encryption key to encrypt/decrypt profile pictures
+* `value.enabledObjectStorage` - true/false to enable/disable object storage (S3/minio). By default DB storage will be used.
+
+When modifying the configuration setting using `PUT /users/settings/entries/{id}`, ensure that the `value` property is a valid JSON object
+and `_version` property is provided with the correct version number.
+
+
+## 2. Configuration using `/users/configurations/entry` endpoints
+
+#### Note: This method is not the preferred way of configuring Profile-Picture feature and starting from version 19.6.0 may not applicable anymore as the configuration entry which was used to be provided by this option will be migrated to the `users.settings` interface in version 19.6.0
+
 ### Permissions
 
 ###### users.configurations.item.put
@@ -55,39 +106,31 @@ To enable this feature for a tenant, we need to perform below operations
 
 ### Invoke GET endpoint
 #### Example request
-GET https://{okapi-location}/users/configurations/entry
+`GET /users/configurations/entry`
 
 ### After GET, PUT endpoint needs to be invoked
 #### Example request
-PUT https://{okapi-location}/users/configurations/entry/{id}
+`PUT /users/configurations/entry/{id}`
 
+```json
 {
-"id": {{id}},
-"configName": "PROFILE_PICTURE_CONFIG",
-"enabled": true,
-"enabledObjectStorage": false,
-"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok",
-"maxFileSize": 4
-}
+  "id": "UUID of the configuration entry obtained from GET",
+  "configName": "PROFILE_PICTURE_CONFIG",
+  "enabled": true,
+  "enabledObjectStorage": false,
+  "encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok",
+  "maxFileSize": 4
+  }
+```
 
-Note: maxFileSize must and should be within range of 0.1 to 10 megabytes.
+## Considerations for Profile-Picture Feature configuration
+
+Note: `maxFileSize` must and should be within range of 0.1 to 10 megabytes.
 
 By default DB storage will be enabled . To enable Object storage(S3/minio) below variables should be present in the env
-AWS_URL
-AWS_REGION
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
+`AWS_URL`
+`AWS_REGION`
+`AWS_ACCESS_KEY_ID`
+`AWS_SECRET_ACCESS_KEY`
 
 Note:- Bucket should pre-exist with same name as tenantName.
-
-#### Example request
-PUT https://{okapi-location}/users/configurations/entry/{id}
-
-{
-"id": {{id}},
-"configName": "PROFILE_PICTURE_CONFIG",
-"enabled": true,
-"enabledObjectStorage": true,
-"encryptionKey": "fgrdvbfgjhutyrdhvbcxzmturdhgtiok",
-"maxFileSize": 4
-}
