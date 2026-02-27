@@ -66,9 +66,8 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          # inputs context works for both workflow_dispatch and workflow_call
-          BASE_IN="${{ inputs.base || '' }}"                                        
-          HEAD_IN="${{ inputs.head || '' }}"                                  
+          BASE_IN="${{ inputs.base || '' }}"
+          HEAD_IN="${{ inputs.head || '' }}"
 
           case "${{ github.event_name }}" in
             push)
@@ -82,40 +81,42 @@ jobs:
             release)
               CUR_TAG="${{ github.event.release.tag_name }}"
               HEAD="${HEAD_IN:-$CUR_TAG}"
-              PREV_TAG="$(git tag --sort=-version:refname --sort=-creatordate \
-                | grep -A1 "^${CUR_TAG}$" | tail -n1 || true)"                     
-              [[ -z "$PREV_TAG" ]] && PREV_TAG="$(git tag --sort=-version:refname \
-                --sort=-creatordate | head -n1 || true)"                            
+              PREV_TAG="$(git tag --sort=-version:refname \
+                | grep -A1 "^${CUR_TAG}$" | tail -n1 || true)"
+              [[ -z "$PREV_TAG" ]] && PREV_TAG="$(git tag --sort=version:refname \
+                | head -n1 || true)"
               [[ -z "$PREV_TAG" ]] && PREV_TAG="$(git rev-list --max-parents=0 HEAD | tail -n1)"
               BASE="${BASE_IN:-$PREV_TAG}"
               ;;
             workflow_dispatch|workflow_call)
               if [[ -n "$BASE_IN" || -n "$HEAD_IN" ]]; then
                 HEAD="${HEAD_IN:-${GITHUB_SHA}}"
-                BASE="${BASE_IN:-$(git rev-parse HEAD~1 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -n1)}"
+                BASE="${BASE_IN:-$(git rev-parse HEAD~1 2>/dev/null \
+                  || git rev-list --max-parents=0 HEAD | tail -n1)}"
               else
-                CUR_TAG="$(git tag --sort=-version:refname --sort=-creatordate \
-                  | sed -n '1p' || true)"                                          
-                PREV_TAG="$(git tag --sort=-version:refname --sort=-creatordate \
-                  | sed -n '2p' || true)"                                          
+                CUR_TAG="$(git tag --sort=-version:refname | sed -n '1p' || true)"
+                PREV_TAG="$(git tag --sort=-version:refname | sed -n '2p' || true)"
                 if [[ -n "$CUR_TAG" && -n "$PREV_TAG" ]]; then
                   HEAD="$CUR_TAG"
                   BASE="$PREV_TAG"
                 else
                   HEAD="${GITHUB_SHA}"
-                  BASE="$(git rev-parse HEAD~1 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -n1)"
+                  BASE="$(git rev-parse HEAD~1 2>/dev/null \
+                    || git rev-list --max-parents=0 HEAD | tail -n1)"
                 fi
               fi
               ;;
             *)
               HEAD="${HEAD_IN:-${GITHUB_SHA}}"
-              BASE="${BASE_IN:-$(git rev-parse HEAD~1 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -n1)}"
+              BASE="${BASE_IN:-$(git rev-parse HEAD~1 2>/dev/null \
+                || git rev-list --max-parents=0 HEAD | tail -n1)}"
               ;;
           esac
 
           git rev-parse "$BASE" "$HEAD" >/dev/null
           echo "base=$BASE" >> "$GITHUB_OUTPUT"
           echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+
       - name: Install jq (quiet)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
 
