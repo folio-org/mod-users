@@ -66,16 +66,8 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          BASE_IN=""
-          HEAD_IN=""
-
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            BASE_IN="${{ github.event.inputs.base || '' }}"
-            HEAD_IN="${{ github.event.inputs.head || '' }}"
-          elif [[ "${{ github.event_name }}" == "workflow_call" ]]; then
-            BASE_IN="${{ inputs.base || '' }}"
-            HEAD_IN="${{ inputs.head || '' }}"
-          fi
+          BASE_IN="${{ inputs.base || '' }}"
+          HEAD_IN="${{ inputs.head || '' }}"
 
           case "${{ github.event_name }}" in
             push)
