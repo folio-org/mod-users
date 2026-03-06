@@ -50,8 +50,6 @@ public class StagingUsersAPI implements StagingUsers {
   @Override
   public void postStagingUsers(StagingUser entity, Map<String, String> okapiHeaders,
                                Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
-    logger.debug("postStagingUsers:: request body: {}", entity);
-
     try {
       PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
       postgresClient.withTrans(conn -> prepareAndSaveNewStagingUser(conn, entity))
@@ -67,8 +65,6 @@ public class StagingUsersAPI implements StagingUsers {
                                                 Map<String, String> okapiHeaders,
                                                 Handler<AsyncResult<Response>> asyncResultHandler,
                                                 Context vertxContext) {
-    logger.debug("putStagingUsersByExternalSystemId:: request body: {}", entity);
-
     try {
       PostgresClient postgresClient = PgUtil.postgresClient(vertxContext, okapiHeaders);
       final Criterion criterion = buildCriterionForExternalSystemId(externalSystemId);
@@ -187,7 +183,7 @@ public class StagingUsersAPI implements StagingUsers {
     new StagingUserService(vertxContext, okapiHeaders)
       .mergeOrCreateUserFromStagingUser(id, userId)
       .onSuccess(user -> {
-        logger.info("putStagingUsersMergeOrCreateUserById:: user response {}", user);
+        logger.info("putStagingUsersMergeOrCreateUserById:: user merged, stagingUserId {} and userId {}", id, userId);
         asyncResultHandler.handle(succeededFuture(PutStagingUsersMergeOrCreateUserByIdResponse
           .respond200WithApplicationJson(new StagingUserMergeResponse().withUserId(user.getId()))));
       })

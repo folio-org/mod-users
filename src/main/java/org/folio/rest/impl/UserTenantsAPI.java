@@ -65,13 +65,13 @@ public class UserTenantsAPI implements UserTenants {
   public void postUserTenants(UserTenant userTenant, Map<String, String> okapiHeaders,
                               Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     String okapiTenantId = TenantTool.tenantId(okapiHeaders);
-    logger.debug("Trying to save user-tenant with id: {}, userId: {}, userName: {}, tenantId: {}.",
-      userTenant.getId(), userTenant.getUserId(), userTenant.getUsername(), userTenant.getTenantId());
+    logger.debug("Trying to save user-tenant with id: {}, userId: {}, tenantId: {}.",
+      userTenant.getId(), userTenant.getUserId(), userTenant.getTenantId());
 
     userTenantService.saveUserTenant(userTenant, okapiTenantId, vertxContext.owner())
       .onSuccess(res -> {
-        logger.info("user-tenant with id: {}, userId: {}, userName: {}, tenantId: {} has been saved successfully.",
-          userTenant.getId(), userTenant.getUserId(), userTenant.getUsername(), userTenant.getTenantId());
+        logger.info("user-tenant with id: {}, userId: {}, tenantId: {} has been saved successfully.",
+          userTenant.getId(), userTenant.getUserId(), userTenant.getTenantId());
         asyncResultHandler.handle(succeededFuture(Response.status(201).build()));
       })
       .onFailure(cause -> {

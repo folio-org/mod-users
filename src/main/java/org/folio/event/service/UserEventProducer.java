@@ -100,7 +100,7 @@ public class UserEventProducer {
         promise.complete(true);
       } else {
         Throwable cause = ar.cause();
-        logger.error("Producer write error for event '{}' for user with id: '{}' for kafka topic '{}'",  eventType, key, topicName, cause);
+        logger.error("Producer write error for event '{}' for user with id: '{}' for kafka topic '{}'", eventType, key, topicName, cause);
         promise.fail(cause);
       }
     });
