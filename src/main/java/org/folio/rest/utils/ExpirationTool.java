@@ -56,9 +56,8 @@ public final class ExpirationTool {
       PostgresClient pgClient = postgresClientFactory.apply(vertxContext.owner(), tenant);
 
       return pgClient.get(TABLE_NAME_USERS, User.class, fieldList, cqlWrapper, true)
-        .onFailure(error ->
-          logger.error(String.format("Error executing postgres query for tenant %s: '%s', %s",
-            tenant, query, error.getMessage()), error))
+        .onFailure(error -> logger.error("Error executing postgres query for tenant {}: '{}', {}",
+            tenant, query, error.getMessage(), error))
         .compose(results -> disableUsers(vertxContext, tenant, query, results, okapiHeaders));
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
@@ -95,11 +94,10 @@ public final class ExpirationTool {
       PostgresClient pgClient = postgresClientFactory.apply(vertxContext.owner(), tenant);
 
       return pgClient.update(TABLE_NAME_USERS, user, user.getId())
-              .onSuccess(hander -> userEventPublisher(vertxContext, okapiHeaders)
-                      .publishUpdated(user.getId(), oldUserEntity, user))
-        .onFailure(cause -> logger.error(String.format(
-          "Error updating user %s for tenant %s: %s", user.getId(), tenant,
-          cause.getMessage()), cause))
+                .onSuccess(handler -> userEventPublisher(vertxContext, okapiHeaders)
+                .publishUpdated(user.getId(), oldUserEntity, user))
+        .onFailure(cause -> logger.error("Error updating user {} for tenant {}: {}",
+          user.getId(), tenant, cause.getMessage(), cause))
         .mapEmpty();
 
     } catch(Exception e) {

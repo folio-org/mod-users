@@ -46,7 +46,7 @@ public class UserGroupService {
   }
 
   public Future<Response> create(Usergroup userGroup) {
-    log.debug("create:: parameters userGroup: {}", () -> userGroup);
+    log.debug("create:: parameters userGroup: {}", userGroup::getGroup);
     Promise<Response> createResult = Promise.promise();
     PgUtil.post(GROUP_TABLE, userGroup, okapiHeaders, vertxContext,
       Groups.PostGroupsResponse.class, getAsyncResultHandler(createResult));
