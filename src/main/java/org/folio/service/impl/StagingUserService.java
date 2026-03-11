@@ -163,7 +163,7 @@ public class StagingUserService {
   private Future<StagingUserUpdatesStorage<User>> createNewUserFromStagingUser(StagingUser stagUser, Conn conn,
                                                                                String homeAddressTypeId,
                                                                                Usergroup remotePatronGroup, Usergroup basicMinorPatronGroup) {
-    log.debug("createNewUserFromStagingUser:: creating a new user from staging user {}", stagUser);
+    log.debug("createNewUserFromStagingUser:: creating a new user from staging user, userId = {}", stagUser.getId());
     var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId);
     setNewUserPatronGroupAndExpirationDate(newUser, stagUser, remotePatronGroup, basicMinorPatronGroup);
     return usersService.saveAndReturnUser(conn, newUser)
