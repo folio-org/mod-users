@@ -88,7 +88,7 @@ public class RecordServiceImpl implements RecordService {
       updated = updated
         .compose(v -> repository.updateUser(user, tenantId))
         .map(found -> {
-          LOG.debug("Field update on user: recordUpdate = {}, userName = {}", recordUpdate, user.getUsername());
+          LOG.debug("Field update on user: recordUpdate = {}, userId = {}", recordUpdate, user.getId());
           return null;
         });
     }
