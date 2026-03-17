@@ -39,8 +39,6 @@ on:
       artifact_name:
         required: false
         type: string
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -53,9 +51,11 @@ concurrency:
 jobs:
   diff:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout (full history incl. tags)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -313,7 +313,7 @@ jobs:
             -o report.html report.md
 
       - name: Upload artifacts (MD + HTML)
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name || format('report-{0}-{1}', github.run_id, github.job) }}
           path: |
