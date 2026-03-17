@@ -163,11 +163,11 @@ public class StagingUserService {
   private Future<StagingUserUpdatesStorage<User>> createNewUserFromStagingUser(StagingUser stagUser, Conn conn,
                                                                                String homeAddressTypeId,
                                                                                Usergroup remotePatronGroup, Usergroup basicMinorPatronGroup) {
-    log.debug("createNewUserFromStagingUser:: creating a new user from staging user {}", stagUser);
+    log.debug("createNewUserFromStagingUser:: creating a new user from staging user, userId = {}", stagUser.getId());
     var newUser = createUserEntityFromStagingUser(stagUser, homeAddressTypeId);
     setNewUserPatronGroupAndExpirationDate(newUser, stagUser, remotePatronGroup, basicMinorPatronGroup);
     return usersService.saveAndReturnUser(conn, newUser)
-            .compose(user->Future.succeededFuture(new StagingUserUpdatesStorage<>(user)));
+      .compose(user -> Future.succeededFuture(new StagingUserUpdatesStorage<>(user)));
   }
 
   private User createUserEntityFromStagingUser(StagingUser stagingUser, String homeAddressTypeId) {
@@ -196,8 +196,7 @@ public class StagingUserService {
   private Future<StagingUserUpdatesStorage<User>> updateExistingUserDetailsFromStagingUser(StagingUser stagUser, String userId,
                                                                                            Conn conn, String homeAddressTypeId,
                                                                                            Usergroup basicMinorPatronGroup) {
-    log.debug("updateExistingUserDetailsFromStagingUser:: updating existing user {} with stagUser details {}",
-      userId, stagUser);
+    log.debug("updateExistingUserDetailsFromStagingUser:: updating existing user {}", userId);
     return usersService.getUserById(conn, userId)
       .compose(existingUser -> {
         if (existingUser != null) {

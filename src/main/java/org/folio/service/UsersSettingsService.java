@@ -39,7 +39,6 @@ public class UsersSettingsService {
     log.debug("updateSetting:: id: {}, setting: {}", id, setting);
     return conn.getById(SETTINGS_TABLE, id, Setting.class)
       .compose(oldSetting -> updateEntity(conn, id, oldSetting, setting));
-
   }
 
   public Future<Config> getProfilePictureConfigSetting(Conn conn) {

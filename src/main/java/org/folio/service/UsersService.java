@@ -41,7 +41,7 @@ public class UsersService {
 
   public Future<User> saveAndReturnUser(Conn conn, User user) {
     return conn.saveAndReturnUpdatedEntity(TABLE_NAME_USERS, user.getId(), user)
-      .onFailure(t -> logger.error("saveAndReturnUser:: unable to save user {}", user, t));
+      .onFailure(t -> logger.error("saveAndReturnUser:: unable to save user, id = {}", user.getId(), t));
   }
 
   public static User getConsortiumUserDto(User user) {

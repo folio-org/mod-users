@@ -209,7 +209,7 @@ public class UserTenantService {
     if (isValidUserType) {
       return Future.succeededFuture();
     } else {
-      logger.error("Invalid user type {} was populated for user with id {} ", user.getType(), user.getId());
+      logger.error("Invalid user type {} was populated for user with id {}", user.getType(), user.getId());
       return Future.failedFuture(INVALID_USER_TYPE_POPULATED);
     }
   }

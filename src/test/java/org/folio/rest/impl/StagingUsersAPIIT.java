@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -248,10 +247,13 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
 
     verifyUserDetails(stagingUser, newUser, homeAddressTypeId, updatedDate, remotePatronGroupId);
 
+    ZonedDateTime expectedExpirationDate = updatedDate.toInstant()
+      .atZone(ZoneId.systemDefault())
+      .plusDays(730);
     assertEquals(
-      LocalDate.now(ZoneId.systemDefault()).plusYears(2),
+      expectedExpirationDate.toLocalDate(),
       newUser.getExpirationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate(),
-      "Expiration date should be 2 years from today (ignoring time)");
+      "Expiration date should be 2 years from enrollment date (730 days)");
 
     var stagingUsersResponse =
       stagingUsersClient.attemptToGetUsers("id="+stagingUser.getId());
