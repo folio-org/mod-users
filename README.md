@@ -68,7 +68,7 @@ or, depending on the required operations, any of the below permissions can be us
 ### Invoke POST endpoint to create setting
 #### Example request to create profile-picture configuration
 
-`POST /users/settings/entries`
+`POST /users/settings`
 ```json
 {
   "id": "3346f338-593c-447e-924e-bbfb2a883715",
@@ -91,7 +91,7 @@ Required parameters:
 * `value.encryptionKey` - encryption key to encrypt/decrypt profile pictures
 * `value.enabledObjectStorage` - true/false to enable/disable object storage (S3/minio). By default DB storage will be used.
 
-When modifying the configuration setting using `PUT /users/settings/entries/{id}`, ensure that the `value` property is a valid JSON object
+When modifying the configuration setting using `PUT /users/settings/{id}`, ensure that the `value` property is a valid JSON object
 and `_version` property is provided with the correct version number.
 
 
