@@ -200,7 +200,7 @@ class UsersAPITest {
 
   @Test
   void putUsersByUserIdException(VertxTestContext vtc) {
-    usersAPI.putUsersByUserId(null, null, null,
+    usersAPI.putUsersByUserId(null, null, null, null,
         vtc.succeeding(response -> vtc.verify( () -> {
           assertThat(response.getStatus(), is(500));
           vtc.completeNow();
