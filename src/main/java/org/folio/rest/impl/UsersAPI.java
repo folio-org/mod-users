@@ -453,35 +453,18 @@ public class UsersAPI implements Users {
 
   @Validate
   @Override
-  public void getUsersByUserId(String userId, RoutingContext routingContext,
+  public void getUsersByUserId(String userId,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
-
-    if ("settings".equals(userId)) {
-      delegateToSettingsList(routingContext, okapiHeaders, asyncResultHandler, vertxContext);
-      return;
-    }
 
     PgUtil.getById(getTableName(null), User.class, userId, okapiHeaders, vertxContext,
       GetUsersByUserIdResponse.class, asyncResultHandler);
   }
 
-  private void delegateToSettingsList(RoutingContext routingContext,
-      Map<String, String> okapiHeaders,
-      Handler<AsyncResult<Response>> asyncResultHandler,
-      Context vertxContext) {
-
-    String query = routingContext.queryParam("query").stream().findFirst().orElse(null);
-    String totalRecords = routingContext.queryParam("totalRecords").stream().findFirst().orElse("auto");
-    int offset = Integer.parseInt(routingContext.queryParam("offset").stream().findFirst().orElse("0"));
-    int limit = Integer.parseInt(routingContext.queryParam("limit").stream().findFirst().orElse("10"));
-    new UsersSettingsAPI().getUsersSettings(query, totalRecords, offset, limit, okapiHeaders, asyncResultHandler, vertxContext);
-  }
-
   @Validate
   @Override
-  public void deleteUsersByUserId(String userId, RoutingContext routingContext,
+  public void deleteUsersByUserId(String userId,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {
@@ -566,7 +549,6 @@ public class UsersAPI implements Users {
   @Validate
   @Override
   public void putUsersByUserId(String userId, User entity,
-      RoutingContext routingContext,
       Map<String, String> okapiHeaders,
       Handler<AsyncResult<Response>> asyncResultHandler,
       Context vertxContext) {

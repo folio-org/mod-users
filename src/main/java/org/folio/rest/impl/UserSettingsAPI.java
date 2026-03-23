@@ -16,56 +16,56 @@ import org.folio.exceptions.UsersSettingsException;
 import org.folio.rest.jaxrs.model.Error;
 import org.folio.rest.jaxrs.model.Setting;
 import org.folio.rest.jaxrs.model.SettingCollection;
-import org.folio.rest.jaxrs.resource.UsersSettings;
+import org.folio.rest.jaxrs.resource.UserSettings;
 import org.folio.rest.persist.PgUtil;
 import org.folio.service.UsersSettingsService;
 
-public class UsersSettingsAPI implements UsersSettings {
+public class UserSettingsAPI implements UserSettings {
 
-  private static final Logger logger = LogManager.getLogger(UsersSettingsAPI.class);
+  private static final Logger logger = LogManager.getLogger(UserSettingsAPI.class);
 
   private final UsersSettingsService settingsService;
 
-  public UsersSettingsAPI() {
+  public UserSettingsAPI() {
     this.settingsService = new UsersSettingsService();
   }
 
   @Override
-  public void getUsersSettings(String query, String totalRecords, int offset, int limit, Map<String, String> okapiHeaders,
+  public void getUserSettings(String query, String totalRecords, int offset, int limit, Map<String, String> okapiHeaders,
                                       Handler<AsyncResult<Response>> resultHandler, Context context) {
     PgUtil.get(TABLE_NAME_SETTINGS, Setting.class, SettingCollection.class, query, offset, limit,
-      okapiHeaders, context, GetUsersSettingsResponse.class)
+      okapiHeaders, context, GetUserSettingsResponse.class)
       .otherwise(this::handleError)
       .onComplete(resultHandler);
   }
 
   @Override
-  public void postUsersSettings(Setting setting, Map<String, String> okapiHeaders,
+  public void postUserSettings(Setting setting, Map<String, String> okapiHeaders,
                                        Handler<AsyncResult<Response>> resultHandler, Context context) {
-    PgUtil.post(TABLE_NAME_SETTINGS, setting, okapiHeaders, context, PostUsersSettingsResponse.class)
+    PgUtil.post(TABLE_NAME_SETTINGS, setting, okapiHeaders, context, PostUserSettingsResponse.class)
       .otherwise(this::handleError)
       .onComplete(resultHandler)
       .onFailure(e -> logger.error("Failed to create setting", e));
   }
 
   @Override
-  public void getUsersSettingsById(String id, Map<String, String> okapiHeaders,
+  public void getUserSettingsById(String id, Map<String, String> okapiHeaders,
                                           Handler<AsyncResult<Response>> resultHandler, Context context) {
-    PgUtil.getById(TABLE_NAME_SETTINGS, Setting.class, id, okapiHeaders, context, GetUsersSettingsByIdResponse.class)
+    PgUtil.getById(TABLE_NAME_SETTINGS, Setting.class, id, okapiHeaders, context, GetUserSettingsByIdResponse.class)
       .otherwise(this::handleError)
       .onComplete(resultHandler);
   }
 
   @Override
-  public void deleteUsersSettingsById(String id, Map<String, String> okapiHeaders,
+  public void deleteUserSettingsById(String id, Map<String, String> okapiHeaders,
                                              Handler<AsyncResult<Response>> resultHandler, Context context) {
-    PgUtil.deleteById(TABLE_NAME_SETTINGS, id, okapiHeaders, context, DeleteUsersSettingsByIdResponse.class)
+    PgUtil.deleteById(TABLE_NAME_SETTINGS, id, okapiHeaders, context, DeleteUserSettingsByIdResponse.class)
       .otherwise(this::handleError)
       .onComplete(resultHandler);
   }
 
   @Override
-  public void putUsersSettingsById(String id, Setting entity, Map<String, String> okapiHeaders,
+  public void putUserSettingsById(String id, Setting entity, Map<String, String> okapiHeaders,
                                           Handler<AsyncResult<Response>> resultHandler, Context context) {
     var postgresClient = PgUtil.postgresClient(context, okapiHeaders);
     postgresClient.withTrans(conn -> settingsService.updateSetting(conn, id, entity))

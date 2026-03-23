@@ -9,7 +9,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <generate_routing_context>/users,/users/{userId}</generate_routing_context>
+    <generate_routing_context>/users</generate_routing_context>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <java.version>21</java.version>
 
