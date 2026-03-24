@@ -216,6 +216,19 @@ class UsersAPIIT extends AbstractRestTestNoData {
   }
 
   @Test
+  void settingsEndpointIsNotInterceptedByUserIdRoute() {
+    final var setting = usersSettingsClient.createSetting(
+      Setting.builder().scope("mod-users").key("routing.regression.key").value("v").build());
+
+    final var result = usersSettingsClient.getAllSettings();
+
+    assertThat(result.getTotalRecords(), is(1));
+    assertThat(result.getSettings().getFirst().getKey(), is("routing.regression.key"));
+
+    usersSettingsClient.deleteSetting(setting.getId());
+  }
+
+  @Test
   void canCreateMultipleUsersWithoutUsername() {
     usersClient.createUser(User.builder()
       .build());

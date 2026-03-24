@@ -3,6 +3,7 @@
 * Add "minor" boolean field to the staging_users table and assign appropriate patron group to created user record (MODUSERS-533)
 * Delete associated manual blocks as well in user deleteById API (MODUSERS-547)
 * Add local setting API ([MODUSERS-554](https://issues.folio.org/browse/MODUSERS-554))
+* Update Users Settings API endpoints and versioning ([MODUSERS-568](https://issues.folio.org/browse/MODUSERS-568))
 
 ## 19.5.1 2025-04-17
 

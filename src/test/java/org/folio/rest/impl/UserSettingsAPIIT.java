@@ -39,7 +39,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 @Slf4j
 @IntegrationTest
 @ExtendWith(VertxExtension.class)
-class UsersSettingsAPIIT extends AbstractRestTestNoData {
+class UserSettingsAPIIT extends AbstractRestTestNoData {
 
   private static UsersSettingsClient settingsClient;
 

@@ -353,31 +353,31 @@
     },
     {
       "id": "users.settings",
-      "version": "1.0",
+      "version": "2.0",
       "handlers": [
         {
           "methods": ["GET"],
-          "pathPattern": "/users/settings/entries",
+          "pathPattern": "/user/settings",
           "permissionsRequired": ["users.settings.collection.get"]
         },
         {
           "methods": ["GET"],
-          "pathPattern": "/users/settings/entries/{id}",
+          "pathPattern": "/user/settings/{id}",
           "permissionsRequired": ["users.settings.item.get"]
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/users/settings/entries",
+          "pathPattern": "/user/settings",
           "permissionsRequired": ["users.settings.item.post"]
         },
         {
           "methods": ["PUT"],
-          "pathPattern": "/users/settings/entries/{id}",
+          "pathPattern": "/user/settings/{id}",
           "permissionsRequired": ["users.settings.item.put"]
         },
         {
           "methods": ["DELETE"],
-          "pathPattern": "/users/settings/entries/{id}",
+          "pathPattern": "/user/settings/{id}",
           "permissionsRequired": ["users.settings.item.delete"]
         }
       ]
