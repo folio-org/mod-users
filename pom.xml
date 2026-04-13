@@ -26,7 +26,7 @@
     <folio-s3-client.version>3.0.0-SNAPSHOT</folio-s3-client.version>
     <folio-custom-fields.version>3.0.0-SNAPSHOT</folio-custom-fields.version>
     <folio-service-tools.version>6.0.0-SNAPSHOT</folio-service-tools.version>
-    <raml-module-builder.version>36.0.0-SNAPSHOT</raml-module-builder.version>
+    <raml-module-builder.version>36.1.0-SNAPSHOT</raml-module-builder.version>
 
     <!-- Test Dependency Versions -->
     <hamcrest.version>3.0</hamcrest.version>
