@@ -7,10 +7,10 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 import io.restassured.RestAssured;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,22 +25,20 @@ import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @IntegrationTest
-public class InstallUpgradeIT {
+class InstallUpgradeIT {
 
   private static final Logger LOG = LoggerFactory.getLogger(InstallUpgradeIT.class);
   private static final boolean IS_LOG_ENABLED = false;
   private static final String KAFKA_NETWORK_ALIAS = UUID.randomUUID().toString();
   private static final Network NETWORK = Network.newNetwork();
 
-  @ClassRule(order = 1)
-  public static final KafkaContainer KAFKA =
+  private static final KafkaContainer KAFKA =
     new KafkaContainer(DockerImageName.parse(KafkaContainerExtension.KAFKA_IMAGE_ID))
       .withNetwork(NETWORK)
       .withNetworkAliases(KAFKA_NETWORK_ALIAS)
       .withListener(KAFKA_NETWORK_ALIAS + ":9095");
 
-  @ClassRule(order = 2)
-  public static final GenericContainer<?> MOD_USERS =
+  private static final GenericContainer<?> MOD_USERS =
     new GenericContainer<>(
       new ImageFromDockerfile("mod-users").withFileFromPath(".", Path.of(".")))
       .withNetwork(NETWORK)
@@ -49,8 +47,10 @@ public class InstallUpgradeIT {
       .withEnv("KAFKA_HOST", KAFKA_NETWORK_ALIAS)
       .withEnv("KAFKA_PORT", "9095");
 
-  @BeforeClass
-  public static void beforeClass() {
+  @BeforeAll
+  static void beforeAll() {
+    KAFKA.start();
+    MOD_USERS.start();
     RestAssured.reset();
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.baseURI = "http://" + MOD_USERS.getHost() + ":" + MOD_USERS.getFirstMappedPort();
@@ -60,20 +60,24 @@ public class InstallUpgradeIT {
     }
   }
 
-  @Before
-  public void beforeEach() {
+  @AfterAll
+  static void afterAll() {
+    MOD_USERS.stop();
+    KAFKA.stop();
+    NETWORK.close();
+  }
+
+  @BeforeEach
+  void beforeEach() {
     RestAssured.requestSpecification = null;
   }
 
   @Test
-  public void health() {
-    // request without X-Okapi-Tenant
-    // RMB 36.0.0-SNAPSHOT health endpoint returns empty body with 200 status
+  void health() {
     when().
       get("/admin/health").
       then().
       statusCode(200).
       body(is("\"OK\""));
   }
-
 }
