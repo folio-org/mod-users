@@ -26,7 +26,7 @@
     <folio-s3-client.version>3.0.0-SNAPSHOT</folio-s3-client.version>
     <folio-custom-fields.version>3.0.0-SNAPSHOT</folio-custom-fields.version>
     <folio-service-tools.version>6.0.0-SNAPSHOT</folio-service-tools.version>
-    <raml-module-builder.version>36.0.0-SNAPSHOT</raml-module-builder.version>
+    <raml-module-builder.version>36.1.0-SNAPSHOT</raml-module-builder.version>
 
     <!-- Test Dependency Versions -->
     <hamcrest.version>3.0</hamcrest.version>
@@ -45,7 +45,7 @@
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
     <exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
     <aspectj-maven-plugin.version>1.14</aspectj-maven-plugin.version>
-    <folio-kafka-wrapper.version>4.0.0-SNAPSHOT</folio-kafka-wrapper.version>
+    <folio-kafka-wrapper.version>4.1.0-SNAPSHOT</folio-kafka-wrapper.version>
   </properties>
 
   <licenses>
