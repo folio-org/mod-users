@@ -29,7 +29,7 @@ import org.testcontainers.shaded.org.awaitility.core.ThrowingRunnable;
 
 import org.folio.event.ConsortiumEventType;
 import org.folio.extensions.KafkaContainerExtension;
-import org.folio.extensions.MinioContainerExtension;
+import org.folio.extensions.LocalStackContainerExtension;
 import org.folio.extensions.PostgresContainerExtension;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.VertxModule;
@@ -44,7 +44,7 @@ import lombok.SneakyThrows;
 @ExtendWith({
   VertxExtension.class,
   KafkaContainerExtension.class,
-  MinioContainerExtension.class,
+  LocalStackContainerExtension.class,
   PostgresContainerExtension.class,
 })
 public abstract class AbstractRestTest {
