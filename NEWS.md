@@ -1,10 +1,52 @@
-## 19.6.0 (in progress)
-* Improve build time (MODUSERS-536)
-* Add "minor" boolean field to the staging_users table and assign appropriate patron group to created user record (MODUSERS-533)
-* Delete associated manual blocks as well in user deleteById API (MODUSERS-547)
-* Add local setting API ([MODUSERS-554](https://issues.folio.org/browse/MODUSERS-554))
-* Update Users Settings API endpoints and versioning ([MODUSERS-568](https://issues.folio.org/browse/MODUSERS-568))
-* Migrate to Github Actions ([MODUSERS-564](https://issues.folio.org/browse/MODUSERS-564))
+## 19.6.0 2026-04-15
+
+### New APIs versions
+* Provides `users.settings v2.0`
+* Provides `custom-fields v3.1`
+* Provides `staging-users v1.2`
+* Optionally requires `feesfines 19.1`
+
+### Features
+* Add local Settings APIs ([MODUSERS-554](https://folio-org.atlassian.net/browse/MODUSERS-554))
+* Update Users Settings API endpoints and versioning ([MODUSERS-568](https://folio-org.atlassian.net/browse/MODUSERS-568))
+* Prevent deletion of all users in a tenant ([MODUSERS-514](https://folio-org.atlassian.net/browse/MODUSERS-514))
+* Delete user manualBlocks after user deletion transaction completes successfully ([MODUSERS-547](https://folio-org.atlassian.net/browse/MODUSERS-547))
+* Add displayInAccordion for custom fields ([MODUSERS-531](https://folio-org.atlassian.net/browse/MODUSERS-531))
+* Add minor boolean field in staging_user table and assign appropriate patronGroup to user record ([MODUSERS-533](https://folio-org.atlassian.net/browse/MODUSERS-533))
+* Add KAFKA_ENABLE option ([MODUSERS-525](https://folio-org.atlassian.net/browse/MODUSERS-525))
+* Honor KAFKA_ENABLE in tenant init ([MODUSERS-526](https://folio-org.atlassian.net/browse/MODUSERS-526))
+
+### Bug fixes
+* Fix metadata in Kafka user update events ([MODUSERS-549](https://folio-org.atlassian.net/browse/MODUSERS-549))
+* Preserve deprecated createdDate on user updates ([MODUSERS-548](https://folio-org.atlassian.net/browse/MODUSERS-548))
+* Fix bulk removal of custom fields ([MODUSERS-531](https://folio-org.atlassian.net/browse/MODUSERS-531))
+* Training ECS: fix problem upgrading patron user to staff user ([MODUSERS-535](https://folio-org.atlassian.net/browse/MODUSERS-535))
+* Sensitive data in logs cleanup ([MODUSERS-506](https://folio-org.atlassian.net/browse/MODUSERS-506))
+
+### Tech Debt
+* Migrate to GitHub Actions ([MODUSERS-564](https://folio-org.atlassian.net/browse/MODUSERS-564))
+* Schema changes reporting GitHub Action ([MODUSERS-552](https://folio-org.atlassian.net/browse/MODUSERS-552))
+* Implement caller-action for schemas reporting ([MODUSERS-571](https://folio-org.atlassian.net/browse/MODUSERS-571))
+* Improve build time ([MODUSERS-536](https://folio-org.atlassian.net/browse/MODUSERS-536))
+
+### Dependencies
+* Bump `vertx` from `4.5.13` to `5.0.10`
+* Bump `raml-module-builder` from `35.4.0` to `36.0.0`
+* Bump `folio-service-tools` from `5.0.0` to `6.0.0`
+* Bump `folio-custom-fields` from `2.3.0` to `3.0.0`
+* Bump `folio-s3-client` from `2.2.1` to `3.0.0`
+* Bump `folio-kafka-wrapper` to `4.0.0`
+* Bump `kafka-clients` to `4.2.0`
+* Bump `lombok` from `1.18.36` to `1.18.44`
+* Bump `aspectj` from `1.9.22.1` to `1.9.25.1`
+* Bump `log4j-bom` to `2.25.4`
+* Bump `commons-lang3` to `3.20.0`
+* Bump `commons-compress` to `1.28.0`
+* Bump `jackson-datatype-jsr310` to `2.21.2`
+* Bump `hamcrest` to `3.0`
+* Bump `awaitility` to `4.3.0`
+
+---
 
 ## 19.5.1 2025-04-17
 
