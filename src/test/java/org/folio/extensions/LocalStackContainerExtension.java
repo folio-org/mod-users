@@ -17,7 +17,7 @@ public class LocalStackContainerExtension implements BeforeAllCallback, AfterAll
 
   @Container
   private static final LocalStackContainer localStackContainer = new LocalStackContainer(
-    DockerImageName.parse("localstack/localstack:s3-latest")
+    DockerImageName.parse("localstack/localstack:s3-community-archive")
   )
     .withServices(LocalStackContainer.Service.S3)
     .withStartupAttempts(3);

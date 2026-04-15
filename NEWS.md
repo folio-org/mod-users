@@ -4,6 +4,7 @@
 * Delete associated manual blocks as well in user deleteById API (MODUSERS-547)
 * Add local setting API ([MODUSERS-554](https://issues.folio.org/browse/MODUSERS-554))
 * Update Users Settings API endpoints and versioning ([MODUSERS-568](https://issues.folio.org/browse/MODUSERS-568))
+* Migrate to Github Actions ([MODUSERS-564](https://issues.folio.org/browse/MODUSERS-564))
 
 ## 19.5.1 2025-04-17
 
