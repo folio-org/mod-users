@@ -13,8 +13,8 @@
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <java.version>21</java.version>
 
-    <vertx.version>5.0.10</vertx.version>
-    <lombok.version>1.18.44</lombok.version>
+    <vertx.version>5.0.11</vertx.version>
+    <lombok.version>1.18.46</lombok.version>
     <aspectj.version>1.9.25.1</aspectj.version>
     <kafka-clients.version>4.2.0</kafka-clients.version>
     <log4j-bom.version>2.25.4</log4j-bom.version>
@@ -23,7 +23,7 @@
     <jackson-datatype-jsr310.version>2.21.2</jackson-datatype-jsr310.version>
 
     <!-- Folio dependencies properties -->
-    <folio-s3-client.version>3.0.0</folio-s3-client.version>
+    <folio-s3-client.version>3.0.1</folio-s3-client.version>
     <folio-custom-fields.version>3.0.0</folio-custom-fields.version>
     <folio-service-tools.version>6.0.0</folio-service-tools.version>
     <raml-module-builder.version>36.0.0</raml-module-builder.version>
@@ -35,7 +35,7 @@
     <rest-assured.version>6.0.0</rest-assured.version>
     <junit-bom.version>6.0.3</junit-bom.version>
     <mockito-bom.version>5.23.0</mockito-bom.version>
-    <testcontainers-bom.version>2.0.4</testcontainers-bom.version>
+    <testcontainers-bom.version>2.0.5</testcontainers-bom.version>
 
     <!-- Plugin Versions -->
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
