@@ -31,7 +31,7 @@
     <!-- Test Dependency Versions -->
     <hamcrest.version>3.0</hamcrest.version>
     <awaitility.version>4.3.0</awaitility.version>
-    <okapi-testing.version>7.0.3</okapi-testing.version>
+    <okapi-testing.version>7.0.4</okapi-testing.version>
     <rest-assured.version>6.0.0</rest-assured.version>
     <junit-bom.version>6.0.3</junit-bom.version>
     <mockito-bom.version>5.23.0</mockito-bom.version>
