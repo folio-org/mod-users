@@ -24,7 +24,7 @@
 
     <!-- Folio dependencies properties -->
     <folio-s3-client.version>3.0.1</folio-s3-client.version>
-    <folio-custom-fields.version>3.0.0</folio-custom-fields.version>
+    <folio-custom-fields.version>4.0.0-SNAPSHOT</folio-custom-fields.version>
     <folio-service-tools.version>6.0.0</folio-service-tools.version>
     <raml-module-builder.version>36.0.0</raml-module-builder.version>
 
