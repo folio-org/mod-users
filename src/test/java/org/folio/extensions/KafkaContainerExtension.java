@@ -27,10 +27,8 @@ import org.folio.support.TestConstants;
 
 public class KafkaContainerExtension implements BeforeAllCallback, AfterAllCallback {
 
+  public static final String KAFKA_IMAGE_ID = "apache/kafka-native:4.2.1";
   private static final Logger LOG = LoggerFactory.getLogger(KafkaContainerExtension.class);
-
-  public static final String KAFKA_IMAGE_ID = "apache/kafka-native:3.8.0";
-
   public static final KafkaContainer KAFKA_CONTAINER =
     new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE_ID))
       .withStartupAttempts(3);

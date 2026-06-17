@@ -45,7 +45,7 @@
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
     <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
     <aspectj-maven-plugin.version>1.14.1</aspectj-maven-plugin.version>
-    <folio-kafka-wrapper.version>4.0.0</folio-kafka-wrapper.version>
+    <folio-kafka-wrapper.version>4.1.0-SNAPSHOT</folio-kafka-wrapper.version>
   </properties>
 
   <licenses>
