@@ -4,7 +4,6 @@ import static io.restassured.http.ContentType.JSON;
 import static java.net.HttpURLConnection.HTTP_CREATED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.folio.test.util.TokenTestUtil.generateToken;
 
 import io.restassured.http.Header;
 import io.restassured.http.Headers;
@@ -185,7 +184,7 @@ public class CustomFieldsClient {
     }
 
     return new Headers(
-      new Header("X-Okapi-Token", generateToken(user.getUsername(), user.getId())),
+      new Header("X-Okapi-Token", "fake-token"),
       new Header("X-Okapi-User-Id", user.getId())
     );
   }

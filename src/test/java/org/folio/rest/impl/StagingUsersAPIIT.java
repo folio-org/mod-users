@@ -53,7 +53,6 @@ import org.folio.support.http.GroupsClient;
 import org.folio.support.http.StagingUsersClient;
 import org.folio.support.http.UsersClient;
 import org.folio.support.tags.IntegrationTest;
-import org.folio.test.util.DBTestUtil;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
@@ -587,7 +586,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
   }
 
   private void deleteAllStagingUsers(Vertx vertx) {
-    DBTestUtil.deleteFromTable(vertx, "staging_users", TENANT_NAME);
+    deleteFromTable(vertx, "staging_users", TENANT_NAME);
   }
 
   private StagingUser createStagingUser(StagingUser stagingUserToCreate) {

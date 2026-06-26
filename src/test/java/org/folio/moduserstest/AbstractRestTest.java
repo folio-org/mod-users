@@ -5,14 +5,16 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static org.folio.extensions.KafkaContainerExtension.createTopics;
 import static org.folio.extensions.KafkaContainerExtension.getTopicName;
+import static org.folio.repository.CustomFieldsConstants.JSONB_COLUMN;
 import static org.folio.support.TestConstants.ENV;
 import static org.folio.support.TestConstants.TENANT_NAME;
-import static org.folio.test.util.TestUtil.readFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +23,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.util.concurrent.CompletableFuture;
+import org.apache.commons.io.FileUtils;
+import org.folio.cql2pgjson.CQL2PgJSON;
+import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.persist.cql.CQLWrapper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -112,6 +120,26 @@ public abstract class AbstractRestTest {
     } catch (IOException | URISyntaxException e) {
       Assertions.fail(e.getMessage());
       return null;
+    }
+  }
+
+  protected static String readFile(String filename) throws IOException, URISyntaxException {
+    return FileUtils.readFileToString(getFile(filename), StandardCharsets.UTF_8);
+  }
+
+  protected static File getFile(String filename) throws URISyntaxException {
+    return new File(AbstractRestTest.class.getClassLoader().getResource(filename).toURI());
+  }
+
+  protected static void deleteFromTable(Vertx vertx, String tableName, String tenantId) {
+    try {
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      PostgresClient.getInstance(vertx, tenantId).delete(tableName,
+        new CQLWrapper(new CQL2PgJSON(JSONB_COLUMN), "cql.allRecords=1"),
+        event -> future.complete(null));
+      future.join();
+    } catch (FieldException e) {
+      throw new IllegalStateException(e);
     }
   }
 }

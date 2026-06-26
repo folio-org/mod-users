@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import io.restassured.http.Header;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,14 +37,13 @@ import org.folio.support.User;
 import org.folio.support.http.DepartmentsClient;
 import org.folio.support.http.UsersClient;
 import org.folio.support.tags.IntegrationTest;
-import org.folio.test.util.TokenTestUtil;
 
 @IntegrationTest
 class DepartmentsAPIIT extends AbstractRestTestNoData {
 
   private static final String USER_JSON_PATH = "users/user8.json";
   private static final String USER_ID = "88888888-8888-4888-8888-888888888888";
-  private static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
+  private static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, "fake-token");
   private static final Header FAKE_USER_ID = new Header(OKAPI_USERID_HEADER, USER_ID);
 
   private static UsersClient usersClient;

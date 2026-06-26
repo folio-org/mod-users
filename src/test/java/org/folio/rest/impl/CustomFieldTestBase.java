@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import io.restassured.http.Header;
+import org.folio.okapi.common.XOkapiHeaders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,12 +16,11 @@ import org.folio.rest.jaxrs.model.CustomField;
 import org.folio.support.User;
 import org.folio.support.http.CustomFieldsClient;
 import org.folio.support.http.UsersClient;
-import org.folio.test.util.TokenTestUtil;
 
 class CustomFieldTestBase extends AbstractRestTestNoData {
 
   protected static final String USER_ID = "88888888-8888-4888-8888-888888888888";
-  protected static final Header FAKE_TOKEN = TokenTestUtil.createTokenHeader("mockuser8", USER_ID);
+  protected static final Header FAKE_TOKEN = new Header(XOkapiHeaders.TOKEN, "fake-token");
   protected static final Header FAKE_USER_ID = new Header(OKAPI_USERID_HEADER, USER_ID);
 
   private static final String USER_JSON_PATH = "users/user8.json";
