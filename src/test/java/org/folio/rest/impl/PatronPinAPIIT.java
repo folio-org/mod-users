@@ -19,7 +19,6 @@ import org.folio.support.User;
 import org.folio.support.http.PatronPinClient;
 import org.folio.support.http.UsersClient;
 import org.folio.support.tags.IntegrationTest;
-import org.folio.test.util.DBTestUtil;
 
 @IntegrationTest
 class PatronPinAPIIT extends AbstractRestTestNoData {
@@ -104,7 +103,7 @@ class PatronPinAPIIT extends AbstractRestTestNoData {
   }
 
   private void deleteAllPatronPins(Vertx vertx) {
-    DBTestUtil.deleteFromTable(vertx, "patronpin", TENANT_NAME);
+    deleteFromTable(vertx, "patronpin", TENANT_NAME);
   }
 
 }

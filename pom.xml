@@ -25,7 +25,6 @@
     <!-- Folio dependencies properties -->
     <folio-s3-client.version>3.0.1</folio-s3-client.version>
     <folio-custom-fields.version>4.0.0-SNAPSHOT</folio-custom-fields.version>
-    <folio-service-tools.version>6.0.0</folio-service-tools.version>
     <raml-module-builder.version>36.0.0</raml-module-builder.version>
 
     <!-- Test Dependency Versions -->
@@ -36,6 +35,7 @@
     <junit-bom.version>6.1.0</junit-bom.version>
     <mockito-bom.version>5.23.0</mockito-bom.version>
     <testcontainers-bom.version>2.0.5</testcontainers-bom.version>
+    <wiremock.version>3.13.2</wiremock.version>
 
     <!-- Plugin Versions -->
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
@@ -193,11 +193,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
        <groupId>io.vertx</groupId>
        <artifactId>vertx-unit</artifactId>
        <scope>test</scope>
@@ -238,12 +233,6 @@
     </dependency>
     <dependency>
       <groupId>org.folio</groupId>
-      <artifactId>folio-service-tools-test</artifactId>
-      <version>${folio-service-tools.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.folio</groupId>
       <artifactId>testing</artifactId>
       <version>${raml-module-builder.version}</version>
       <scope>test</scope>
@@ -275,6 +264,18 @@
       <version>${awaitility.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>${wiremock.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>net.sf.jopt-simple</groupId>
+          <artifactId>jopt-simple</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -284,6 +285,13 @@
         <configuration>
           <release>${java.version}</release>
           <encoding>UTF-8</encoding>
+          <annotationProcessorPaths>
+          <path>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+          </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>
