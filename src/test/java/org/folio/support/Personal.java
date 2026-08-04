@@ -23,6 +23,6 @@ public class Personal {
   String email;
   String phone;
   String mobilePhone;
-  String preferredContactTypeId;
+  List<String> preferredContactTypeIds;
   String profilePictureLink;
 }

@@ -282,7 +282,7 @@ public class StagingUserService {
       personal.withEmail(contactInfo.getEmail())
         .withPhone(contactInfo.getPhone())
         .withMobilePhone(contactInfo.getMobilePhone())
-        .withPreferredContactTypeId(CONTACT_TYPE_EMAIL_ID);
+        .withPreferredContactTypeIds(List.of(CONTACT_TYPE_EMAIL_ID));
     }
   }
 

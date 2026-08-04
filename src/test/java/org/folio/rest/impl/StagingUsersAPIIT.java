@@ -526,7 +526,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
         .middleName("jj")
         .lastName("brockhurst")
         .email("folio@folio.com")
-        .preferredContactTypeId("003")
+        .preferredContactTypeIds(List.of("003"))
         .phone("1234")
         .mobilePhone("4321")
         .addresses(addressList)
@@ -545,7 +545,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals("folio@folio.com", personal.getEmail());
     assertEquals("1234", personal.getPhone());
     assertEquals("4321", personal.getMobilePhone());
-    assertEquals("003", personal.getPreferredContactTypeId());
+    assertEquals(List.of("003"), personal.getPreferredContactTypeIds());
     assertEquals(addressList.size(), personal.getAddresses().size());
     assertEquals(Set.of(PreferredEmailCommunication.SUPPORT), createdUser.getPreferredEmailCommunication());
     return userToCreate;
@@ -615,7 +615,7 @@ class StagingUsersAPIIT extends AbstractRestTestNoData {
     assertEquals(stagingUser.getExternalSystemId(), user.getExternalSystemId());
     assertEquals(stagingContactInfo.getPhone(), userPersonal.getPhone());
     assertEquals(stagingContactInfo.getMobilePhone(), userPersonal.getMobilePhone());
-    assertEquals(CONTACT_TYPE_EMAIL_ID, userPersonal.getPreferredContactTypeId(), "user should always have 002 as its contact type");
+    assertEquals(List.of(CONTACT_TYPE_EMAIL_ID), userPersonal.getPreferredContactTypeIds(), "user should always have 002 as its only preferred contact type");
     var address = fetchPrimaryAddressFromUser(user);
     assertNotNull(address, "User should have a primary address");
     assertEquals(stagingAddressInfo.getAddressLine0(), address.getAddressLine1());

@@ -78,7 +78,7 @@ for (my $i = $start; $i < $users + $start; $i++) {
                            email => $faker->email(),
                            phone => $faker->phone_number(),
                            dateOfBirth => "$birth_year-" . sprintf("%02d",$birth_month) . '-' . sprintf("%02d",$birth_day),
-                           preferredContactTypeId => $contacts[int(rand(5))],
+                           preferredContactTypeIds => [$contacts[int(rand(5))]],
                            addresses => [
                                          {
                                           countryId => 'US',

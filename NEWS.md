@@ -1,3 +1,10 @@
+## 19.7.0 IN PROGRESS
+
+### New APIs versions
+* Provides `users v16.5`
+
+* **Deprecated** users' `personal`->`preferredContactTypeId` field in favor of an array `personal`->`preferredContactTypeIds` ([MODUSERS-586](https://folio-org.atlassian.net/browse/MODUSERS-586))
+
 ## 19.6.0 2026-04-15
 
 ### New APIs versions
