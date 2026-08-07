@@ -19,7 +19,7 @@
       "mobilePhone" : "1-625-134-8454",
       "email" : "edward@hermiston-runte.ca.us",
       "dateOfBirth" : "1994-01-29",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Sauer"
    },
    "username" : "shaylee",
@@ -28,4 +28,3 @@
    "barcode" : "961651134809955",
    "type" : "patron"
 }
-

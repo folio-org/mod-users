@@ -11,7 +11,7 @@
       "dateOfBirth" : "1976-12-07",
       "email" : "eulah@veum-streich-and-mueller.ks.us",
       "lastName" : "Okuneva",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Stefan",
       "addresses" : [
          {
@@ -27,4 +27,3 @@
    },
    "id" : "95a99d37-66b5-4b8d-a598-ab36618f9aac"
 }
-

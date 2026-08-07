@@ -8,7 +8,7 @@
    "active" : true,
    "id" : "b3dae815-3d30-49f9-ac26-363e661382a0",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Esteban",
       "lastName" : "Kulas",
       "addresses" : [
@@ -29,4 +29,3 @@
       "mobilePhone" : "1-762-228-6098 x0493"
    }
 }
-

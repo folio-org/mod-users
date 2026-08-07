@@ -18,7 +18,7 @@
       "lastName" : "Koss",
       "phone" : "049.877.6192",
       "firstName" : "Hipolito",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "dateOfBirth" : "1972-12-13",
       "email" : "rosalia@hirthe-raynor.az"
    },
@@ -27,4 +27,3 @@
    "type" : "patron",
    "expirationDate" : "2019-05-16"
 }
-

@@ -20,7 +20,7 @@
       "dateOfBirth" : "2009-07-21",
       "mobilePhone" : "(557)093-7575",
       "phone" : "759.693.8557",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Denesik",
       "middleName" : "Noel"
    },
@@ -29,4 +29,3 @@
    "expirationDate" : "2019-06-20",
    "enrollmentDate" : "2015-04-13"
 }
-

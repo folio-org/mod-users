@@ -20,7 +20,7 @@
       "phone" : "852.559.2262 x8243",
       "email" : "drake@kohler-okeefe-and-dooley.au",
       "dateOfBirth" : "2016-05-09",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Bobby",
       "lastName" : "Crona"
    },
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-10-20",
    "barcode" : "730185433611190"
 }
-

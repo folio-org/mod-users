@@ -20,7 +20,7 @@
       "phone" : "1-794-142-6128",
       "middleName" : "Layne",
       "lastName" : "Zulauf",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "active" : false,
    "username" : "hanna",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2016-12-24",
    "type" : "patron"
 }
-

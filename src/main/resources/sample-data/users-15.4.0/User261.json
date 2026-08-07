@@ -20,7 +20,7 @@
       "lastName" : "Toy",
       "email" : "wanda@murphy-reichel-and-nitzsche.cn",
       "middleName" : "Meda",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "firstName" : "Jennie"
    },
    "id" : "ac521a2a-d933-42f9-b3a4-2d7399880057",
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-04-22",
    "type" : "patron"
 }
-

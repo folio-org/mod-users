@@ -20,7 +20,7 @@
       "dateOfBirth" : "1972-01-16",
       "lastName" : "Wintheiser",
       "phone" : "225.278.0004",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Melody",
       "middleName" : "Marcellus",
       "email" : "mabelle@stanton-schaefer.sb"
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2018-01-08",
    "username" : "edwina"
 }
-

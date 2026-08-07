@@ -9,7 +9,7 @@
    "active" : true,
    "personal" : {
       "lastName" : "Kovacek",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Carey",
       "addresses" : [
          {
@@ -28,4 +28,3 @@
       "email" : "erich@sporer-group.lv"
    }
 }
-

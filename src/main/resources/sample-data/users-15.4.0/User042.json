@@ -9,7 +9,7 @@
       "phone" : "103-227-0227 x6093",
       "email" : "kavon@effertz-inc.ai",
       "dateOfBirth" : "1950-05-14",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "firstName" : "Rosemary",
       "lastName" : "Schaden",
       "addresses" : [
@@ -27,4 +27,3 @@
    "id" : "969e6710-309e-41bd-ba35-2b97faec30b7",
    "active" : true
 }
-

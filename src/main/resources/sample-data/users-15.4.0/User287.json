@@ -22,10 +22,9 @@
       "lastName" : "Hyatt",
       "phone" : "1-352-388-0288",
       "firstName" : "Juston",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "middleName" : "Green",
       "email" : "scarlett@roberts-weber-and-rice.fi"
    },
    "active" : true
 }
-

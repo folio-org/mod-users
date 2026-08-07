@@ -9,7 +9,7 @@
    "personal" : {
       "lastName" : "Weissnat",
       "firstName" : "Maddison",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "addresses" : [
          {
             "addressTypeId" : "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
@@ -27,4 +27,3 @@
    },
    "active" : true
 }
-

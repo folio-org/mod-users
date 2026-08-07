@@ -8,7 +8,7 @@
    "active" : true,
    "id" : "2c2e383d-7369-4aff-afb7-eb3db4cb71a0",
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Green",
       "middleName" : "Alysha",
       "firstName" : "Brandon",
@@ -29,4 +29,3 @@
       "dateOfBirth" : "1981-01-30"
    }
 }
-

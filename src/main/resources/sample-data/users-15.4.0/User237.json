@@ -8,7 +8,7 @@
       "lastName" : "Zulauf",
       "email" : "catherine@daugherty-and-sons.jo",
       "middleName" : "Clifford",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "mobilePhone" : "(664)091-9434",
       "firstName" : "Ezekiel",
       "addresses" : [
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-02-02",
    "type" : "patron"
 }
-

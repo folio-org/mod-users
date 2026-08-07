@@ -2,7 +2,7 @@
    "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
    "username" : "zella",
    "personal" : {
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "lastName" : "Rolfson",
       "middleName" : "Katrine",
       "addresses" : [
@@ -29,4 +29,3 @@
    "expirationDate" : "2019-05-26",
    "enrollmentDate" : "2018-08-06"
 }
-

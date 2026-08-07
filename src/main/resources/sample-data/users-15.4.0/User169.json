@@ -20,7 +20,7 @@
          }
       ],
       "lastName" : "Prohaska",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "username" : "rowland",
    "barcode" : "293649666736325",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2019-02-19",
    "type" : "patron"
 }
-

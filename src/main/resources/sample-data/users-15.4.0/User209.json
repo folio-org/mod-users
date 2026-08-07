@@ -6,7 +6,7 @@
    "expirationDate" : "2019-04-18",
    "active" : false,
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Yasmine",
       "middleName" : "Karlee",
       "email" : "dorthy@reichert-harris.sd.us",
@@ -28,4 +28,3 @@
    "username" : "jillian",
    "enrollmentDate" : "2016-10-19"
 }
-

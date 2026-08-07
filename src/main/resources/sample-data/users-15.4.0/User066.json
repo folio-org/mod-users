@@ -25,8 +25,7 @@
       "firstName" : "Jabari",
       "middleName" : "Tressie",
       "lastName" : "Marvin",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "username" : "brant"
 }
-

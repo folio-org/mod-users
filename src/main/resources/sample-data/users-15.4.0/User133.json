@@ -3,7 +3,7 @@
    "username" : "eladio",
    "id" : "8931291a-8f92-4044-a17f-49a546b489ce",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Robel",
       "middleName" : "Clarabelle",
       "firstName" : "Adelbert",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2018-11-16",
    "expirationDate" : "2020-04-29"
 }
-

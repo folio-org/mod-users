@@ -4,7 +4,7 @@
    "active" : true,
    "id" : "70e0c050-e842-4eee-9632-967a49e43bb2",
    "personal" : {
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "lastName" : "Torp",
       "middleName" : "Sofia",
       "firstName" : "Willard",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2015-05-22",
    "expirationDate" : "2020-06-10"
 }
-

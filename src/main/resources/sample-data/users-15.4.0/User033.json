@@ -22,11 +22,10 @@
       "firstName" : "Margret",
       "middleName" : "Adelia",
       "lastName" : "Koss",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "type" : "patron",
    "enrollmentDate" : "2019-02-07",
    "expirationDate" : "2019-11-22",
    "barcode" : "979109654603071"
 }
-

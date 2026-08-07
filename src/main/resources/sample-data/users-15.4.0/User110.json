@@ -22,10 +22,9 @@
          }
       ],
       "firstName" : "Ewell",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Swift"
    },
    "id" : "fb5de3c8-5293-440e-8448-a688c3a7367c",
    "active" : false
 }
-

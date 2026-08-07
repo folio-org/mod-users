@@ -21,11 +21,10 @@
          }
       ],
       "lastName" : "Ratke",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "type" : "patron",
    "expirationDate" : "2020-12-11",
    "enrollmentDate" : "2017-02-11",
    "barcode" : "181666707103044"
 }
-

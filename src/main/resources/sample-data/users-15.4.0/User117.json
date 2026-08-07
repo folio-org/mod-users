@@ -10,7 +10,7 @@
    "personal" : {
       "middleName" : "Jadyn",
       "lastName" : "Fadel",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "dateOfBirth" : "1954-08-04",
       "email" : "aimee@sanford-schneider-and-kessler.ar",
       "phone" : "086.011.5005 x35496",
@@ -28,4 +28,3 @@
       "firstName" : "Gilbert"
    }
 }
-

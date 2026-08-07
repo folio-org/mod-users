@@ -7,7 +7,7 @@
    "personal" : {
       "lastName" : "Hagenes",
       "middleName" : "Lamar",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "addresses" : [
          {
             "primaryAddress" : true,
@@ -28,4 +28,3 @@
    "id" : "a8a11126-40b9-45f0-aa6e-9408e57c4b47",
    "username" : "erna"
 }
-

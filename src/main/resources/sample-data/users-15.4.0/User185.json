@@ -3,7 +3,7 @@
    "active" : true,
    "id" : "f643e743-3496-4ecd-94d7-1ca2fdf56c82",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Gutkowski",
       "middleName" : "Jodie",
       "email" : "monty@heidenreich-harris-and-veum.so",
@@ -29,4 +29,3 @@
    "barcode" : "28440705076121",
    "type" : "patron"
 }
-

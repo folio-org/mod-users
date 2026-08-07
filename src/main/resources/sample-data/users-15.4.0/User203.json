@@ -13,7 +13,7 @@
       "middleName" : "Arne",
       "email" : "hester@grant-sporer-and-hodkiewicz.pa.us",
       "mobilePhone" : "(335)765-6908 x82927",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Edgardo",
       "addresses" : [
          {
@@ -29,4 +29,3 @@
       "dateOfBirth" : "1999-07-16"
    }
 }
-

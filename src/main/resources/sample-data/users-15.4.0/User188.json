@@ -17,7 +17,7 @@
             "countryId" : "US"
          }
       ],
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Donna",
       "lastName" : "Hickle",
       "email" : "lonnie@runte-reichel.es",
@@ -27,4 +27,3 @@
    "id" : "f3055954-ebc3-4da8-8a60-0b8f52480125",
    "username" : "rita"
 }
-

@@ -22,11 +22,10 @@
       ],
       "middleName" : "Madisen",
       "lastName" : "Kub",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "type" : "patron",
    "expirationDate" : "2019-11-13",
    "enrollmentDate" : "2018-06-22",
    "barcode" : "379402199971554"
 }
-

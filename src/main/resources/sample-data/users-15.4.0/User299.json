@@ -20,11 +20,10 @@
       "lastName" : "Lockman",
       "email" : "hiram@hettinger-kirlin.mil",
       "dateOfBirth" : "2009-09-18",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Destiney"
    },
    "username" : "mollie",
    "enrollmentDate" : "2015-11-11",
    "active" : true
 }
-

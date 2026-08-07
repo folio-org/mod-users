@@ -22,10 +22,9 @@
             "addressLine1" : "31306 Katelynn Crescent"
          }
       ],
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "lastName" : "Christiansen",
       "middleName" : "May"
    },
    "username" : "winnifred"
 }
-

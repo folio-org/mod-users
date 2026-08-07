@@ -4,7 +4,7 @@
    "personal" : {
       "lastName" : "Rodriguez",
       "middleName" : "Cora",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "primaryAddress" : true,
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2015-12-28",
    "barcode" : "272166777013790"
 }
-

@@ -21,11 +21,10 @@
       "email" : "nettie@cummings-and-sons.ps",
       "dateOfBirth" : "1958-02-12",
       "phone" : "1-386-358-5666 x8907",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Emard",
       "middleName" : "Tressie"
    },
    "id" : "8f7a47c4-d66f-4dba-9255-f74507a2ecee",
    "username" : "bridget"
 }
-

@@ -7,7 +7,7 @@
    "username" : "louie",
    "id" : "4a5e1aa3-0733-45d9-b9cc-836b4e92d6ea",
    "personal" : {
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Lane",
       "lastName" : "Brakus",
       "addresses" : [
@@ -29,4 +29,3 @@
    },
    "active" : false
 }
-

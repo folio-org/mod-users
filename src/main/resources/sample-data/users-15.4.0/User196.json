@@ -24,8 +24,7 @@
       "dateOfBirth" : "1947-08-16",
       "email" : "keon@hane-llc.ir",
       "lastName" : "Hayes",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "username" : "santiago"
 }
-

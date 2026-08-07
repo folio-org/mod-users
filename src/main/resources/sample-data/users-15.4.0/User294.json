@@ -8,7 +8,7 @@
    "personal" : {
       "firstName" : "Stevie",
       "mobilePhone" : "(271)541-3712",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "email" : "reinhold@swaniawski-hane.km",
       "lastName" : "Erdman",
       "phone" : "(278)436-8225",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2016-09-17",
    "username" : "deanna"
 }
-

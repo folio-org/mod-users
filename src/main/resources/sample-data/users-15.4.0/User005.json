@@ -20,7 +20,7 @@
       ],
       "phone" : "919-542-3508 x8519",
       "firstName" : "Sadie",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "middleName" : "Sylvia",
       "lastName" : "Rowe",
       "email" : "mathias@gleichner-kozey-and-reinger.mo"
@@ -28,4 +28,3 @@
    "id" : "e308411d-773e-416e-be58-f16176c0549e",
    "type" : "patron"
 }
-

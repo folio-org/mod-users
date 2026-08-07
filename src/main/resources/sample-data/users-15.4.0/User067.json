@@ -24,9 +24,8 @@
       "firstName" : "Deja",
       "middleName" : "Arianna",
       "lastName" : "Harvey",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "id" : "5a57f974-ea09-4c87-b7f5-e4144dde6128",
    "active" : true
 }
-

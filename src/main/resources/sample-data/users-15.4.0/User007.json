@@ -19,7 +19,7 @@
       ],
       "dateOfBirth" : "1950-09-26",
       "middleName" : "Doyle",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "email" : "caden@okon-roob-and-williamson.gp",
       "lastName" : "Hagenes",
       "firstName" : "Macey",
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-05-07",
    "type" : "patron"
 }
-

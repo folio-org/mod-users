@@ -8,7 +8,7 @@
       "lastName" : "Schaefer",
       "middleName" : "Renee",
       "email" : "michelle@schuster-mcdermott.dk",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "mobilePhone" : "444.448.7359 x459",
       "firstName" : "Colten",
       "addresses" : [
@@ -29,4 +29,3 @@
    "expirationDate" : "2019-08-19",
    "type" : "patron"
 }
-

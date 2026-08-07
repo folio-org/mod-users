@@ -13,7 +13,7 @@
       "email" : "jermey@hessel-hettinger.ok.us",
       "mobilePhone" : "1-585-529-3409",
       "firstName" : "Jackeline",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "postalCode" : "11104",
@@ -28,4 +28,3 @@
       "dateOfBirth" : "1947-10-15"
    }
 }
-

@@ -17,7 +17,7 @@
       "middleName" : "Jackie",
       "mobilePhone" : "(414)238-0544 x546",
       "firstName" : "Iliana",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "phone" : "(320)304-2693",
       "lastName" : "Emard"
    },
@@ -29,4 +29,3 @@
    "barcode" : "870729091333835",
    "id" : "7d7f46e8-5f99-4ac8-aa86-83a23f4bd8de"
 }
-

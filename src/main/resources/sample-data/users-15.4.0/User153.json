@@ -7,7 +7,7 @@
    "username" : "elmira",
    "personal" : {
       "firstName" : "Triston",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Nicolas",
       "addresses" : [
          {
@@ -27,4 +27,3 @@
    "id" : "df84acd4-4425-47e9-9a25-db8eb2973950",
    "active" : true
 }
-

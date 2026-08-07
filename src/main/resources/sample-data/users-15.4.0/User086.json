@@ -2,7 +2,7 @@
    "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
    "username" : "juston",
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Walker",
       "middleName" : "Marilou",
       "firstName" : "Adaline",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-10-25",
    "barcode" : "438581524422918"
 }
-

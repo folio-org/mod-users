@@ -3,7 +3,7 @@
    "username" : "nova",
    "enrollmentDate" : "2017-06-30",
    "personal" : {
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "mobilePhone" : "1-654-336-4763 x993",
       "firstName" : "Demond",
       "middleName" : "Elias",
@@ -29,4 +29,3 @@
    "id" : "15b9deaf-1a59-4396-a8e5-d6c7e5b79b28",
    "barcode" : "190102646879172"
 }
-

@@ -5,7 +5,7 @@
       "lastName" : "Koss",
       "phone" : "1-035-717-5715 x1958",
       "firstName" : "Eddie",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Rusty",
       "email" : "holden@mitchell-group.om",
       "addresses" : [
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-10-23",
    "type" : "patron"
 }
-

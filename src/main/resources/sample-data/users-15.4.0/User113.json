@@ -8,7 +8,7 @@
    "id" : "5dfffe75-267d-4133-b7bf-6d6daf26d5a4",
    "personal" : {
       "lastName" : "Schroeder",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "phone" : "1-942-839-9561 x44076",
       "mobilePhone" : "1-962-343-8680",
       "dateOfBirth" : "1969-03-07",
@@ -28,4 +28,3 @@
    },
    "active" : true
 }
-

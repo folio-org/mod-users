@@ -22,9 +22,8 @@
       "lastName" : "Tillman",
       "phone" : "024.243.8205",
       "dateOfBirth" : "1961-07-09",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Cordie",
       "email" : "america@jast-hamill.ao"
    }
 }
-

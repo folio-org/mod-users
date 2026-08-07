@@ -23,10 +23,9 @@
       "firstName" : "Thad",
       "email" : "emelie@larkin-llc.rw",
       "lastName" : "Torphy",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "middleName" : "Reba"
    },
    "type" : "patron",
    "enrollmentDate" : "2017-10-11"
 }
-

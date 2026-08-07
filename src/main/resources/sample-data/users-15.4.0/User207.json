@@ -18,7 +18,7 @@
          }
       ],
       "email" : "trinity@tremblay-dare-and-conroy.va.us",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Ashley",
       "dateOfBirth" : "1977-01-12"
    },
@@ -27,4 +27,3 @@
    "expirationDate" : "2020-02-22",
    "type" : "patron"
 }
-

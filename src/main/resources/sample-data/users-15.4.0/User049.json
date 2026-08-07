@@ -19,7 +19,7 @@
       "email" : "enola@stroman-bergstrom.mt",
       "dateOfBirth" : "1987-02-06",
       "phone" : "1-990-063-2196 x96861",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "middleName" : "Andreanne",
       "lastName" : "Batz"
    },
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-10-28",
    "enrollmentDate" : "2018-09-14"
 }
-

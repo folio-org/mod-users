@@ -8,7 +8,7 @@
    "personal" : {
       "middleName" : "Orland",
       "lastName" : "Denesik",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Brook",
       "addresses" : [
          {
@@ -29,4 +29,3 @@
    "active" : true,
    "id" : "a56edfbe-087e-4f79-bd7e-d855fbe746e4"
 }
-

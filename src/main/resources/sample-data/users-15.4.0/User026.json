@@ -19,7 +19,7 @@
          }
       ],
       "firstName" : "Timothy",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Vernice",
       "lastName" : "Murazik"
    },
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-11-04",
    "barcode" : "570514672235127"
 }
-

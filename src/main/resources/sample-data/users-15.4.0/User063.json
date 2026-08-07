@@ -8,7 +8,7 @@
    "personal" : {
       "middleName" : "Paris",
       "lastName" : "Schneider",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "region" : "MP",
@@ -29,4 +29,3 @@
    "active" : true,
    "id" : "0db6912a-40c0-41db-8d15-be05ff851f96"
 }
-

@@ -21,11 +21,10 @@
          }
       ],
       "firstName" : "Brayan",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "middleName" : "Cory",
       "lastName" : "Jenkins"
    },
    "id" : "b3f61b07-a1b3-44ac-bb7f-622b90ac17c3",
    "active" : false
 }
-

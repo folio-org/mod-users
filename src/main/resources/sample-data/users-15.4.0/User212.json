@@ -20,7 +20,7 @@
       "email" : "esteban@schultz-hettinger.in.us",
       "firstName" : "Narciso",
       "mobilePhone" : "(985)426-5134 x560",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "active" : true,
    "type" : "patron",
@@ -28,4 +28,3 @@
    "id" : "15fa3eda-f495-496c-b21e-4f281b38a3ef",
    "barcode" : "971460036650480"
 }
-

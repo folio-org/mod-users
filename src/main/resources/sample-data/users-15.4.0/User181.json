@@ -9,7 +9,7 @@
    "id" : "2fabd929-3ed9-40ae-aaf2-6c39c4bebf13",
    "personal" : {
       "lastName" : "Denesik",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Aliya",
       "addresses" : [
          {
@@ -28,4 +28,3 @@
       "email" : "everette@hermann-armstrong.wi.us"
    }
 }
-

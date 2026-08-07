@@ -10,7 +10,7 @@
    "personal" : {
       "middleName" : "Myrna",
       "lastName" : "Wisoky",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Augustus",
       "addresses" : [
          {
@@ -29,4 +29,3 @@
       "email" : "sonya@rowe-inc.lb"
    }
 }
-

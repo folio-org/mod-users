@@ -6,7 +6,7 @@
    "barcode" : "318184383030693",
    "username" : "vena",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Stroman",
       "middleName" : "Tiana",
       "email" : "ethelyn@emmerich-cruickshank-and-robel.pa.us",
@@ -29,4 +29,3 @@
    "active" : false,
    "id" : "a0dadce9-06ed-4b23-9fc0-6b5238aa92d8"
 }
-

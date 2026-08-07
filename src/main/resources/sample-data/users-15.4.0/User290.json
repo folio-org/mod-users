@@ -18,7 +18,7 @@
       "lastName" : "Block",
       "phone" : "890-719-9790 x316",
       "firstName" : "Araceli",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "email" : "fredy@lehner-and-sons.sr",
       "middleName" : "Avery"
    },
@@ -28,4 +28,3 @@
    "id" : "384272bb-efab-4e94-b3b8-f67f20796f20",
    "barcode" : "217874037910807"
 }
-

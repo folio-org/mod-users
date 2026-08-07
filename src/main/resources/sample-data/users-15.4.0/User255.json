@@ -21,10 +21,9 @@
       "phone" : "(619)645-7533 x5934",
       "dateOfBirth" : "1947-06-23",
       "firstName" : "Lois",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "email" : "monserrat@donnelly-skiles.ge"
    },
    "username" : "elmer",
    "enrollmentDate" : "2018-05-06"
 }
-

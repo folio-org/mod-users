@@ -5,7 +5,7 @@
    "username" : "zackery",
    "personal" : {
       "mobilePhone" : "1-315-820-3371 x235",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "firstName" : "Amira",
       "email" : "noel@rath-oconner-and-hackett.om",
       "lastName" : "Johnson",
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-02-03",
    "type" : "patron"
 }
-

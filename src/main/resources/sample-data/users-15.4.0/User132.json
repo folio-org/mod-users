@@ -3,7 +3,7 @@
    "username" : "schuyler",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Glover",
       "middleName" : "Ervin",
       "mobilePhone" : "1-422-331-2245",
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-01-18",
    "enrollmentDate" : "2016-03-06"
 }
-

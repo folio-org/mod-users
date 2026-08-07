@@ -23,9 +23,8 @@
       "lastName" : "Kulas",
       "middleName" : "Angel",
       "email" : "yvonne@cormier-mertz.tz",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Earline"
    },
    "active" : true
 }
-

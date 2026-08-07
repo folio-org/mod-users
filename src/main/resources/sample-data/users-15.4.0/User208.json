@@ -19,7 +19,7 @@
       "dateOfBirth" : "1981-05-19",
       "lastName" : "Rogahn",
       "phone" : "1-277-648-2924 x441",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Brandon",
       "middleName" : "Sharon",
       "email" : "kraig@willms-gerlach.mx"
@@ -28,4 +28,3 @@
    "username" : "johanna",
    "active" : false
 }
-

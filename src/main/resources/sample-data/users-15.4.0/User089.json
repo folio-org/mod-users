@@ -2,7 +2,7 @@
    "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
    "username" : "jaclyn",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Amelia",
       "lastName" : "Oberbrunner",
       "mobilePhone" : "1-622-373-5253",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2017-02-24",
    "expirationDate" : "2019-06-13"
 }
-

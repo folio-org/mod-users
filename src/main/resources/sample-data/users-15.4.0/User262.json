@@ -9,7 +9,7 @@
       "lastName" : "Russel",
       "phone" : "1-871-876-7675",
       "mobilePhone" : "1-311-014-7555 x947",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Madeline",
       "email" : "ludie@will-bode-and-yundt.wf",
       "addresses" : [
@@ -28,4 +28,3 @@
    "username" : "alyson",
    "enrollmentDate" : "2017-11-18"
 }
-

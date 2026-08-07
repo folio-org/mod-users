@@ -8,7 +8,7 @@
    "id" : "1ee0a888-ade1-4bc7-a9b6-15a2d46a6b18",
    "personal" : {
       "lastName" : "Wiza",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "mobilePhone" : "553-544-3842",
       "phone" : "864.379.8305 x7407",
       "dateOfBirth" : "1982-01-05",
@@ -28,4 +28,3 @@
    },
    "username" : "noelia"
 }
-

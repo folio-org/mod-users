@@ -8,7 +8,7 @@
    "personal" : {
       "lastName" : "Rutherford",
       "email" : "hazel@kunze-blick.jo",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "addresses" : [
          {
             "region" : "ME",
@@ -27,4 +27,3 @@
    "type" : "patron",
    "enrollmentDate" : "2016-12-08"
 }
-

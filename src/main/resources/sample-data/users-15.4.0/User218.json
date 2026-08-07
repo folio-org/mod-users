@@ -10,7 +10,7 @@
    "personal" : {
       "email" : "fleta@okuneva-group.tr",
       "dateOfBirth" : "2007-04-23",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Chet",
       "phone" : "1-968-830-7181",
       "lastName" : "Koss",
@@ -27,4 +27,3 @@
       ]
    }
 }
-

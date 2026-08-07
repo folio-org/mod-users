@@ -20,7 +20,7 @@
             "addressLine1" : "14567 Smitham Path"
          }
       ],
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "mobilePhone" : "362.131.9602 x6297",
       "firstName" : "Jazlyn",
       "email" : "petra@herzog-group.mu",
@@ -29,4 +29,3 @@
       "phone" : "705.954.0099 x5114"
    }
 }
-

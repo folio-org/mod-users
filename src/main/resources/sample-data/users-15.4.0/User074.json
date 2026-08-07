@@ -21,7 +21,7 @@
       "mobilePhone" : "1-930-357-4670 x9072",
       "email" : "thalia@anderson-group.ia.us",
       "dateOfBirth" : "1955-09-30",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "lastName" : "Kulas",
       "middleName" : "Rowan"
    },
@@ -29,4 +29,3 @@
    "active" : true,
    "username" : "angelita"
 }
-

@@ -10,7 +10,7 @@
    "personal" : {
       "lastName" : "Schroeder",
       "middleName" : "Juston",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Natalia",
       "addresses" : [
          {
@@ -28,4 +28,3 @@
       "email" : "micah@cassin-cormier.ag"
    }
 }
-

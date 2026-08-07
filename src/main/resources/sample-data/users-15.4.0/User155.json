@@ -4,7 +4,7 @@
    "active" : true,
    "id" : "956f39c5-92e3-4c26-bcdc-1827674710cf",
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Hilll",
       "middleName" : "Travon",
       "firstName" : "Santino",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2017-06-05",
    "expirationDate" : "2020-09-28"
 }
-

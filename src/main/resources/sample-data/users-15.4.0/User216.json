@@ -16,7 +16,7 @@
       "phone" : "1-562-888-1713 x03714",
       "lastName" : "Jaskolski",
       "email" : "jedediah@torp-wiegand-and-schuppe.ga.us",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "mobilePhone" : "1-447-181-6690 x90817",
       "firstName" : "Theresa"
    },
@@ -28,4 +28,3 @@
    "barcode" : "384535810243711",
    "id" : "f57c13f1-6114-41b2-aa6f-33045068d6be"
 }
-

@@ -5,7 +5,7 @@
    "personal" : {
       "lastName" : "Ruecker",
       "middleName" : "Adelbert",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "dateOfBirth" : "1998-06-17",
       "email" : "berneice@rau-and-sons.do",
       "mobilePhone" : "396-791-1800",
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-10-07",
    "enrollmentDate" : "2018-01-09"
 }
-

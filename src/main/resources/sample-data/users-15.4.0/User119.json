@@ -15,7 +15,7 @@
             "city" : "Calabasas"
          }
       ],
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Jodie",
       "lastName" : "Davis",
       "email" : "otilia@morar-and-sons.ht",
@@ -27,4 +27,3 @@
    "expirationDate" : "2020-06-05",
    "barcode" : "496915951064778"
 }
-

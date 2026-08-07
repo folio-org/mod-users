@@ -2,7 +2,7 @@
    "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
    "username" : "sigrid",
    "personal" : {
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "middleName" : "Macey",
       "lastName" : "McCullough",
       "mobilePhone" : "893.859.2876 x60367",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-05-12",
    "expirationDate" : "2020-02-05"
 }
-

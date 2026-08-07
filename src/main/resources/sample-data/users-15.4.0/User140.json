@@ -19,7 +19,7 @@
          }
       ],
       "firstName" : "Leda",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "lastName" : "Pollich"
    },
    "type" : "patron",
@@ -27,4 +27,3 @@
    "enrollmentDate" : "2018-08-08",
    "barcode" : "580560277022502"
 }
-

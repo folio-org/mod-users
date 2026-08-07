@@ -18,7 +18,7 @@
          }
       ],
       "firstName" : "Alena",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "lastName" : "Luettgen",
       "middleName" : "Amanda"
    },
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-03-06",
    "type" : "patron"
 }
-

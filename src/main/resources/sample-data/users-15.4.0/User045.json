@@ -23,9 +23,8 @@
       "dateOfBirth" : "1960-10-20",
       "email" : "colby@kessler-inc.py",
       "lastName" : "Koepp",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "active" : true,
    "id" : "0e64adb1-36ba-4cdd-9909-047612b7629e"
 }
-

@@ -9,7 +9,7 @@
       "email" : "jammie@beatty-kris.ba",
       "middleName" : "Macey",
       "firstName" : "Darren",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "addresses" : [
          {
             "region" : "OK",
@@ -28,4 +28,3 @@
    "type" : "patron",
    "expirationDate" : "2020-09-19"
 }
-

@@ -3,7 +3,7 @@
    "id" : "0cce8c30-0a0d-4ebb-a107-cf47ad35eafb",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "middleName" : "Laney",
       "lastName" : "McKenzie",
       "phone" : "666-338-9978 x09222",
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-09-04",
    "type" : "patron"
 }
-

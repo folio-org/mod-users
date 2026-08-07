@@ -17,7 +17,7 @@
       "email" : "leilani@rutherford-ortiz-and-halvorson.cm",
       "dateOfBirth" : "1981-02-07",
       "firstName" : "Julianne",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    },
    "username" : "novella",
    "enrollmentDate" : "2016-09-06",
@@ -27,4 +27,3 @@
    "barcode" : "617842747960086",
    "id" : "c97f19d3-7a82-4891-aaa1-de087a9a903f"
 }
-

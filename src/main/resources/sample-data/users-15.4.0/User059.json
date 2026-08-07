@@ -22,11 +22,10 @@
       "email" : "roel@prosacco-cummings-and-wintheiser.cu",
       "middleName" : "Chyna",
       "lastName" : "Klocko",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "type" : "patron",
    "enrollmentDate" : "2017-09-29",
    "expirationDate" : "2021-01-08",
    "barcode" : "245336184453709"
 }
-

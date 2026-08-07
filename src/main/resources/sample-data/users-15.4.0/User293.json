@@ -23,9 +23,8 @@
       "lastName" : "Mraz",
       "middleName" : "Tobin",
       "email" : "luis@bayer-breitenberg.zw",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Kyleigh"
    },
    "active" : true
 }
-

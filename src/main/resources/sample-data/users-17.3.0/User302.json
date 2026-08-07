@@ -11,6 +11,6 @@
     "firstName": "bazinga",
     "email": "sheldon@example.com",
     "addresses": [],
-    "preferredContactTypeId": "002"
+    "preferredContactTypeIds": ["002"]
   }
 }

@@ -18,7 +18,7 @@
          }
       ],
       "lastName" : "Conn",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "id" : "86c9f455-a685-45d0-9d01-5943a1ba7e5b",
    "active" : true,
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-10-29",
    "type" : "patron"
 }
-

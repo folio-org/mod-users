@@ -17,7 +17,7 @@
          }
       ],
       "firstName" : "Gladyce",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Erica",
       "lastName" : "Marquardt"
    },
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2019-01-13",
    "type" : "patron"
 }
-

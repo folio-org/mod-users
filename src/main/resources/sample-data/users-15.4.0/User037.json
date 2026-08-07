@@ -20,7 +20,7 @@
       "email" : "herman@herzog-kutch.co",
       "middleName" : "Lonzo",
       "lastName" : "Prosacco",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "id" : "ade18246-c529-497f-bd4c-2c3f85e995ad",
    "type" : "patron",
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-11-29",
    "enrollmentDate" : "2016-05-25"
 }
-

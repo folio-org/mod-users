@@ -23,10 +23,9 @@
             "postalCode" : "42979-4043"
          }
       ],
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Alize",
       "lastName" : "Littel"
    },
    "username" : "percival"
 }
-

@@ -17,7 +17,7 @@
       "phone" : "1-181-329-3026 x244",
       "mobilePhone" : "(577)033-8256 x896",
       "firstName" : "Mylene",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "email" : "abraham@little-spinka-and-koepp.pr"
    },
    "enrollmentDate" : "2017-02-17",
@@ -28,4 +28,3 @@
    "barcode" : "966003183343282",
    "id" : "67e40b72-66ca-4113-bed9-17a40bc448e0"
 }
-

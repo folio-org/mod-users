@@ -7,7 +7,7 @@
    "id" : "342971e4-43af-44c3-a8c3-478a97cc94bc",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "middleName" : "Ilene",
       "lastName" : "Cronin",
       "email" : "jonatan@fisher-champlin.ad",
@@ -29,4 +29,3 @@
    },
    "username" : "mathew"
 }
-

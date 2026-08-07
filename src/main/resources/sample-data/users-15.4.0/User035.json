@@ -2,7 +2,7 @@
    "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Ronny",
       "lastName" : "McLaughlin",
       "addresses" : [
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2015-08-17",
    "type" : "patron"
 }
-

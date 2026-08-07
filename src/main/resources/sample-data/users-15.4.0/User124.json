@@ -3,7 +3,7 @@
    "personal" : {
       "middleName" : "Rubie",
       "lastName" : "Hamill",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "dateOfBirth" : "1958-10-27",
       "email" : "wellington@reinger-inc.nc",
       "phone" : "(301)179-9972 x3077",
@@ -29,4 +29,3 @@
    "barcode" : "501745941225589",
    "type" : "patron"
 }
-

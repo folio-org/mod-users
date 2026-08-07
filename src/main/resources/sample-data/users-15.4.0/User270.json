@@ -4,7 +4,7 @@
    "personal" : {
       "middleName" : "Guadalupe",
       "email" : "arlie@schultz-franecki-and-kohler.org",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "mobilePhone" : "969.479.2172",
       "firstName" : "Franco",
       "phone" : "201-462-5010 x7332",
@@ -29,4 +29,3 @@
    "expirationDate" : "2019-11-17",
    "type" : "patron"
 }
-

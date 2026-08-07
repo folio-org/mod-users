@@ -19,7 +19,7 @@
          }
       ],
       "firstName" : "Colt",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Dach",
       "middleName" : "Alford"
    },
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-04-22",
    "type" : "patron"
 }
-

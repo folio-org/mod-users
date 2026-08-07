@@ -23,9 +23,8 @@
       "phone" : "(348)233-4100",
       "lastName" : "Schimmel",
       "middleName" : "Darrin",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "active" : true,
    "username" : "genesis"
 }
-

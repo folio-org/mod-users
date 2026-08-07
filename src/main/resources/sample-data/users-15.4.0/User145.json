@@ -9,7 +9,7 @@
    "personal" : {
       "lastName" : "Kohler",
       "middleName" : "Lowell",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "mobilePhone" : "(824)319-7898",
       "phone" : "116-652-6703",
       "dateOfBirth" : "1976-06-06",
@@ -29,4 +29,3 @@
    },
    "id" : "b09038a4-0386-4782-8ee8-11aa87e09887"
 }
-

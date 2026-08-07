@@ -7,7 +7,7 @@
    "username" : "earnestine",
    "id" : "17b26a4a-e481-4b86-8949-5ef6570eb622",
    "personal" : {
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Wilburn",
       "lastName" : "Predovic",
       "firstName" : "Earline",
@@ -28,4 +28,3 @@
    },
    "active" : true
 }
-

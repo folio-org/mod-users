@@ -5,7 +5,7 @@
    "personal" : {
       "mobilePhone" : "591.690.6025 x9830",
       "firstName" : "Bettye",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "email" : "baby@abernathy-and-sons.cm",
       "lastName" : "Murphy",
       "phone" : "783.614.3439",
@@ -28,4 +28,3 @@
    "id" : "6e74dfe1-2eca-48bd-89ce-9fe1633920a3",
    "barcode" : "70567676297152"
 }
-

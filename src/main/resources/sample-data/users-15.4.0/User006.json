@@ -20,7 +20,7 @@
       "firstName" : "Katrina",
       "phone" : "461-124-2529 x456",
       "middleName" : "Jean",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "email" : "jackie@kuhlman-and-sons.cs",
       "lastName" : "Cartwright"
    },
@@ -29,4 +29,3 @@
    "type" : "patron",
    "enrollmentDate" : "2018-12-17"
 }
-

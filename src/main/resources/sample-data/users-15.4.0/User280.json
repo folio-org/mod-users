@@ -22,11 +22,10 @@
       "middleName" : "Arthur",
       "firstName" : "Casimir",
       "mobilePhone" : "1-142-783-1473",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "id" : "6f644096-0cb6-4d9c-9da4-0831b3625c0d",
    "barcode" : "456173865331194",
    "type" : "patron",
    "expirationDate" : "2019-04-13"
 }
-

@@ -16,7 +16,7 @@
          }
       ],
       "lastName" : "Braun",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Aleen",
       "dateOfBirth" : "1996-07-05",
       "email" : "werner@wolff-hauck.lk",
@@ -27,4 +27,3 @@
    "expirationDate" : "2020-03-30",
    "barcode" : "548755241194417"
 }
-

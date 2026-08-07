@@ -6,7 +6,7 @@
    "id" : "251cfa92-24a7-45db-9f0d-acd2da450b50",
    "personal" : {
       "middleName" : "Misty",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "email" : "moises@blick-schuster-and-mohr.gu",
       "lastName" : "Boehm",
       "firstName" : "Elyse",
@@ -29,4 +29,3 @@
    "username" : "dominic",
    "active" : true
 }
-

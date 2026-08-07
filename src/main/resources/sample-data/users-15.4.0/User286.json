@@ -3,7 +3,7 @@
    "personal" : {
       "email" : "brenna@feil-orn-and-barton.gs",
       "middleName" : "Camylle",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "mobilePhone" : "(918)523-4719 x006",
       "firstName" : "Khalil",
       "phone" : "206.349.8590 x22816",
@@ -29,4 +29,3 @@
    "barcode" : "394156228501504",
    "id" : "f6cd72ab-3e89-44c0-99aa-54ab4844f167"
 }
-

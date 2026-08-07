@@ -11,7 +11,7 @@
       "email" : "ibrahim@strosin-mills.ir",
       "dateOfBirth" : "1982-09-02",
       "firstName" : "Darrell",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Champlin",
       "addresses" : [
          {
@@ -27,4 +27,3 @@
    },
    "username" : "leone"
 }
-

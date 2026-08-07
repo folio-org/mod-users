@@ -20,7 +20,7 @@
             "addressLine1" : "28183 Zion Grove #028"
          }
       ],
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "lastName" : "Yundt",
       "middleName" : "Loma"
    },
@@ -29,4 +29,3 @@
    "expirationDate" : "2019-10-10",
    "barcode" : "131104607484122"
 }
-

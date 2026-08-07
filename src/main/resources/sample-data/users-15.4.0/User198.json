@@ -7,7 +7,7 @@
    "active" : true,
    "id" : "8cde4a35-f58b-492e-bd07-d668f7322253",
    "personal" : {
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "lastName" : "Streich",
       "email" : "tre@greenholt-bergnaum.la",
       "dateOfBirth" : "2011-04-06",
@@ -28,4 +28,3 @@
    },
    "username" : "viola"
 }
-

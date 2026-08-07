@@ -23,10 +23,9 @@
       "lastName" : "Sporer",
       "email" : "jaylin@moen-goyette-and-greenholt.ar",
       "middleName" : "Keaton",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "mobilePhone" : "917-076-5849 x730",
       "firstName" : "Maud"
    },
    "active" : true
 }
-

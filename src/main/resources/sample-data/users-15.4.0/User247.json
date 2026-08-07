@@ -21,10 +21,9 @@
       "lastName" : "Stoltenberg",
       "phone" : "(874)390-9335 x53499",
       "firstName" : "Jeanne",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "dateOfBirth" : "1965-06-04",
       "email" : "eula@walter-wyman-and-wintheiser.ly"
    },
    "active" : false
 }
-

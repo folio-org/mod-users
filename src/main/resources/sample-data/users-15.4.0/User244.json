@@ -26,7 +26,6 @@
       "middleName" : "Maximillia",
       "mobilePhone" : "1-471-781-0194",
       "firstName" : "Caleigh",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    }
 }
-

@@ -18,7 +18,7 @@
       "email" : "davin@braun-schiller.es",
       "dateOfBirth" : "2012-03-21",
       "phone" : "1-253-594-8460",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Denesik",
       "middleName" : "Columbus"
    },
@@ -28,4 +28,3 @@
    "barcode" : "555048703191946",
    "type" : "patron"
 }
-

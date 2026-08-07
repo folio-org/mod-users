@@ -22,11 +22,10 @@
       "dateOfBirth" : "2011-10-14",
       "phone" : "(927)909-8981",
       "mobilePhone" : "547.314.7419 x92831",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "lastName" : "Hammes",
       "middleName" : "Willie"
    },
    "active" : true,
    "username" : "aliya"
 }
-

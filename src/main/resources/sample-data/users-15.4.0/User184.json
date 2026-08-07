@@ -24,8 +24,7 @@
       "email" : "faustino@mueller-inc.gu",
       "middleName" : "Keeley",
       "lastName" : "West",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "username" : "caitlyn"
 }
-

@@ -22,11 +22,10 @@
       "dateOfBirth" : "1960-08-24",
       "lastName" : "Koss",
       "phone" : "1-107-113-0140",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "mobilePhone" : "807-715-7006 x3633",
       "firstName" : "Hassie",
       "email" : "bradford@ebert-nikolaus-and-hauck.sb",
       "middleName" : "Esmeralda"
    }
 }
-

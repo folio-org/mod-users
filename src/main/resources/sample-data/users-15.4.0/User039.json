@@ -26,7 +26,6 @@
       "email" : "sheldon@carroll-white-and-cole.gs",
       "lastName" : "Waters",
       "middleName" : "Jonathon",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    }
 }
-

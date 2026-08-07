@@ -6,7 +6,7 @@
    "barcode" : "678545225007717",
    "username" : "rodolfo",
    "personal" : {
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Olson",
       "firstName" : "Winfield",
       "addresses" : [
@@ -28,4 +28,3 @@
    "id" : "1b648069-8563-41c8-afc0-d8359f11503c",
    "active" : true
 }
-

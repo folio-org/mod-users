@@ -19,7 +19,7 @@
       "email" : "christa@thiel-hahn.bn",
       "middleName" : "Jacquelyn",
       "lastName" : "Koelpin",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "active" : true,
    "id" : "acf8aab2-91ee-4210-bb7c-b688d66a9de4",
@@ -29,4 +29,3 @@
    "barcode" : "184798638159936",
    "type" : "patron"
 }
-

@@ -21,7 +21,7 @@
       "phone" : "(420)513-3214",
       "middleName" : "Loy",
       "lastName" : "Heller",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "username" : "danial",
    "barcode" : "131896890107931",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2019-02-08",
    "type" : "patron"
 }
-

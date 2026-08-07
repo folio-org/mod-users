@@ -19,7 +19,7 @@
       "phone" : "1-915-933-6017 x91395",
       "lastName" : "Koss",
       "email" : "lavern@heller-ryan-and-stanton.zm",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "expirationDate" : "2019-08-11",
    "id" : "745bdee1-458c-4076-bad1-be5a470c49fb",
@@ -28,4 +28,3 @@
    "username" : "roberto",
    "enrollmentDate" : "2018-08-05"
 }
-

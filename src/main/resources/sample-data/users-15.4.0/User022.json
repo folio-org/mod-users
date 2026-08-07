@@ -22,11 +22,10 @@
       "mobilePhone" : "497-708-9054 x308",
       "email" : "dejah@kuphal-gerlach.bn",
       "dateOfBirth" : "2008-04-27",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Schiller",
       "middleName" : "Dora"
    },
    "active" : false,
    "username" : "maverick"
 }
-

@@ -21,11 +21,10 @@
       "lastName" : "Becker",
       "email" : "mackenzie@parisian-reilly-and-strosin.ac",
       "middleName" : "Zola",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "expirationDate" : "2019-06-20",
    "barcode" : "933948480962822",
    "username" : "deonte",
    "active" : true
 }
-

@@ -7,7 +7,7 @@
    "id" : "e13b3d8d-71ff-49bd-9ea1-4ad7da8b1b8e",
    "active" : false,
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "middleName" : "Marlin",
       "lastName" : "Denesik",
       "addresses" : [
@@ -29,4 +29,3 @@
    },
    "username" : "maximillian"
 }
-

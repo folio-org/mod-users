@@ -23,9 +23,8 @@
       "phone" : "556-405-5640 x75121",
       "middleName" : "Marc",
       "lastName" : "Johnston",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    },
    "id" : "21ce4a36-4d3a-4a9d-98be-d40852799d9b",
    "username" : "gayle"
 }
-

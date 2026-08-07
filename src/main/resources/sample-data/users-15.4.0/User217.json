@@ -23,10 +23,9 @@
       "email" : "syble@deckow-and-sons.mz",
       "firstName" : "Cristian",
       "mobilePhone" : "679-310-5840 x445",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "username" : "nicola",
    "enrollmentDate" : "2016-05-01",
    "active" : true
 }
-

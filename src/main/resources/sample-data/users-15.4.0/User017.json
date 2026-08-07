@@ -21,11 +21,10 @@
       "dateOfBirth" : "1957-03-08",
       "email" : "juliana@reichel-bernhard.mm",
       "lastName" : "McGlynn",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "phone" : "1-232-590-6006 x66909",
       "firstName" : "Tyrel"
    },
    "type" : "patron",
    "enrollmentDate" : "2017-08-19"
 }
-

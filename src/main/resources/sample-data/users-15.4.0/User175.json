@@ -2,7 +2,7 @@
    "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Mraz",
       "phone" : "845.879.6319 x77980",
       "mobilePhone" : "1-612-179-7983 x236",
@@ -28,4 +28,3 @@
    "barcode" : "696296117207797",
    "type" : "patron"
 }
-

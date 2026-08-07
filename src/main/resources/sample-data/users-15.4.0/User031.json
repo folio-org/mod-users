@@ -21,7 +21,7 @@
       "email" : "dayana@carter-goodwin-and-rogahn.nv.us",
       "lastName" : "Torphy",
       "middleName" : "Rubye",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    },
    "username" : "rosemarie",
    "barcode" : "124365178425740",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2016-09-11",
    "type" : "patron"
 }
-

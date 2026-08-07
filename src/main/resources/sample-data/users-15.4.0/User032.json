@@ -4,7 +4,7 @@
    "active" : true,
    "id" : "2884afb0-5bec-45c4-b9f4-0bc525bc0322",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Waters",
       "middleName" : "Brock",
       "addresses" : [
@@ -29,4 +29,3 @@
    "expirationDate" : "2019-07-01",
    "enrollmentDate" : "2016-09-08"
 }
-

@@ -6,7 +6,7 @@
    "barcode" : "225841499591069",
    "username" : "nathanial",
    "personal" : {
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "lastName" : "Quitzon",
       "middleName" : "Maria",
       "firstName" : "Trystan",
@@ -28,4 +28,3 @@
    "active" : false,
    "id" : "c6a1f097-1292-441c-a760-682279a7f94c"
 }
-

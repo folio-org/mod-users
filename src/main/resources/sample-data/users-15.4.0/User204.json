@@ -13,7 +13,7 @@
             "addressLine1" : "68822 Sawayn Point Suite 289"
          }
       ],
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Antonina",
       "middleName" : "Marques",
       "email" : "ashley@kilback-kris-and-cronin.org",
@@ -28,4 +28,3 @@
    "barcode" : "234963930375499",
    "id" : "292451b5-0026-4463-a762-d43fc6cc9122"
 }
-

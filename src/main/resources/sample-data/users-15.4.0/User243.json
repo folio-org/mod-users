@@ -8,7 +8,7 @@
       "phone" : "(064)078-4507 x6779",
       "firstName" : "Ciara",
       "mobilePhone" : "1-609-887-2430",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Hulda",
       "email" : "ike@hintz-moen-and-buckridge.lc",
       "addresses" : [
@@ -29,4 +29,3 @@
    "type" : "patron",
    "expirationDate" : "2019-10-31"
 }
-

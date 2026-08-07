@@ -19,7 +19,7 @@
       "lastName" : "Okuneva",
       "middleName" : "Ronny",
       "email" : "lucie@moore-bradtke.gh",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "mobilePhone" : "656-639-3081",
       "firstName" : "Hailey"
    },
@@ -29,4 +29,3 @@
    "id" : "50e30476-ee93-4b16-a53c-27ce2c4b49d7",
    "barcode" : "883315883746696"
 }
-

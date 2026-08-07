@@ -25,7 +25,6 @@
       "email" : "mitchel@leuschke-klocko.dz",
       "mobilePhone" : "031.904.0434",
       "firstName" : "Luz",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    }
 }
-

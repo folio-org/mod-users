@@ -8,7 +8,7 @@
    "active" : true,
    "personal" : {
       "lastName" : "Ruecker",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Nina",
       "addresses" : [
          {
@@ -28,4 +28,3 @@
    },
    "id" : "94fc2d88-359e-45e1-8360-ff6fb132cac4"
 }
-

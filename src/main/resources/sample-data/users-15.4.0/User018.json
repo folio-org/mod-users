@@ -6,7 +6,7 @@
       "email" : "nash@witting-mertz.om",
       "lastName" : "McDermott",
       "middleName" : "Macey",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "firstName" : "Bill",
       "phone" : "082.266.7001 x1124",
       "addresses" : [
@@ -29,4 +29,3 @@
    "active" : true,
    "barcode" : "792078722873427"
 }
-

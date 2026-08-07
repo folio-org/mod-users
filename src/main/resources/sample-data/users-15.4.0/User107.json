@@ -2,7 +2,7 @@
    "patronGroup": "bdc2b6d4-5ceb-4a12-ab46-249b9a68473e",
    "username" : "napoleon",
    "personal" : {
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "lastName" : "Nikolaus",
       "firstName" : "Bailey",
       "addresses" : [
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-08-27",
    "barcode" : "390734993858352"
 }
-
