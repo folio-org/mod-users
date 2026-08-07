@@ -14,7 +14,7 @@
       ],
       "lastName" : "Becker",
       "firstName" : "Jazmin",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "dateOfBirth" : "1984-08-10",
       "email" : "maximo@bergnaum-lueilwitz.vn",
       "phone" : "383-132-9117"
@@ -27,4 +27,3 @@
    "barcode" : "194710970216014",
    "type" : "patron"
 }
-

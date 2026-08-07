@@ -23,10 +23,9 @@
       "dateOfBirth" : "1958-08-22",
       "mobilePhone" : "1-833-574-5277 x613",
       "phone" : "740.834.7513 x1522",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Lind",
       "middleName" : "Carter"
    },
    "username" : "lupe"
 }
-

@@ -9,7 +9,7 @@
    "id" : "589ee8e5-4fe4-4ab3-8a58-441cebea454a",
    "personal" : {
       "lastName" : "Medhurst",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "mobilePhone" : "1-172-048-6774",
       "phone" : "713-608-0783",
       "dateOfBirth" : "1949-06-23",
@@ -28,4 +28,3 @@
       ]
    }
 }
-

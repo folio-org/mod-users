@@ -7,7 +7,7 @@
    "personal" : {
       "middleName" : "Abigale",
       "email" : "amara@emmerich-stroman-and-cummings.et",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Freda",
       "phone" : "648-421-1448 x339",
       "lastName" : "Hirthe",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2018-11-07",
    "active" : true
 }
-

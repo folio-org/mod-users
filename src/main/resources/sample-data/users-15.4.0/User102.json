@@ -24,8 +24,7 @@
       "phone" : "612-002-5040",
       "lastName" : "Kub",
       "middleName" : "Sofia",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "username" : "alejandra"
 }
-

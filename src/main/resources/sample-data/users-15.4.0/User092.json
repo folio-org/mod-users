@@ -18,7 +18,7 @@
       "phone" : "689-392-1784 x52973",
       "lastName" : "Johns",
       "middleName" : "Bartholome",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "active" : false,
    "id" : "89066e1d-0691-4514-ae37-586cf746d3f4",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2019-01-29",
    "type" : "patron"
 }
-

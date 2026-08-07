@@ -9,7 +9,7 @@
    "personal" : {
       "lastName" : "Renner",
       "middleName" : "Audreanne",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "phone" : "342.564.6025 x871",
       "mobilePhone" : "1-370-615-8878",
       "dateOfBirth" : "1991-08-11",
@@ -29,4 +29,3 @@
    },
    "username" : "rory"
 }
-

@@ -3,7 +3,7 @@
    "type" : "patron",
    "personal" : {
       "middleName" : "Thad",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "email" : "buford@turcotte-llc.is",
       "lastName" : "Bechtelar",
       "firstName" : "Cathrine",
@@ -29,4 +29,3 @@
    "active" : true,
    "enrollmentDate" : "2018-08-06"
 }
-

@@ -21,7 +21,7 @@
       "email" : "michaela@gerlach-inc.mv",
       "firstName" : "Reta",
       "mobilePhone" : "464.863.9490 x63388",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "active" : true,
    "type" : "patron",
@@ -29,4 +29,3 @@
    "id" : "2cb8a9f5-5a04-4b26-89de-c5a522638de2",
    "barcode" : "664902183251587"
 }
-

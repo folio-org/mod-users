@@ -3,7 +3,7 @@
    "active" : true,
    "personal" : {
       "email" : "justine@cole-group.zw",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "mobilePhone" : "038.348.1149 x50914",
       "firstName" : "Meredith",
       "phone" : "1-979-995-5610 x758",
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-12-03",
    "type" : "patron"
 }
-

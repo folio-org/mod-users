@@ -24,9 +24,8 @@
       "mobilePhone" : "871-680-0312",
       "lastName" : "Sawayn",
       "middleName" : "Damion",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "id" : "44e640f4-3e0e-4bb4-92af-6263108893b2",
    "username" : "keanu"
 }
-

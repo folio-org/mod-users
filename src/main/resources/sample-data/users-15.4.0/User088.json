@@ -6,7 +6,7 @@
    "personal" : {
       "middleName" : "Agustina",
       "lastName" : "Renner",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "addresses" : [
          {
             "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-12-11",
    "enrollmentDate" : "2016-09-08"
 }
-

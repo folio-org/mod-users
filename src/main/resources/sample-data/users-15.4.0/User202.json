@@ -9,7 +9,7 @@
    "personal" : {
       "dateOfBirth" : "1947-05-07",
       "firstName" : "Neva",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "email" : "monroe@rau-beatty.wi.us",
       "lastName" : "Hartmann",
       "addresses" : [
@@ -27,4 +27,3 @@
    },
    "active" : true
 }
-

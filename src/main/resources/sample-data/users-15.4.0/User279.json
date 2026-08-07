@@ -18,7 +18,7 @@
          }
       ],
       "email" : "estell@friesen-llc.au",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "mobilePhone" : "1-791-331-4472",
       "firstName" : "Bridget",
       "phone" : "350-369-4844 x907",
@@ -28,4 +28,3 @@
    "username" : "carolina",
    "active" : true
 }
-

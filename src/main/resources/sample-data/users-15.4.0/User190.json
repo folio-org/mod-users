@@ -3,7 +3,7 @@
    "username" : "quentin",
    "personal" : {
       "lastName" : "Block",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "addresses" : [
          {
             "countryId" : "US",
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-04-20",
    "enrollmentDate" : "2019-03-01"
 }
-

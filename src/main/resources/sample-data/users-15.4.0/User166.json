@@ -24,8 +24,7 @@
       "firstName" : "Linda",
       "middleName" : "Abbigail",
       "lastName" : "Grady",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    },
    "active" : true
 }
-

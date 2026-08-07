@@ -10,7 +10,7 @@
    "personal" : {
       "lastName" : "Bednar",
       "middleName" : "Elvera",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "phone" : "111-788-2683",
       "mobilePhone" : "128.156.5851",
       "dateOfBirth" : "1994-11-06",
@@ -29,4 +29,3 @@
       ]
    }
 }
-

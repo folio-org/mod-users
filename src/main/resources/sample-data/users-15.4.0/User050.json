@@ -7,7 +7,7 @@
    "username" : "khalid",
    "personal" : {
       "lastName" : "Dickinson",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "mobilePhone" : "818.624.6615 x295",
       "phone" : "633-148-6027",
       "dateOfBirth" : "1949-03-26",
@@ -28,4 +28,3 @@
    "active" : true,
    "id" : "71f4828b-8ad5-4ae6-bfa6-45ecfe3f6c3c"
 }
-

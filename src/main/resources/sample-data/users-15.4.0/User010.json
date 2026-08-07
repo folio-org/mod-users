@@ -23,10 +23,9 @@
       "email" : "hyman@mcclure-volkman.fr",
       "lastName" : "Harris",
       "middleName" : "Jerrell",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "barcode" : "592137900094893",
    "active" : false,
    "username" : "rudy"
 }
-

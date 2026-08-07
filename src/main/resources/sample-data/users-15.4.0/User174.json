@@ -5,7 +5,7 @@
    "id" : "2e5f9cc4-46ab-4dfe-b40a-8493296353fb",
    "personal" : {
       "lastName" : "Lehner",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "addressTypeId" : "1c4b225f-f669-4e9b-afcd-ebc0e273a34e",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2016-12-05",
    "barcode" : "69474122738444"
 }
-

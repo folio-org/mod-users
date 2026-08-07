@@ -1,7 +1,7 @@
 {
    "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
    "personal" : {
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "mobilePhone" : "(571)322-6274",
       "firstName" : "Ellis",
       "email" : "zola@wisozk-oreilly-and-veum.ls",
@@ -29,4 +29,3 @@
    "barcode" : "904469293249338",
    "id" : "6ff36aa8-c68d-42c9-b68b-ece603ea59d7"
 }
-

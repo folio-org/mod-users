@@ -9,7 +9,7 @@
       "email" : "litzy@sawayn-turcotte.dz",
       "firstName" : "Coby",
       "mobilePhone" : "(056)300-3670 x808",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "city" : "Merced",
@@ -29,4 +29,3 @@
    "id" : "f5d7aed2-1647-4e83-b85e-74760f770799",
    "barcode" : "78306618161899"
 }
-

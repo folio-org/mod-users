@@ -8,7 +8,7 @@
    "personal" : {
       "dateOfBirth" : "1956-01-02",
       "firstName" : "Vito",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "email" : "tiffany@klocko-wolf-and-marks.mc",
       "addresses" : [
          {
@@ -27,4 +27,3 @@
    "username" : "jaeden",
    "enrollmentDate" : "2015-04-04"
 }
-

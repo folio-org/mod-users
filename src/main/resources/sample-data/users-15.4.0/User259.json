@@ -4,7 +4,7 @@
    "personal" : {
       "lastName" : "Zieme",
       "phone" : "(717)282-0004 x5449",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Donna",
       "middleName" : "Santa",
       "email" : "sid@mohr-schowalter.ec",
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-08-25",
    "type" : "patron"
 }
-

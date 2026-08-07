@@ -7,7 +7,7 @@
    "personal" : {
       "email" : "lillian@kreiger-halvorson-and-reynolds.eg",
       "mobilePhone" : "322-338-8530 x1379",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Jolie",
       "phone" : "(234)085-0331 x789",
       "lastName" : "Koss",
@@ -28,4 +28,3 @@
    "username" : "clifton",
    "active" : true
 }
-

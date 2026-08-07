@@ -4,7 +4,7 @@
    "personal" : {
       "mobilePhone" : "(503)015-6306",
       "firstName" : "Mohammad",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "email" : "myrtie@treutel-beier.kz",
       "middleName" : "Fatima",
       "lastName" : "Koss",
@@ -29,4 +29,3 @@
    "type" : "patron",
    "expirationDate" : "2020-03-05"
 }
-

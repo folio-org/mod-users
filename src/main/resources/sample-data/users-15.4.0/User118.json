@@ -8,7 +8,7 @@
    "personal" : {
       "lastName" : "Jewess",
       "middleName" : "Jamey",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "mobilePhone" : "467-243-3953 x653",
       "phone" : "229-117-3695",
       "dateOfBirth" : "1967-08-23",
@@ -29,4 +29,3 @@
    "active" : false,
    "id" : "4ca6da61-a9fa-4226-850d-43aa2d89f9a6"
 }
-

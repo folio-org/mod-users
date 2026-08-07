@@ -5,7 +5,7 @@
       "email" : "hester@sauer-kuphal.as",
       "mobilePhone" : "1-211-174-2359",
       "firstName" : "Ada",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "phone" : "413.255.5895",
       "lastName" : "Medhurst",
       "dateOfBirth" : "1973-04-18",
@@ -29,4 +29,3 @@
    "barcode" : "301995528428356",
    "id" : "c2f1cefa-2ebb-4a7a-a420-84dcf2f89cf5"
 }
-

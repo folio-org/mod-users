@@ -13,7 +13,7 @@
             "city" : "Toledo"
          }
       ],
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Deondre",
       "email" : "constance@wunsch-group.ki",
       "middleName" : "Mafalda",
@@ -28,4 +28,3 @@
    "barcode" : "348406231338938",
    "id" : "8e9d1a69-9745-4ad4-a8e8-6841a9441b40"
 }
-

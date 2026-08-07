@@ -6,7 +6,7 @@
    "personal" : {
       "lastName" : "Walker",
       "phone" : "152-043-1465 x5892",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Chelsie",
       "email" : "efrain@tromp-feest-and-runolfsdottir.gf",
       "middleName" : "Carmela",
@@ -28,4 +28,3 @@
    "type" : "patron",
    "expirationDate" : "2020-09-13"
 }
-

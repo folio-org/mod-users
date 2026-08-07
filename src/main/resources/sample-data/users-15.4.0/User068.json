@@ -19,7 +19,7 @@
       "phone" : "1-046-299-1320 x85524",
       "mobilePhone" : "1-557-802-5587",
       "lastName" : "Hickle",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    },
    "id" : "21c08ac3-c287-4a21-b966-e263504aa773",
    "active" : false,
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-05-03",
    "enrollmentDate" : "2017-12-19"
 }
-

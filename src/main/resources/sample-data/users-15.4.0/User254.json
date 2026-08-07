@@ -16,7 +16,7 @@
       ],
       "middleName" : "Marisa",
       "email" : "candido@white-bartell-and-glover.ir",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "mobilePhone" : "514-538-6868",
       "firstName" : "Lilly",
       "phone" : "307-470-4467",
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-11-06",
    "type" : "patron"
 }
-

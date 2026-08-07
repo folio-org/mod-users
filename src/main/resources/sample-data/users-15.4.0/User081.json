@@ -4,7 +4,7 @@
    "personal" : {
       "middleName" : "Waino",
       "lastName" : "Sporer",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "region" : "GU",
@@ -29,4 +29,3 @@
    "expirationDate" : "2019-09-27",
    "enrollmentDate" : "2016-06-21"
 }
-

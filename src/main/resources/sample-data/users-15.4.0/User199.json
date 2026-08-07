@@ -8,7 +8,7 @@
    "personal" : {
       "middleName" : "Allen",
       "lastName" : "Hessel",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "city" : "Indio",
@@ -29,4 +29,3 @@
    "active" : false,
    "id" : "888a321d-676e-42fc-b588-a677d16a76ec"
 }
-

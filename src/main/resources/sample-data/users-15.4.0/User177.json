@@ -20,7 +20,7 @@
       "dateOfBirth" : "1958-12-09",
       "email" : "aida@daugherty-stark.om",
       "lastName" : "Lakin",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "username" : "neil",
    "expirationDate" : "2019-08-27",
@@ -28,4 +28,3 @@
    "barcode" : "738734358526066",
    "type" : "patron"
 }
-

@@ -14,7 +14,7 @@
          }
       ],
       "mobilePhone" : "023.988.9608",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Edmond",
       "email" : "virginie@haag-rippin.nu",
       "middleName" : "Sheldon",
@@ -29,4 +29,3 @@
    "barcode" : "26132887126792",
    "id" : "e14b1bc1-8784-4b55-bfbe-e5ec8ce0b07a"
 }
-

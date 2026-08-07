@@ -4,7 +4,7 @@
    "id" : "f7a0a518-6ff3-4531-b54b-e630d61aede0",
    "personal" : {
       "firstName" : "Ryder",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Crooks",
       "addresses" : [
          {
@@ -27,4 +27,3 @@
    "expirationDate" : "2020-04-21",
    "type" : "patron"
 }
-

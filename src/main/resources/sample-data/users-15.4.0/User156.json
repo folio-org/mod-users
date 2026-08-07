@@ -21,11 +21,10 @@
          }
       ],
       "lastName" : "Skiles",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "type" : "patron",
    "enrollmentDate" : "2016-01-22",
    "expirationDate" : "2020-12-06",
    "barcode" : "38533358444816"
 }
-

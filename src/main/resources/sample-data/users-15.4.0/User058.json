@@ -9,7 +9,7 @@
    "personal" : {
       "middleName" : "Una",
       "lastName" : "Shields",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "addresses" : [
          {
             "primaryAddress" : true,
@@ -28,4 +28,3 @@
    },
    "username" : "dallas"
 }
-

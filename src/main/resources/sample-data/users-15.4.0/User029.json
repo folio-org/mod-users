@@ -4,7 +4,7 @@
    "personal" : {
       "lastName" : "Lakin",
       "middleName" : "Carlo",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "phone" : "375-322-8828 x762",
       "dateOfBirth" : "1986-02-09",
       "email" : "jaylen@herman-jones-and-daniel.gi",
@@ -28,4 +28,3 @@
    "barcode" : "562915263776012",
    "type" : "patron"
 }
-

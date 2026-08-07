@@ -11,7 +11,7 @@
       "lastName" : "Koss",
       "email" : "harry@anderson-and-sons.nm.us",
       "mobilePhone" : "730.671.8900 x54982",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Elena",
       "addresses" : [
          {
@@ -28,4 +28,3 @@
    },
    "active" : true
 }
-

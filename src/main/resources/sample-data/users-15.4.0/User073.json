@@ -24,9 +24,8 @@
       "firstName" : "Ines",
       "lastName" : "Bergnaum",
       "middleName" : "Terrill",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "id" : "c2a2f428-ab5f-46ce-b3ed-7d0ab39a0096",
    "active" : false
 }
-

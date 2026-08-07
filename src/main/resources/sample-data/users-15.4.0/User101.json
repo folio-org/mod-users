@@ -2,7 +2,7 @@
    "patronGroup": "ad0bc554-d5bc-463c-85d1-5562127ae91b",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Grant",
       "middleName" : "Danielle",
       "phone" : "333-400-5145 x657",
@@ -29,4 +29,3 @@
    "barcode" : "240905641162392",
    "type" : "patron"
 }
-

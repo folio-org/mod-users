@@ -21,7 +21,7 @@
       "firstName" : "Elbert",
       "lastName" : "Lowe",
       "middleName" : "Barrett",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    },
    "username" : "reece",
    "expirationDate" : "2020-04-04",
@@ -29,4 +29,3 @@
    "barcode" : "105883620407176",
    "type" : "patron"
 }
-

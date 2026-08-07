@@ -8,7 +8,7 @@
    "username" : "odell",
    "personal" : {
       "mobilePhone" : "1-456-899-6815 x518",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Mara",
       "email" : "demetris@vandervort-nikolaus-and-skiles.ba",
       "middleName" : "Mikayla",
@@ -29,4 +29,3 @@
    },
    "active" : false
 }
-

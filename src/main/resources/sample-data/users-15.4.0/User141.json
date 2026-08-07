@@ -7,7 +7,7 @@
    "active" : true,
    "id" : "f62dc160-eacc-4922-a0cb-e1ed68a44601",
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Mertz",
       "email" : "craig@ruecker-dach.se",
       "dateOfBirth" : "1976-03-20",
@@ -28,4 +28,3 @@
    },
    "username" : "abby"
 }
-

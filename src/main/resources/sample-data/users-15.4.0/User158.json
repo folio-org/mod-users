@@ -26,7 +26,6 @@
       ],
       "lastName" : "Gislason",
       "middleName" : "Jeff",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    }
 }
-

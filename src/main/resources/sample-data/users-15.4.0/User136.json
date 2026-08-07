@@ -8,7 +8,7 @@
    "personal" : {
       "lastName" : "Hoeger",
       "middleName" : "Libbie",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "dateOfBirth" : "1947-12-02",
       "email" : "kathlyn@steuber-kutch-and-durgan.so",
       "phone" : "057.915.0771",
@@ -29,4 +29,3 @@
    "id" : "42e9d211-4bfb-45fe-a088-f19d0a514f98",
    "username" : "lorna"
 }
-

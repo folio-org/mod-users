@@ -8,7 +8,7 @@
    "id" : "e5e950e0-3f56-4ff1-8e86-671cdbc37688",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "lastName" : "Denesik",
       "email" : "destinee@abernathy-jacobs.ps",
       "dateOfBirth" : "1986-02-07",
@@ -28,4 +28,3 @@
       "firstName" : "Laurianne"
    }
 }
-

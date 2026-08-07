@@ -9,7 +9,7 @@
    "id" : "daa9cf25-f333-447b-b577-158d6ce944a5",
    "personal" : {
       "lastName" : "Monahan",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "mobilePhone" : "574.315.1782",
       "phone" : "(255)481-4812 x339",
       "dateOfBirth" : "1994-05-04",
@@ -28,4 +28,3 @@
       ]
    }
 }
-

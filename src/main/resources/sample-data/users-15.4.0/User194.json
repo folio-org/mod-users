@@ -19,7 +19,7 @@
       "phone" : "1-390-960-0355 x091",
       "lastName" : "Miller",
       "middleName" : "Dahlia",
-      "preferredContactTypeId" : "005"
+      "preferredContactTypeIds" : ["005"]
    },
    "active" : true,
    "id" : "56708cfe-750e-49ad-b72a-003ce7ad78a4",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2019-02-06",
    "type" : "patron"
 }
-

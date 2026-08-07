@@ -22,10 +22,9 @@
       "phone" : "1-488-794-2446 x46383",
       "email" : "ed@wyman-and-sons.lc",
       "dateOfBirth" : "1948-08-28",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Spinka",
       "middleName" : "Yadira"
    },
    "username" : "ellen"
 }
-

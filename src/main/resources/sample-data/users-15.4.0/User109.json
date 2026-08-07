@@ -5,7 +5,7 @@
    "personal" : {
       "middleName" : "Payton",
       "lastName" : "Boyle",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "phone" : "833-693-7297",
       "mobilePhone" : "(785)279-5645 x1029",
       "dateOfBirth" : "1989-12-12",
@@ -29,4 +29,3 @@
    "barcode" : "871239214404756",
    "type" : "patron"
 }
-

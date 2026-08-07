@@ -21,7 +21,7 @@
       "email" : "taryn@herman-inc.museum",
       "lastName" : "Quitzon",
       "middleName" : "Winona",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "firstName" : "Haley",
       "phone" : "1-403-675-9843 x731"
    },
@@ -29,4 +29,3 @@
    "id" : "6b5f249c-7df1-4c2f-afc2-0ef6fc21b701",
    "type" : "patron"
 }
-

@@ -18,7 +18,7 @@
       "phone" : "(963)962-0601 x70839",
       "email" : "tomasa@wintheiser-llc.id",
       "dateOfBirth" : "2011-08-28",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "middleName" : "Marlen",
       "lastName" : "Brekke"
    },
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-11-24",
    "type" : "patron"
 }
-

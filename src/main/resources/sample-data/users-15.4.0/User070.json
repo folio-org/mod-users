@@ -24,9 +24,8 @@
       ],
       "middleName" : "Newton",
       "lastName" : "Maggio",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "id" : "2ee07dc7-835f-4a33-a783-db2ae3f1238c",
    "active" : true
 }
-

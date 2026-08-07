@@ -3,7 +3,7 @@
    "personal" : {
       "email" : "emil@dibbert-bode.iq",
       "mobilePhone" : "1-663-027-5212",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Malika",
       "phone" : "1-612-669-7014",
       "lastName" : "Rutherford",
@@ -28,4 +28,3 @@
    "barcode" : "899885926908709",
    "id" : "e25fecaf-dfbf-4e59-bd3d-0493c1b519f5"
 }
-

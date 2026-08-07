@@ -6,7 +6,7 @@
    "type" : "patron",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Alf",
       "lastName" : "Denesik",
       "email" : "luella@swift-hegmann-and-gutmann.aw",
@@ -29,4 +29,3 @@
    "id" : "6f36265e-722a-490a-b436-806e63af2ea7",
    "username" : "kayla"
 }
-

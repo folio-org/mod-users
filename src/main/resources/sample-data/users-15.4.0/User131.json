@@ -4,7 +4,7 @@
    "id" : "62b25727-310f-4fa3-b308-666a6cf28c97",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Bergnaum",
       "firstName" : "Evalyn",
       "addresses" : [
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2016-01-24",
    "expirationDate" : "2019-08-31"
 }
-

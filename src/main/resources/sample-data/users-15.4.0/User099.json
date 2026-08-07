@@ -21,7 +21,7 @@
       "mobilePhone" : "408-562-5448 x1964",
       "middleName" : "Keagan",
       "lastName" : "Dicki",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "username" : "piper",
    "barcode" : "526093411956626",
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-01-12",
    "type" : "patron"
 }
-

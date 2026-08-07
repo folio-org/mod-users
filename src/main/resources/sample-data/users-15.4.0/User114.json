@@ -10,7 +10,7 @@
    "personal" : {
       "lastName" : "Roob",
       "middleName" : "Elwyn",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "mobilePhone" : "(434)191-5582",
       "phone" : "(480)987-5187 x678",
       "dateOfBirth" : "2003-10-22",
@@ -29,4 +29,3 @@
       ]
    }
 }
-

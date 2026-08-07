@@ -24,8 +24,7 @@
       "email" : "jess@hermiston-jaskolski.sb",
       "lastName" : "Wiegand",
       "middleName" : "Clementina",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "username" : "marcelina"
 }
-

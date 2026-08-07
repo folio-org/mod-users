@@ -2,7 +2,7 @@
    "patronGroup": "503a81cd-6c26-400f-b620-14c08943697c",
    "personal" : {
       "firstName" : "Anne",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Grimes",
       "addresses" : [
          {
@@ -27,4 +27,3 @@
    "barcode" : "379497554513687",
    "type" : "patron"
 }
-

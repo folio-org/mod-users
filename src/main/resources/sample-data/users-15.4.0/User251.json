@@ -19,7 +19,7 @@
       ],
       "firstName" : "Aglae",
       "mobilePhone" : "(785)272-0417 x5465",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "middleName" : "Abbey",
       "email" : "lafayette@koss-cremin-and-romaguera.st",
       "lastName" : "Koss",
@@ -29,4 +29,3 @@
    "username" : "ophelia",
    "active" : true
 }
-

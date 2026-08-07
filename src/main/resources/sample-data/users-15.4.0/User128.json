@@ -21,7 +21,7 @@
       "email" : "tod@crooks-llc.io",
       "lastName" : "Denesik",
       "middleName" : "Alexzander",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "username" : "carlo",
    "enrollmentDate" : "2017-11-17",
@@ -29,4 +29,3 @@
    "barcode" : "605566117903595",
    "type" : "patron"
 }
-

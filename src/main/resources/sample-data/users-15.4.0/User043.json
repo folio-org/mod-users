@@ -21,11 +21,10 @@
       ],
       "lastName" : "Denesik",
       "middleName" : "Maybelle",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "type" : "patron",
    "barcode" : "592809378069983",
    "enrollmentDate" : "2018-09-03",
    "expirationDate" : "2019-12-24"
 }
-

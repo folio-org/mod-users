@@ -20,7 +20,7 @@
          }
       ],
       "firstName" : "Dagmar",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Borer"
    },
    "type" : "patron",
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-01-11",
    "barcode" : "509575459201574"
 }
-

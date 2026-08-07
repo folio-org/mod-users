@@ -23,10 +23,9 @@
       "lastName" : "McCullough",
       "middleName" : "Cletus",
       "email" : "sadye@schoen-bins.sh",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "mobilePhone" : "116.581.4518 x13462",
       "firstName" : "Giovani"
    },
    "active" : true
 }
-

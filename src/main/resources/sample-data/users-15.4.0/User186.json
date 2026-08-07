@@ -9,7 +9,7 @@
    "personal" : {
       "middleName" : "Rolando",
       "lastName" : "Bosco",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "dateOfBirth" : "1959-12-06",
       "email" : "citlalli@mclaughlin-kemmer.yu",
       "mobilePhone" : "(448)273-0210 x1902",
@@ -29,4 +29,3 @@
    },
    "username" : "alberto"
 }
-

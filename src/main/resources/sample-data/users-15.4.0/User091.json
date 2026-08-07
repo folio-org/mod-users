@@ -6,7 +6,7 @@
       "phone" : "(663)844-6130 x99387",
       "email" : "angelica@kiehn-sporer-and-hammes.tg",
       "dateOfBirth" : "1975-01-27",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Breana",
       "lastName" : "Heller",
       "addresses" : [
@@ -27,4 +27,3 @@
    "expirationDate" : "2020-10-17",
    "barcode" : "687475934082478"
 }
-

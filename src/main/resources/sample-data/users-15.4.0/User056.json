@@ -5,7 +5,7 @@
    "personal" : {
       "middleName" : "Kieran",
       "lastName" : "Prohaska",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "dateOfBirth" : "1961-01-30",
       "email" : "leanne@conroy-llc.cs",
       "mobilePhone" : "1-154-117-4466",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-09-30",
    "barcode" : "787181529957397"
 }
-

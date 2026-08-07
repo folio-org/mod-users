@@ -8,7 +8,7 @@
    "username" : "theodora",
    "personal" : {
       "mobilePhone" : "373-226-0411",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Francisca",
       "middleName" : "Dock",
       "email" : "rollin@jacobson-emmerich-and-schaefer.kg",
@@ -29,4 +29,3 @@
    },
    "active" : true
 }
-

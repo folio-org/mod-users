@@ -25,8 +25,7 @@
       "mobilePhone" : "(826)811-6221 x8553",
       "middleName" : "Suzanne",
       "lastName" : "Schamberger",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "username" : "maxine"
 }
-

@@ -18,7 +18,7 @@
          }
       ],
       "firstName" : "Paris",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Schaden",
       "middleName" : "Rosetta"
    },
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-11-23",
    "type" : "patron"
 }
-

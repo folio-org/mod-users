@@ -22,11 +22,10 @@
       "mobilePhone" : "(487)166-9371 x49884",
       "email" : "pascale@lindgren-hammes-and-toy.nm.us",
       "dateOfBirth" : "1979-01-23",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "middleName" : "Brigitte",
       "lastName" : "Brown"
    },
    "active" : true,
    "username" : "vida"
 }
-

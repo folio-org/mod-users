@@ -5,7 +5,7 @@
    "id" : "423d5beb-3196-449e-aacb-9595d6321950",
    "personal" : {
       "lastName" : "Kuhlman",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "addresses" : [
          {
             "city" : "Villa Park",
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-10-16",
    "barcode" : "941346984284265"
 }
-

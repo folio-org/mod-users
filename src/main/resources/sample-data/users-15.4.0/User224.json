@@ -17,7 +17,7 @@
       "lastName" : "Schuster",
       "email" : "daisy@schulist-fisher.il.us",
       "dateOfBirth" : "2012-03-10",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Felton"
    },
    "enrollmentDate" : "2015-06-15",
@@ -27,4 +27,3 @@
    "type" : "patron",
    "expirationDate" : "2020-04-30"
 }
-

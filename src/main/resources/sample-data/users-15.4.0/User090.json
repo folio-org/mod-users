@@ -3,7 +3,7 @@
    "id" : "beaffbac-e56d-4e32-a653-b631945f060c",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "lastName" : "Denesik",
       "email" : "destinee@luettgen-group.mg",
       "dateOfBirth" : "1971-07-01",
@@ -28,4 +28,3 @@
    "barcode" : "412224905087885",
    "type" : "patron"
 }
-

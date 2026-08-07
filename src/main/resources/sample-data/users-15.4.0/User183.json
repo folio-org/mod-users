@@ -24,9 +24,8 @@
       "phone" : "(023)078-6981",
       "lastName" : "Walter",
       "middleName" : "Emma",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "id" : "a983c74e-b4f5-4ca9-94f0-b79efa947b27",
    "username" : "shyanne"
 }
-

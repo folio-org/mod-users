@@ -9,7 +9,7 @@
       "lastName" : "Will",
       "phone" : "1-255-789-1285 x30034",
       "mobilePhone" : "1-090-543-7327 x2335",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Name",
       "email" : "faye@hansen-wintheiser.md",
       "middleName" : "Jettie",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2018-09-22",
    "username" : "ben"
 }
-

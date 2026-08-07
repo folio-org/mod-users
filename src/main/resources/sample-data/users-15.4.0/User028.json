@@ -9,7 +9,7 @@
    "personal" : {
       "lastName" : "Krajcik",
       "middleName" : "Tyra",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "firstName" : "Coralie",
       "addresses" : [
          {
@@ -29,4 +29,3 @@
    },
    "username" : "otto"
 }
-

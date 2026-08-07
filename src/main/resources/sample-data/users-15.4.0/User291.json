@@ -11,7 +11,7 @@
       "lastName" : "Bednar",
       "middleName" : "Gail",
       "email" : "jeremie@bartoletti-wintheiser-and-lindgren.uk",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "mobilePhone" : "282-198-8110",
       "firstName" : "Albin",
       "addresses" : [
@@ -29,4 +29,3 @@
    },
    "active" : true
 }
-

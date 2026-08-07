@@ -7,7 +7,7 @@
    "personal" : {
       "middleName" : "Ricky",
       "email" : "ceasar@schroeder-hauck-and-barrows.es",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "mobilePhone" : "(746)171-3004 x0116",
       "firstName" : "Agustina",
       "phone" : "947-332-7963 x647",
@@ -29,4 +29,3 @@
    "username" : "boyd",
    "active" : true
 }
-

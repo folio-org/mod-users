@@ -9,7 +9,7 @@
    "personal" : {
       "firstName" : "Foster",
       "phone" : "1-943-518-4026 x78360",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "email" : "ansley@larson-williamson-and-williamson.eh",
       "lastName" : "McDermott",
       "dateOfBirth" : "1997-09-26",
@@ -28,4 +28,3 @@
    },
    "expirationDate" : "2020-12-04"
 }
-

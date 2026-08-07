@@ -8,7 +8,7 @@
       "email" : "christiana@hahn-collins-and-bruen.pf",
       "mobilePhone" : "248-408-7381",
       "firstName" : "Caterina",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "addresses" : [
          {
             "addressLine1" : "65046 Floor 50",
@@ -28,4 +28,3 @@
    "id" : "a2468e40-fb7c-453c-a217-8388801e2407",
    "barcode" : "599322056324332"
 }
-

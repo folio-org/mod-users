@@ -20,11 +20,10 @@
       ],
       "lastName" : "Satterfield",
       "email" : "andres@hyatt-turner-and-white.nz",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Elvie",
       "dateOfBirth" : "1981-01-13"
    },
    "enrollmentDate" : "2015-11-14",
    "username" : "eugene"
 }
-

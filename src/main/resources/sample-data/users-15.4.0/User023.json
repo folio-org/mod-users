@@ -7,7 +7,7 @@
    "id" : "ceecd8ee-9586-4024-b107-d368b58a1025",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Rodriguez",
       "firstName" : "Aiden",
       "addresses" : [
@@ -28,4 +28,3 @@
    },
    "username" : "wilson"
 }
-

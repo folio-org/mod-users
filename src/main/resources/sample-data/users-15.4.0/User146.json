@@ -10,7 +10,7 @@
    "personal" : {
       "lastName" : "Kulas",
       "middleName" : "Mayra",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "dateOfBirth" : "1997-04-23",
       "email" : "garfield@bins-heidenreich-and-tremblay.ao",
       "phone" : "363.952.2395 x24397",
@@ -28,4 +28,3 @@
       "firstName" : "Ryann"
    }
 }
-

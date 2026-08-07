@@ -22,11 +22,10 @@
       "phone" : "(136)082-4680 x8231",
       "email" : "guy@lemke-llc.ok.us",
       "dateOfBirth" : "1986-06-26",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Abbott",
       "middleName" : "Fanny"
    },
    "active" : false,
    "username" : "devonte"
 }
-

@@ -4,7 +4,7 @@
       "email" : "concepcion@jacobi-koepp.ri.us",
       "middleName" : "Brian",
       "mobilePhone" : "393.107.6320 x2955",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Zetta",
       "phone" : "519.837.1673",
       "lastName" : "Lueilwitz",
@@ -29,4 +29,3 @@
    "barcode" : "646523505901846",
    "id" : "860b2291-c28a-4943-804a-169af01edef4"
 }
-

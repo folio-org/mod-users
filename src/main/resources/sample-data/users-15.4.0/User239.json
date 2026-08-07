@@ -3,7 +3,7 @@
    "personal" : {
       "mobilePhone" : "(233)630-1861 x9186",
       "firstName" : "Hal",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "email" : "kian@reilly-beer.lr",
       "middleName" : "Otha",
       "lastName" : "Spencer",
@@ -29,4 +29,3 @@
    "barcode" : "650368947981103",
    "id" : "fbc2b501-a8cc-43a7-8d8c-b68067b63a33"
 }
-

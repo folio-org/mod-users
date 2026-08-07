@@ -5,7 +5,7 @@
       "middleName" : "Idell",
       "email" : "jayne@crona-and-sons.vn",
       "firstName" : "Cathrine",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "phone" : "861.179.1850 x832",
       "lastName" : "Hudson",
       "dateOfBirth" : "2010-10-13",
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-08-03",
    "type" : "patron"
 }
-

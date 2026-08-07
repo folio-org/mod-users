@@ -17,7 +17,7 @@
          }
       ],
       "lastName" : "Reynolds",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "firstName" : "Chester"
    },
    "id" : "5ed8a4be-f0d8-459d-9e9a-27f2e8c155af",
@@ -27,4 +27,3 @@
    "barcode" : "763581543039464",
    "type" : "patron"
 }
-

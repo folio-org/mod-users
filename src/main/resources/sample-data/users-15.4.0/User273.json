@@ -5,7 +5,7 @@
       "email" : "laura@torp-hilll-and-rippin.gs",
       "firstName" : "Heath",
       "mobilePhone" : "1-932-404-5189 x065",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "phone" : "170-706-1753 x73724",
       "lastName" : "Glover",
       "dateOfBirth" : "1998-04-26",
@@ -29,4 +29,3 @@
    "barcode" : "726027361780136",
    "id" : "93136048-585b-466e-88f8-a10115e6d7e2"
 }
-

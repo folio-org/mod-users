@@ -18,7 +18,7 @@
       ],
       "mobilePhone" : "227-143-9012 x232",
       "firstName" : "Modesta",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "email" : "stone@buckridge-inc.ru",
       "lastName" : "Runolfsson",
       "phone" : "(284)419-7957 x666"
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-04-27",
    "type" : "patron"
 }
-

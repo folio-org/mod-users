@@ -17,7 +17,7 @@
       "dateOfBirth" : "1998-08-02",
       "lastName" : "McClure",
       "phone" : "(369)441-1512 x334",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "mobilePhone" : "(807)609-7008 x01814",
       "firstName" : "Madisyn",
       "middleName" : "Elise",
@@ -29,4 +29,3 @@
    "id" : "07066a1f-1fb7-4793-bbca-7cd8d1ea90ab",
    "barcode" : "950908851771803"
 }
-

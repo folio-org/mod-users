@@ -7,7 +7,7 @@
    "active" : true,
    "id" : "f1c2d681-faba-4950-918f-bf58d914ba1f",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Keanu",
       "lastName" : "Parisian",
       "mobilePhone" : "685.462.7647 x23440",
@@ -29,4 +29,3 @@
    },
    "username" : "maiya"
 }
-

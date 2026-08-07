@@ -15,7 +15,7 @@
          }
       ],
       "firstName" : "Lionel",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "email" : "norris@wilderman-brown-and-bayer.aq",
       "middleName" : "Bernhard",
       "lastName" : "Schmidt",
@@ -28,4 +28,3 @@
    "type" : "patron",
    "expirationDate" : "2020-10-13"
 }
-

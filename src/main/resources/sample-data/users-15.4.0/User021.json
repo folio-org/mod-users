@@ -13,7 +13,7 @@
          }
       ],
       "firstName" : "Ronny",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "lastName" : "Rogahn",
       "email" : "rowena@steuber-lynch.ga",
       "dateOfBirth" : "1966-04-11",
@@ -27,4 +27,3 @@
    "enrollmentDate" : "2016-02-11",
    "type" : "patron"
 }
-

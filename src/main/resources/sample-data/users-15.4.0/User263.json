@@ -21,11 +21,10 @@
       "phone" : "1-339-245-0353 x4993",
       "mobilePhone" : "1-267-394-1592 x833",
       "firstName" : "Jaleel",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "email" : "minerva@lebsack-group.mw"
    },
    "enrollmentDate" : "2018-12-04",
    "username" : "vivienne",
    "active" : true
 }
-

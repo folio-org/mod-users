@@ -7,7 +7,7 @@
    "id" : "3b464026-79e7-450a-a441-0e1d4f8ebf99",
    "personal" : {
       "lastName" : "Denesik",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "addresses" : [
          {
             "region" : "KY",
@@ -28,4 +28,3 @@
    "active" : false,
    "username" : "reid"
 }
-

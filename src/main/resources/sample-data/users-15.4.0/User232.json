@@ -9,7 +9,7 @@
       "middleName" : "Demetrius",
       "email" : "leora@donnelly-adams-and-bode.sn",
       "mobilePhone" : "(969)443-0354",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Ralph",
       "addresses" : [
          {
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-09-16",
    "type" : "patron"
 }
-

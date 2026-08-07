@@ -21,11 +21,10 @@
       "email" : "laura@jewess-hayes-and-schuppe.ba",
       "firstName" : "Cora",
       "mobilePhone" : "084.739.9139 x7112",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "phone" : "(832)988-4869 x807",
       "lastName" : "Willms"
    },
    "username" : "cecelia",
    "enrollmentDate" : "2018-02-21"
 }
-

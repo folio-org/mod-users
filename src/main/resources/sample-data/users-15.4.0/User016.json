@@ -15,7 +15,7 @@
             "addressLine1" : "87941 Douglas Lock Suite 230"
          }
       ],
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "lastName" : "Donnelly",
       "email" : "tristian@hettinger-parker.museum",
       "firstName" : "Hildegard",
@@ -27,4 +27,3 @@
    "username" : "nina",
    "barcode" : "851232198188977"
 }
-

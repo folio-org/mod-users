@@ -7,7 +7,7 @@
       "dateOfBirth" : "1968-08-12",
       "email" : "earnestine@sipes-stokes-and-durgan.so",
       "lastName" : "Auer",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Darius",
       "addresses" : [
          {
@@ -27,4 +27,3 @@
    "barcode" : "997383903573496",
    "type" : "patron"
 }
-

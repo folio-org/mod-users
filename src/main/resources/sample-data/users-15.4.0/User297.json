@@ -18,7 +18,7 @@
       "lastName" : "Kuhlman",
       "phone" : "1-571-266-1145 x226",
       "firstName" : "Ruby",
-      "preferredContactTypeId" : "004",
+      "preferredContactTypeIds" : ["004"],
       "dateOfBirth" : "1962-03-27",
       "email" : "stan@greenfelder-and-sons.us"
    },
@@ -27,4 +27,3 @@
    "type" : "patron",
    "expirationDate" : "2020-01-12"
 }
-

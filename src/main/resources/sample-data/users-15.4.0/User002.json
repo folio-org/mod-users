@@ -22,11 +22,10 @@
       "lastName" : "Feil",
       "email" : "anastacio@hansen-dickens-and-mante.vu",
       "middleName" : "Myrna",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Penelope",
       "phone" : "(145)639-8408 x1218"
    },
    "id" : "d0fc4228-2e42-49b2-a5b0-9df48897e8c0",
    "type" : "patron"
 }
-

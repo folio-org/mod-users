@@ -20,7 +20,7 @@
       "email" : "pete@schulist-raynor-and-beer.ar.us",
       "lastName" : "Hilll",
       "middleName" : "Else",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "expirationDate" : "2019-11-27",
    "type" : "patron",
@@ -29,4 +29,3 @@
    "barcode" : "344058867767195",
    "enrollmentDate" : "2016-12-31"
 }
-

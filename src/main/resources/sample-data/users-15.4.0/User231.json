@@ -21,11 +21,10 @@
       "middleName" : "Annie",
       "email" : "dejon@wilkinson-ritchie-and-heaney.ge",
       "firstName" : "Aiyana",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "phone" : "(446)134-4449 x6505",
       "lastName" : "Marks"
    },
    "enrollmentDate" : "2015-10-23",
    "username" : "elta"
 }
-

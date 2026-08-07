@@ -20,7 +20,7 @@
       "email" : "shaylee@hayes-and-sons.aero",
       "mobilePhone" : "752-136-3560 x448",
       "firstName" : "Buck",
-      "preferredContactTypeId" : "001"
+      "preferredContactTypeIds" : ["001"]
    },
    "active" : true,
    "expirationDate" : "2019-03-30",
@@ -28,4 +28,3 @@
    "id" : "bf93cf45-4c02-4a34-aad0-9ed949109630",
    "barcode" : "916928316187196"
 }
-

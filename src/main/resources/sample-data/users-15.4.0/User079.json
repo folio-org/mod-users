@@ -4,7 +4,7 @@
    "id" : "e63273e7-48f5-4c43-ab4e-1751ecacaa21",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Drake",
       "lastName" : "Jast",
       "addresses" : [
@@ -29,4 +29,3 @@
    "expirationDate" : "2020-06-29",
    "barcode" : "721408137069396"
 }
-

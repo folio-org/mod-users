@@ -9,7 +9,7 @@
    "active" : false,
    "personal" : {
       "lastName" : "Kiehn",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "firstName" : "Donny",
       "addresses" : [
          {
@@ -28,4 +28,3 @@
       "email" : "dessie@zboncak-rohan.wv.us"
    }
 }
-

@@ -20,7 +20,7 @@
       ],
       "phone" : "1-528-887-7262 x08397",
       "firstName" : "Chase",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Annie",
       "email" : "janie@jacobs-murazik.ky",
       "lastName" : "McDermott"
@@ -29,4 +29,3 @@
    "type" : "patron",
    "enrollmentDate" : "2018-09-19"
 }
-

@@ -20,7 +20,7 @@
       ],
       "lastName" : "Denesik",
       "middleName" : "Lyric",
-      "preferredContactTypeId" : "002"
+      "preferredContactTypeIds" : ["002"]
    },
    "id" : "7b06cbcf-5d6d-431b-8922-20509d40f1ae",
    "type" : "patron",
@@ -28,4 +28,3 @@
    "expirationDate" : "2020-07-08",
    "barcode" : "937814009886828"
 }
-

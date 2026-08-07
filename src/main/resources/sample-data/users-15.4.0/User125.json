@@ -7,7 +7,7 @@
    "personal" : {
       "lastName" : "Bayer",
       "middleName" : "Dayana",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "dateOfBirth" : "1957-04-12",
       "email" : "boris@schimmel-oberbrunner.eh",
       "phone" : "675-694-9085",
@@ -29,4 +29,3 @@
    "active" : false,
    "username" : "edna"
 }
-

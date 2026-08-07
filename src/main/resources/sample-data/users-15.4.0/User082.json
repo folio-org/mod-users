@@ -23,10 +23,9 @@
             "primaryAddress" : true
          }
       ],
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "middleName" : "Dayton",
       "lastName" : "Miller"
    },
    "id" : "9e87bfea-2d31-4cc3-9cef-9e1e67553243"
 }
-

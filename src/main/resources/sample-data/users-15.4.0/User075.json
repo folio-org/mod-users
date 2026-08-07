@@ -4,7 +4,7 @@
    "personal" : {
       "lastName" : "Denesik",
       "middleName" : "Ronny",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "firstName" : "Vickie",
       "addresses" : [
          {
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2015-12-06",
    "barcode" : "668365498167"
 }
-

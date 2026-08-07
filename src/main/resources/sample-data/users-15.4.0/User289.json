@@ -21,11 +21,10 @@
       "email" : "anissa@sanford-and-sons.bv",
       "firstName" : "Branson",
       "mobilePhone" : "1-156-445-4163",
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "phone" : "390-670-1991",
       "lastName" : "Beer"
    },
    "enrollmentDate" : "2018-05-13",
    "username" : "grace"
 }
-

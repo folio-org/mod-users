@@ -8,7 +8,7 @@
    "personal" : {
       "lastName" : "Kautzer",
       "middleName" : "Maxine",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "phone" : "1-102-800-2197 x336",
       "dateOfBirth" : "1993-09-23",
       "email" : "mariela@wiza-schamberger.gq",
@@ -28,4 +28,3 @@
    "active" : true,
    "username" : "gardner"
 }
-

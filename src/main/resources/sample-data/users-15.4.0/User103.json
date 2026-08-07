@@ -23,10 +23,9 @@
       "dateOfBirth" : "2012-10-23",
       "phone" : "1-231-053-1512",
       "mobilePhone" : "(783)669-7471",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "middleName" : "Aiyana",
       "lastName" : "Ruecker"
    },
    "username" : "jaleel"
 }
-

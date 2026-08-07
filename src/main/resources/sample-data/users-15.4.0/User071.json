@@ -22,11 +22,10 @@
          }
       ],
       "firstName" : "Cleo",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Hunter",
       "lastName" : "Kris"
    },
    "id" : "f6d2c74c-3181-4c25-9a21-1b1f4c30765f",
    "username" : "kian"
 }
-

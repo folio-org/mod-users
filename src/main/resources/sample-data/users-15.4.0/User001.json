@@ -7,7 +7,7 @@
    "type" : "patron",
    "expirationDate" : "2019-09-10",
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "middleName" : "Kendall",
       "email" : "maya@schmidt-moore-and-greenfelder.gu",
       "lastName" : "Brakus",
@@ -28,4 +28,3 @@
    },
    "id" : "ab579dc3-219b-4f5b-8068-ab1c7a55c402"
 }
-

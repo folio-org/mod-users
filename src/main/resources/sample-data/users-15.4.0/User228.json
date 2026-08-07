@@ -18,7 +18,7 @@
       "lastName" : "Koss",
       "phone" : "(215)223-7640 x150",
       "mobilePhone" : "(589)923-3094 x7774",
-      "preferredContactTypeId" : "003",
+      "preferredContactTypeIds" : ["003"],
       "firstName" : "Jordane",
       "email" : "melody@zieme-green.lr",
       "middleName" : "Dolores"
@@ -29,4 +29,3 @@
    "id" : "197f8e91-5110-4487-ad36-b3d21a66059d",
    "barcode" : "110408495506241"
 }
-

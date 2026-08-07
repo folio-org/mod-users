@@ -20,7 +20,7 @@
       ],
       "email" : "esther@cummerata-mclaughlin-and-grant.cd",
       "middleName" : "Shea",
-      "preferredContactTypeId" : "005",
+      "preferredContactTypeIds" : ["005"],
       "mobilePhone" : "265-043-4033 x73485",
       "firstName" : "Zora",
       "phone" : "242.169.1046 x52431",
@@ -29,4 +29,3 @@
    "username" : "austin",
    "enrollmentDate" : "2017-10-12"
 }
-

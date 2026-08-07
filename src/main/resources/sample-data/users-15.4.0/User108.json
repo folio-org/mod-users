@@ -24,8 +24,7 @@
       ],
       "middleName" : "Ronaldo",
       "lastName" : "Kuhlman",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "username" : "barney"
 }
-

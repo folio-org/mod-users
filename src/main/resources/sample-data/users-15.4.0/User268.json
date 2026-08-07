@@ -17,7 +17,7 @@
       "email" : "cullen@cassin-llc.bh",
       "mobilePhone" : "959-422-9547 x581",
       "firstName" : "Harry",
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "phone" : "261.843.4484 x190",
       "lastName" : "Barrows"
    },
@@ -28,4 +28,3 @@
    "expirationDate" : "2019-04-11",
    "type" : "patron"
 }
-

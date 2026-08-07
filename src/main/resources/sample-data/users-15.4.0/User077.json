@@ -22,11 +22,10 @@
             "region" : "WI"
          }
       ],
-      "preferredContactTypeId" : "002",
+      "preferredContactTypeIds" : ["002"],
       "middleName" : "Luigi",
       "lastName" : "Sporer"
    },
    "active" : false,
    "username" : "rollin"
 }
-

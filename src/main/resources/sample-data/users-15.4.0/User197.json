@@ -19,7 +19,7 @@
       "email" : "trinity@lehner-nikolaus.sc",
       "middleName" : "Delta",
       "lastName" : "Jerde",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "active" : true,
    "id" : "65ec5d8b-c3f6-41d4-8026-fba1f7cae715",
@@ -29,4 +29,3 @@
    "enrollmentDate" : "2017-08-27",
    "type" : "patron"
 }
-

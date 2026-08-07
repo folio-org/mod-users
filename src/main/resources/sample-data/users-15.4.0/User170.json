@@ -19,7 +19,7 @@
       ],
       "firstName" : "Orval",
       "lastName" : "Swift",
-      "preferredContactTypeId" : "003"
+      "preferredContactTypeIds" : ["003"]
    },
    "active" : true,
    "id" : "2c9e8cdd-d2fe-485b-b663-34225637fe93",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2017-04-07",
    "barcode" : "684350779415389"
 }
-

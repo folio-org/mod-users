@@ -2,7 +2,7 @@
    "patronGroup": "3684a786-6671-4268-8ed0-9db82ebca60b",
    "active" : true,
    "personal" : {
-      "preferredContactTypeId" : "001",
+      "preferredContactTypeIds" : ["001"],
       "firstName" : "Lincoln",
       "middleName" : "Izabella",
       "email" : "eldred@morissette-and-sons.sn",
@@ -28,4 +28,3 @@
    "type" : "patron",
    "expirationDate" : "2020-08-14"
 }
-

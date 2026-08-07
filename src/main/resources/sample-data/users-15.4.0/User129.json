@@ -20,7 +20,7 @@
       "email" : "jovan@reichel-and-sons.pg",
       "middleName" : "Mable",
       "lastName" : "Hodkiewicz",
-      "preferredContactTypeId" : "004"
+      "preferredContactTypeIds" : ["004"]
    },
    "username" : "yoshiko",
    "barcode" : "701139394489075",
@@ -28,4 +28,3 @@
    "enrollmentDate" : "2017-05-03",
    "type" : "patron"
 }
-
