@@ -1,13 +1,10 @@
 package org.folio.rest.impl;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
-
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +15,13 @@ import org.folio.rest.annotations.Validate;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.tools.utils.TenantLoading;
 import org.folio.rest.tools.utils.TenantTool;
+import org.folio.service.SettingsMigrationService;
 import org.folio.support.kafka.topic.UsersKafkaTopic;
+
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 
 public class TenantRefAPI extends TenantAPI {
 
@@ -75,7 +78,11 @@ public class TenantRefAPI extends TenantAPI {
       KafkaConfigSingleton.INSTANCE.isKafkaEnabled() && Boolean.TRUE.equals(tenantAttributes.getPurge())
         ? deleteTopics(tenantId, context)
         : Future.succeededFuture();
-    result.onComplete(x -> super.postTenant(tenantAttributes, headers, handler, context));
+
+    result.compose(x -> super.postTenantSync(tenantAttributes, headers, context))
+      .compose(postTenantResponse -> migrateSettings(tenantAttributes, headers, context)
+        .map(postTenantResponse))
+      .onComplete(handler);
   }
 
 
@@ -100,5 +107,17 @@ public class TenantRefAPI extends TenantAPI {
     };
     since.setFromModuleVersion(featureVersion);
     return since.isNewForThisInstall(attributes.getModuleFrom());
+  }
+
+  private Future<Void> migrateSettings(TenantAttributes tenantAttributes,
+    Map<String, String> headers, Context context) {
+
+    if (isBlank(tenantAttributes.getModuleTo())) {
+      log.info("migrateSettings:: skipping settings migration");
+      return Future.succeededFuture();
+    }
+
+    log.info("migrateSettings:: attempting to migrate settings from mod-configuration to mod-users");
+    return new SettingsMigrationService(context, headers).migrateSettings();
   }
 }

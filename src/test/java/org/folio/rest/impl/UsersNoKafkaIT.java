@@ -1,5 +1,10 @@
 package org.folio.rest.impl;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -8,17 +13,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.folio.extensions.KafkaContainerExtension;
 import org.folio.extensions.PostgresContainerExtension;
@@ -33,6 +27,22 @@ import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.folio.support.tags.IntegrationTest;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.Timeout;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 
 @IntegrationTest
 @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
@@ -42,22 +52,28 @@ class UsersNoKafkaIT {
   private static UsersClient usersClient;
   private static OkapiUrl okapiUrl;
   private static OkapiHeaders okapiHeaders;
+  private static WireMockServer wireMockServer;
 
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext context) {
+    wireMockServer = new WireMockServer(new WireMockConfiguration().dynamicPort());
+    wireMockServer.start();
+
     final var port = NetworkUtils.nextFreePort();
     final var token = new FakeTokenGenerator().generateToken();
 
     okapiUrl = new OkapiUrl("http://localhost:" + port);
-    okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
+    OkapiUrl wireMockUrl = new OkapiUrl("http://localhost:" + wireMockServer.port());
+    okapiHeaders = new OkapiHeaders(wireMockUrl, TENANT_NAME, token);
 
-    usersClient = new UsersClient(okapiUrl, okapiHeaders);
+    usersClient = new UsersClient(wireMockUrl, okapiHeaders);
 
     module = new VertxModule(vertx);
     KafkaContainerExtension.disableKafka(context);
 
     boolean hasData = false;
 
+    mockConfiguration(); // otherwise POST /_/tenant fails during settings migration attempt
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
       .onComplete(context.succeedingThenComplete());
@@ -70,6 +86,7 @@ class UsersNoKafkaIT {
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
       })
+      .onComplete(ignored -> wireMockServer.stop())
       .onComplete(context.succeedingThenComplete());
   }
 
@@ -104,5 +121,21 @@ class UsersNoKafkaIT {
     assertThat(createdUser.getTags().getTagList(), containsInAnyOrder("foo", "bar"));
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
+  }
+
+  protected static void mockConfiguration() {
+    JsonObject mockResponseBody = new JsonObject()
+      .put("configs", new JsonArray());
+
+    wireMockServer.stubFor(get(urlPathMatching("/configurations/entries.*"))
+      .atPriority(1)
+      .willReturn(aResponse()
+        .withStatus(200)
+        .withBody(mockResponseBody.encodePrettily())));
+
+    // forward all other requests back to the module
+    wireMockServer.stubFor(any(anyUrl())
+      .atPriority(10)
+      .willReturn(aResponse().proxiedFrom(okapiUrl.toString())));
   }
 }

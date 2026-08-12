@@ -1,5 +1,10 @@
 package org.folio.moduserstest;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
@@ -16,37 +21,39 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
 import java.util.concurrent.CompletableFuture;
+
 import org.apache.commons.io.FileUtils;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.FieldException;
+import org.folio.event.ConsortiumEventType;
+import org.folio.extensions.KafkaContainerExtension;
+import org.folio.extensions.LocalStackContainerExtension;
+import org.folio.extensions.PostgresContainerExtension;
+import org.folio.rest.jaxrs.model.ConfigurationEntry;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.support.VertxModule;
+import org.folio.support.http.FakeTokenGenerator;
+import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.shaded.org.awaitility.core.ThrowingRunnable;
 
-import org.folio.event.ConsortiumEventType;
-import org.folio.extensions.KafkaContainerExtension;
-import org.folio.extensions.LocalStackContainerExtension;
-import org.folio.extensions.PostgresContainerExtension;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.support.VertxModule;
-import org.folio.support.http.FakeTokenGenerator;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
-
 import com.github.tomakehurst.wiremock.WireMockServer;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
 @ExtendWith({
@@ -62,6 +69,7 @@ public abstract class AbstractRestTest {
   protected static OkapiUrl okapiUrl;
   protected static VertxModule module;
   protected static OkapiHeaders okapiHeaders;
+  protected static PostgresClient postgresClient;
 
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
@@ -73,8 +81,16 @@ public abstract class AbstractRestTest {
     final var token = new FakeTokenGenerator().generateToken();
 
     okapiUrl = new OkapiUrl("http://localhost:" + port);
-    okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
+    OkapiUrl wireMockUrl = new OkapiUrl("http://localhost:" + wireMockServer.port());
+    okapiHeaders = new OkapiHeaders(wireMockUrl, TENANT_NAME, token);
     module = new VertxModule(vertx);
+    postgresClient = PostgresClient.getInstance(vertx, TENANT_NAME);
+
+    mockConfiguration();
+    // forward all other requests back to the module
+    wireMockServer.stubFor(any(anyUrl())
+      .atPriority(10)
+      .willReturn(aResponse().proxiedFrom(okapiUrl.toString())));
 
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
@@ -85,8 +101,8 @@ public abstract class AbstractRestTest {
   static void afterAll(Vertx vertx, VertxTestContext context) {
     module.purgeModule(okapiHeaders)
       .onComplete(context.succeedingThenComplete())
-      .onComplete(unused -> vertx.close());
-    wireMockServer.stop();
+      .onComplete(unused -> vertx.close())
+      .onComplete(unused -> wireMockServer.stop());
   }
 
   private static List<String> getConsortiumTopicNames() {
@@ -131,15 +147,38 @@ public abstract class AbstractRestTest {
     return new File(AbstractRestTest.class.getClassLoader().getResource(filename).toURI());
   }
 
+  protected static void deleteFromTable(String tableName) {
+    deleteFromTable(tableName, postgresClient);
+  }
+
   protected static void deleteFromTable(Vertx vertx, String tableName, String tenantId) {
+   deleteFromTable(tableName, PostgresClient.getInstance(vertx, tenantId));
+  }
+
+  protected static void deleteFromTable(String tableName, PostgresClient postgresClient) {
     try {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      PostgresClient.getInstance(vertx, tenantId).delete(tableName,
+      postgresClient.delete(tableName,
         new CQLWrapper(new CQL2PgJSON(JSONB_COLUMN), "cql.allRecords=1"),
         event -> future.complete(null));
       future.join();
     } catch (FieldException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  protected static void mockConfiguration() {
+    mockConfiguration(new ArrayList<>());
+  }
+
+  protected static void mockConfiguration(List<ConfigurationEntry> configs) {
+    JsonObject mockResponseBody = new JsonObject()
+      .put("configs", configs);
+
+    wireMockServer.stubFor(get(urlPathMatching("/configurations/entries.*"))
+      .atPriority(1)
+      .willReturn(aResponse()
+        .withStatus(200)
+        .withBody(mockResponseBody.encodePrettily())));
   }
 }

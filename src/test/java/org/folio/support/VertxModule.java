@@ -35,10 +35,6 @@ public class VertxModule {
     return vertx.deployVerticle(RestVerticle.class.getName(), options);
   }
 
-  public Future<Void> enableModule(@NonNull OkapiHeaders headers) {
-    return enableModule(headers, false, false);
-  }
-
   public Future<Void> enableModule(@NonNull OkapiHeaders headers,
     @NonNull Boolean loadReferenceData, @NonNull Boolean loadSampleData) {
 
@@ -69,6 +65,12 @@ public class VertxModule {
   }
 
   public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom) {
+    return migrateModule(headers, versionFrom, true, true);
+  }
+
+  public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom,
+    boolean loadReferenceData, boolean loadSampleData) {
+
     final var tenantClient = new TenantClient(headers.getOkapiUrl(),
         headers.getTenantId(), headers.getToken(), webClient);
 
@@ -78,8 +80,8 @@ public class VertxModule {
 
     List<Parameter> parameters = new LinkedList<>();
 
-    parameters.add(parameter("loadReference", true));
-    parameters.add(parameter("loadSample", true));
+    parameters.add(parameter("loadReference", loadReferenceData));
+    parameters.add(parameter("loadSample", loadSampleData));
 
     ta.setParameters(parameters);
 
