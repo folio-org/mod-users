@@ -1,10 +1,5 @@
 package org.folio.rest.impl;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static org.folio.support.TestConstants.TENANT_NAME;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -22,6 +17,7 @@ import org.folio.support.Personal;
 import org.folio.support.TagList;
 import org.folio.support.User;
 import org.folio.support.VertxModule;
+import org.folio.support.WireMockHelper;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
@@ -38,8 +34,6 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -53,11 +47,13 @@ class UsersNoKafkaIT {
   private static OkapiUrl okapiUrl;
   private static OkapiHeaders okapiHeaders;
   private static WireMockServer wireMockServer;
+  private static WireMockHelper wireMockHelper;
 
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext context) {
     wireMockServer = new WireMockServer(new WireMockConfiguration().dynamicPort());
     wireMockServer.start();
+    wireMockHelper = new WireMockHelper(wireMockServer);
 
     final var port = NetworkUtils.nextFreePort();
     final var token = new FakeTokenGenerator().generateToken();
@@ -73,7 +69,9 @@ class UsersNoKafkaIT {
 
     boolean hasData = false;
 
-    mockConfiguration(); // otherwise POST /_/tenant fails during settings migration attempt
+    wireMockHelper = new WireMockHelper(wireMockServer, okapiUrl.toString());
+    wireMockHelper.mockConfiguration(); // otherwise POST /_/tenant fails during settings migration attempt
+
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
       .onComplete(context.succeedingThenComplete());
@@ -123,19 +121,4 @@ class UsersNoKafkaIT {
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
   }
 
-  protected static void mockConfiguration() {
-    JsonObject mockResponseBody = new JsonObject()
-      .put("configs", new JsonArray());
-
-    wireMockServer.stubFor(get(urlPathMatching("/configurations/entries.*"))
-      .atPriority(1)
-      .willReturn(aResponse()
-        .withStatus(200)
-        .withBody(mockResponseBody.encodePrettily())));
-
-    // forward all other requests back to the module
-    wireMockServer.stubFor(any(anyUrl())
-      .atPriority(10)
-      .willReturn(aResponse().proxiedFrom(okapiUrl.toString())));
-  }
 }

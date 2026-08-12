@@ -41,7 +41,7 @@ class TenantRefAPITest extends AbstractRestTestNoData {
 
   @AfterAll
   static void tearDown() {
-    mockConfiguration(); // restore default mock
+    wireMockHelper.mockConfiguration(); // restore default mock
   }
 
   @Test
@@ -56,7 +56,7 @@ class TenantRefAPITest extends AbstractRestTestNoData {
       .withConfigName("suppressEdit")
       .withValue(value.encode());
 
-    mockConfiguration(List.of(suppressEditConfig));
+    wireMockHelper.mockConfiguration(List.of(suppressEditConfig));
     enableModule(); // triggers migration
 
     JsonObject expectedSetting = new JsonObject()

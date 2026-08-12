@@ -3,8 +3,6 @@ package org.folio.moduserstest;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
@@ -21,7 +19,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -33,11 +30,11 @@ import org.folio.event.ConsortiumEventType;
 import org.folio.extensions.KafkaContainerExtension;
 import org.folio.extensions.LocalStackContainerExtension;
 import org.folio.extensions.PostgresContainerExtension;
-import org.folio.rest.jaxrs.model.ConfigurationEntry;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.support.VertxModule;
+import org.folio.support.WireMockHelper;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
@@ -51,7 +48,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
@@ -70,6 +66,7 @@ public abstract class AbstractRestTest {
   protected static VertxModule module;
   protected static OkapiHeaders okapiHeaders;
   protected static PostgresClient postgresClient;
+  protected static WireMockHelper wireMockHelper;
 
   @SneakyThrows
   public static void beforeAll(Vertx vertx, VertxTestContext context, boolean hasData) {
@@ -86,11 +83,8 @@ public abstract class AbstractRestTest {
     module = new VertxModule(vertx);
     postgresClient = PostgresClient.getInstance(vertx, TENANT_NAME);
 
-    mockConfiguration();
-    // forward all other requests back to the module
-    wireMockServer.stubFor(any(anyUrl())
-      .atPriority(10)
-      .willReturn(aResponse().proxiedFrom(okapiUrl.toString())));
+    wireMockHelper = new WireMockHelper(wireMockServer, okapiUrl.toString());
+    wireMockHelper.mockConfiguration();
 
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
@@ -167,18 +161,4 @@ public abstract class AbstractRestTest {
     }
   }
 
-  protected static void mockConfiguration() {
-    mockConfiguration(new ArrayList<>());
-  }
-
-  protected static void mockConfiguration(List<ConfigurationEntry> configs) {
-    JsonObject mockResponseBody = new JsonObject()
-      .put("configs", configs);
-
-    wireMockServer.stubFor(get(urlPathMatching("/configurations/entries.*"))
-      .atPriority(1)
-      .willReturn(aResponse()
-        .withStatus(200)
-        .withBody(mockResponseBody.encodePrettily())));
-  }
 }
