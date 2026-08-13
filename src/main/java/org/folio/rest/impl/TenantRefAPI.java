@@ -1,7 +1,5 @@
 package org.folio.rest.impl;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -122,7 +120,7 @@ public class TenantRefAPI extends TenantAPI {
   }
 
   /**
-   * Returns true only if this is an upgrade (attributes.getModuleFrom() is not null)
+   * Returns true only if this is an upgrade (attributes.getModuleFrom() attributes.getModuleTo() are not null)
    * and attributes.getModuleFrom() < featureVersion, i.e. the tenant previously
    * ran a version older than featureVersion and is now crossing it. Unlike
    * {@link #isNew}, a fresh install (moduleFrom == null) returns false here, since
