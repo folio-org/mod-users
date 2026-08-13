@@ -23,7 +23,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
-class TenantRefAPITest extends AbstractRestTestNoData {
+class SettingsMigrationTest extends AbstractRestTestNoData {
 
   private static final String SETTINGS_TABLE = "settings";
   private static UsersSettingsClient settingsClient;
