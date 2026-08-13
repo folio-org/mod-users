@@ -112,7 +112,7 @@ public class TenantRefAPI extends TenantAPI {
   private Future<Void> migrateSettings(TenantAttributes tenantAttributes,
     Map<String, String> headers, Context context) {
 
-    if (isBlank(tenantAttributes.getModuleTo()) || !isUpgradingAcross(tenantAttributes, "19.7.0")) {
+    if (!isUpgradingAcross(tenantAttributes, "19.7.0")) {
       log.info("migrateSettings:: skipping settings migration");
       return Future.succeededFuture();
     }
@@ -129,7 +129,8 @@ public class TenantRefAPI extends TenantAPI {
    * there is nothing to migrate on a new tenant.
    */
   private static boolean isUpgradingAcross(TenantAttributes attributes, String featureVersion) {
-    if (attributes.getModuleFrom() == null) {
+    if (attributes.getModuleFrom() == null || attributes.getModuleTo() == null) {
+      log.info("isUpgradingAcross:: moduleFrom or moduleTo is null, not an upgrade");
       return false;
     }
     var since = new Versioned() {
