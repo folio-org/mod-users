@@ -41,8 +41,8 @@ public class SettingsMigrationService {
 
   public Future<Void> migrateSettings() {
     return migrateSetting(USERS_MODULE, SUPPRESS_EDIT_CONFIG_NAME, JSON_ARRAY_TO_LIST_TRANSFORMER)
-      .onSuccess(v -> log.info("migrateSetting:: migration completed successfully"))
-      .onFailure(t -> log.error("migrateSetting:: migration failed", t));
+      .onSuccess(v -> log.info("migrateSettings:: migration completed successfully"))
+      .onFailure(t -> log.error("migrateSettings:: migration failed", t));
   }
 
   private Future<Void> migrateSetting(String module, String configName,
