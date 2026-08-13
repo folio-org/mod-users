@@ -14,9 +14,7 @@ import org.folio.rest.jaxrs.model.ConfigurationEntry;
 import com.github.tomakehurst.wiremock.WireMockServer;
 
 import io.vertx.core.json.JsonObject;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 public class WireMockHelper {
 
   private final WireMockServer wireMockServer;

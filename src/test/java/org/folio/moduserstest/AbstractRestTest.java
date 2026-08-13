@@ -18,35 +18,36 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.io.FileUtils;
 import org.folio.cql2pgjson.CQL2PgJSON;
 import org.folio.cql2pgjson.exception.FieldException;
-import org.folio.event.ConsortiumEventType;
-import org.folio.extensions.KafkaContainerExtension;
-import org.folio.extensions.LocalStackContainerExtension;
-import org.folio.extensions.PostgresContainerExtension;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.rest.tools.utils.NetworkUtils;
-import org.folio.support.VertxModule;
-import org.folio.support.WireMockHelper;
-import org.folio.support.http.FakeTokenGenerator;
-import org.folio.support.http.OkapiHeaders;
-import org.folio.support.http.OkapiUrl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.shaded.org.awaitility.core.ThrowingRunnable;
 
+import org.folio.event.ConsortiumEventType;
+import org.folio.extensions.KafkaContainerExtension;
+import org.folio.extensions.LocalStackContainerExtension;
+import org.folio.extensions.PostgresContainerExtension;
+import org.folio.rest.tools.utils.NetworkUtils;
+import org.folio.support.VertxModule;
+import org.folio.support.WireMockHelper;
+import org.folio.support.http.FakeTokenGenerator;
+import org.folio.support.http.OkapiHeaders;
+import org.folio.support.http.OkapiUrl;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
 import lombok.SneakyThrows;
 
 @ExtendWith({

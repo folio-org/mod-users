@@ -9,6 +9,20 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.Timeout;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+
 import org.folio.extensions.KafkaContainerExtension;
 import org.folio.extensions.PostgresContainerExtension;
 import org.folio.rest.persist.PostgresClient;
@@ -23,20 +37,6 @@ import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
 import org.folio.support.http.UsersClient;
 import org.folio.support.tags.IntegrationTest;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.junit5.Timeout;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.junit5.VertxTestContext;
 
 @IntegrationTest
 @Timeout(value = 20, timeUnit = TimeUnit.SECONDS)
@@ -53,7 +53,6 @@ class UsersNoKafkaIT {
   static void beforeAll(Vertx vertx, VertxTestContext context) {
     wireMockServer = new WireMockServer(new WireMockConfiguration().dynamicPort());
     wireMockServer.start();
-    wireMockHelper = new WireMockHelper(wireMockServer);
 
     final var port = NetworkUtils.nextFreePort();
     final var token = new FakeTokenGenerator().generateToken();

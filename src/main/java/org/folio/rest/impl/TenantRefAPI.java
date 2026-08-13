@@ -6,6 +6,11 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.dbschema.Versioned;
@@ -17,11 +22,6 @@ import org.folio.rest.tools.utils.TenantLoading;
 import org.folio.rest.tools.utils.TenantTool;
 import org.folio.service.SettingsMigrationService;
 import org.folio.support.kafka.topic.UsersKafkaTopic;
-
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
 
 public class TenantRefAPI extends TenantAPI {
 
