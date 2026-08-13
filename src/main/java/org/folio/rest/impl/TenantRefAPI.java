@@ -112,12 +112,29 @@ public class TenantRefAPI extends TenantAPI {
   private Future<Void> migrateSettings(TenantAttributes tenantAttributes,
     Map<String, String> headers, Context context) {
 
-    if (isBlank(tenantAttributes.getModuleTo())) {
+    if (isBlank(tenantAttributes.getModuleTo()) || !isUpgradingAcross(tenantAttributes, "19.7.0")) {
       log.info("migrateSettings:: skipping settings migration");
       return Future.succeededFuture();
     }
 
     log.info("migrateSettings:: attempting to migrate settings from mod-configuration to mod-users");
     return new SettingsMigrationService(context, headers).migrateSettings();
+  }
+
+  /**
+   * Returns true only if this is an upgrade (attributes.getModuleFrom() is not null)
+   * and attributes.getModuleFrom() < featureVersion, i.e. the tenant previously
+   * ran a version older than featureVersion and is now crossing it. Unlike
+   * {@link #isNew}, a fresh install (moduleFrom == null) returns false here, since
+   * there is nothing to migrate on a new tenant.
+   */
+  private static boolean isUpgradingAcross(TenantAttributes attributes, String featureVersion) {
+    if (attributes.getModuleFrom() == null) {
+      return false;
+    }
+    var since = new Versioned() {
+    };
+    since.setFromModuleVersion(featureVersion);
+    return since.isNewForThisInstall(attributes.getModuleFrom());
   }
 }

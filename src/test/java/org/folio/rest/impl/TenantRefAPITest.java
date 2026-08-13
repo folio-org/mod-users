@@ -12,7 +12,6 @@ import org.folio.moduserstest.AbstractRestTestNoData;
 import org.folio.rest.jaxrs.model.ConfigurationEntry;
 import org.folio.rest.jaxrs.model.Setting;
 import org.folio.rest.persist.cql.CQLWrapper;
-import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.UsersSettingsClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -37,17 +36,16 @@ class TenantRefAPITest extends AbstractRestTestNoData {
   @BeforeEach
   void beforeEach() {
     deleteFromTable(SETTINGS_TABLE);
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
   }
 
   @AfterAll
   static void tearDown() {
-    wireMockHelper.mockConfiguration(); // restore default mock
+    wireMockHelper.mockConfiguration(); // restore default configuration mock
   }
 
   @Test
-  void suppressEditSettingIsMigratedWhenModuleIsEnabled() {
-    assertTrue(getAllSettingsFromDatabase().isEmpty());
-
+  void settingsAreMigratedWhenModuleIsEnabled() {
     String configurationId = randomId();
     JsonArray value = new JsonArray(List.of(randomId(), randomId()));
     ConfigurationEntry suppressEditConfig = new ConfigurationEntry()
@@ -57,7 +55,7 @@ class TenantRefAPITest extends AbstractRestTestNoData {
       .withValue(value.encode());
 
     wireMockHelper.mockConfiguration(List.of(suppressEditConfig));
-    enableModule(); // triggers migration
+    enableModule("19.6.0", "19.7.0"); // triggers migration
 
     JsonObject expectedSetting = new JsonObject()
       .put("id", configurationId)
@@ -70,7 +68,7 @@ class TenantRefAPITest extends AbstractRestTestNoData {
     assertEquals(expectedSetting, getSettingFromDatabaseAsJson(configurationId));
 
     // run migration again to verify that it is idempotent and does not create duplicates
-    enableModule();
+    enableModule("19.6.0", "19.7.0");
     assertEquals(1, getAllSettingsFromDatabase().size());
     assertEquals(expectedSetting, getSettingFromDatabaseAsJson(configurationId));
 
@@ -78,12 +76,57 @@ class TenantRefAPITest extends AbstractRestTestNoData {
     assertEquals(expectedSetting, settingsClient.getSettingAsJson(configurationId));
   }
 
+  @Test
+  void settingsAreNotMigratedOnFreshInstall() {
+    wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
+    wait(module.enableModule(okapiHeaders, false, false));
+
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
+  }
+
+  @Test
+  void settingsAreNotMigratedWhenModuleFromIsAtThreshold() {
+    wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
+    enableModule("19.7.0", "19.7.0");
+
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
+  }
+
+  @Test
+  void settingsAreNotMigratedWhenModuleFromIsAboveThreshold() {
+    wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
+    enableModule("19.8.0", "19.9.0");
+
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
+  }
+
+  @Test
+  void settingsAreMigratedWhenModuleFromIsPreReleaseBelowThreshold() {
+    wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
+    enableModule("19.6.9-SNAPSHOT", "19.7.0");
+
+    assertEquals(1, getAllSettingsFromDatabase().size());
+  }
+
+  @Test
+  void settingsAreNotMigratedWhenConfigurationIsNotFound() {
+    wireMockHelper.mockConfiguration(List.of());
+    enableModule("19.6.0", "19.7.0");
+
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
+  }
+
+  private ConfigurationEntry suppressEditConfig() {
+    return new ConfigurationEntry()
+      .withId(randomId())
+      .withModule("@folio/users")
+      .withConfigName("suppressEdit")
+      .withValue(new JsonArray(List.of(randomId(), randomId())).encode());
+  }
+
   @SneakyThrows
-  private void enableModule() {
-    String wireMockUrl = "http://localhost:" + wireMockServer.port();
-    OkapiHeaders customHeaders = new OkapiHeaders(wireMockUrl, okapiHeaders.getTenantId(),
-      okapiHeaders.getToken());
-    wait(module.migrateModule(customHeaders, "19.7.0", false, false));
+  private void enableModule(String versionFrom, String versionTo) {
+    wait(module.migrateModule(okapiHeaders, "mod-users-" + versionFrom, "mod-users-" + versionTo, false, false));
   }
 
   @SneakyThrows

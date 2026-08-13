@@ -3,7 +3,6 @@ package org.folio.service;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.integration.http.HttpClientFactory.getHttpClient;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -29,6 +28,8 @@ public class SettingsMigrationService {
   private static final String USERS_MODULE = "@folio/users";
   private static final String SUPPRESS_EDIT_CONFIG_NAME = "suppressEdit";
   private static final String DEFAULT_SCOPE = Setting.Scope.MOD_USERS.value();
+  private static final Function<String, Object> JSON_ARRAY_TO_LIST_TRANSFORMER =
+    jsonArrayString -> new JsonArray(jsonArrayString).stream().toList();
 
   private final ConfigurationClient configurationClient;
   private final SettingsRepository settingsRepository;
@@ -39,7 +40,7 @@ public class SettingsMigrationService {
   }
 
   public Future<Void> migrateSettings() {
-    return migrateSetting(USERS_MODULE, SUPPRESS_EDIT_CONFIG_NAME, SettingsMigrationService::jsonArrayToList)
+    return migrateSetting(USERS_MODULE, SUPPRESS_EDIT_CONFIG_NAME, JSON_ARRAY_TO_LIST_TRANSFORMER)
       .onSuccess(v -> log.info("migrateSetting:: migration completed successfully"))
       .onFailure(t -> log.error("migrateSetting:: migration failed", t));
   }
@@ -85,12 +86,12 @@ public class SettingsMigrationService {
     log.info("migrateSetting:: setting does not exist, proceeding with migration");
 
     return configurationClient.getConfiguration(module, configName)
-      .compose(config -> migrateSetting(config, valueTransformer));
+      .compose(config -> saveSetting(config, valueTransformer));
   }
 
-  private Future<Void> migrateSetting(ConfigurationEntry config, Function<String, Object> valueTransformer) {
+  private Future<Void> saveSetting(ConfigurationEntry config, Function<String, Object> valueTransformer) {
     if (config == null) {
-      log.info("migrateSetting:: configuration not found, skipping migration");
+      log.info("saveSetting:: configuration not found, skipping migration");
       return succeededFuture();
     }
 
@@ -100,16 +101,10 @@ public class SettingsMigrationService {
       .withKey(config.getConfigName())
       .withValue(valueTransformer.apply(config.getValue()));
 
-    log.info("migrateSetting:: saving setting: scope={}, key={}", setting::getScope, setting::getKey);
+    log.info("saveSetting:: saving setting: scope={}, key={}", setting::getScope, setting::getKey);
 
     return settingsRepository.save(setting.getId(), setting)
       .mapEmpty();
-  }
-
-  private static List<Object> jsonArrayToList(String jsonArrayString) {
-    return new JsonArray(jsonArrayString)
-      .stream()
-      .toList();
   }
 
 }

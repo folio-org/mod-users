@@ -71,11 +71,17 @@ public class VertxModule {
   public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom,
     boolean loadReferenceData, boolean loadSampleData) {
 
+    return migrateModule(headers, versionFrom, "mod-users-999999.0.0", loadReferenceData, loadSampleData);
+  }
+
+  public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom, String versionTo,
+    boolean loadReferenceData, boolean loadSampleData) {
+
     final var tenantClient = new TenantClient(headers.getOkapiUrl(),
         headers.getTenantId(), headers.getToken(), webClient);
 
     TenantAttributes ta = new TenantAttributes();
-    ta.setModuleTo("mod-users-999999.0.0");
+    ta.setModuleTo(versionTo);
     ta.setModuleFrom(versionFrom);
 
     List<Parameter> parameters = new LinkedList<>();
