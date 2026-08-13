@@ -2,32 +2,41 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "Configuration Entry",
   "type": "object",
+  "description": "Configuration entry",
   "properties": {
     "id": {
       "$ref": "raml-util/schemas/uuid.schema"
     },
     "module": {
+      "description": "Module name",
       "type": "string"
     },
     "configName": {
+      "description": "Configuration name",
       "type": "string"
     },
     "code": {
+      "description": "Configuration code",
       "type": "string"
     },
     "description": {
+      "description": "Configuration description",
       "type": "string"
     },
     "default": {
+      "description": "Indicates if this is the default configuration",
       "type": "boolean"
     },
     "enabled": {
+      "description": "Indicates if this configuration is enabled",
       "type": "boolean"
     },
     "value": {
+      "description": "Configuration value",
       "type": "string"
     },
     "userId": {
+      "description": "User ID associated with this configuration",
       "type": "string"
     },
     "metadata": {
