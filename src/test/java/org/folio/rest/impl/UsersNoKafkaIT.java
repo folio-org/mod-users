@@ -47,7 +47,6 @@ class UsersNoKafkaIT {
   private static OkapiUrl okapiUrl;
   private static OkapiHeaders okapiHeaders;
   private static WireMockServer wireMockServer;
-  private static WireMockHelper wireMockHelper;
 
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext context) {
@@ -68,8 +67,8 @@ class UsersNoKafkaIT {
 
     boolean hasData = false;
 
-    wireMockHelper = new WireMockHelper(wireMockServer, okapiUrl.toString());
-    wireMockHelper.mockConfiguration(); // otherwise POST /_/tenant fails during settings migration attempt
+    new WireMockHelper(wireMockServer, okapiUrl.toString())
+      .mockConfiguration(); // otherwise POST /_/tenant fails during settings migration attempt
 
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
