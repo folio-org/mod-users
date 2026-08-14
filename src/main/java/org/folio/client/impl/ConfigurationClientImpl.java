@@ -13,7 +13,9 @@ import org.folio.rest.jaxrs.model.ConfigurationEntry;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class ConfigurationClientImpl implements ConfigurationClient {
 
   private static final String CONFIGS_ARRAY_NAME = "configs";
@@ -24,11 +26,6 @@ public class ConfigurationClientImpl implements ConfigurationClient {
 
   private final VertxOkapiHttpClient client;
   private final Map<String, String> headers;
-
-  public ConfigurationClientImpl(VertxOkapiHttpClient client, Map<String, String> headers) {
-    this.client = client;
-    this.headers = headers;
-  }
 
   @Override
   public Future<ConfigurationEntry> getConfiguration(String module, String configName) {
