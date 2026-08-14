@@ -135,7 +135,6 @@ class SettingsMigrationTest extends AbstractRestTestNoData {
     assertTrue(getAllSettingsFromDatabase().isEmpty());
   }
 
-
   private ConfigurationEntry suppressEditConfig() {
     return new ConfigurationEntry()
       .withId(randomId())
