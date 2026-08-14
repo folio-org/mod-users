@@ -95,11 +95,17 @@ public class SettingsMigrationService {
       return succeededFuture();
     }
 
+    String value = config.getValue();
+    if (value == null || value.isEmpty()) {
+      log.info("saveSetting:: configuration value is null or empty, skipping migration");
+      return succeededFuture();
+    }
+
     Setting setting = new Setting()
       .withId(config.getId())
       .withScope(Setting.Scope.MOD_USERS)
       .withKey(config.getConfigName())
-      .withValue(valueTransformer.apply(config.getValue()));
+      .withValue(valueTransformer.apply(value));
 
     log.info("saveSetting:: saving setting: scope={}, key={}", setting::getScope, setting::getKey);
 

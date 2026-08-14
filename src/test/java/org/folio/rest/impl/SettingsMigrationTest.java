@@ -17,6 +17,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -115,6 +118,23 @@ class SettingsMigrationTest extends AbstractRestTestNoData {
 
     assertTrue(getAllSettingsFromDatabase().isEmpty());
   }
+
+  @ParameterizedTest
+  @EmptySource
+  @NullSource
+  void settingsAreNotMigratedWhenConfigurationValueIsNullOrEmpty(String configurationValue) {
+    ConfigurationEntry config = new ConfigurationEntry()
+      .withId(randomId())
+      .withModule("@folio/users")
+      .withConfigName("suppressEdit")
+      .withValue(configurationValue);
+
+    wireMockHelper.mockConfiguration(List.of(config));
+    enableModule("19.6.0", "19.7.0");
+
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
+  }
+
 
   private ConfigurationEntry suppressEditConfig() {
     return new ConfigurationEntry()
