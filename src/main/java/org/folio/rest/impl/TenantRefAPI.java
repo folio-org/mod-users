@@ -120,13 +120,8 @@ public class TenantRefAPI extends TenantAPI {
   }
 
   private static boolean isUpgradingAcross(TenantAttributes attributes, String featureVersion) {
-    log.info("isUpgradingAcross:: moduleFrom={}, moduleTo={}, featureVersion={}",
-      attributes.getModuleFrom(), attributes.getModuleTo(), featureVersion);
-    if (true) {
-      return true;
-    }
-    if (attributes.getModuleFrom() == null || attributes.getModuleTo() == null) {
-      log.info("isUpgradingAcross:: moduleFrom or moduleTo is null, not an upgrade");
+    if (attributes.getModuleTo() == null) {
+      log.info("isUpgradingAcross:: moduleTo is null, not an upgrade");
       return false;
     }
     return isNew(attributes, featureVersion);

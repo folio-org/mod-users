@@ -77,11 +77,11 @@ class SettingsMigrationTest extends AbstractRestTestNoData {
   }
 
   @Test
-  void settingsAreNotMigratedOnFreshInstall() {
+  void settingsAreMigratedWheModuleFromIsNull() {
     wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
-    wait(module.enableModule(okapiHeaders, false, false));
+    enableModule(null, "19.7.0");
 
-    assertTrue(getAllSettingsFromDatabase().isEmpty());
+    assertEquals(1, getAllSettingsFromDatabase().size());
   }
 
   @Test
@@ -126,7 +126,9 @@ class SettingsMigrationTest extends AbstractRestTestNoData {
 
   @SneakyThrows
   private void enableModule(String versionFrom, String versionTo) {
-    wait(module.migrateModule(okapiHeaders, "mod-users-" + versionFrom, "mod-users-" + versionTo, false, false));
+    String moduleFrom = versionFrom == null ? null : "mod-users-" + versionFrom;
+    String moduleTo = versionTo == null ? null : "mod-users-" + versionTo;
+    wait(module.migrateModule(okapiHeaders, moduleFrom, moduleTo, false, false));
   }
 
   @SneakyThrows
