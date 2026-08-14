@@ -119,21 +119,11 @@ public class TenantRefAPI extends TenantAPI {
     return new SettingsMigrationService(context, headers).migrateSettings();
   }
 
-  /**
-   * Returns true only if this is an upgrade (attributes.getModuleFrom() attributes.getModuleTo() are not null)
-   * and attributes.getModuleFrom() < featureVersion, i.e. the tenant previously
-   * ran a version older than featureVersion and is now crossing it. Unlike
-   * {@link #isNew}, a fresh install (moduleFrom == null) returns false here, since
-   * there is nothing to migrate on a new tenant.
-   */
   private static boolean isUpgradingAcross(TenantAttributes attributes, String featureVersion) {
     if (attributes.getModuleFrom() == null || attributes.getModuleTo() == null) {
       log.info("isUpgradingAcross:: moduleFrom or moduleTo is null, not an upgrade");
       return false;
     }
-    var since = new Versioned() {
-    };
-    since.setFromModuleVersion(featureVersion);
-    return since.isNewForThisInstall(attributes.getModuleFrom());
+    return isNew(attributes, featureVersion);
   }
 }
