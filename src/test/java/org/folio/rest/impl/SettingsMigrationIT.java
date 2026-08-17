@@ -26,7 +26,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 
-class SettingsMigrationTest extends AbstractRestTestNoData {
+class SettingsMigrationIT extends AbstractRestTestNoData {
 
   private static final String SETTINGS_TABLE = "settings";
   private static UsersSettingsClient settingsClient;
