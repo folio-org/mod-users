@@ -110,7 +110,7 @@ public class TenantRefAPI extends TenantAPI {
   private Future<Void> migrateSettings(TenantAttributes tenantAttributes,
     Map<String, String> headers, Context context) {
 
-    if (!isUpgradingAcross(tenantAttributes, "19.7.0")) {
+    if (!isUpgradingAcross(tenantAttributes, "19.6.1")) {
       log.info("migrateSettings:: skipping settings migration");
       return Future.succeededFuture();
     }

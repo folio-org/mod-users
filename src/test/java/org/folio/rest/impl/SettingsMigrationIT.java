@@ -58,7 +58,7 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
       .withValue(value.encode());
 
     wireMockHelper.mockConfiguration(List.of(suppressEditConfig));
-    enableModule("19.6.0", "19.7.0"); // triggers migration
+    enableModule("19.6.0", "19.6.1"); // triggers migration
 
     JsonObject expectedSetting = new JsonObject()
       .put("id", configurationId)
@@ -71,7 +71,7 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
     assertEquals(expectedSetting, getSettingFromDatabaseAsJson(configurationId));
 
     // run migration again to verify that it is idempotent and does not create duplicates
-    enableModule("19.6.0", "19.7.0");
+    enableModule("19.6.0", "19.6.1");
     assertEquals(1, getAllSettingsFromDatabase().size());
     assertEquals(expectedSetting, getSettingFromDatabaseAsJson(configurationId));
 
@@ -82,7 +82,7 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
   @Test
   void settingsAreMigratedWheModuleFromIsNull() {
     wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
-    enableModule(null, "19.7.0");
+    enableModule(null, "19.6.1");
 
     assertEquals(1, getAllSettingsFromDatabase().size());
   }
@@ -90,7 +90,7 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
   @Test
   void settingsAreNotMigratedWhenModuleFromIsAtThreshold() {
     wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
-    enableModule("19.7.0", "19.7.0");
+    enableModule("19.6.1", "19.6.1");
 
     assertTrue(getAllSettingsFromDatabase().isEmpty());
   }
@@ -98,7 +98,7 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
   @Test
   void settingsAreNotMigratedWhenModuleFromIsAboveThreshold() {
     wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
-    enableModule("19.8.0", "19.9.0");
+    enableModule("19.7.0", "19.8.0");
 
     assertTrue(getAllSettingsFromDatabase().isEmpty());
   }
@@ -106,7 +106,7 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
   @Test
   void settingsAreMigratedWhenModuleFromIsPreReleaseBelowThreshold() {
     wireMockHelper.mockConfiguration(List.of(suppressEditConfig()));
-    enableModule("19.6.9-SNAPSHOT", "19.7.0");
+    enableModule("19.6.0-SNAPSHOT", "19.6.1");
 
     assertEquals(1, getAllSettingsFromDatabase().size());
   }
@@ -114,7 +114,7 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
   @Test
   void settingsAreNotMigratedWhenConfigurationIsNotFound() {
     wireMockHelper.mockConfiguration(List.of());
-    enableModule("19.6.0", "19.7.0");
+    enableModule("19.6.0", "19.6.1");
 
     assertTrue(getAllSettingsFromDatabase().isEmpty());
   }
