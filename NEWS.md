@@ -1,5 +1,8 @@
 ## 19.7.0 IN PROGRESS
 
+### Tech Debt
+* Migrate setting `suppressEdit` from mod-configuration to mod-users ([MODUSERS-587](https://folio-org.atlassian.net/browse/MODUSERS-587))
+
 ### New APIs versions
 * Provides `users v16.5`
 
