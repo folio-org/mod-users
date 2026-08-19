@@ -20,6 +20,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+
 import org.folio.extensions.KafkaContainerExtension;
 import org.folio.extensions.PostgresContainerExtension;
 import org.folio.rest.persist.PostgresClient;
@@ -28,6 +31,7 @@ import org.folio.support.Personal;
 import org.folio.support.TagList;
 import org.folio.support.User;
 import org.folio.support.VertxModule;
+import org.folio.support.WireMockHelper;
 import org.folio.support.http.FakeTokenGenerator;
 import org.folio.support.http.OkapiHeaders;
 import org.folio.support.http.OkapiUrl;
@@ -42,21 +46,29 @@ class UsersNoKafkaIT {
   private static UsersClient usersClient;
   private static OkapiUrl okapiUrl;
   private static OkapiHeaders okapiHeaders;
+  private static WireMockServer wireMockServer;
 
   @BeforeAll
   static void beforeAll(Vertx vertx, VertxTestContext context) {
+    wireMockServer = new WireMockServer(new WireMockConfiguration().dynamicPort());
+    wireMockServer.start();
+
     final var port = NetworkUtils.nextFreePort();
     final var token = new FakeTokenGenerator().generateToken();
 
     okapiUrl = new OkapiUrl("http://localhost:" + port);
-    okapiHeaders = new OkapiHeaders(okapiUrl, TENANT_NAME, token);
+    OkapiUrl wireMockUrl = new OkapiUrl("http://localhost:" + wireMockServer.port());
+    okapiHeaders = new OkapiHeaders(wireMockUrl, TENANT_NAME, token);
 
-    usersClient = new UsersClient(okapiUrl, okapiHeaders);
+    usersClient = new UsersClient(wireMockUrl, okapiHeaders);
 
     module = new VertxModule(vertx);
     KafkaContainerExtension.disableKafka(context);
 
     boolean hasData = false;
+
+    new WireMockHelper(wireMockServer, okapiUrl.toString())
+      .mockConfiguration(); // otherwise POST /_/tenant fails during settings migration attempt
 
     module.deployModule(port)
       .compose(res -> module.enableModule(okapiHeaders, hasData, hasData))
@@ -70,6 +82,7 @@ class UsersNoKafkaIT {
         PostgresClient.stopPostgresTester();
         return Future.succeededFuture();
       })
+      .onComplete(ignored -> wireMockServer.stop())
       .onComplete(context.succeedingThenComplete());
   }
 
@@ -105,4 +118,5 @@ class UsersNoKafkaIT {
     assertThat(createdUser.getMetadata().getCreatedDate(), is(notNullValue()));
     assertThat(createdUser.getMetadata().getUpdatedDate(), is(notNullValue()));
   }
+
 }
