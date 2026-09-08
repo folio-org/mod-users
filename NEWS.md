@@ -1,3 +1,8 @@
+## 19.6.1 2026-09-08
+
+### Tech Debt
+* Migrate configuration entry `suppressEdit` from mod-configuration to mod-users ([MODUSERS-587](https://folio-org.atlassian.net/browse/MODUSERS-587))
+
 ## 19.6.0 2026-04-15
 
 ### New APIs versions
