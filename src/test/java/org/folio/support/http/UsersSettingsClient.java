@@ -1,8 +1,10 @@
 package org.folio.support.http;
 
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_OK;
 
 import io.restassured.response.ValidatableResponse;
+import io.vertx.core.json.JsonObject;
 import lombok.NonNull;
 import org.folio.support.Setting;
 import org.folio.support.Settings;
@@ -145,6 +147,22 @@ public class UsersSettingsClient {
    */
   public ValidatableResponse attemptToDeleteSetting(String id) {
     return client.attemptToDeleteRecord(id);
+  }
+
+  /**
+   * Gets a setting as a JSON object by ID.
+   *
+   * @param id the setting ID
+   * @return the setting as a JSON object
+   */
+  public JsonObject getSettingAsJson(String id) {
+    String bodyJson = attemptToGetSetting(id)
+      .statusCode(HTTP_OK)
+      .extract()
+      .body()
+      .asPrettyString();
+
+    return new JsonObject(bodyJson);
   }
 }
 
