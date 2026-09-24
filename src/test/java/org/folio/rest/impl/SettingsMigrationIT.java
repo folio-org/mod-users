@@ -133,7 +133,6 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
   @Test
   void tenantInstallationFailsAndSettingsAreNotMigratedWhenConfigurationServiceReturnsServerError() {
     wireMockHelper.mockConfigurationResponseStatus(500);
-
     HttpResponse<Buffer> postTenantResponse = enableModule("19.6.0", "19.6.1");
 
     assertEquals(500, postTenantResponse.statusCode());
