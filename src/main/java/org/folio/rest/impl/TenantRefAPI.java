@@ -1,5 +1,8 @@
 package org.folio.rest.impl;
 
+import static io.vertx.core.Future.succeededFuture;
+import static org.folio.rest.jaxrs.resource.Tenant.PostTenantResponse.respond500WithTextPlain;
+
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -32,7 +35,7 @@ public class TenantRefAPI extends TenantAPI {
 
     return super.loadData(attributes, tenantId, headers, vertxContext)
         .compose(superRecordsLoaded -> {
-          Future<Void> f = Future.succeededFuture();
+          Future<Void> f = succeededFuture();
           if (KafkaConfigSingleton.INSTANCE.isKafkaEnabled()) {
             log.info("creating kafka topics");
             f = createTopics(tenantId, vertxContext);
@@ -75,14 +78,18 @@ public class TenantRefAPI extends TenantAPI {
     Future<Void> result =
       KafkaConfigSingleton.INSTANCE.isKafkaEnabled() && Boolean.TRUE.equals(tenantAttributes.getPurge())
         ? deleteTopics(tenantId, context)
-        : Future.succeededFuture();
+        : succeededFuture();
 
     result.compose(x -> super.postTenantSync(tenantAttributes, headers, context))
-      .compose(postTenantResponse -> migrateSettings(tenantAttributes, headers, context)
-        .map(postTenantResponse))
+      .compose(response -> migrateSettings(tenantAttributes, headers, context).map(response))
+      .recover(TenantRefAPI::handlePostTenantFailure)
       .onComplete(handler);
   }
 
+  private static Future<Response> handlePostTenantFailure(Throwable cause) {
+    log.error("handlePostTenantFailure:: tenant installation failed", cause);
+    return succeededFuture(respond500WithTextPlain(cause.getMessage()));
+  }
 
   static Future<Void> createTopics(String tenantId, Context context) {
     return new KafkaAdminClientService(context.owner())
@@ -112,7 +119,7 @@ public class TenantRefAPI extends TenantAPI {
 
     if (!isUpgradingAcross(tenantAttributes, "19.6.1")) {
       log.info("migrateSettings:: skipping settings migration");
-      return Future.succeededFuture();
+      return succeededFuture();
     }
 
     log.info("migrateSettings:: attempting to migrate settings from mod-configuration to mod-users");
