@@ -22,8 +22,10 @@ import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.NullSource;
 
 import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import lombok.SneakyThrows;
 
 class SettingsMigrationIT extends AbstractRestTestNoData {
@@ -119,6 +121,25 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
     assertTrue(getAllSettingsFromDatabase().isEmpty());
   }
 
+  @Test
+  void tenantInstallationSucceedsAndSettingsAreNotMigratedWhenConfigurationServiceReturns404() {
+    wireMockHelper.mockConfigurationResponseStatus(404);
+    HttpResponse<Buffer> postTenantResponse = enableModule("19.6.0", "19.6.1");
+
+    assertEquals(204, postTenantResponse.statusCode());
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
+  }
+
+  @Test
+  void tenantInstallationFailsAndSettingsAreNotMigratedWhenConfigurationServiceReturnsServerError() {
+    wireMockHelper.mockConfigurationResponseStatus(500);
+
+    HttpResponse<Buffer> postTenantResponse = enableModule("19.6.0", "19.6.1");
+
+    assertEquals(500, postTenantResponse.statusCode());
+    assertTrue(getAllSettingsFromDatabase().isEmpty());
+  }
+
   @ParameterizedTest
   @EmptySource
   @NullSource
@@ -144,10 +165,10 @@ class SettingsMigrationIT extends AbstractRestTestNoData {
   }
 
   @SneakyThrows
-  private void enableModule(String versionFrom, String versionTo) {
+  private HttpResponse<Buffer> enableModule(String versionFrom, String versionTo) {
     String moduleFrom = versionFrom == null ? null : "mod-users-" + versionFrom;
     String moduleTo = versionTo == null ? null : "mod-users-" + versionTo;
-    wait(module.migrateModule(okapiHeaders, moduleFrom, moduleTo, false, false));
+    return wait(module.migrateModule(okapiHeaders, moduleFrom, moduleTo, false, false));
   }
 
   @SneakyThrows

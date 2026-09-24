@@ -39,6 +39,12 @@ public class WireMockHelper {
         .withBody(mockResponseBody.encodePrettily())));
   }
 
+  public void mockConfigurationResponseStatus(int status) {
+    wireMockServer.stubFor(get(urlPathMatching("/configurations/entries.*"))
+      .atPriority(1)
+      .willReturn(aResponse().withStatus(status)));
+  }
+
   private void proxyOtherRequestsTo(String upstreamServerUrl) {
     wireMockServer.stubFor(any(anyUrl())
       .atPriority(10)

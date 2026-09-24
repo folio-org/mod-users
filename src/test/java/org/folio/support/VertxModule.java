@@ -13,7 +13,9 @@ import org.folio.support.http.OkapiHeaders;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import lombok.Getter;
 import lombok.NonNull;
@@ -35,7 +37,7 @@ public class VertxModule {
     return vertx.deployVerticle(RestVerticle.class.getName(), options);
   }
 
-  public Future<Void> enableModule(@NonNull OkapiHeaders headers,
+  public Future<HttpResponse<Buffer>> enableModule(@NonNull OkapiHeaders headers,
     @NonNull Boolean loadReferenceData, @NonNull Boolean loadSampleData) {
 
     final var tenantClient = new TenantClient(headers.getOkapiUrl(),
@@ -54,7 +56,7 @@ public class VertxModule {
     return TenantInit.init(tenantClient, ta);
   }
 
-  public Future<Void> purgeModule(@NonNull OkapiHeaders headers) {
+  public Future<HttpResponse<Buffer>> purgeModule(@NonNull OkapiHeaders headers) {
     final var tenantClient = new TenantClient(headers.getOkapiUrl(),
         headers.getTenantId(), headers.getToken(), webClient);
 
@@ -64,17 +66,17 @@ public class VertxModule {
     return TenantInit.init(tenantClient, ta);
   }
 
-  public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom) {
+  public Future<HttpResponse<Buffer>> migrateModule(@NonNull OkapiHeaders headers, String versionFrom) {
     return migrateModule(headers, versionFrom, true, true);
   }
 
-  public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom,
+  public Future<HttpResponse<Buffer>> migrateModule(@NonNull OkapiHeaders headers, String versionFrom,
     boolean loadReferenceData, boolean loadSampleData) {
 
     return migrateModule(headers, versionFrom, "mod-users-999999.0.0", loadReferenceData, loadSampleData);
   }
 
-  public Future<Void> migrateModule(@NonNull OkapiHeaders headers, String versionFrom, String versionTo,
+  public Future<HttpResponse<Buffer>> migrateModule(@NonNull OkapiHeaders headers, String versionFrom, String versionTo,
     boolean loadReferenceData, boolean loadSampleData) {
 
     final var tenantClient = new TenantClient(headers.getOkapiUrl(),
