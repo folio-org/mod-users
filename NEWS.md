@@ -1,3 +1,8 @@
+## 19.6.2 2026-09-28
+
+### Tech Debt
+* Add missing dependency on interface `configuration`, make settings migration more robust ([MODUSERS-598](https://folio-org.atlassian.net/browse/MODUSERS-598))
+
 ## 19.6.1 2026-09-08
 
 ### Tech Debt
