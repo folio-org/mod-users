@@ -1,5 +1,6 @@
 package org.folio.service;
 
+import static io.vertx.core.Future.failedFuture;
 import static io.vertx.core.Future.succeededFuture;
 import static org.folio.integration.http.HttpClientFactory.getHttpClient;
 
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.client.ConfigurationClient;
 import org.folio.client.impl.ConfigurationClientImpl;
+import org.folio.exceptions.HttpException;
 import org.folio.repository.SettingsRepository;
 import org.folio.rest.jaxrs.model.ConfigurationEntry;
 import org.folio.rest.jaxrs.model.Setting;
@@ -25,6 +27,7 @@ public class SettingsMigrationService {
 
   private static final Logger log = LogManager.getLogger(SettingsMigrationService.class);
 
+  private static final int HTTP_NOT_FOUND = 404;
   private static final String USERS_MODULE = "@folio/users";
   private static final String SUPPRESS_EDIT_CONFIG_NAME = "suppressEdit";
   private static final String DEFAULT_SCOPE = Setting.Scope.MOD_USERS.value();
@@ -86,7 +89,17 @@ public class SettingsMigrationService {
     log.info("migrateSetting:: setting does not exist, proceeding with migration");
 
     return configurationClient.getConfiguration(module, configName)
-      .compose(config -> saveSetting(config, valueTransformer));
+      .compose(config -> saveSetting(config, valueTransformer))
+      .recover(this::handleConfigurationLookupFailure);
+  }
+
+  private Future<Void> handleConfigurationLookupFailure(Throwable t) {
+    if (t instanceof HttpException httpException && httpException.getCode() == HTTP_NOT_FOUND) {
+      log.info("handleConfigurationLookupFailure:: request to configuration service returned 404, " +
+        "assuming it's no longer available");
+      return succeededFuture();
+    }
+    return failedFuture(t);
   }
 
   private Future<Void> saveSetting(ConfigurationEntry config, Function<String, Object> valueTransformer) {

@@ -1,5 +1,6 @@
 package org.folio.rest.utils;
 
+import static io.vertx.core.Future.succeededFuture;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
@@ -8,6 +9,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpResponse;
+
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.support.tags.UnitTest;
@@ -16,13 +20,14 @@ import org.folio.support.tags.UnitTest;
 public class TenantInit {
   private TenantInit() {}
 
-  public static Future<Void> init(TenantClient tenantClient, TenantAttributes ta) {
+  public static Future<HttpResponse<Buffer>> init(TenantClient tenantClient, TenantAttributes ta) {
     return tenantClient.postTenant(ta)
         .compose(res -> {
-          if (res.statusCode() == SC_NO_CONTENT) {
-            return Future.succeededFuture();
+          int responseStatusCode = res.statusCode();
+          if (responseStatusCode != SC_CREATED) {
+            return succeededFuture(res);
           }
-          assertThat("tenant POST status", res.statusCode(), is(SC_CREATED));
+          assertThat("tenant POST status", responseStatusCode, is(SC_CREATED));
           assertThat("tenant POST error", res.bodyAsJsonObject().getString("error"), is(nullValue()));
           var jsonObject = res.bodyAsJsonObject();
           return tenantClient.getTenantByOperationId(jsonObject.getString("id"), 50000)
@@ -33,7 +38,7 @@ public class TenantInit {
               })
               .map(res3 -> {
                 assertThat("tenant DELETE status", res3.statusCode(), is(SC_NO_CONTENT));
-                return null;
+                return res3;
               });
         });
   }
