@@ -42,12 +42,13 @@ class InstallUpgradeIT {
   private static final GenericContainer<?> MOD_USERS =
     new GenericContainer<>(
       new ImageFromDockerfile("mod-users").withFileFromPath(".", Path.of(".")))
+      .dependsOn(KAFKA)
       .withNetwork(NETWORK)
       .withExposedPorts(8081, 5005)
       .withEnv("JAVA_OPTIONS", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
       .withEnv("KAFKA_HOST", KAFKA_NETWORK_ALIAS)
       .withEnv("KAFKA_PORT", "9095")
-      .waitingFor(Wait.forHttp("/").forStatusCode(404));
+      .waitingFor(Wait.forHttp("/").forPort(8081).forStatusCode(404));
 
   @BeforeAll
   static void beforeAll() {
@@ -57,8 +58,8 @@ class InstallUpgradeIT {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     RestAssured.baseURI = "http://" + MOD_USERS.getHost() + ":" + MOD_USERS.getFirstMappedPort();
     if (IS_LOG_ENABLED) {
-      KAFKA.followOutput(new Slf4jLogConsumer(LOG).withSeparateOutputStreams());
-      MOD_USERS.followOutput(new Slf4jLogConsumer(LOG).withSeparateOutputStreams());
+      KAFKA.followOutput(new Slf4jLogConsumer(LOG).withSeparateOutputStreams().withPrefix("kafka"));
+      MOD_USERS.followOutput(new Slf4jLogConsumer(LOG).withSeparateOutputStreams().withPrefix("mod-users"));
     }
   }
 
