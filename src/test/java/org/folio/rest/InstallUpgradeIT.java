@@ -20,6 +20,7 @@ import org.folio.support.tags.IntegrationTest;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -45,7 +46,8 @@ class InstallUpgradeIT {
       .withExposedPorts(8081, 5005)
       .withEnv("JAVA_OPTIONS", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005")
       .withEnv("KAFKA_HOST", KAFKA_NETWORK_ALIAS)
-      .withEnv("KAFKA_PORT", "9095");
+      .withEnv("KAFKA_PORT", "9095")
+      .waitingFor(Wait.forHttp("/").forStatusCode(404));
 
   @BeforeAll
   static void beforeAll() {
