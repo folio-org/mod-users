@@ -1,5 +1,8 @@
 ## 19.7.0 IN PROGRESS
 
+### Features
+* Upgrade from Java 21 to Java 25 ([MODUSERS-597)](https://folio-org.atlassian.net/browse/MODUSERS-597))
+
 ### Tech Debt
 * Migrate setting `suppressEdit` from mod-configuration to mod-users ([MODUSERS-587](https://folio-org.atlassian.net/browse/MODUSERS-587))
 
