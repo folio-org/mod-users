@@ -211,6 +211,11 @@
       "maxItems": 3,
       "uniqueItems": true,
       "description": "Preferred email communication types"
+    },
+    "loanAnonymizationPreference": {
+      "description": "Preference for anonymizing the user's closed loans; a missing value means libraryPolicy",
+      "type": "string",
+      "enum": ["libraryPolicy", "asEarlyAsPossible", "never"]
     }
   },
   "additionalProperties": false

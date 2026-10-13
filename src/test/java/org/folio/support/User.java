@@ -31,6 +31,7 @@ public class User {
   Metadata metadata;
   Set<String> departments;
   Set<PreferredEmailCommunication> preferredEmailCommunication;
+  String loanAnonymizationPreference;
   String externalSystemId;
   Date enrollmentDate;
   Date createdDate;
@@ -53,6 +54,7 @@ public class User {
       .metadata(metadata)
       .departments(departments)
       .preferredEmailCommunication(preferredEmailCommunication)
+      .loanAnonymizationPreference(loanAnonymizationPreference)
       .externalSystemId(externalSystemId)
       .enrollmentDate(enrollmentDate)
       .customFields(customFields)

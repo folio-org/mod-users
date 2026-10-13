@@ -8,6 +8,9 @@
 
 * **Deprecated** users' `personal`->`preferredContactTypeId` field in favor of an array `personal`->`preferredContactTypeIds` ([MODUSERS-586](https://folio-org.atlassian.net/browse/MODUSERS-586))
 
+### Features
+* Add `loanAnonymizationPreference` to the user record ([MODUSERS-600](https://folio-org.atlassian.net/browse/MODUSERS-600))
+
 ## 19.6.0 2026-04-15
 
 ### New APIs versions

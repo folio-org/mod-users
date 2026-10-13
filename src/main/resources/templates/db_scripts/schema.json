@@ -232,6 +232,10 @@
           "tOps" : "ADD"
         },
         {
+          "fieldName" : "loanAnonymizationPreference",
+          "tOps" : "ADD"
+        },
+        {
           "fieldName" : "expirationDate",
           "tOps" : "ADD",
           "caseSensitive": true,
