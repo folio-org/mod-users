@@ -26,7 +26,6 @@ import static org.folio.support.matchers.DomainEventAssertions.await;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.greaterThan;
@@ -58,7 +57,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import org.folio.domain.UserType;
@@ -314,33 +312,6 @@ class UsersAPIIT extends AbstractRestTestNoData {
         .preferredEmailCommunication(set)
         .build());
     });
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"libraryPolicy", "asEarlyAsPossible", "never"})
-  void canCreateUserWithLoanAnonymizationPreference(String preference) {
-    final var user = usersClient.createUser(User.builder()
-      .username("ellen")
-      .loanAnonymizationPreference(preference)
-      .build());
-
-    assertThat(usersClient.getUser(user.getId()).getLoanAnonymizationPreference(), is(preference));
-  }
-
-  @Test
-  void loanAnonymizationPreferenceHasNoDefault() {
-    final var user = usersClient.createUser("frank");
-
-    assertThat(usersClient.getUser(user.getId()).getLoanAnonymizationPreference(), nullValue());
-  }
-
-  @Test
-  void cannotCreateUserWithUnknownLoanAnonymizationPreference() {
-    usersClient.attemptToCreateUser(User.builder()
-        .username("gina")
-        .loanAnonymizationPreference("sometimes")
-        .build())
-      .statusCode(is(SC_BAD_REQUEST));
   }
 
   @Test
