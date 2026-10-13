@@ -314,6 +314,32 @@ class UsersAPIIT extends AbstractRestTestNoData {
     });
   }
 
+  @Test
+  void canFindUsersByLoanAnonymizationPreference() {
+    usersClient.createUser("hank");
+
+    usersClient.createUser(User.builder()
+      .username("iris")
+      .loanAnonymizationPreference("libraryPolicy")
+      .build());
+
+    final var asEarlyAsPossible = usersClient.createUser(User.builder()
+      .username("jake")
+      .loanAnonymizationPreference("asEarlyAsPossible")
+      .build());
+
+    final var never = usersClient.createUser(User.builder()
+      .username("kate")
+      .loanAnonymizationPreference("never")
+      .build());
+
+    final var users = usersClient.getUsers(
+      "loanAnonymizationPreference==(asEarlyAsPossible or never)");
+
+    assertThat(users.getUsers().stream().map(User::getId).toList(),
+      containsInAnyOrder(asEarlyAsPossible.getId(), never.getId()));
+  }
+
   static Stream<Arguments> dateOfBirth() {
     return Stream.of(
       Arguments.of("0000-01-01", false),
